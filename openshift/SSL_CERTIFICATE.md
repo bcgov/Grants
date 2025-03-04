@@ -1,4 +1,4 @@
-# Instructions to Install Unity SSL Certificate
+# Instructions to Install grants SSL Certificate
 
 ## Step 1: Submit a CSR
 
@@ -11,24 +11,24 @@ As a best practice, store copies of these files in the ISB Operations SSL certif
 
 Ensure you have all four (4) required files:
 
-- Certificate: unity.gov.bc.ca.txt
-- Private Key: unity.gov.bc.ca.key
+- Certificate: grants.gov.bc.ca.txt
+- Private Key: grants.gov.bc.ca.key
 - CA Certificate: L1KChain.txt
 - CA Root Certificate: G2Root.txt
 
-## Step 3: Create route for unity.gov.bc.ca
+## Step 3: Create route for grants.gov.bc.ca
 
 You can create network routes using the web OpenShift console or the oc CLI.
 
-Using the command line, the following example creates a secured HTTPS route named `unity-gov-bc-ca` that directs traffic to the `unity-grantmanager-web` service:
+Using the command line, the following example creates a secured HTTPS route named `grants-gov-bc-ca` that directs traffic to the `grants-grantmanager-web` service:
 
 ```bash
-oc create route edge unity-gov-bc-ca \
- --service=unity-grantmanager-web \
- --cert=unity.gov.bc.ca.txt \
- --key=unity.gov.bc.ca.key \
+oc create route edge grants-gov-bc-ca \
+ --service=applicant-portal-web \
+ --cert=grants.gov.bc.ca.txt \
+ --key=grants.gov.bc.ca.key \
  --ca-cert=L1KChain.txt \
- --hostname=unity.gov.bc.ca \
+ --hostname=grants.gov.bc.ca \
  --insecure-policy=Redirect
 ```
 
@@ -38,34 +38,34 @@ Click **Create Route** to define and create a route in the project.
 
 Use the following settings:
 
-- Name: unity-gov-bc-ca
-- Hostname: unity.gov.bc.ca
+- Name: grants-gov-bc-ca
+- Hostname: grants.gov.bc.ca
 - Path: `/`
-- Service: unity-grantmanager-web
+- Service: applicant-portal-web
 - Secure Route: (yes)
 - TLS Termination: Edge
 - Insecure Traffic: Redirect
 
 | Route field                |  Source file        |
 | -------------------------- | ------------------- |
-| Certificate                |  unity.gov.bc.ca.txt |
-| Private Key                |  unity.gov.bc.ca.key |
+| Certificate                |  grants.gov.bc.ca.txt |
+| Private Key                |  grants.gov.bc.ca.key |
 | CA Certificate             |  L1KChain.txt       |
 
 ## Step 4: Verify new route
 
 The site should work immediately after saving these route settings.
 
-- Check that https://unity.gov.bc.ca is live and that the application landing page loads correctly.
+- Check that https://grants.gov.bc.ca is live and that the application landing page loads correctly.
 - Verify SSO (Keycloak) settings - https://bcgov.github.io/sso-requests
 
 ## Optional steps to generate a local CSR
 Run the openssl utility with the CSR and private key options **these do not need to be created on the intended machine or containers**. 
 
 ```bashs
-openssl req -new -newkey rsa:2048 -nodes -out unity.gov.bc.ca.csr \
-  -keyout unity.gov.bc.ca.key \
-  -subj "/C=CA/ST=British Columbia/L=Victoria/O=Government of the Province of British Columbia/OU=CITZ/CN=unity.gov.bc.ca"
+openssl req -new -newkey rsa:2048 -nodes -out grants.gov.bc.ca.csr \
+  -keyout grants.gov.bc.ca.key \
+  -subj "/C=CA/ST=British Columbia/L=Victoria/O=Government of the Province of British Columbia/OU=CITZ/CN=grants.gov.bc.ca"
 ```
 
 Response should be:
@@ -74,7 +74,7 @@ Response should be:
 Generating a RSA private key
 .........+++++
 ...............................+++++
-writing new private key to 'unity.gov.bc.ca.key'
+writing new private key to 'grants.gov.bc.ca.key'
 -----
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
@@ -88,7 +88,7 @@ State or Province Name (full name) [Some-State]:British Columbia
 Locality Name (eg, city) []:Victoria
 Organization Name (eg, company) [Internet Widgits Pty Ltd]:Government of the Province of British Columbia
 Organizational Unit Name (eg, section) []:JEDI
-Common Name (e.g. server FQDN or YOUR name) []:unity.gov.bc.ca
+Common Name (e.g. server FQDN or YOUR name) []:grants.gov.bc.ca
 Email Address []:
 
 Keep the secret key and send the `.csr` file to the OCIO Access and Directory Management Services team they will require an iStore order to process the `.csr` file and will provide the SSL certificates when they are ready.

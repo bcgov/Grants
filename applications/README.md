@@ -1,5 +1,5 @@
-# Unity Solution
+# Grants Applicant Portal Solution
 
-- [Unity.ApplicantPortal](Unity.ApplicantPortal/README.md)
-- [Unity.AutoUI](Unity.AutoUI/README.md)
-- [Unity.Tools](Unity.Tools/README.md)
+- [Grants.ApplicantPortal](Grants.ApplicantPortal/README.md)
+- [Grants.AutoUI](Grants.AutoUI/README.md)
+- [Grants.Tools](Grants.Tools/README.md)
