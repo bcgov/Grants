@@ -22,6 +22,7 @@ function Show-Usage {
     Write-Host "  .\dev-env.ps1 logs     - View logs from all services"
     Write-Host "  .\dev-env.ps1 logs SERVICE - View logs for a specific service (frontend, backend, postgres)"
     Write-Host "  .\dev-env.ps1 rebuild  - Rebuild and restart all services"
+    Write-Host "  .\dev-env.ps1 clean    - Remove all containers, volumes, networks and images created by this environment"
     Write-Host
     Write-Host "Or simply use standard Docker Compose commands:"
     Write-Host "  docker-compose up -d   - Start all services in detached mode"
@@ -64,6 +65,23 @@ switch ($Command) {
         docker-compose build
         docker-compose up -d
         Write-Host "Services rebuilt and started." -ForegroundColor Green
+    }
+    "clean" {
+        Write-Host "Stopping all services..." -ForegroundColor Yellow
+        docker-compose down
+        
+        Write-Host "Removing all containers, volumes, and networks for the project..." -ForegroundColor Yellow
+        docker-compose down --volumes --remove-orphans
+        
+        # Remove all images used by the project
+        Write-Host "Removing all project-related Docker images..." -ForegroundColor Yellow
+        $images = docker images --filter "reference=grants_*" -q
+        if ($images) {
+            docker rmi $images -f
+        }
+        
+        Write-Host "Environment cleaned successfully." -ForegroundColor Green
+        Write-Host "Use '.\dev-env.ps1 start' to start with fresh containers." -ForegroundColor Gray
     }
     default {
         Show-Usage
