@@ -1,0 +1,55 @@
+name: grants
+
+services:
+  backend:
+    build:
+      context: ./Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
+      dockerfile: Dockerfile
+    image: grants-backend
+    container_name: grants-backend
+    ports:
+      - "5100:5100"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=GrantsDB;Username=postgres;Password=localdev
+    networks:
+      - grants-network
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+      dockerfile: Dockerfile
+    image: grants-frontend
+    container_name: grants-frontend
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - BACKEND_SERVICE_URL=http://backend:5100
+    networks:
+      - grants-network
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:16
+    container_name: grants-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=GrantsDB
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=localdev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - grants-network
+
+networks:
+  grants-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
