@@ -1,0 +1,523 @@
+2025-03-19 10:03:15.638 -07:00 [INF] Registered 6 endpoints in 866 milliseconds.
+2025-03-19 10:03:16.657 -07:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;
+2025-03-19 10:03:16.930 -07:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Contributors" AS "c")
+2025-03-19 10:03:16.945 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Profiles" AS "p")
+2025-03-19 10:03:17.372 -07:00 [INF] Now listening on: https://localhost:63945
+2025-03-19 10:03:17.379 -07:00 [INF] No action descriptors found. This may indicate an incorrectly configured application or missing application parts. To learn more, visit https://aka.ms/aspnet/mvc/app-parts
+2025-03-19 10:03:17.488 -07:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-19 10:03:17.488 -07:00 [INF] Hosting environment: Development
+2025-03-19 10:03:17.488 -07:00 [INF] Content root path: C:\Repos\Grants\applications\Grants.ApplicantPortal.API\src\Grants.ApplicantPortal.API.Web
+2025-03-19 10:03:18.701 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/swagger - null null
+2025-03-19 10:03:18.792 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/swagger - 302 0 null 101.1946ms
+2025-03-19 10:03:18.800 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/swagger/index.html - null null
+2025-03-19 10:03:18.829 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/swagger/index.html - 200 null text/html; charset=utf-8 28.9311ms
+2025-03-19 10:03:18.834 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-19 10:03:18.846 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/_framework/aspnetcore-browser-refresh.js - 200 13812 application/javascript; charset=utf-8 12.1772ms
+2025-03-19 10:03:18.847 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/_vs/browserLink - null null
+2025-03-19 10:03:18.890 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/_vs/browserLink - 200 null text/javascript; charset=UTF-8 43.1372ms
+2025-03-19 10:03:19.132 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/swagger/v1/swagger.json - null null
+2025-03-19 10:03:19.254 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/swagger/v1/swagger.json - 200 null application/json; charset=utf-8 121.7575ms
+2025-03-19 10:10:25.913 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:25.956 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:26.181 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:26.183 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:26.508 -07:00 [INF] Executed DbCommand (21ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:26.586 -07:00 [INF] Populate Profile "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:26.599 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 415 ms
+2025-03-19 10:10:26.624 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:26.633 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 730.7663ms
+2025-03-19 10:10:34.981 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:34.983 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:34.987 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:34.987 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:35.057 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:35.058 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 70 ms
+2025-03-19 10:10:35.058 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.059 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 77.8802ms
+2025-03-19 10:10:35.510 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:35.510 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.513 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:35.513 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:35.519 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:35.520 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 6 ms
+2025-03-19 10:10:35.520 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.520 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 10.7575ms
+2025-03-19 10:10:35.803 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:35.803 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.803 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:35.804 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:35.805 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:35.806 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:10:35.806 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.806 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.7261ms
+2025-03-19 10:10:35.959 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:35.959 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.959 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:35.960 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:35.970 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:35.971 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 11 ms
+2025-03-19 10:10:35.973 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:35.973 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 14.614ms
+2025-03-19 10:10:36.107 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:36.109 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:36.109 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:36.109 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:36.111 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:36.112 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:10:36.112 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:36.113 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 6.1158ms
+2025-03-19 10:10:39.136 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:39.137 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:39.138 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:39.138 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:39.140 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:39.141 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 3 ms
+2025-03-19 10:10:39.143 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:39.143 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 6.4512ms
+2025-03-19 10:10:39.528 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:10:39.529 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:39.530 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:10:39.532 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:10:39.534 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:10:39.535 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:10:39.535 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:10:39.535 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 6.9015ms
+2025-03-19 10:11:15.201 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:15.201 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:15.202 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:15.203 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:15.205 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:15.206 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 3 ms
+2025-03-19 10:11:15.206 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:15.207 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 5.5249ms
+2025-03-19 10:11:15.813 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:15.814 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:15.814 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:15.814 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:15.817 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:15.818 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 3 ms
+2025-03-19 10:11:15.818 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:15.818 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.8399ms
+2025-03-19 10:11:16.209 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:16.211 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.211 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:16.211 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:16.221 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:16.221 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 10 ms
+2025-03-19 10:11:16.221 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.222 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 12.5022ms
+2025-03-19 10:11:16.391 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:16.391 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.392 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:16.392 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:16.394 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:16.394 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:11:16.395 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.395 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.7577ms
+2025-03-19 10:11:16.576 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:16.576 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.576 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:16.576 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:16.578 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:16.579 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:11:16.579 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.579 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.1773ms
+2025-03-19 10:11:16.738 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:16.738 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.739 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:16.739 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:16.741 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:16.742 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:11:16.742 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.742 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.0341ms
+2025-03-19 10:11:16.894 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:11:16.895 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.895 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:11:16.895 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:11:16.899 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:11:16.899 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 3 ms
+2025-03-19 10:11:16.899 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:11:16.900 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 6.4292ms
+2025-03-19 10:12:13.450 -07:00 [INF] Registered 6 endpoints in 1,098 milliseconds.
+2025-03-19 10:12:14.428 -07:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;
+2025-03-19 10:12:14.663 -07:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Contributors" AS "c")
+2025-03-19 10:12:14.675 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Profiles" AS "p")
+2025-03-19 10:12:15.011 -07:00 [INF] Now listening on: https://localhost:64285
+2025-03-19 10:12:15.020 -07:00 [INF] No action descriptors found. This may indicate an incorrectly configured application or missing application parts. To learn more, visit https://aka.ms/aspnet/mvc/app-parts
+2025-03-19 10:12:16.252 -07:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-19 10:12:16.252 -07:00 [INF] Hosting environment: Development
+2025-03-19 10:12:16.252 -07:00 [INF] Content root path: C:\Repos\Grants\applications\Grants.ApplicantPortal.API\src\Grants.ApplicantPortal.API.Web
+2025-03-19 10:13:20.650 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/swagger - null null
+2025-03-19 10:13:20.777 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/swagger/index.html - null null
+2025-03-19 10:13:20.773 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/swagger - 302 0 null 134.2274ms
+2025-03-19 10:13:20.813 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/swagger/index.html - 200 null text/html; charset=utf-8 36.2355ms
+2025-03-19 10:13:20.822 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-19 10:13:20.829 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/_vs/browserLink - null null
+2025-03-19 10:13:20.873 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/_framework/aspnetcore-browser-refresh.js - 200 13812 application/javascript; charset=utf-8 50.8168ms
+2025-03-19 10:13:20.892 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/_vs/browserLink - 200 null text/javascript; charset=UTF-8 63.5211ms
+2025-03-19 10:13:20.936 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/swagger/v1/swagger.json - null null
+2025-03-19 10:13:20.985 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/swagger/v1/swagger.json - 200 null application/json; charset=utf-8 49.1723ms
+2025-03-19 10:13:33.535 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:33.541 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:33.605 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:33.606 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:33.720 -07:00 [INF] Executed DbCommand (4ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:33.770 -07:00 [INF] Populate Profile "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:33.782 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 176 ms
+2025-03-19 10:13:33.792 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:33.798 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 263.1095ms
+2025-03-19 10:13:38.274 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:38.275 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:38.276 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:38.276 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:38.336 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:38.337 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 61 ms
+2025-03-19 10:13:38.338 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:38.339 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 64.6531ms
+2025-03-19 10:13:38.823 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:38.824 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:38.826 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:38.826 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:38.836 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:38.837 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 10 ms
+2025-03-19 10:13:38.837 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:38.837 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 14.0978ms
+2025-03-19 10:13:39.261 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:39.261 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.261 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:39.262 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:39.264 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:39.265 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 3 ms
+2025-03-19 10:13:39.265 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.265 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.9062ms
+2025-03-19 10:13:39.560 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:39.560 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.561 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:39.561 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:39.563 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:39.563 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:39.563 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.564 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.0756ms
+2025-03-19 10:13:39.810 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:39.810 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.811 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:39.811 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:39.812 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:39.813 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:39.813 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.814 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.9756ms
+2025-03-19 10:13:39.973 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:39.973 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.974 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:39.974 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:39.976 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:39.976 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:39.977 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:39.977 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.9533ms
+2025-03-19 10:13:40.130 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:40.131 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:40.131 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:40.131 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:40.133 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:40.133 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:40.134 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:40.134 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.8704ms
+2025-03-19 10:13:40.270 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:40.271 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:40.271 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:40.271 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:40.272 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:40.273 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:40.273 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:40.273 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.053ms
+2025-03-19 10:13:43.478 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:43.479 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:43.479 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:43.479 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:43.481 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:43.481 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:43.482 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:43.482 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.7477ms
+2025-03-19 10:13:44.009 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:44.010 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:44.010 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:44.010 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:44.012 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:44.014 -07:00 [INF] Populate Profile "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:44.015 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 4 ms
+2025-03-19 10:13:44.015 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:44.015 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 6.0639ms
+2025-03-19 10:13:44.447 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:44.448 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:44.449 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:44.449 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:44.451 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:44.451 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:44.451 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:44.451 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.2748ms
+2025-03-19 10:13:44.960 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:44.960 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:44.961 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:44.961 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:44.962 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:44.962 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:44.963 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:44.963 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 2.8084ms
+2025-03-19 10:13:45.173 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:45.175 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.175 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:45.175 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:45.177 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:45.177 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:45.177 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.178 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.5685ms
+2025-03-19 10:13:45.328 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:45.329 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.330 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:45.330 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:45.332 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:45.332 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:45.333 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.333 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.5863ms
+2025-03-19 10:13:45.486 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:45.486 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.487 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:45.487 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:45.488 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:45.488 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:45.489 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.489 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.3523ms
+2025-03-19 10:13:45.666 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:45.666 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.666 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:45.667 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:45.668 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:45.669 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:45.669 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.670 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.7214ms
+2025-03-19 10:13:45.817 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:45.817 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.817 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:45.817 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:45.818 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:45.819 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:45.819 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.819 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 2.4577ms
+2025-03-19 10:13:45.987 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:45.987 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.987 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:45.988 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:45.990 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:45.991 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:45.991 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:45.991 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 4.5822ms
+2025-03-19 10:13:46.431 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:46.432 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.432 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:46.432 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:46.434 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:46.434 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:46.434 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.434 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.2111ms
+2025-03-19 10:13:46.600 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:46.603 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.604 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:46.604 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:46.605 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:46.606 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:46.607 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.607 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 7.4051ms
+2025-03-19 10:13:46.767 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:46.768 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.769 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:46.769 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:46.770 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:46.771 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 2 ms
+2025-03-19 10:13:46.771 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.771 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 3.9751ms
+2025-03-19 10:13:46.933 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:46.934 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.934 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:46.934 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:46.939 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:46.940 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 6 ms
+2025-03-19 10:13:46.941 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:46.941 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 7.89ms
+2025-03-19 10:13:47.210 -07:00 [INF] Request starting HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - null null
+2025-03-19 10:13:47.211 -07:00 [INF] Executing endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:47.211 -07:00 [INF] Handling GetProfileQuery
+2025-03-19 10:13:47.211 -07:00 [INF] Property ProfileId : "aeac0c9f-8436-48d6-b4c8-816083b38d6e"
+2025-03-19 10:13:47.212 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__profileId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT "p"."Id", "p"."Subject"
+FROM "Profiles" AS "p"
+WHERE "p"."Id" = @__profileId_0
+LIMIT 1
+2025-03-19 10:13:47.213 -07:00 [INF] Handled GetProfileQuery with Ardalis.Result.Result`1[Grants.ApplicantPortal.API.UseCases.Profiles.ProfileDTO] in 1 ms
+2025-03-19 10:13:47.213 -07:00 [INF] Executed endpoint 'HTTP: GET /Profiles/{ProfileId:Guid}'
+2025-03-19 10:13:47.213 -07:00 [INF] Request finished HTTP/2 GET https://localhost:57679/Profiles/AEAC0C9F-8436-48D6-B4C8-816083B38D6E - 200 null application/json; charset=utf-8 2.7526ms
