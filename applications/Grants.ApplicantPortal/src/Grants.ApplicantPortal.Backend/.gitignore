@@ -1,0 +1,6 @@
+# Exclude log files
+src/Grants.ApplicantPortal.API.Web/log*.txt
+
+# Exclude SQLite temporary files
+src/Grants.ApplicantPortal.API.Web/database.sqlite-shm
+src/Grants.ApplicantPortal.API.Web/database.sqlite-wal
