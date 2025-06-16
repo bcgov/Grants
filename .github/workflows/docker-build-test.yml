@@ -149,8 +149,8 @@ jobs:
     - name: Build Docker images
       run: |
         echo "buildArgs GRANTS_BUILD_VERSION: ${{env.GRANTS_BUILD_VERSION}}, GRANTS_BUILD_REVISION: ${{env.GRANTS_BUILD_REVISION}}"
-        docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-backend -f Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
-        docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-frontend -f Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+        docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-backend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
+        docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-frontend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
       working-directory: ./
     - name: Connect to JFrog Artifactory non-interactive login using --password-stdin
       run: |
