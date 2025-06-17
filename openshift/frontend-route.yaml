@@ -1,17 +1,16 @@
-apiVersion: v1
-kind: Service
+apiVersion: route.openshift.io/v1
+kind: Route
 metadata:
   name: dev2-grants-frontend
   labels:
-    app: dev2-grants-frontend
     app.kubernetes.io/part-of: dev2-unity-applicant-portal
   annotations:
     app.kubernetes.io/part-of: dev2-unity-applicant-portal
 spec:
-  selector:
-    app: dev2-grants-frontend
-  ports:
-    - protocol: TCP
-      port: 4000
-      targetPort: 4000
-  type: ClusterIP
+  to:
+    kind: Service
+    name: dev2-grants-frontend
+  port:
+    targetPort: 4000
+  tls:
+    termination: edge
