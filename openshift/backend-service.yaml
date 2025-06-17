@@ -1,14 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-service
+  name: dev2-grants-backend
   labels:
-    app: backend
+    app: dev2-grants-backend
+    app.kubernetes.io/part-of: dev2-unity-applicant-portal
+  annotations:
+    app.kubernetes.io/part-of: dev2-unity-applicant-portal
 spec:
   selector:
-    app: backend
+    app: dev2-grants-backend
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 5100
+      targetPort: 5100
   type: ClusterIP
