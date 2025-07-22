@@ -1,0 +1,25 @@
+<div class="container-fluid p-0">
+  <div class="row g-0 min-vh-100">
+    <!-- Sidebar Column -->
+    <div class="col-md-3 sidebar-column">
+      <div class="sidebar-container">
+        <app-sidebar></app-sidebar>
+      </div>
+    </div>
+
+    <!-- Main Content Column -->
+    <div class="col-md-9 main-content-column">
+      <div class="main-content-container">
+        <!-- Header Section -->
+        <header class="main-header">
+          <app-header [applicantInfo]="applicantInfo"></app-header>
+        </header>
+
+        <!-- Page Content Section -->
+        <main class="page-content">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>

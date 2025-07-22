@@ -1,0 +1,31 @@
+<header class="header">
+  <div class="header-left">
+    <div class="page-title">Applicant Info</div>
+  </div>
+  <div class="header-right">
+    <div class="btn-group">
+      <button
+        class="btn btn-secondary dropdown-toggle"
+        type="button"
+        id="dropdownMenuButton"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        Dropdown
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <li><a class="dropdown-item" href="#">Menu item</a></li>
+        <li><a class="dropdown-item" href="#">Menu item</a></li>
+        <li><a class="dropdown-item" href="#">Menu item</a></li>
+      </ul>
+    </div>
+    <button class="logout-btn" (click)="onLogout()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 012 2v2h-2V4H5v16h9v-2h2v2a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2h9z"
+        />
+      </svg>
+      Log out
+    </button>
+  </div>
+</header>
