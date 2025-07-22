@@ -22,6 +22,11 @@ public class NoOpMediator : IMediator
     return Task.FromResult<object?>(default);
   }
 
+  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
+  {
+    return Task.CompletedTask;
+  }
+
   public async IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request,
     [EnumeratorCancellation] CancellationToken cancellationToken = default)
   {
@@ -34,10 +39,5 @@ public class NoOpMediator : IMediator
   {
     await Task.CompletedTask;
     yield break;
-  }
-
-  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
-  {
-    return Task.CompletedTask;
   }
 }

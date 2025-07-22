@@ -21,23 +21,23 @@ public class Update(IMediator _mediator)
 
   public override async Task HandleAsync(
     UpdateContributorRequest request,
-    CancellationToken cancellationToken)
+    CancellationToken ct)
   {
-    var result = await _mediator.Send(new UpdateContributorCommand(request.Id, request.Name!), cancellationToken);
+    var result = await _mediator.Send(new UpdateContributorCommand(request.Id, request.Name!), ct);
 
     if (result.Status == ResultStatus.NotFound)
     {
-      await SendNotFoundAsync(cancellationToken);
+      await SendNotFoundAsync(ct);
       return;
     }
 
     var query = new GetContributorQuery(request.ContributorId);
 
-    var queryResult = await _mediator.Send(query, cancellationToken);
+    var queryResult = await _mediator.Send(query, ct);
 
     if (queryResult.Status == ResultStatus.NotFound)
     {
-      await SendNotFoundAsync(cancellationToken);
+      await SendNotFoundAsync(ct);
       return;
     }
 
