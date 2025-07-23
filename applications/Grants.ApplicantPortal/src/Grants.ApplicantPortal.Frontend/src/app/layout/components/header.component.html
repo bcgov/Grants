@@ -1,25 +1,16 @@
 <header class="header">
   <div class="header-left">
-    <div class="page-title">Applicant Info</div>
+    <div class="page-title">{{ pageTitle }}</div>
   </div>
   <div class="header-right">
-    <div class="btn-group">
-      <a
-        class="btn btn-link dropdown-toggle"
-        type="button"
-        id="dropdownMenuButton"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
-        <i class="fa-regular fa-circle-user fa-2xl"></i>
-      </a>
-      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        <li>
-          <a class="dropdown-item" class="logout-btn" (click)="onLogout()"
-            >Log out</a
-          >
-        </li>
-      </ul>
-    </div>
+    <app-user-dropdown
+      [userInfo]="applicantInfo"
+      dropdownId="headerUserDropdown"
+      buttonClass="btn btn-link dropdown-toggle"
+      dropdownClass="header-dropdown"
+      iconClass="fa-regular fa-circle-user fa-2xl"
+      (logout)="onLogout($event)"
+    >
+    </app-user-dropdown>
   </div>
 </header>

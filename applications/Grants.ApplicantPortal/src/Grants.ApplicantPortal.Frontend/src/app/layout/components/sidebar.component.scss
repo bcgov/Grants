@@ -6,6 +6,11 @@
   height: 75px;
   border-bottom: 1px solid var(--bc-blue-80);
   padding: 1rem;
+
+  // Hide logo section on mobile devices
+  @media (max-width: 767.98px) {
+    display: none;
+  }
 }
 
 .bc-logo {
@@ -81,7 +86,7 @@ aside {
   padding: 1rem;
   border-top: 1px solid var(--bc-blue-80);
   color: var(--bc-white);
-  margin-top: auto; // This pushes the footer to the bottom
+  margin-top: auto; // Push footer to the bottom
 }
 
 .funding-info {

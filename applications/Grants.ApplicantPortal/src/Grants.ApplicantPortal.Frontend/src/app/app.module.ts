@@ -10,14 +10,14 @@ import { routes } from './app.routes';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  declarations: [AppComponent],
   imports: [
     BrowserModule,
     CommonModule,
     FormsModule,
     RouterModule.forRoot(routes),
+    AppComponent,
   ],
   providers: [provideHttpClient()],
-  bootstrap: [AppComponent],
+  bootstrap: [],
 })
 export class AppModule {}

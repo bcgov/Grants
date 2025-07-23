@@ -1,9 +1,64 @@
 <div class="container-fluid p-0">
   <div class="row g-0 min-vh-100">
+    <!-- Mobile Header with Hamburger -->
+    <div class="mobile-header d-md-none">
+      <div class="mobile-header-content">
+        <button
+          class="hamburger-btn"
+          (click)="toggleSidebar()"
+          [class.active]="sidebarOpen"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="mobile-brand">
+          <div class="mobile-logo">
+            <img
+              src="images/logo/BCID_V_rgb_rev.png"
+              alt="BC Government Logo"
+              class="mobile-bc-logo"
+            />
+          </div>
+          <div class="mobile-title">
+            <div class="mobile-main-title">Enterprise Grant</div>
+            <div class="mobile-sub-title">Management System</div>
+          </div>
+        </div>
+
+        <app-user-dropdown
+          [userInfo]="applicantInfo"
+          dropdownId="mobileUserDropdown"
+          buttonClass="btn btn-outline-light dropdown-toggle"
+          dropdownClass="mobile-dropdown"
+          iconClass="fa-regular fa-circle-user fa-xl"
+          (logout)="onMobileLogout($event)"
+        >
+        </app-user-dropdown>
+      </div>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div
+      class="sidebar-overlay"
+      [class.show]="sidebarOpen"
+      (click)="closeSidebar()"
+      *ngIf="sidebarOpen"
+    ></div>
+
     <!-- Sidebar Column -->
-    <div class="col-md-3 sidebar-column">
+    <div
+      class="col-md-3 sidebar-column"
+      [class.mobile-open]="sidebarOpen"
+      [class.d-none]="!sidebarOpen"
+      [class.d-md-block]="true"
+    >
       <div class="sidebar-container">
-        <app-sidebar></app-sidebar>
+        <!-- Close button for mobile -->
+        <button class="mobile-close-btn d-md-none" (click)="closeSidebar()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+        <app-sidebar (menuItemClicked)="closeSidebar()"></app-sidebar>
       </div>
     </div>
 
