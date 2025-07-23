@@ -27,4 +27,10 @@
   <ItemGroup>
     <Folder Include="Data\Migrations\" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Update="C:\Repos\Grants\applications\Grants.ApplicantPortal\src\Grants.ApplicantPortal.Backend\GlobalSuppressions.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
 </Project>
