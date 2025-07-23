@@ -17,9 +17,9 @@ public class List(IMediator _mediator) : EndpointWithoutRequest<ContributorListR
     AllowAnonymous();
   }
 
-  public override async Task HandleAsync(CancellationToken cancellationToken)
+  public override async Task HandleAsync(CancellationToken ct)
   {
-    Result<IEnumerable<ContributorDTO>> result = await _mediator.Send(new ListContributorsQuery(null, null), cancellationToken);
+    Result<IEnumerable<ContributorDTO>> result = await _mediator.Send(new ListContributorsQuery(null, null), ct);
 
     if (result.IsSuccess)
     {

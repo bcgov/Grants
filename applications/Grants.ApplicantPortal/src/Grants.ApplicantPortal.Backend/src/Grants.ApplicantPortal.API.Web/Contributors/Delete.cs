@@ -1,4 +1,5 @@
-﻿using Grants.ApplicantPortal.API.UseCases.Contributors.Delete;
+﻿using System.Threading;
+using Grants.ApplicantPortal.API.UseCases.Contributors.Delete;
 
 namespace Grants.ApplicantPortal.API.Web.Contributors;
 
@@ -19,22 +20,23 @@ public class Delete(IMediator _mediator)
 
   public override async Task HandleAsync(
     DeleteContributorRequest request,
-    CancellationToken cancellationToken)
+    CancellationToken ct)
   {
     var command = new DeleteContributorCommand(request.ContributorId);
 
-    var result = await _mediator.Send(command, cancellationToken);
+    var result = await _mediator.Send(command, ct);
 
     if (result.Status == ResultStatus.NotFound)
     {
-      await SendNotFoundAsync(cancellationToken);
+      await SendNotFoundAsync(ct);
       return;
     }
 
     if (result.IsSuccess)
     {
-      await SendNoContentAsync(cancellationToken);
-    };
+      await SendNoContentAsync(ct);
+    }
+
     // TODO: Handle other issues as needed
   }
 }

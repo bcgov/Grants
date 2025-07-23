@@ -11,6 +11,21 @@ public static class ServiceConfigs
     services.AddInfrastructureServices(builder.Configuration, logger)
             .AddMediatrConfigs();
 
+    // Add distributed caching services
+    // For development, use in-memory cache. For production, consider Redis
+    if (builder.Environment.IsDevelopment())
+    {
+      services.AddDistributedMemoryCache();
+    }
+    else
+    {
+      // For production, you would typically use Redis:
+      // services.AddStackExchangeRedisCache(options =>
+      // {
+      //     options.Configuration = builder.Configuration.GetConnectionString("Redis");
+      // });
+      services.AddDistributedMemoryCache(); // Fallback to memory cache for now
+    }
 
     if (builder.Environment.IsDevelopment())
     {
@@ -27,10 +42,8 @@ public static class ServiceConfigs
       services.AddScoped<IEmailSender, MimeKitEmailSender>();
     }
 
-    logger.LogInformation("{Project} services registered", "Mediatr and Email Sender");
+    logger.LogInformation("{Project} services registered", "Mediatr, Caching and Email Sender");
 
     return services;
   }
-
-
 }

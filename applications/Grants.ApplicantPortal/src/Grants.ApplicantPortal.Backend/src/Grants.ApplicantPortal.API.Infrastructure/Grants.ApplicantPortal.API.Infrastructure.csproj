@@ -11,10 +11,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" PrivateAssets="all" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="SQLite" />
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
   
   <ItemGroup>
@@ -24,5 +26,11 @@
   
   <ItemGroup>
     <Folder Include="Data\Migrations\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Update="C:\Repos\Grants\applications\Grants.ApplicantPortal\src\Grants.ApplicantPortal.Backend\GlobalSuppressions.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
 </Project>
