@@ -10,24 +10,24 @@ import {
 } from '../../../shared/models/applicant.model';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-applicant-info',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="dashboard-content">
-      <h2>Dashboard</h2>
-      <p>This page will contain dashboard.</p>
+    <div class="applicant-info-content">
+      <h2>Applicant Info</h2>
+      <p>This page will contain applicant info content.</p>
     </div>
   `,
   styles: [
     `
-      .dashboard-content {
+      .applicant-info-content {
         padding: 2rem;
       }
     `,
   ],
 })
-export class DashboardComponent implements OnInit {
+export class ApplicantInfoComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   organizationInfo: OrganizationInfo | null = null;
   contactInfo: ContactInfo[] = [];
