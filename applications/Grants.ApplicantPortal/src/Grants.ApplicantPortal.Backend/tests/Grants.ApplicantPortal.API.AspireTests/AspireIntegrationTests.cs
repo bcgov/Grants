@@ -1,4 +1,4 @@
-namespace Grants.ApplicantPortal.API.AspireTests.Tests;
+﻿namespace Grants.ApplicantPortal.API.AspireTests;
 
 public class AspireIntegrationTests
 {
