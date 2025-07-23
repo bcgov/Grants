@@ -20,9 +20,7 @@
             "outputPath": "dist/frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -32,9 +30,13 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/@bcgov/bootstrap-v5-theme/css/bootstrap-theme.min.css",
+              "src/styles/styles.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "node_modules/@bcgov/bootstrap-v5-theme/js/bootstrap-theme.min.js"
+            ],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {
@@ -83,10 +85,7 @@
         "test": {
           "builder": "@angular/build:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -96,9 +95,13 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/@bcgov/bootstrap-v5-theme/css/bootstrap-theme.min.css",
+              "src/styles/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/@bcgov/bootstrap-v5-theme/js/bootstrap-theme.min.js"
+            ]
           }
         }
       }

@@ -1,0 +1,28 @@
+/* ===================================
+   BC Gov Bootstrap Theme Variables
+   =================================== */
+:root {
+  --bc-primary: #2d2d2d; //primary
+  --bc-white: #ffffff;
+  --bc-blue: #013366; //primary
+  --bc-blue-light: #255a90; //link
+  --bc-blue-80: #3470b1;
+  --bc-blue-90: #1e5189; // button hover
+  --bc-gold: #fcba19; //primary
+  --bc-gray: #edebe9;
+  --bc-gray-50: #d1cfcd;
+  --bc-gray-80: #605e5c;
+}
+
+/* ===================================
+   Global Reset & Base Styles
+   =================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "BCSans", "Noto Sans", Verdana, Arial, sans-serif;
+}
