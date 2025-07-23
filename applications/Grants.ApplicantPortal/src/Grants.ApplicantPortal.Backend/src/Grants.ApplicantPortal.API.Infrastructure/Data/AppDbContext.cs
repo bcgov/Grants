@@ -2,6 +2,10 @@
 using Grants.ApplicantPortal.API.Core.Profiles.ProfileAggregate;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Data;
+
+/// <summary>
+/// Application database context
+/// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options,
   IDomainEventDispatcher? dispatcher) : DbContext(options)
 {

@@ -1,6 +1,6 @@
 ﻿global using System.Runtime.CompilerServices;
 global using Ardalis.SharedKernel;
-global using Grants.ApplicantPortal.API.Core.ContributorAggregate;
+global using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
 global using Grants.ApplicantPortal.API.UseCases.Contributors.Create;
 global using FluentAssertions;
 global using MediatR;

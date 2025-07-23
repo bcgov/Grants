@@ -22,6 +22,8 @@ public class ContributorGetById(CustomWebApplicationFactory<Program> factory) : 
   public async Task ReturnsNotFoundGivenId1000()
   {
     string route = GetContributorByIdRequest.BuildRoute(1000);
-    _ = await _client.GetAndEnsureNotFoundAsync(route);
+    var response = await _client.GetAndEnsureNotFoundAsync(route);
+    
+    Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
   }
 }
