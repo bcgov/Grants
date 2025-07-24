@@ -1,0 +1,188 @@
+<div class="applicant-info-content">
+  <div class="app-info">
+    <span class="app-id">{{ applicantInfo?.id }}</span>
+    <span class="app-name">{{ applicantInfo?.organization }}</span>
+  </div>
+
+  <div class="content-grid">
+    <!-- Organization Information -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div class="flex-grow-1">
+          <h3 class="mb-0">Organization Information</h3>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary btn-floating"
+            (click)="saveOrganization()"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="container-fluid form-section">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="field">
+                <label for="orgSearch">Org Book Search</label>
+                <input
+                  id="orgSearch"
+                  type="text"
+                  [value]="organizationInfo?.orgName"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field">
+                <label for="orgName">Registered Organization Name</label>
+                <input
+                  id="orgName"
+                  type="text"
+                  [value]="organizationInfo?.orgName"
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field">
+                <label for="regNumber">Registered Organization Number</label>
+                <input
+                  id="regNumber"
+                  type="text"
+                  [value]="organizationInfo?.orgRegisteredNumber"
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field">
+                <label for="orgStatus">Organization Book Status</label>
+                <input
+                  id="orgStatus"
+                  type="text"
+                  [value]="
+                    organizationInfo?.orgStatus ? 'Active' : 'Not Active'
+                  "
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field">
+                <label for="orgType">Organization Type</label>
+                <input
+                  id="orgType"
+                  type="text"
+                  [value]="
+                    organizationInfo?.orgType
+                      ? organizationInfo?.orgType
+                      : 'N/A'
+                  "
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-8">
+              <div class="field">
+                <label for="nonRegOrgName"
+                  >Non-Registered Organization Name</label
+                >
+                <input
+                  id="nonRegOrgName"
+                  type="text"
+                  [value]="organizationInfo?.nonRegOrgName"
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="field">
+                <label for="orgSize">Organization Size</label>
+                <input
+                  id="orgSize"
+                  type="text"
+                  [value]="organizationInfo?.orgSize"
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field">
+                <label for="fiscalYearEndMonth">Fiscal Year End Month</label>
+                <input
+                  id="fiscalYearEndMonth"
+                  type="text"
+                  [value]="organizationInfo?.fiscalYearEndMonth"
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field">
+                <label for="fiscalYearEndDay">Fiscal Year End Day</label>
+                <input
+                  id="fiscalYearEndDay"
+                  type="text"
+                  [value]="organizationInfo?.fiscalYearEndDay"
+                  readonly
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div>
+          <h3 class="mb-0 ap-pad-10">Submissions</h3>
+        </div>
+      </div>
+      <div class="card-body"></div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div>
+          <h3 class="mb-0 ap-pad-10">Contact Information</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        &nbsp;<br />&nbsp;<br />&nbsp;<br />&nbsp;<br />&nbsp;<br />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div>
+          <h3 class="mb-0 ap-pad-10">Address Information</h3>
+        </div>
+      </div>
+      <div class="card-body"></div>
+    </div>
+  </div>
+</div>

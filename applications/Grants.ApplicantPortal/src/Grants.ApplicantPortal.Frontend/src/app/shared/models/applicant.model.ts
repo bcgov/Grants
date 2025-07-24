@@ -4,15 +4,14 @@ export interface ApplicantInfo {
 }
 
 export interface OrganizationInfo {
-  registeredNumber: string;
-  bookStatus: string;
-  type: string;
-  name: string;
-  size: string;
+  orgRegisteredNumber: string;
+  orgStatus: string;
+  orgType: string;
+  orgName: string;
+  orgSize: string;
+  nonRegOrgName: string;
   fiscalYearEndMonth?: string;
   fiscalYearEndDay?: string;
-  goodStanding: boolean;
-  dateOfIncorporation: Date;
 }
 
 export interface ContactInfo {
