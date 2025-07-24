@@ -27,13 +27,14 @@ export class ApplicantService {
 
   getOrganizationInfo(): Observable<OrganizationInfo> {
     return of({
-      registeredNumber: '234523523423423',
-      bookStatus: 'Active',
-      type: 'Sole Proprietorship',
-      name: 'Your Amazing Organization',
-      size: 'Medium',
-      goodStanding: true,
-      dateOfIncorporation: new Date('2020-01-15'),
+      orgRegisteredNumber: '234523523423423',
+      orgStatus: 'Active',
+      orgType: 'Sole Proprietorship',
+      orgName: 'Your Amazing Organization',
+      orgSize: '50',
+      nonRegOrgName: 'N/A',
+      fiscalYearEndMonth: 'December',
+      fiscalYearEndDay: '31',
     });
   }
 

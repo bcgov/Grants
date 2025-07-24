@@ -10,8 +10,15 @@
   --bc-blue-90: #1e5189; // button hover
   --bc-gold: #fcba19; //primary
   --bc-gray: #edebe9;
+  --bc-gray-20: #f3f2f1;
   --bc-gray-50: #d1cfcd;
   --bc-gray-80: #605e5c;
+
+  --bc-font-size-13: 0.8125rem;
+  --bc-font-size-14: 0.875rem;
+  --bc-font-size-16: 1rem; //default
+  --bc-font-size-18: 1.125rem;
+  --bc-font-size-20: 1.25rem;
 }
 
 /* ===================================
@@ -25,4 +32,42 @@
 
 body {
   font-family: "BCSans", "Noto Sans", Verdana, Arial, sans-serif;
+}
+
+h3 {
+  font-size: var(--bc-font-size-18);
+}
+
+/* ===================================
+   Component Styles
+   =================================== */
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.card-header {
+  padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.ap-pad-10 {
+  padding: 10px;
+}
+
+/* Form Section */
+.form-section {
+  .field {
+    margin-bottom: 10px;
+  }
+
+  label {
+    font-size: var(--bc-font-size-13);
+    font-weight: bold;
+  }
 }

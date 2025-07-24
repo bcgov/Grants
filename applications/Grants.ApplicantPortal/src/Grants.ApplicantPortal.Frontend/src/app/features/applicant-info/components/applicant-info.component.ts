@@ -13,19 +13,8 @@ import {
   selector: 'app-applicant-info',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="applicant-info-content">
-      <h2>Applicant Info</h2>
-      <p>This page will contain applicant info content.</p>
-    </div>
-  `,
-  styles: [
-    `
-      .applicant-info-content {
-        padding: 2rem;
-      }
-    `,
-  ],
+  templateUrl: './applicant-info.component.html',
+  styleUrls: ['./applicant-info.component.scss'],
 })
 export class ApplicantInfoComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
@@ -52,6 +41,7 @@ export class ApplicantInfoComponent implements OnInit {
     });
 
     this.applicantService.getOrganizationInfo().subscribe((data) => {
+      console.log('Organization Info:', data);
       this.organizationInfo = data;
     });
 

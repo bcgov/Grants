@@ -1,0 +1,26 @@
+.applicant-info-content {
+  padding: 0.8rem 1rem 1rem 1rem;
+}
+
+.app-info {
+  margin-bottom: 0.8rem;
+  font-size: var(--bc-font-size-18);
+
+  .app-id {
+    padding-right: 1rem;
+    font-weight: bold;
+  }
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 0rem;
+  }
+}

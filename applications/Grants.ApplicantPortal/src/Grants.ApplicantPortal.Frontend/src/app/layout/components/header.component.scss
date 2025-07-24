@@ -15,7 +15,7 @@
 }
 
 .page-title {
-  font-size: 1.2rem;
+  font-size: var(--bc-font-size-18);
   font-weight: 600;
 }
 
@@ -40,6 +40,6 @@
   }
 
   .header {
-    padding: 0.5rem 2rem;
+    padding: 0.8rem 2rem 0.6rem 2rem;
   }
 }
