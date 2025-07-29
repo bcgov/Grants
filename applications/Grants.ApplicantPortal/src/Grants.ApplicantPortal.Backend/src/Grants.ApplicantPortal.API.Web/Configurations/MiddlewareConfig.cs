@@ -24,6 +24,13 @@ public static class MiddlewareConfig
 
     app.UseHttpsRedirection(); // Note this will drop Authorization headers
 
+    // Add CORS before authentication
+    app.UseCors("AllowFrontend");
+
+    // Add authentication and authorization middleware
+    app.UseAuthentication();
+    app.UseAuthorization();
+
     // Initialize plugin registry at startup
     InitializePluginRegistry(app);
 
