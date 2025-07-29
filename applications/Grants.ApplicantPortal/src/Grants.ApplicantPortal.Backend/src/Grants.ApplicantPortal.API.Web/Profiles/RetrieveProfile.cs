@@ -1,4 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Profiles.Retrieve;
+using Grants.ApplicantPortal.API.Web.Auth;
 
 namespace Grants.ApplicantPortal.API.Web.Profiles;
 
@@ -12,12 +13,13 @@ public class RetrieveProfile(IMediator mediator)
   public override void Configure()
   {
     Get(RetrieveProfileRequest.Route);
-    AllowAnonymous();
+    Policies(AuthPolicies.RequireAuthenticatedUser); // Require authenticated user
     Summary(s =>
     {
       s.Summary = "Retrieve profile";
       s.Description = "Retrieves cached profile data by ProfileId and PluginId";
       s.Responses[200] = "Profile retrieved successfully";
+      s.Responses[401] = "Unauthorized - valid JWT token required";
       s.Responses[404] = "Profile not found in cache for the specified plugin";
       s.Responses[400] = "Invalid request";
     });

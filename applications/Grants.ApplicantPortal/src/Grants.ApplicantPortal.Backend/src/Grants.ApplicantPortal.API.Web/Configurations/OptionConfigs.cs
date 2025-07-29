@@ -11,6 +11,7 @@ public static class OptionConfigs
                                                     WebApplicationBuilder builder)
   {
     services.Configure<MailserverConfiguration>(configuration.GetSection("Mailserver"))
+            .Configure<KeycloakConfiguration>(configuration.GetSection(KeycloakConfiguration.SectionName))
     // Configure Web Behavior
     .Configure<CookiePolicyOptions>(options =>
     {
