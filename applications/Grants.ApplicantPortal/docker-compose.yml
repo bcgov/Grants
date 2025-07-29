@@ -12,10 +12,12 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=GrantsDB;Username=postgres;Password=localdev
+      - ConnectionStrings__Redis=redis:6379
     networks:
       - grants-network
     depends_on:
       - postgres
+      - redis
 
   frontend:
     build:
@@ -34,7 +36,7 @@ services:
       - backend
 
   postgres:
-    image: postgres:16
+    image: postgres:17
     container_name: grants-postgres
     ports:
       - "5434:5432"
@@ -47,9 +49,33 @@ services:
     networks:
       - grants-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: grants-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - grants-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: grants-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    networks:
+      - grants-network
+    depends_on:
+      - redis
+
 networks:
   grants-network:
     driver: bridge
 
 volumes:
   postgres-data:
+  redis-data:
