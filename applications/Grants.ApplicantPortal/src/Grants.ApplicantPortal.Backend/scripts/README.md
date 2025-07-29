@@ -1,6 +1,6 @@
-# PowerShell Keycloak Token Automation
+# PowerShell Keycloak Token Automation ??
 
-This directory contains PowerShell scripts to automate Keycloak token retrieval with IDIR/BCeID authentication.
+This directory contains PowerShell scripts to automate Keycloak token retrieval with IDIR/BCeID authentication, featuring a beautiful API callback experience.
 
 ## ?? Quick Start
 
@@ -8,282 +8,202 @@ This directory contains PowerShell scripts to automate Keycloak token retrieval 
 ```powershell
 # Set up your Keycloak configuration using user secrets
 .\setup-dev-secrets.ps1
+```
 
-# Or manually set user secrets
+### 2. Get Token (Recommended - Fully Automated)
+```powershell
+# Start your API first
 cd src\Grants.ApplicantPortal.API.Web
-dotnet user-secrets set "Keycloak:Resource" "your-client-id"
-dotnet user-secrets set "Keycloak:Credentials:Secret" "your-client-secret"
-dotnet user-secrets set "Keycloak:AuthServerUrl" "https://your-keycloak-server/auth"
-dotnet user-secrets set "Keycloak:Realm" "your-realm"
+dotnet run
+
+# Then run the fully automated script (opens beautiful callback page)
+.\scripts\Get-KeycloakTokenFullyAutomated.ps1
 ```
 
-### 2. Setup Dependencies (One-time)
-```powershell
-# Install Selenium WebDriver and other dependencies
-.\Setup-TokenAutomation.ps1
-```
-
-### 3. Get Token (Automated)
-```powershell
-# Full automation with Selenium WebDriver
-.\Get-KeycloakToken.ps1 -Username "your-username" -Password (Read-Host -AsSecureString) -IdentityProvider "IDIR"
-
-# Simplified version (works with or without Selenium)
-.\Get-KeycloakTokenSimple.ps1 -Username "your-username" -Password (Read-Host -AsSecureString) -IdentityProvider "IDIR"
-```
-
-### 4. Use Token
+### 3. Use Token
 ```powershell
 # Token is automatically saved to environment variable
 curl -H "Authorization: Bearer $env:KEYCLOAK_TOKEN" https://localhost:7000/Auth/userinfo
 ```
 
-## ?? Scripts Overview
+## ?? Available Scripts
 
-| Script | Purpose | Requirements |
-|--------|---------|-------------|
-| `setup-dev-secrets.ps1` | Configure Keycloak settings in user secrets | PowerShell 5+ |
-| `Setup-TokenAutomation.ps1` | Installs dependencies (Selenium, ChromeDriver) | PowerShell 5+ |
-| `Get-KeycloakToken.ps1` | Full browser automation | Selenium + Chrome |
-| `Get-KeycloakTokenSimple.ps1` | Hybrid approach (auto or manual) | PowerShell only |
+| Script | Description | Experience |
+|--------|-------------|------------|
+| **`Get-KeycloakTokenFullyAutomated.ps1`** ? | Opens browser, handles login, shows beautiful callback page with copy buttons | **Best** - Fully automated |
+| **`Get-KeycloakTokenSimple.ps1`** | Selenium-powered browser automation with fallback to manual | **Good** - Reliable fallback |
+| **`setup-dev-secrets.ps1`** | Configure Keycloak settings in user secrets | **Setup** - One-time |
+
+## ?? Recommended Workflow
+
+### Fully Automated Experience (NEW!)
+The best way to get tokens now uses your API's beautiful callback endpoint:
+
+```powershell
+# 1. Start your API (this serves the callback endpoint)
+cd src\Grants.ApplicantPortal.API.Web
+dotnet run
+
+# 2. Run the fully automated script
+.\scripts\Get-KeycloakTokenFullyAutomated.ps1
+```
+
+**What happens:**
+1. ?? **Browser opens** to Keycloak login
+2. ?? **You complete authentication** (IDIR, BCeID, etc.)
+3. ? **Beautiful callback page appears** with:
+   - ??? Access token with copy button
+   - ?? Refresh token with copy button  
+   - ?? User information display
+   - ? Token expiration details
+   - ?? Ready-to-use curl examples
+
+### Simple Automation (Fallback)
+If the fully automated approach doesn't work:
+
+```powershell
+.\scripts\Get-KeycloakTokenSimple.ps1
+```
+
+This uses Selenium browser automation and works without requiring your API to be running.
 
 ## ?? Configuration
 
-### Method 1: User Secrets (Recommended)
+### User Secrets (Recommended)
 User secrets are stored securely and not committed to source control:
 
 ```powershell
 cd src\Grants.ApplicantPortal.API.Web
-dotnet user-secrets set "Keycloak:Resource" "your-client-id"
+dotnet user-secrets set "Keycloak:Resource" "grants-portal-5361"
 dotnet user-secrets set "Keycloak:Credentials:Secret" "your-client-secret"
-dotnet user-secrets set "Keycloak:AuthServerUrl" "https://your-keycloak-server/auth"
-dotnet user-secrets set "Keycloak:Realm" "your-realm"
+dotnet user-secrets set "Keycloak:AuthServerUrl" "https://dev.loginproxy.gov.bc.ca/auth"
+dotnet user-secrets set "Keycloak:Realm" "standard"
 ```
-
-### Method 2: Environment Variables
-Set these environment variables:
-
-```powershell
-$env:KEYCLOAK_CLIENT_ID = "your-client-id"
-$env:KEYCLOAK_CLIENT_SECRET = "your-client-secret"
-$env:KEYCLOAK_URL = "https://your-keycloak-server/auth"
-$env:KEYCLOAK_REALM = "your-realm"
-```
-
-## ?? Parameters
-
-### Common Parameters
-- **`-Username`**: Your IDIR/BCeID username (required)
-- **`-Password`**: SecureString password (required)
-- **`-IdentityProvider`**: "IDIR", "BCeID", or "BCeID Business" (default: "IDIR")
-
-### Advanced Parameters (Get-KeycloakToken.ps1)
-- **`-Headless`**: Run browser in headless mode (default: true)
-- **`-TimeoutSeconds`**: Authentication timeout (default: 30)
-- **`-ClientId`**: Override client ID from configuration
-- **`-ClientSecret`**: Override client secret from configuration
 
 ## ?? Usage Examples
 
-### Basic Usage
+### Most Common Usage
 ```powershell
-# IDIR authentication
-$password = Read-Host -AsSecureString -Prompt "Enter your IDIR password"
-.\Get-KeycloakTokenSimple.ps1 -Username "your-idir-username" -Password $password -IdentityProvider "IDIR"
+# Easy setup - just run this once
+.\scripts\setup-dev-secrets.ps1
 
-# BCeID authentication  
-$password = Read-Host -AsSecureString -Prompt "Enter your BCeID password"
-.\Get-KeycloakTokenSimple.ps1 -Username "your-bceid-username" -Password $password -IdentityProvider "BCeID"
+# Then get tokens anytime with:
+.\scripts\Get-KeycloakTokenFullyAutomated.ps1
 ```
 
 ### Advanced Usage
 ```powershell
-# Full automation with custom timeout
-.\Get-KeycloakToken.ps1 -Username "username" -Password $securePassword -IdentityProvider "IDIR" -TimeoutSeconds 60 -Headless:$false
+# If you want to see the browser automation in action
+.\scripts\Get-KeycloakTokenSimple.ps1
 
-# View browser during automation (for debugging)
-.\Get-KeycloakToken.ps1 -Username "username" -Password $securePassword -Headless:$false
-```
-
-### Batch Token Retrieval
-```powershell
-# Save credentials securely
-$credential = Get-Credential -Message "Enter IDIR credentials"
-
-# Get token
-.\Get-KeycloakTokenSimple.ps1 -Username $credential.UserName -Password $credential.Password
-
-# Test multiple API endpoints
+# Test your token immediately
 $headers = @{ "Authorization" = "Bearer $env:KEYCLOAK_TOKEN" }
 Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
-Invoke-RestMethod -Uri "https://localhost:7000/api/profiles/123" -Headers $headers
 ```
 
-## ?? Security Notes
+## ??? Security Notes
 
 ### Configuration Security
 - **User secrets**: Stored in `%APPDATA%\Microsoft\UserSecrets\grants-applicant-portal-web-secrets\secrets.json`
-- **Environment variables**: Stored in current session only
 - **Never commit secrets** to source control
+- **Secrets are loaded automatically** by both scripts
 
-### Credential Handling
-- **Always use SecureString**: `Read-Host -AsSecureString`
-- **Never hardcode passwords** in scripts
-- **Use Get-Credential** for interactive scenarios
-- **Clear variables** after use: `$password = $null`
+### Token Security
+- **Tokens are temporary** (typically 5-15 minutes)
+- **Automatic environment variable**: `$env:KEYCLOAK_TOKEN`
+- **JSON file saved**: `keycloak-token.json` for backup
+- **Copy buttons** make it easy to use tokens securely
 
-### Token Storage
-- Tokens are saved to `keycloak-token.json`
-- Environment variable `KEYCLOAK_TOKEN` is set
-- Tokens expire (typically 5-15 minutes)
-- Refresh tokens last longer (30+ minutes)
-
-## ??? Dependencies
+## ?? Dependencies
 
 ### Required
 - **PowerShell 5.0+** (Windows PowerShell or PowerShell Core)
 - **Internet connection** to reach Keycloak server
-- **Keycloak configuration** (via user secrets or environment variables)
+- **Keycloak configuration** (via user secrets)
 
-### Optional (for full automation)
-- **Selenium WebDriver module**: `Install-Module -Name Selenium`
-- **Chrome browser** or **Microsoft Edge**
-- **ChromeDriver** or **EdgeDriver**
+### For Fully Automated Script (Recommended)
+- **Your API running** on `https://localhost:7000`
+- **Default browser** (any modern browser works)
 
-### Installation
-```powershell
-# Install Selenium module
-Install-Module -Name Selenium -Force -Scope CurrentUser
-
-# Or run the setup script
-.\Setup-TokenAutomation.ps1
-```
+### For Simple Script (Fallback)
+- **Selenium WebDriver module**: Auto-installed if missing
+- **Chrome or Edge browser** for automation
 
 ## ?? Troubleshooting
 
-### Common Issues
-
-#### "Configuration not found"
-Make sure you've set up your configuration:
+### "API server not running" (Fully Automated)
 ```powershell
-# Check user secrets
+# Make sure your API is running first
 cd src\Grants.ApplicantPortal.API.Web
-dotnet user-secrets list
-
-# Or set environment variables
-$env:KEYCLOAK_CLIENT_ID = "your-client-id"
+dotnet run
+# Wait for "Now listening on: https://localhost:7000"
 ```
 
-#### "Selenium module not found"
+### "Configuration not found"
+```powershell
+# Run the setup script
+.\scripts\setup-dev-secrets.ps1
+
+# Or check your user secrets
+cd src\Grants.ApplicantPortal.API.Web
+dotnet user-secrets list
+```
+
+### "Selenium module not found" (Simple Script)
+The script will automatically try to install Selenium. If it fails:
 ```powershell
 Install-Module -Name Selenium -Force -Scope CurrentUser
 ```
 
-#### "ChromeDriver not found" 
-- Download from: https://chromedriver.chromium.org/
-- Extract to a folder in your PATH
-- Or run `.\Setup-TokenAutomation.ps1`
-
-#### "Could not find username field"
-- Try running with `-Headless:$false` to see the login page
-- Different identity providers may have different form layouts
-- The script attempts multiple field selectors
-
-#### "Authentication timeout"
-- Increase timeout: `-TimeoutSeconds 60`
-- Check network connectivity to Keycloak server
-- Verify username/password are correct
-
-#### "Invalid redirect URI"
-- Ensure `http://localhost:8080/callback` is configured in Keycloak
-- The redirect URI must match exactly
-
-### Debug Mode
-```powershell
-# Run with visible browser to debug
-.\Get-KeycloakToken.ps1 -Username "user" -Password $pass -Headless:$false -TimeoutSeconds 120
-```
-
-### Manual Fallback
-If automation fails, the simple script provides manual instructions:
-```powershell
-.\Get-KeycloakTokenSimple.ps1 -Username "user" -Password $pass
-# Follow the manual steps if Selenium is not available
-```
+### "Invalid redirect URI"
+Make sure this redirect URI is configured in your Keycloak client:
+- **For Fully Automated**: `https://localhost:7000/auth/callback`
+- **For Simple Script**: `https://localhost:7000/auth/callback` (first choice)
 
 ## ?? Testing Your Token
 
-Once you have a token, test it with your API:
+Once you have a token:
 
 ```powershell
-# Check token validity
+# Check token validity and user info
 $headers = @{ "Authorization" = "Bearer $env:KEYCLOAK_TOKEN" }
-
-# Get user info
 $userInfo = Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
-Write-Host "Logged in as: $($userInfo.username)" -ForegroundColor Green
+Write-Host "? Logged in as: $($userInfo.username)" -ForegroundColor Green
 
-# Test protected endpoints
-try {
-    $profiles = Invoke-RestMethod -Uri "https://localhost:7000/api/profiles" -Headers $headers
-    Write-Host "? API access successful" -ForegroundColor Green
-} catch {
-    Write-Host "? API access failed: $($_.Exception.Message)" -ForegroundColor Red
-}
+# Test other protected endpoints
+Invoke-RestMethod -Uri "https://localhost:7000/System/info" -Headers $headers
 ```
 
-## ?? Token Refresh
+## ?? Pro Tips
 
+### Quick Token Refresh
 ```powershell
-# If you have a refresh token, you can get a new access token
-$tokenData = Get-Content "keycloak-token.json" | ConvertFrom-Json
-$refreshToken = $tokenData.refresh_token
-
-# Load configuration (same as in scripts)
-cd src\Grants.ApplicantPortal.API.Web
-$secretsJson = dotnet user-secrets list --json
-$secrets = $secretsJson | ConvertFrom-Json
-
-$body = @{
-    grant_type = "refresh_token"
-    client_id = $secrets.'Keycloak:Resource'
-    client_secret = $secrets.'Keycloak:Credentials:Secret'
-    refresh_token = $refreshToken
-}
-
-$newTokens = Invoke-RestMethod -Uri "$($secrets.'Keycloak:AuthServerUrl')/realms/$($secrets.'Keycloak:Realm')/protocol/openid-connect/token" -Method Post -Body $body -ContentType "application/x-www-form-urlencoded"
-
-$env:KEYCLOAK_TOKEN = $newTokens.access_token
-Write-Host "? Token refreshed successfully" -ForegroundColor Green
+# Just re-run the fully automated script - it's fast!
+.\scripts\Get-KeycloakTokenFullyAutomated.ps1
 ```
 
-## ?? Automation Tips
-
-### Scheduled Token Retrieval
+### Multiple Environment Support
 ```powershell
-# Store configuration in user secrets (secure)
-# Store credentials separately (use Windows Credential Manager or similar)
-$credential = Get-StoredCredential -Target "MyIDIRAccount"
-.\Get-KeycloakTokenSimple.ps1 -Username $credential.UserName -Password $credential.Password
+# Different Keycloak configurations for different environments
+.\scripts\Get-KeycloakTokenFullyAutomated.ps1 -KeycloakUrl "https://test.loginproxy.gov.bc.ca/auth" -Realm "test"
 ```
 
-### CI/CD Integration
+### Integration with Other Tools
 ```powershell
-# Use environment variables for automation
-$username = $env:IDIR_USERNAME
-$password = ConvertTo-SecureString $env:IDIR_PASSWORD -AsPlainText -Force
+# Export token for Postman, curl, etc.
+Write-Host "Authorization: Bearer $env:KEYCLOAK_TOKEN"
 
-.\Get-KeycloakToken.ps1 -Username $username -Password $password -IdentityProvider "IDIR"
+# Or copy directly to clipboard (Windows)
+"Bearer $env:KEYCLOAK_TOKEN" | Set-Clipboard
 ```
 
-## ??? Security Best Practices
+## ?? What Makes This Special
 
-1. **Never commit secrets** to source control
-2. **Use user secrets** for local development  
-3. **Use environment variables** for CI/CD
-4. **Clear sensitive variables** after use
-5. **Use SecureString** for password input
-6. **Rotate secrets** regularly
-7. **Monitor token usage** and expiration
+1. **?? Fully Automated**: No manual token copying from URLs
+2. **?? Beautiful UI**: Professional callback page with copy buttons
+3. **?? User-Friendly**: Shows user info, expiration, examples
+4. **?? Smart Fallback**: Multiple approaches if one doesn't work
+5. **??? Secure**: Uses user secrets, no hardcoded credentials
+6. **? Fast**: Quick token refresh workflow
 
-Your PowerShell automation is now secure and ready! ??
+Your PowerShell automation is now streamlined and ready! The fully automated approach with the beautiful callback page makes getting Keycloak tokens a pleasant experience. ??

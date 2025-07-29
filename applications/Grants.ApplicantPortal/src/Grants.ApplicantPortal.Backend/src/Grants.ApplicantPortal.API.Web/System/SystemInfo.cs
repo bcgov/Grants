@@ -1,4 +1,6 @@
-using System.Reflection;
+﻿using System.Reflection;
+using Microsoft.Extensions.Options;
+using Grants.ApplicantPortal.API.Web.Configurations;
 
 namespace Grants.ApplicantPortal.API.Web.System;
 
@@ -8,6 +10,13 @@ namespace Grants.ApplicantPortal.API.Web.System;
 /// </summary>
 public class SystemInfo : EndpointWithoutRequest<SystemInfoResponse>
 {
+    private readonly IOptions<KeycloakConfiguration> _keycloakOptions;
+
+    public SystemInfo(IOptions<KeycloakConfiguration> keycloakOptions)
+    {
+        _keycloakOptions = keycloakOptions;
+    }
+
     public override void Configure()
     {
         Get("/System/info");
@@ -28,6 +37,21 @@ public class SystemInfo : EndpointWithoutRequest<SystemInfoResponse>
         var version = assembly.GetName().Version?.ToString() ?? "Unknown";
         var buildDate = GetBuildDate(assembly);
         
+        // Check Keycloak configuration for debugging
+        var keycloakConfig = _keycloakOptions.Value;
+        var keycloakStatus = "Not configured";
+        if (keycloakConfig != null)
+        {
+            keycloakStatus = $"Configured - Server: {(!string.IsNullOrEmpty(keycloakConfig.AuthServerUrl) ? "✓" : "✗")}, " +
+                           $"Realm: {(!string.IsNullOrEmpty(keycloakConfig.Realm) ? "✓" : "✗")}, " +
+                           $"Resource: {(!string.IsNullOrEmpty(keycloakConfig.Resource) ? "✓" : "✗")}, " +
+                           $"Secret: {(!string.IsNullOrEmpty(keycloakConfig.Credentials?.Secret) ? "✓" : "✗")}";
+        }
+        else
+        {
+            keycloakStatus = "Configuration object is null";
+        }
+        
         Response = new SystemInfoResponse(
             "Grants Applicant Portal API",
             version,
@@ -35,6 +59,7 @@ public class SystemInfo : EndpointWithoutRequest<SystemInfoResponse>
             Environment.OSVersion.ToString(),
             Environment.Version.ToString(),
             buildDate,
+            keycloakStatus,
             DateTime.UtcNow);
 
         await Task.CompletedTask;
@@ -63,4 +88,5 @@ public record SystemInfoResponse(
     string OperatingSystem,
     string RuntimeVersion,
     DateTime BuildDate,
+    string KeycloakConfigStatus,
     DateTime RequestedAt);

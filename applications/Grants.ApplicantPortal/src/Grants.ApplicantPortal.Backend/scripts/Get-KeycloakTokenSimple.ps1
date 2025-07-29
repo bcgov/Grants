@@ -15,7 +15,7 @@ param(
     [string]$Realm,
     
     [Parameter(Mandatory=$false)]
-    [string]$RedirectUri = "https://localhost:7000/auth/callback",  # Use your API's callback
+    [string]$RedirectUri = "https://localhost:7000/auth/callback",  # Back to port 7000
     
     [Parameter(Mandatory=$false)]
     [int]$TimeoutSeconds = 300  # 5 minutes - plenty of time for login
@@ -265,8 +265,8 @@ function Get-ValidRedirectUris {
     Write-Host ""
     Write-Host "Choose a redirect URI to use:" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "1. http://localhost:8080/callback (most common)" -ForegroundColor White
-    Write-Host "2. https://localhost:7000/auth/callback (your API)" -ForegroundColor White
+    Write-Host "1. https://localhost:7000/auth/callback (your app's callback)" -ForegroundColor White
+    Write-Host "2. http://localhost:8080/callback (generic callback)" -ForegroundColor White
     Write-Host "3. http://127.0.0.1:8080/callback (alternative localhost)" -ForegroundColor White
     Write-Host "4. Custom redirect URI" -ForegroundColor White
     Write-Host ""
@@ -275,12 +275,12 @@ function Get-ValidRedirectUris {
     
     switch ($choice) {
         "1" { 
-            Write-Info "Using: http://localhost:8080/callback"
-            return "http://localhost:8080/callback" 
-        }
-        "2" { 
             Write-Info "Using: https://localhost:7000/auth/callback"
             return "https://localhost:7000/auth/callback" 
+        }
+        "2" { 
+            Write-Info "Using: http://localhost:8080/callback"
+            return "http://localhost:8080/callback" 
         }
         "3" { 
             Write-Info "Using: http://127.0.0.1:8080/callback"
@@ -292,8 +292,8 @@ function Get-ValidRedirectUris {
             return $customUri
         }
         default { 
-            Write-Info "Invalid choice, using default: http://localhost:8080/callback"
-            return "http://localhost:8080/callback"
+            Write-Info "Invalid choice, using default: https://localhost:7000/auth/callback"
+            return "https://localhost:7000/auth/callback"
         }
     }
 }
@@ -575,9 +575,9 @@ try {
     }
     
     # Ask for redirect URI if not provided
-    if (-not $RedirectUri -or $RedirectUri -eq "http://localhost:8080/callback") {
-        Write-Host "?? Need to configure redirect URI for Keycloak authentication" -ForegroundColor Yellow
-        $RedirectUri = Get-ValidRedirectUris
+    if (-not $RedirectUri -or $RedirectUri -eq "https://localhost:7000/auth/callback") {
+        Write-Host "?? Using your app's callback endpoint by default" -ForegroundColor Yellow
+        Write-Host "   If this doesn't work, try option 2 for manual mode" -ForegroundColor Gray
     }
     
     Write-Host "Ready to authenticate with:" -ForegroundColor Yellow
@@ -627,9 +627,11 @@ try {
     Write-Host "? Failed: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
     Write-Host "?? Common Solutions:" -ForegroundColor Yellow
-    Write-Host "  1. Add redirect URI to Keycloak client configuration" -ForegroundColor White
-    Write-Host "  2. Install Chrome: https://www.google.com/chrome/" -ForegroundColor White
-    Write-Host "  3. Install Edge: https://www.microsoft.com/edge" -ForegroundColor White
+    Write-Host "  1. Add redirect URI to Keycloak client configuration:" -ForegroundColor White
+    Write-Host "     https://localhost:7000/auth/callback" -ForegroundColor Gray
+    Write-Host "  2. Make sure your API is running on https://localhost:7000" -ForegroundColor White
+    Write-Host "  3. Install Chrome: https://www.google.com/chrome/" -ForegroundColor White
+    Write-Host "  4. Install Edge: https://www.microsoft.com/edge" -ForegroundColor White
     Write-Host ""
     
     exit 1
