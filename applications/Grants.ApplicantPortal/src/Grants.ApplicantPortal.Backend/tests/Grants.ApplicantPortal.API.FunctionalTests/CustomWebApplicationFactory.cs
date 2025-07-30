@@ -1,26 +1,21 @@
-﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
+﻿using Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints.Contributors.Mocks;
+using Grants.ApplicantPortal.API.Infrastructure.Data;
+using Grants.ApplicantPortal.API.UseCases.Contributors.List;
+using Microsoft.EntityFrameworkCore;
+using Ardalis.SharedKernel;
 
 namespace Grants.ApplicantPortal.API.FunctionalTests;
 
 public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
 {
-  /// <summary>
-  /// Overriding CreateHost to avoid creating a separate ServiceProvider per this thread:
-  /// https://github.com/dotnet-architecture/eShopOnWeb/issues/465
-  /// </summary>
-  /// <param name="builder"></param>
-  /// <returns></returns>
   protected override IHost CreateHost(IHostBuilder builder)
   {
-    builder.UseEnvironment("Development"); // will not send real emails
+    builder.UseEnvironment("Development");
     var host = builder.Build();
     host.Start();
 
-    // Get service provider.
     var serviceProvider = host.Services;
 
-    // Create a scope to obtain a reference to the database
-    // context (AppDbContext).
     using (var scope = serviceProvider.CreateScope())
     {
       var scopedServices = scope.ServiceProvider;
@@ -29,21 +24,12 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
       var logger = scopedServices
           .GetRequiredService<ILogger<CustomWebApplicationFactory<TProgram>>>();
 
-      // Reset Sqlite database for each test run
-      // If using a real database, you'll likely want to remove this step.
       db.Database.EnsureDeleted();
-
-      // Ensure the database is created.
       db.Database.EnsureCreated();
 
       try
       {
-        // Can also skip creating the items
-        //if (!db.ToDoItems.Any())
-        //{
-        // Seed the database with test data.
         SeedData.InitializeAsync(db).Wait();
-        //}
       }
       catch (Exception ex)
       {
@@ -57,29 +43,52 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 
   protected override void ConfigureWebHost(IWebHostBuilder builder)
   {
-    builder
-        .ConfigureServices(services =>
-        {
-          // Configure test dependencies here
+    builder.ConfigureServices(services =>
+    {
+      // Remove database-related service registrations
+      var descriptorsToRemove = services.Where(d => 
+        d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
+        d.ServiceType == typeof(DbContextOptions) ||
+        d.ServiceType == typeof(AppDbContext)
+      ).ToList();
 
-          //// Remove the app's ApplicationDbContext registration.
-          //var descriptor = services.SingleOrDefault(
-          //d => d.ServiceType ==
-          //    typeof(DbContextOptions<AppDbContext>));
+      foreach (var descriptor in descriptorsToRemove)
+      {
+        services.Remove(descriptor);
+      }
 
-          //if (descriptor != null)
-          //{
-          //  services.Remove(descriptor);
-          //}
+      // Remove the existing query service registration that uses raw SQL
+      var queryServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IListContributorsQueryService));
+      if (queryServiceDescriptor != null)
+      {
+        services.Remove(queryServiceDescriptor);
+      }
 
-          //// This should be set for each individual test run
-          //string inMemoryCollectionName = Guid.NewGuid().ToString();
+      string inMemoryCollectionName = Guid.NewGuid().ToString();
 
-          //// Add ApplicationDbContext using an in-memory database for testing.
-          //services.AddDbContext<AppDbContext>(options =>
-          //{
-          //  options.UseInMemoryDatabase(inMemoryCollectionName);
-          //});
-        });
+      // Create a completely separate service provider for in-memory database like integration tests do
+      var inMemoryServiceProvider = new ServiceCollection()
+        .AddEntityFrameworkInMemoryDatabase()
+        .BuildServiceProvider();
+
+      // Create DbContextOptions manually to avoid conflicts
+      var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+      optionsBuilder.UseInMemoryDatabase(inMemoryCollectionName)
+                    .UseInternalServiceProvider(inMemoryServiceProvider);
+      var options = optionsBuilder.Options;
+
+      // Register the manually created options
+      services.AddSingleton(options);
+
+      // Register AppDbContext with a factory that uses the manually created options
+      services.AddScoped<AppDbContext>(serviceProvider =>
+      {
+        var dispatcher = serviceProvider.GetService<IDomainEventDispatcher>();
+        return new AppDbContext(options, dispatcher);
+      });
+
+      // Register the test-specific query service that works with in-memory database
+      services.AddScoped<IListContributorsQueryService, InMemoryListContributorsQueryService>();
+    });
   }
 }
