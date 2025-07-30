@@ -1,4 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Web.Configurations;
+using Serilog;
+using Serilog.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
