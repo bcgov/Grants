@@ -1,7 +1,7 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contributors;
 using Grants.ApplicantPortal.API.UseCases.Contributors.List;
 
-namespace Grants.ApplicantPortal.API.Infrastructure.Data.Queries;
+namespace Grants.ApplicantPortal.API.Infrastructure.Data.Queries.Contributors;
 
 public class ListContributorsQueryService(AppDbContext _db) : IListContributorsQueryService
 {
@@ -11,8 +11,9 @@ public class ListContributorsQueryService(AppDbContext _db) : IListContributorsQ
   public async Task<IEnumerable<ContributorDTO>> ListAsync()
   {
     // NOTE: This will fail if testing with EF InMemory provider!
+    // Use quoted identifiers to match PostgreSQL's case-sensitive table and column names
     var result = await _db.Database.SqlQuery<ContributorDTO>(
-      $"SELECT Id, Name, PhoneNumber_Number AS PhoneNumber FROM Contributors") // don't fetch other big columns
+      $"SELECT \"Id\", \"Name\", \"PhoneNumber_Number\" AS \"PhoneNumber\" FROM \"Contributors\"") // don't fetch other big columns
       .ToListAsync();
 
     return result;

@@ -1,7 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.Contributors.Interfaces;
 using Grants.ApplicantPortal.API.Core.Contributors.Services;
 using Grants.ApplicantPortal.API.Infrastructure.Data;
-using Grants.ApplicantPortal.API.Infrastructure.Data.Queries;
 using Grants.ApplicantPortal.API.Infrastructure.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Plugins.Unity;
 using Grants.ApplicantPortal.API.Infrastructure.Plugins.Demo;
@@ -12,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Ardalis.GuardClauses;
+using Grants.ApplicantPortal.API.Infrastructure.Data.Queries.Contributors;
 
 namespace Grants.ApplicantPortal.API.Infrastructure;
 

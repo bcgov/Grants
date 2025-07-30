@@ -1,7 +1,7 @@
 ﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.Web.Contributors;
 
-namespace Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints;
+namespace Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints.Contributors;
 
 [Collection("Sequential")]
 public class ContributorList(CustomWebApplicationFactory<Program> factory) : IClassFixture<CustomWebApplicationFactory<Program>>
