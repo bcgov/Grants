@@ -2,7 +2,7 @@
 using Grants.ApplicantPortal.API.Web.Contributors;
 
 
-namespace Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints;
+namespace Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints.Contributors;
 
 [Collection("Sequential")]
 public class ContributorGetById(CustomWebApplicationFactory<Program> factory) : IClassFixture<CustomWebApplicationFactory<Program>>
@@ -21,7 +21,7 @@ public class ContributorGetById(CustomWebApplicationFactory<Program> factory) : 
   [Fact]
   public async Task ReturnsNotFoundGivenId1000()
   {
-    string route = GetContributorByIdRequest.BuildRoute(1000);
+    var route = GetContributorByIdRequest.BuildRoute(1000);
     var response = await _client.GetAndEnsureNotFoundAsync(route);
     
     Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);

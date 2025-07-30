@@ -4,6 +4,7 @@ using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,21 +16,27 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate.Contributor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(250)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -40,13 +47,17 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Subject")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Subject")
+                        .IsUnique();
 
                     b.ToTable("Profiles");
                 });
@@ -56,18 +67,18 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data.Migrations
                     b.OwnsOne("Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate.PhoneNumber", "PhoneNumber", b1 =>
                         {
                             b1.Property<int>("ContributorId")
-                                .HasColumnType("INTEGER");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("CountryCode")
                                 .IsRequired()
-                                .HasColumnType("TEXT");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Extension")
-                                .HasColumnType("TEXT");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Number")
                                 .IsRequired()
-                                .HasColumnType("TEXT");
+                                .HasColumnType("text");
 
                             b1.HasKey("ContributorId");
 
