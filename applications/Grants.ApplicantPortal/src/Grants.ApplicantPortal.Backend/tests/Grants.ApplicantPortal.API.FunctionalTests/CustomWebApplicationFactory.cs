@@ -1,4 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
+using Grants.ApplicantPortal.API.Infrastructure.Data.Queries;
+using Grants.ApplicantPortal.API.UseCases.Contributors.List;
 
 namespace Grants.ApplicantPortal.API.FunctionalTests;
 
@@ -61,6 +63,18 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         .ConfigureServices(services =>
         {
           // Configure test dependencies here
+          
+          // Replace the ListContributorsQueryService with the fake implementation
+          // The real implementation uses raw SQL which doesn't work with EF InMemory provider
+          var descriptor = services.SingleOrDefault(
+              d => d.ServiceType == typeof(IListContributorsQueryService));
+          
+          if (descriptor != null)
+          {
+            services.Remove(descriptor);
+          }
+          
+          services.AddScoped<IListContributorsQueryService, FakeListContributorsQueryService>();
 
           //// Remove the app's ApplicationDbContext registration.
           //var descriptor = services.SingleOrDefault(

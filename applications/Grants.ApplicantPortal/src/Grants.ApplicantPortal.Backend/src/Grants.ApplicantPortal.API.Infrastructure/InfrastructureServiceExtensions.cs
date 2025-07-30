@@ -7,6 +7,11 @@ using Grants.ApplicantPortal.API.Infrastructure.Plugins.Unity;
 using Grants.ApplicantPortal.API.Infrastructure.Plugins.Demo;
 using Grants.ApplicantPortal.API.UseCases.Contributors.List;
 using Grants.ApplicantPortal.API.Core.Plugins;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Ardalis.GuardClauses;
 
 namespace Grants.ApplicantPortal.API.Infrastructure;
 
@@ -17,10 +22,10 @@ public static class InfrastructureServiceExtensions
     ConfigurationManager config,
     ILogger logger)
   {
-    string? connectionString = config.GetConnectionString("SqliteConnection");
+    string? connectionString = config.GetConnectionString("DefaultConnection");
     Guard.Against.Null(connectionString);
     services.AddDbContext<AppDbContext>(options =>
-     options.UseSqlite(connectionString));
+     options.UseNpgsql(connectionString));
 
     services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>))
            .AddScoped(typeof(IReadRepository<>), typeof(EfRepository<>))

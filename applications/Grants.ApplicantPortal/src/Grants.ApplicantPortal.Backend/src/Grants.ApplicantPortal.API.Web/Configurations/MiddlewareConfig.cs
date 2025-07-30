@@ -1,6 +1,7 @@
 ﻿using Ardalis.ListStartupServices;
 using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.Infrastructure.Plugins;
+using Microsoft.EntityFrameworkCore;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
@@ -67,14 +68,47 @@ public static class MiddlewareConfig
     try
     {
       var context = services.GetRequiredService<AppDbContext>();
-      // context.Database.Migrate();
-      context.Database.EnsureCreated();
-      await SeedData.InitializeAsync(context);
+      var configuration = services.GetRequiredService<IConfiguration>();
+      var logger = services.GetRequiredService<ILogger<Program>>();
+
+      // Get database configuration options
+      var runMigrationsOnStartup = configuration.GetValue<bool>("Database:RunMigrationsOnStartup", false);
+      var seedDataOnStartup = configuration.GetValue<bool>("Database:SeedDataOnStartup", false);
+
+      logger.LogInformation("Database initialization settings - RunMigrations: {RunMigrations}, SeedData: {SeedData}", 
+          runMigrationsOnStartup, seedDataOnStartup);
+
+      if (runMigrationsOnStartup)
+      {
+        logger.LogInformation("Running database migrations...");
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Database migrations completed successfully");
+      }
+      else
+      {
+        logger.LogInformation("Skipping database migrations (disabled in configuration)");
+        // For development/testing scenarios, ensure database exists
+        if (app.Environment.IsDevelopment())
+        {
+          context.Database.EnsureCreated();
+        }
+      }
+
+      if (seedDataOnStartup)
+      {
+        logger.LogInformation("Running database seeding...");
+        await SeedData.InitializeAsync(context);
+        logger.LogInformation("Database seeding completed successfully");
+      }
+      else
+      {
+        logger.LogInformation("Skipping database seeding (disabled in configuration)");
+      }
     }
     catch (Exception ex)
     {
       var logger = services.GetRequiredService<ILogger<Program>>();
-      logger.LogError(ex, "An error occurred seeding the DB. {exceptionMessage}", ex.Message);
+      logger.LogError(ex, "An error occurred during database initialization. {exceptionMessage}", ex.Message);
     }
   }
 }
