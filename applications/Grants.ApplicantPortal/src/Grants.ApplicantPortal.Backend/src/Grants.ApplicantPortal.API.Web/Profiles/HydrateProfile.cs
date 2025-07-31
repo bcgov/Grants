@@ -13,7 +13,8 @@ public class HydrateProfile(IMediator mediator)
   public override void Configure()
   {
     Post(HydrateProfileRequest.Route);
-    Policies(AuthPolicies.RequireAuthenticatedUser); // Require authenticated user
+    //Policies(AuthPolicies.RequireAuthenticatedUser); // Require authenticated user
+    AllowAnonymous(); // Allow anonymous access for testing purposes
     Summary(s =>
     {
       s.Summary = "Hydrate profile data cache using a plugin";
@@ -31,6 +32,8 @@ public class HydrateProfile(IMediator mediator)
     var command = new HydrateProfileCommand(
       request.ProfileId, 
       request.PluginId, 
+      request.Provider,
+      request.Key,
       request.AdditionalData);
 
     var result = await mediator.Send(command, ct);
@@ -53,6 +56,8 @@ public class HydrateProfile(IMediator mediator)
       Response = new HydrateProfileResponse(
         profileData.ProfileId,
         profileData.PluginId,
+        profileData.Provider,
+        profileData.Key,
         profileData.JsonData,
         profileData.PopulatedAt        
       );

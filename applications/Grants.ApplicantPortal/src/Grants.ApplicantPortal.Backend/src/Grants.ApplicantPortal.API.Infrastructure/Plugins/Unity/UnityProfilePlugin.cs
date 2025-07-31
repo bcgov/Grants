@@ -67,8 +67,9 @@ public class UnityProfilePlugin(ILogger<UnityProfilePlugin> logger) : IProfilePl
             return new ProfileData(
                 metadata.ProfileId,
                 metadata.PluginId,
-                jsonData,
-                DateTime.UtcNow);
+                metadata.Provider,
+                metadata.Key,
+                jsonData);
         }
         catch (Exception ex)
         {
