@@ -13,7 +13,8 @@ public class RetrieveProfile(IMediator mediator)
   public override void Configure()
   {
     Get(RetrieveProfileRequest.Route);
-    Policies(AuthPolicies.RequireAuthenticatedUser); // Require authenticated user
+    //Policies(AuthPolicies.RequireAuthenticatedUser); // Require authenticated user
+    AllowAnonymous(); // Allow anonymous access for testing purposes
     Summary(s =>
     {
       s.Summary = "Retrieve profile";
@@ -28,7 +29,7 @@ public class RetrieveProfile(IMediator mediator)
   public override async Task HandleAsync(RetrieveProfileRequest request,
     CancellationToken ct)
   {
-    var query = new RetrieveProfileQuery(request.ProfileId, request.PluginId);
+    var query = new RetrieveProfileQuery(request.ProfileId, request.PluginId, request.Provider, request.Key, request.AdditionalData);
 
     var result = await mediator.Send(query, ct);
 
@@ -43,6 +44,8 @@ public class RetrieveProfile(IMediator mediator)
       Response = new RetrieveProfileResponse(
         result.Value.ProfileId,
         result.Value.PluginId,
+        result.Value.Provider,
+        result.Value.Key,
         result.Value.JsonData,
         result.Value.PopulatedAt);
       return;

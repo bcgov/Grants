@@ -6,6 +6,8 @@
 public record ProfilePopulationMetadata(
     Guid ProfileId,
     string PluginId,
+    string Provider,
+    string Key,
     Dictionary<string, object>? AdditionalData = null,
     DateTime RequestedAt = default
 )
@@ -19,6 +21,8 @@ public record ProfilePopulationMetadata(
 public record ProfileData(
     Guid ProfileId,
     string PluginId,
+    string Provider,
+    string Key,
     string JsonData,
     DateTime PopulatedAt = default
 )
@@ -32,7 +36,7 @@ public record ProfileData(
 public interface IProfilePlugin
 {
   /// <summary>
-  /// The unique identifier for this plugin (e.g., "UNITY")
+  /// The unique identifier for this plugin
   /// </summary>
   string PluginId { get; }
 

@@ -15,8 +15,8 @@ public class HydrateProfileCommandHandler(
     
     public async Task<Result<ProfileData>> Handle(HydrateProfileCommand request, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Processing profile hydration for ProfileId: {ProfileId}, PluginId: {PluginId}", 
-            request.ProfileId, request.PluginId);
+        logger.LogInformation("Processing profile hydration for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}, Key: {Key}", 
+            request.ProfileId, request.PluginId, request.Provider, request.Key);
 
         // Get the appropriate plugin
         var plugin = pluginFactory.GetPlugin(request.PluginId);
@@ -32,6 +32,8 @@ public class HydrateProfileCommandHandler(
             var metadata = new ProfilePopulationMetadata(
                 request.ProfileId,
                 request.PluginId,
+                request.Provider,
+                request.Key,
                 request.AdditionalData);
 
             // Validate plugin can handle this request
@@ -44,8 +46,8 @@ public class HydrateProfileCommandHandler(
             // Hydrate profile data using the plugin
             var profileData = await plugin.PopulateProfileAsync(metadata, cancellationToken);
 
-            // Cache the result with ProfileId and PluginId in the key
-            var cacheKey = $"{CACHE_KEY_PREFIX}{request.ProfileId}:{request.PluginId}";
+            // Cache the result with ProfileId, PluginId, Provider, and Key in the cache key
+            var cacheKey = $"{CACHE_KEY_PREFIX}{request.ProfileId}:{request.PluginId}:{request.Provider}:{request.Key}";
             var serializedData = JsonSerializer.Serialize(profileData);
             
             var cacheOptions = new DistributedCacheEntryOptions
@@ -56,15 +58,15 @@ public class HydrateProfileCommandHandler(
 
             await distributedCache.SetStringAsync(cacheKey, serializedData, cacheOptions, cancellationToken);
 
-            logger.LogInformation("Profile data hydrated and cached for ProfileId: {ProfileId}, PluginId: {PluginId}", 
-                request.ProfileId, request.PluginId);
+            logger.LogInformation("Profile data hydrated and cached for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}, Key: {Key}", 
+                request.ProfileId, request.PluginId, request.Provider, request.Key);
             
             return Result.Success(profileData);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error hydrating profile for ProfileId: {ProfileId}, PluginId: {PluginId}", 
-                request.ProfileId, request.PluginId);
+            logger.LogError(ex, "Error hydrating profile for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}, Key: {Key}", 
+                request.ProfileId, request.PluginId, request.Provider, request.Key);
             return Result.Error($"Failed to hydrate profile: {ex.Message}");
         }
     }
