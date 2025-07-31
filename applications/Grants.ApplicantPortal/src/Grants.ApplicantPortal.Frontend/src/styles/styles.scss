@@ -2,7 +2,7 @@
    BC Gov Bootstrap Theme Variables
    =================================== */
 :root {
-  --bc-primary: #2d2d2d; //primary
+  --bc-primary: #2d2d2d; //primary font color
   --bc-white: #ffffff;
   --bc-blue: #013366; //primary
   --bc-blue-light: #255a90; //link
@@ -11,9 +11,22 @@
   --bc-gold: #fcba19; //primary
   --bc-gray: #edebe9;
   --bc-gray-20: #f3f2f1;
+  --bc-gray-30: #eceae8; // hover tertiary
   --bc-gray-50: #d1cfcd;
   --bc-gray-80: #605e5c;
 
+  /**Support colors**/
+  --bc-bg-info: #053662;
+  --bc-bg-success: #42814a;
+  --bc-bg-error: #ce3e39;
+  --bc-bg-warning: #f8bb47;
+
+  --bc-surface-info: #f7f9fc;
+  --bc-surface-success: #f6fff8;
+  --bc-surface-error: #f4e1e2;
+  --bc-surface-warning: #fef1d8;
+
+  /**Font Sizes**/
   --bc-font-size-13: 0.8125rem;
   --bc-font-size-14: 0.875rem;
   --bc-font-size-16: 1rem; //default
