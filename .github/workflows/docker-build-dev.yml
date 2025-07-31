@@ -152,3 +152,7 @@ jobs:
     - name: Disconnect docker from OpenShift container registry
       run: |
         docker logout
+    - name: Trigger OpenShift deployment restart
+      run: |
+        oc rollout restart statefulset dev-grants-backend
+        oc rollout restart statefulset dev-grants-frontend
