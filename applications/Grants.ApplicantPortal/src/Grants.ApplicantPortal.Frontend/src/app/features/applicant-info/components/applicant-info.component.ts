@@ -216,17 +216,4 @@ export class ApplicantInfoComponent implements OnInit {
   // addAddress(): void {
   //   console.log('Add address clicked');
   // }
-
-  getStatusSeverity(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'submitted':
-        return 'success';
-      case 'under review':
-        return 'warning';
-      case 'approved':
-        return 'info';
-      default:
-        return 'secondary';
-    }
-  }
 }

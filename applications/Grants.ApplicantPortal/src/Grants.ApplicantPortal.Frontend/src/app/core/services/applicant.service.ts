@@ -80,35 +80,6 @@ export class ApplicantService {
     ]);
   }
 
-  getSubmissions(): Observable<Submission[]> {
-    return of([
-      {
-        date: '28/02/2024',
-        id: '368GB783',
-        projectName: 'Your project name here',
-        title: 'Economic Development Grant Application',
-        submissionDate: new Date('2024-02-28'),
-        status: 'Submitted',
-      },
-      {
-        date: '21/01/2024',
-        id: '237456DDD',
-        projectName: 'Your project name here',
-        title: 'Community Enhancement Project',
-        submissionDate: new Date('2024-01-21'),
-        status: 'Approved',
-      },
-      {
-        date: '22/12/2023',
-        id: '161HND333',
-        projectName: 'Your project name here',
-        title: 'Infrastructure Development Initiative',
-        submissionDate: new Date('2023-12-22'),
-        status: 'Under Review',
-      },
-    ]);
-  }
-
   saveOrganizationInfo(orgInfo: OrganizationInfo): Observable<any> {
     // Replace with actual API call
     return of({ success: true });

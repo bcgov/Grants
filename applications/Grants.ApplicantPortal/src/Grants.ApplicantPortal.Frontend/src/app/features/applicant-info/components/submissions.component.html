@@ -5,6 +5,26 @@
     >
       <thead>
         <tr>
+          <!-- <th
+            class="sortable"
+            (click)="sortSubmissions('id')"
+            (keydown.enter)="sortSubmissions('id')"
+            (keydown.space)="sortSubmissions('id')"
+            tabindex="0"
+          >
+            ID
+            <i class="fas fa-sort"></i>
+          </th> -->
+          <th
+            class="sortable"
+            (click)="sortSubmissions('confirmationNo')"
+            (keydown.enter)="sortSubmissions('confirmationNo')"
+            (keydown.space)="sortSubmissions('confirmationNo')"
+            tabindex="0"
+          >
+            Confirmation No
+            <i class="fas fa-sort"></i>
+          </th>
           <th
             class="sortable"
             (click)="sortSubmissions('date')"
@@ -15,16 +35,7 @@
             Date
             <i class="fas fa-sort"></i>
           </th>
-          <th
-            class="sortable"
-            (click)="sortSubmissions('id')"
-            (keydown.enter)="sortSubmissions('id')"
-            (keydown.space)="sortSubmissions('id')"
-            tabindex="0"
-          >
-            ID
-            <i class="fas fa-sort"></i>
-          </th>
+
           <th
             class="sortable"
             (click)="sortSubmissions('projectName')"
@@ -45,6 +56,26 @@
             Status
             <i class="fas fa-sort"></i>
           </th>
+          <th
+            class="sortable"
+            (click)="sortSubmissions('updatedOn')"
+            (keydown.enter)="sortSubmissions('updatedOn')"
+            (keydown.space)="sortSubmissions('updatedOn')"
+            tabindex="0"
+          >
+            Updated On
+            <i class="fas fa-sort"></i>
+          </th>
+          <th
+            class="sortable"
+            (click)="sortSubmissions('paidAmount')"
+            (keydown.enter)="sortSubmissions('paidAmount')"
+            (keydown.space)="sortSubmissions('paidAmount')"
+            tabindex="0"
+          >
+            Paid Amount
+            <i class="fas fa-sort"></i>
+          </th>
           <th class="actions-column"></th>
         </tr>
       </thead>
@@ -57,8 +88,11 @@
           (keydown.space)="onSubmissionClick(submission)"
           tabindex="0"
         >
-          <td class="date-column">{{ submission.date }}</td>
-          <td class="id-column">{{ submission.id }}</td>
+          <!-- <td class="id-column">{{ submission.id }}</td> -->
+          <td class="date-column">{{ submission.confirmationNo }}</td>
+          <td class="submission-date-column">
+            {{ submission.submissionDate | date : "mediumDate" }}
+          </td>
           <td class="project-name-column">{{ submission.projectName }}</td>
           <td class="status-column">
             <span
@@ -67,6 +101,12 @@
             >
               {{ submission.status }}
             </span>
+          </td>
+          <td class="updated-on-column">
+            <span>{{ submission.updatedOn }}</span>
+          </td>
+          <td class="paid-amount-column">
+            <span>{{ submission.paidAmount | currency }}</span>
           </td>
           <td class="actions-column">
             <button

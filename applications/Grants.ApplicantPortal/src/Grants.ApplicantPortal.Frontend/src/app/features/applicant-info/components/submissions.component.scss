@@ -46,6 +46,10 @@
       }
     }
 
+    .submission-date-column {
+      min-width: 120px;
+    }
+
     tbody {
       tr {
         border-bottom: 1px solid var(--bc-gray-50);
@@ -107,16 +111,6 @@
 
     &.status-declined {
       background-color: var(--bc-bg-error);
-      color: var(--bc-white);
-    }
-
-    &.status-submitted {
-      background-color: var(--bc-bg-warning);
-      color: var(--bc-white);
-    }
-
-    &.status-under-review {
-      background-color: var(--bc-purple);
       color: var(--bc-white);
     }
   }

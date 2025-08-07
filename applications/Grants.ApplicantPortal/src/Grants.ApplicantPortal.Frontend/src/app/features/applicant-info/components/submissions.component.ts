@@ -15,44 +15,54 @@ export class SubmissionsComponent implements OnInit {
   // Sample data - replace with actual service call
   mockSubmissions: Submission[] = [
     {
-      date: '28/02/2024',
       id: '368GBJ783',
+      confirmationNo: '123456789',
       projectName: 'Your project name here',
-      title: 'Community Development Grant',
       submissionDate: new Date('2024-02-28'),
       status: 'In Progress',
+      updatedOn: '28/02/2024',
+      paidAmount: 5000,
+      submissionLink: 'https://example.com/submission/368GBJ783',
     },
     {
-      date: '21/01/2024',
       id: '237456DDD',
+      confirmationNo: '3453463463',
       projectName: 'Your project name here',
-      title: 'Educational Support Initiative',
       submissionDate: new Date('2024-01-21'),
       status: 'Approved',
+      updatedOn: '28/02/2024',
+      paidAmount: 9000,
+      submissionLink: 'https://example.com/submission/237456DDD',
     },
     {
-      date: '22/12/2023',
       id: '16IHND333',
-      projectName: 'Your project name here',
-      title: 'Infrastructure Enhancement Project',
+      confirmationNo: '897856754',
+      projectName: 'Infrastructure Enhancement Project',
       submissionDate: new Date('2023-12-22'),
       status: 'Declined',
+      updatedOn: '28/06/2025',
+      paidAmount: 10000,
+      submissionLink: 'https://example.com/submission/16IHND333',
     },
     {
-      date: '22/12/2023',
-      id: '16IHND333',
-      projectName: 'Your project name here',
-      title: 'Infrastructure Enhancement Project',
-      submissionDate: new Date('2023-12-22'),
-      status: 'Submitted',
+      id: '985789DDD',
+      confirmationNo: '887564738',
+      projectName: 'Test project name',
+      submissionDate: new Date('2024-01-21'),
+      status: 'In Progress',
+      updatedOn: '07/08/2025',
+      paidAmount: 150000,
+      submissionLink: 'https://example.com/submission/985789DDD',
     },
     {
-      date: '22/12/2023',
-      id: '16IHND333',
-      projectName: 'Your project name here',
-      title: 'Infrastructure Enhancement Project',
+      id: '98IHNA444',
+      confirmationNo: '173646726',
+      projectName: 'Project portal',
       submissionDate: new Date('2023-12-22'),
-      status: 'Under Review',
+      status: 'Approved',
+      updatedOn: '28/06/2025',
+      paidAmount: 20000,
+      submissionLink: 'https://example.com/submission/98IHNA444',
     },
   ];
 
@@ -78,10 +88,6 @@ export class SubmissionsComponent implements OnInit {
         return 'status-approved';
       case 'Declined':
         return 'status-declined';
-      case 'Submitted':
-        return 'status-submitted';
-      case 'Under Review':
-        return 'status-under-review';
       default:
         return '';
     }
