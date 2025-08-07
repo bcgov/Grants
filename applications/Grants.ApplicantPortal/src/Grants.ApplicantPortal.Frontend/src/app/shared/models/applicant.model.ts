@@ -33,15 +33,12 @@ export interface AddressInfo {
 }
 
 export interface Submission {
-  date: string;
   id: string;
-  projectName: string;
-  title: string;
+  confirmationNo: string;
   submissionDate: Date;
-  status:
-    | 'In Progress'
-    | 'Approved'
-    | 'Declined'
-    | 'Submitted'
-    | 'Under Review';
+  projectName: string;
+  status: 'In Progress' | 'Approved' | 'Declined';
+  updatedOn?: string;
+  paidAmount?: number;
+  submissionLink?: string;
 }

@@ -25,14 +25,6 @@
           <div class="row">
             <div class="col-md-12">
               <div class="field">
-                <!-- <label for="orgSearch">Org Book Search</label>
-                <input
-                  id="orgSearch"
-                  type="text"
-                  [value]="organizationInfo?.orgName"
-                  class="form-control"
-                /> -->
-
                 <label for="orgSearch">Organization Book Search</label>
                 <div class="search-container">
                   <div class="input-group">
@@ -47,33 +39,22 @@
                       placeholder="Type at least 3 characters to search registered name..."
                       autocomplete="off"
                     />
-                    <div class="ap-spinner" *ngIf="isSearching">
+
+                    @if (isSearching) {
+                    <div class="ap-spinner">
                       <div class="spinner-border spinner-border-sm float-end">
                         <span class="sr-only">Loading...</span>
                       </div>
                     </div>
-                    <!-- *ngIf="isSearching"-->
-                    <!-- <div class="input-group-append">
-                     
-                      <span class="input-group-text">
-                        <div
-                          class="spinner-border spinner-border-sm"
-                          role="status"
-                        >
-                          <span class="sr-only">Loading...</span>
-                        </div>
-                      </span>
-                    </div> -->
+                    }
                   </div>
 
                   <!-- Search Results Dropdown -->
-                  <div
-                    class="search-dropdown"
-                    *ngIf="showDropdown && searchResults.length > 0"
-                  >
+                  @if (showDropdown && searchResults.length > 0) {
+                  <div class="search-dropdown">
+                    @for (result of searchResults; track result.id) {
                     <div
                       class="search-result-item"
-                      *ngFor="let result of searchResults"
                       (click)="onSearchResultSelect(result)"
                     >
                       <div class="result-name">{{ result.name }}</div>
@@ -89,20 +70,17 @@
                         <span class="type">{{ result.type }}</span>
                       </div>
                     </div>
+                    }
                   </div>
+                  }
 
                   <!-- No Results Message -->
-                  <div
-                    class="search-dropdown"
-                    *ngIf="
-                      showDropdown &&
-                      searchResults.length === 0 &&
-                      searchTerm.length >= 3 &&
-                      !isSearching
-                    "
-                  >
+                  @if (showDropdown && searchResults.length === 0 &&
+                  searchTerm.length >= 3 && !isSearching) {
+                  <div class="search-dropdown">
                     <div class="no-results">No organizations found</div>
                   </div>
+                  }
                 </div>
               </div>
             </div>
@@ -226,12 +204,11 @@
                   [(ngModel)]="selectedFiscalDay"
                 >
                   <option selected>Select Day</option>
-                  <option
-                    *ngFor="let day of [].constructor(31); let i = index"
-                    [value]="i + 1"
-                  >
-                    {{ i + 1 }}
+                  @for (day of daysArray; track day) {
+                  <option [value]="day">
+                    {{ day }}
                   </option>
+                  }
                 </select>
               </div>
             </div>
@@ -246,7 +223,9 @@
           <h3 class="mb-0 ap-pad-10">Submissions</h3>
         </div>
       </div>
-      <div class="card-body"></div>
+      <div class="card-body">
+        <app-submissions [submissions]="submissions"></app-submissions>
+      </div>
     </div>
   </div>
 
