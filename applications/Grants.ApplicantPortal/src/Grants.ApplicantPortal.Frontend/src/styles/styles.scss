@@ -6,13 +6,17 @@
   --bc-white: #ffffff;
   --bc-blue: #013366; //primary
   --bc-blue-light: #255a90; //link
+  --bc-blue-10: #f1f8fe;
   --bc-blue-80: #3470b1;
   --bc-blue-90: #1e5189; // button hover
   --bc-gold: #fcba19; //primary
+  --bc-gold-80: #f9c462;
   --bc-gray: #edebe9;
+  --bc-gray-10: #faf9f8;
   --bc-gray-20: #f3f2f1;
   --bc-gray-30: #eceae8; // hover tertiary
   --bc-gray-50: #d1cfcd;
+  --bc-gray-60: #c6c5c3;
   --bc-gray-80: #605e5c;
 
   /**Support colors**/
@@ -20,6 +24,7 @@
   --bc-bg-success: #42814a;
   --bc-bg-error: #ce3e39;
   --bc-bg-warning: #f8bb47;
+  --bc-purple: #6f2c91; //No equivalent in the original
 
   --bc-surface-info: #f7f9fc;
   --bc-surface-success: #f6fff8;
@@ -27,6 +32,7 @@
   --bc-surface-warning: #fef1d8;
 
   /**Font Sizes**/
+  --bc-font-size-12: 0.75rem;
   --bc-font-size-13: 0.8125rem;
   --bc-font-size-14: 0.875rem;
   --bc-font-size-16: 1rem; //default
@@ -45,10 +51,12 @@
 
 body {
   font-family: "BCSans", "Noto Sans", Verdana, Arial, sans-serif;
+  color: var(--bc-primary);
 }
 
 h3 {
   font-size: var(--bc-font-size-18);
+  color: var(--bc-primary);
 }
 
 /* ===================================
@@ -82,5 +90,35 @@ h3 {
   label {
     font-size: var(--bc-font-size-13);
     font-weight: bold;
+    color: var(--bc-primary);
+  }
+}
+
+/* Table */
+.table-striped > tbody > tr:nth-child(odd) > td,
+.table-striped > tbody > tr:nth-child(odd) > th {
+  background-color: #feffff;
+}
+
+.table tbody tr:hover td,
+.table tbody tr:hover th {
+  background-color: var(--bc-blue-10);
+}
+
+/* Buttons */
+.btn {
+  padding: 5px 15px;
+}
+
+.btn-primary {
+  background-color: var(--bc-blue);
+  border-color: var(--bc-blue);
+  color: var(--bc-white);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--bc-blue-90);
+    border-color: var(--bc-blue-90);
+    color: white;
   }
 }

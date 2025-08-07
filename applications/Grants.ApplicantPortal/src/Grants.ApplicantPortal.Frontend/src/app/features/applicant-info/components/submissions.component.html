@@ -1,0 +1,92 @@
+<div class="submissions-container">
+  <div class="submissions-table-wrapper">
+    <table
+      class="table table-responsive table-striped table-hover submissions-table"
+    >
+      <thead>
+        <tr>
+          <th
+            class="sortable"
+            (click)="sortSubmissions('date')"
+            (keydown.enter)="sortSubmissions('date')"
+            (keydown.space)="sortSubmissions('date')"
+            tabindex="0"
+          >
+            Date
+            <i class="fas fa-sort"></i>
+          </th>
+          <th
+            class="sortable"
+            (click)="sortSubmissions('id')"
+            (keydown.enter)="sortSubmissions('id')"
+            (keydown.space)="sortSubmissions('id')"
+            tabindex="0"
+          >
+            ID
+            <i class="fas fa-sort"></i>
+          </th>
+          <th
+            class="sortable"
+            (click)="sortSubmissions('projectName')"
+            (keydown.enter)="sortSubmissions('projectName')"
+            (keydown.space)="sortSubmissions('projectName')"
+            tabindex="0"
+          >
+            Project Name
+            <i class="fas fa-sort"></i>
+          </th>
+          <th
+            class="sortable"
+            (click)="sortSubmissions('status')"
+            (keydown.enter)="sortSubmissions('status')"
+            (keydown.space)="sortSubmissions('status')"
+            tabindex="0"
+          >
+            Status
+            <i class="fas fa-sort"></i>
+          </th>
+          <th class="actions-column"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (submission of submissions; track submission.id) {
+        <tr
+          class="submission-row"
+          (click)="onSubmissionClick(submission)"
+          (keydown.enter)="onSubmissionClick(submission)"
+          (keydown.space)="onSubmissionClick(submission)"
+          tabindex="0"
+        >
+          <td class="date-column">{{ submission.date }}</td>
+          <td class="id-column">{{ submission.id }}</td>
+          <td class="project-name-column">{{ submission.projectName }}</td>
+          <td class="status-column">
+            <span
+              class="status-badge"
+              [ngClass]="getStatusClass(submission.status)"
+            >
+              {{ submission.status }}
+            </span>
+          </td>
+          <td class="actions-column">
+            <button
+              type="button"
+              class="btn btn-link p-0 border-0"
+              (click)="onSubmissionClick(submission); $event.stopPropagation()"
+              aria-label="View submission details"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (submissions.length === 0) {
+  <div class="no-submissions">
+    <p>No submissions were found with your BCeID.</p>
+  </div>
+  }
+</div>

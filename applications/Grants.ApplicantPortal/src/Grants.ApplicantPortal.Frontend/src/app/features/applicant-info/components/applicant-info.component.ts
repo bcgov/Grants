@@ -5,9 +5,11 @@ import { ApplicantService } from '../../../core/services/applicant.service';
 import {
   ApplicantInfo,
   OrganizationInfo,
+  Submission,
 } from '../../../shared/models/applicant.model';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Subject, Observable, of } from 'rxjs';
+import { SubmissionsComponent } from './submissions.component';
 
 export interface OrgSearchResult {
   id: string;
@@ -20,13 +22,14 @@ export interface OrgSearchResult {
 @Component({
   selector: 'app-applicant-info',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SubmissionsComponent],
   templateUrl: './applicant-info.component.html',
   styleUrls: ['./applicant-info.component.scss'],
 })
 export class ApplicantInfoComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   organizationInfo: OrganizationInfo | null = null;
+  submissions: Submission[] = [];
 
   // Search functionality
   searchTerm: string = '';
