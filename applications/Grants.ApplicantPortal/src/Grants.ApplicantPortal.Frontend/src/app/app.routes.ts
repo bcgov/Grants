@@ -1,8 +1,5 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/components/layout.component';
-import { ApplicantInfoComponent } from './features/applicant-info/components/applicant-info.component';
-import { SubmissionsComponent } from './features/submissions/components/submissions.component';
-import { PaymentsComponent } from './features/payments/components/payments.component';
 
 export const routes: Routes = [
   {
@@ -10,9 +7,27 @@ export const routes: Routes = [
     component: LayoutComponent,
     children: [
       { path: '', redirectTo: '/applicant-info', pathMatch: 'full' },
-      { path: 'applicant-info', component: ApplicantInfoComponent },
-      { path: 'submissions', component: SubmissionsComponent },
-      { path: 'payments', component: PaymentsComponent },
+      {
+        path: 'applicant-info',
+        loadComponent: () =>
+          import(
+            './features/applicant-info/components/applicant-info.component'
+          ).then((m) => m.ApplicantInfoComponent),
+      },
+      {
+        path: 'submissions',
+        loadComponent: () =>
+          import(
+            './features/submissions/components/submissions.component'
+          ).then((m) => m.SubmissionsComponent),
+      },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/payments/components/payments.component').then(
+            (m) => m.PaymentsComponent
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '/applicant-info' },
