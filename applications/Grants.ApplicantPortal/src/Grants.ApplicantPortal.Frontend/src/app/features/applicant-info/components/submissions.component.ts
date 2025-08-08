@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Submission } from '../../../shared/models/applicant.model';
+import { Submission } from '../../../shared/models/applicant.interface';
 
 @Component({
   selector: 'app-submissions',

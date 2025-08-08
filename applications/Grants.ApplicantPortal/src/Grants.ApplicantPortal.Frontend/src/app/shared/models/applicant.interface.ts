@@ -3,17 +3,6 @@ export interface ApplicantInfo {
   organization: string;
 }
 
-export interface OrganizationInfo {
-  orgRegisteredNumber: string;
-  orgStatus: string;
-  orgType: string;
-  orgName: string;
-  orgSize: string;
-  nonRegOrgName: string;
-  fiscalYearEndMonth?: string;
-  fiscalYearEndDay?: string;
-}
-
 export interface ContactInfo {
   firstName: string;
   lastName: string;

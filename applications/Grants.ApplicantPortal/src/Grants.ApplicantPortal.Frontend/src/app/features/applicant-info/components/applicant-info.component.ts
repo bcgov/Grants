@@ -1,23 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, Observable, of } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  takeUntil,
+} from 'rxjs/operators';
+
 import { ApplicantService } from '../../../core/services/applicant.service';
+import { OrganizationService } from '../../../core/services/organization.service';
 import {
   ApplicantInfo,
-  OrganizationInfo,
   Submission,
-} from '../../../shared/models/applicant.model';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { Subject, Observable, of } from 'rxjs';
+} from '../../../shared/models/applicant.interface';
 import { SubmissionsComponent } from './submissions.component';
-
-export interface OrgSearchResult {
-  id: string;
-  name: string;
-  registeredNumber: string;
-  status: string;
-  type: string;
-}
+import {
+  OrganizationData,
+  OrgSearchResult,
+} from '../../../shared/models/applicant-info.interface';
 
 @Component({
   selector: 'app-applicant-info',
@@ -26,25 +28,26 @@ export interface OrgSearchResult {
   templateUrl: './applicant-info.component.html',
   styleUrls: ['./applicant-info.component.scss'],
 })
-export class ApplicantInfoComponent implements OnInit {
+export class ApplicantInfoComponent implements OnInit, OnDestroy {
+  // Data properties
   applicantInfo: ApplicantInfo | null = null;
-  organizationInfo: OrganizationInfo | null = null;
+  organizationData: OrganizationData | null = null;
   submissions: Submission[] = [];
 
-  // Search functionality
-  searchTerm: string = '';
+  // Search properties
+  searchTerm = '';
   searchResults: OrgSearchResult[] = [];
-  showDropdown: boolean = false;
-  isSearching: boolean = false;
-  private readonly searchSubject = new Subject<string>();
+  showDropdown = false;
+  isSearching = false;
 
-  selectedFiscalMonth: string = '';
-  selectedFiscalDay: string = '';
+  // Form properties
+  selectedFiscalMonth = '';
+  selectedFiscalDay = '';
 
-  daysArray: number[] = Array.from({ length: 31 }, (_, i) => i + 1);
+  isHydratingOrgInfo = false;
 
-  // Month options array (optional - for dynamic rendering)
-  monthOptions = [
+  // Constants
+  readonly monthOptions = [
     { value: 'Jan', label: 'January' },
     { value: 'Feb', label: 'February' },
     { value: 'Mar', label: 'March' },
@@ -59,34 +62,73 @@ export class ApplicantInfoComponent implements OnInit {
     { value: 'Dec', label: 'December' },
   ];
 
-  constructor(private readonly applicantService: ApplicantService) {}
+  readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  // Subjects for cleanup and search
+  private readonly destroy$ = new Subject<void>();
+  private readonly searchSubject = new Subject<string>();
+
+  constructor(
+    private readonly applicantService: ApplicantService,
+    private readonly organizationService: OrganizationService
+  ) {
+    this.setupSearch();
+  }
 
   ngOnInit(): void {
+    this.loadData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadData(): void {
     this.loadApplicantInfo();
-    this.setupOrganizationSearch();
+    this.loadOrganizationInfo();
   }
 
   private loadApplicantInfo(): void {
-    this.applicantService.getApplicantInfo().subscribe((data) => {
-      console.log('Applicant Info:', data);
-      this.applicantInfo = data;
-    });
-
-    this.applicantService.getOrganizationInfo().subscribe((data) => {
-      console.log('Organization Info:', data);
-      this.organizationInfo = data;
-
-      this.selectedFiscalMonth = data?.fiscalYearEndMonth || '';
-      this.selectedFiscalDay = data?.fiscalYearEndDay || '';
-    });
+    this.applicantService
+      .getApplicantInfo()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data) => (this.applicantInfo = data));
   }
 
-  private setupOrganizationSearch(): void {
+  private loadOrganizationInfo(): void {
+    this.isHydratingOrgInfo = true;
+
+    this.organizationService
+      .hydrateAndGetOrganizationInfo({})
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.isHydratingOrgInfo = false;
+          this.organizationData = result.organizationData;
+          console.log('Organization data loaded:', result.organizationData);
+
+          this.selectedFiscalMonth = result?.organizationData.fiscalMonth || '';
+          this.selectedFiscalDay =
+            result?.organizationData.fiscalDay != null
+              ? String(result.organizationData.fiscalDay)
+              : '';
+        },
+        error: (error) => {
+          this.isHydratingOrgInfo = false;
+          console.error('Hydration failed:', error);
+        },
+      });
+  }
+
+  // === Search Methods ===
+  private setupSearch(): void {
     this.searchSubject
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        switchMap((term) => this.searchOrganizations(term))
+        switchMap((term) => this.performSearch(term)),
+        takeUntil(this.destroy$)
       )
       .subscribe((results) => {
         this.searchResults = results;
@@ -95,53 +137,51 @@ export class ApplicantInfoComponent implements OnInit {
       });
   }
 
-  private searchOrganizations(term: string): Observable<OrgSearchResult[]> {
-    if (term.length < 3) {
-      return of([]);
-    }
+  private performSearch(term: string): Observable<OrgSearchResult[]> {
+    if (term.length < 3) return of([]);
 
-    // Mock search results - replace with actual API call
+    // Replace with actual API call
     return of(this.getMockSearchResults(term));
   }
 
   private getMockSearchResults(term: string): OrgSearchResult[] {
-    // Mock data - replace with actual API call
     const mockOrgs: OrgSearchResult[] = [
       {
         id: '1',
-        name: 'ABC Technology Corp',
-        registeredNumber: 'BC1234567',
-        status: 'Active',
-        type: 'Corporation',
+        orgName: 'ABC Technology Corp',
+        orgNumber: 'BC1234567',
+        orgStatus: 'Active',
+        organizationType: 'Corporation',
       },
       {
         id: '2',
-        name: 'ABC Solutions Ltd',
-        registeredNumber: 'BC2345678',
-        status: 'Active',
-        type: 'Limited Company',
+        orgName: 'ABC Solutions Ltd',
+        orgNumber: 'BC2345678',
+        orgStatus: 'Active',
+        organizationType: 'Limited Company',
       },
       {
         id: '3',
-        name: 'Advanced Business Consulting',
-        registeredNumber: 'BC3456789',
-        status: 'Active',
-        type: 'Partnership',
+        orgName: 'Advanced Business Consulting',
+        orgNumber: 'BC3456789',
+        orgStatus: 'Active',
+        organizationType: 'Partnership',
       },
       {
         id: '4',
-        name: 'Alpha Beta Communications',
-        registeredNumber: 'BC4567890',
-        status: 'Inactive',
-        type: 'Corporation',
+        orgName: 'Alpha Beta Communications',
+        orgNumber: 'BC4567890',
+        orgStatus: 'Inactive',
+        organizationType: 'Corporation',
       },
     ];
 
     return mockOrgs.filter((org) =>
-      org.name.toLowerCase().includes(term.toLowerCase())
+      org.orgName.toLowerCase().includes(term.toLowerCase())
     );
   }
 
+  // === Event Handlers ===
   onSearchInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
@@ -151,16 +191,12 @@ export class ApplicantInfoComponent implements OnInit {
       this.showDropdown = true;
       this.searchSubject.next(this.searchTerm);
     } else {
-      this.searchResults = [];
-      this.showDropdown = false;
-      this.isSearching = false;
+      this.resetSearch();
     }
   }
 
   onSearchBlur(): void {
-    setTimeout(() => {
-      this.showDropdown = false;
-    }, 200);
+    setTimeout(() => (this.showDropdown = false), 200);
   }
 
   onSearchFocus(): void {
@@ -170,50 +206,48 @@ export class ApplicantInfoComponent implements OnInit {
   }
 
   onSearchResultSelect(result: OrgSearchResult): void {
-    this.organizationInfo = {
-      ...this.organizationInfo,
-      orgName: result.name,
-      orgRegisteredNumber: result.registeredNumber,
-      orgStatus: result.status,
-      orgType: result.type,
-      orgSize: this.organizationInfo?.orgSize || '',
-      nonRegOrgName: this.organizationInfo?.nonRegOrgName || '',
-      fiscalYearEndMonth: this.organizationInfo?.fiscalYearEndMonth,
-      fiscalYearEndDay: this.organizationInfo?.fiscalYearEndDay,
-    };
-
-    // Update search term and hide dropdown
-    this.searchTerm = result.name;
+    this.updateOrganizationFromSearch(result);
+    this.searchTerm = result.orgName;
     this.showDropdown = false;
   }
 
   onFiscalMonthChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     this.selectedFiscalMonth = target.value;
-    if (this.organizationInfo) {
-      this.organizationInfo.fiscalYearEndMonth = this.selectedFiscalMonth;
+    if (this.organizationData) {
+      this.organizationData.fiscalMonth = this.selectedFiscalMonth;
     }
-    console.log('Selected Fiscal Month:', this.selectedFiscalMonth);
   }
 
   onFiscalDayChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     this.selectedFiscalDay = target.value;
-    if (this.organizationInfo) {
-      this.organizationInfo.fiscalYearEndDay = this.selectedFiscalDay;
+    if (this.organizationData) {
+      this.organizationData.fiscalDay = Number(this.selectedFiscalDay);
     }
-    console.log('Selected Fiscal Day:', this.selectedFiscalDay);
   }
 
   saveOrganization(): void {
-    console.log('Save organization clicked');
+    console.log('Saving organization...', this.organizationData);
+    // Implement save logic
   }
 
-  // addContact(): void {
-  //   console.log('Add contact clicked');
-  // }
+  // === Helper Methods ===
+  private resetSearch(): void {
+    this.searchResults = [];
+    this.showDropdown = false;
+    this.isSearching = false;
+  }
 
-  // addAddress(): void {
-  //   console.log('Add address clicked');
-  // }
+  private updateOrganizationFromSearch(result: OrgSearchResult): void {
+    if (!this.organizationData) return;
+
+    this.organizationData = {
+      ...this.organizationData,
+      orgName: result.orgName,
+      orgNumber: result.orgNumber,
+      orgStatus: result.orgStatus,
+      organizationType: result.organizationType,
+    };
+  }
 }
