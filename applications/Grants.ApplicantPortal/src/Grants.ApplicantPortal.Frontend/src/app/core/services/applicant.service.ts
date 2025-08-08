@@ -3,11 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import {
   ApplicantInfo,
-  OrganizationInfo,
   ContactInfo,
   AddressInfo,
-  Submission,
-} from '../../shared/models/applicant.model';
+} from '../../shared/models/applicant.interface';
+import { OrganizationData } from '../../shared/models/applicant-info.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -22,19 +21,6 @@ export class ApplicantService {
     return of({
       id: '368GB783',
       organization: 'Your Amazing Organization Inc.',
-    });
-  }
-
-  getOrganizationInfo(): Observable<OrganizationInfo> {
-    return of({
-      orgRegisteredNumber: '234523523423423',
-      orgStatus: 'Active',
-      orgType: 'Sole Proprietorship',
-      orgName: 'Your Amazing Organization',
-      orgSize: '50',
-      nonRegOrgName: 'N/A',
-      fiscalYearEndMonth: 'December',
-      fiscalYearEndDay: '31',
     });
   }
 
@@ -80,7 +66,7 @@ export class ApplicantService {
     ]);
   }
 
-  saveOrganizationInfo(orgInfo: OrganizationInfo): Observable<any> {
+  saveOrganizationInfo(orgInfo: OrganizationData): Observable<any> {
     // Replace with actual API call
     return of({ success: true });
   }

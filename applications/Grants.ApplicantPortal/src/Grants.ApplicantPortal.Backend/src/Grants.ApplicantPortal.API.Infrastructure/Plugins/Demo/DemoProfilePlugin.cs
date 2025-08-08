@@ -65,12 +65,12 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
 
         return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
         {
-            ("PROGRAM1", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
-            ("PROGRAM1", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
-            ("PROGRAM1", "PAYMENTS") => GenerateProgram1Payments(baseData),
-            ("PROGRAM2", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
-            ("PROGRAM2", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
-            ("PROGRAM2", "PAYMENTS") => GenerateProgram2Payments(baseData),
+            ("DEMO", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
+            ("DEMO", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
+            ("DEMO", "PAYMENTS") => GenerateProgram1Payments(baseData),
+            ("UNITY", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
+            ("UNITY", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
+            ("UNITY", "PAYMENTS") => GenerateProgram2Payments(baseData),
             _ => GenerateDefaultData(baseData)
         };
     }
@@ -139,11 +139,18 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
             {
                 OrganizationInfo = new
                 {
+                    OrgName = "Cowichan Exhibition",
+                    OrgNumber = "S0003748",
+                    OrgStatus =  "Active", 
+                    OrganizationType = "Society",
+                    NonRegOrgName = "Shrine Org",
+                    OrgSize = "50",
+                    FiscalMonth = "Aug",
+                    FiscalDay = 1,
                     OrganizationId = "ORG-DEMO-001",
                     LegalName = "Demo Community Health Foundation",
                     DoingBusinessAs = "DCHF",
                     EIN = "12-3456789",
-                    OrganizationType = "501(c)(3) Nonprofit",
                     Founded = 2010,
                     Address = new
                     {

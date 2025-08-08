@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
-import { ApplicantInfo } from '../../shared/models/applicant.model';
+import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 

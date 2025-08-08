@@ -4,7 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
 import { ApplicantService } from '../../core/services/applicant.service';
-import { ApplicantInfo } from '../../shared/models/applicant.model';
+import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
 
 @Component({
