@@ -11,7 +11,7 @@ import {
   providedIn: 'root',
 })
 export class ApplicantService {
-  private readonly apiUrl = '/api'; // Replace with your actual API URL
+  //private readonly apiUrl = '/api'; // Replace with your actual API URL
 
   constructor(private readonly http: HttpClient) {}
 
