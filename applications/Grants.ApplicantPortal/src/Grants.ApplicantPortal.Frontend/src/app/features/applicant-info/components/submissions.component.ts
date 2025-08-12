@@ -1,13 +1,11 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject } from 'rxjs';
+import { take, takeUntil, Subject } from 'rxjs';
 import {
   Submission,
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
-import { take, takeUntil } from 'rxjs';
-
 @Component({
   selector: 'app-submissions',
   standalone: true,
