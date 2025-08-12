@@ -105,7 +105,7 @@
             </span>
           </td>
           <td class="updated-on-column">
-            <span>{{ submission.lastModified }}</span>
+            <span>{{ submission.lastModified | date : "mediumDate" }}</span>
           </td>
           <td class="paid-amount-column">
             <span>{{ submission.paidAmount | currency }}</span>

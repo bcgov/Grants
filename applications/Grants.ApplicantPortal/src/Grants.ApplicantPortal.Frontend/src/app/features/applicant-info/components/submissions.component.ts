@@ -1,10 +1,12 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
 import {
   Submission,
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { take, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-submissions',
@@ -13,12 +15,15 @@ import { ApplicantInfoService } from '../../../core/services/applicant-info.serv
   templateUrl: './submissions.component.html',
   styleUrls: ['./submissions.component.scss'],
 })
-export class SubmissionsComponent implements OnInit {
+export class SubmissionsComponent implements OnInit, OnDestroy {
   // @Input() submissions: Submission[] = [];
   @Input() profileId!: string;
   @Input() pluginId!: string;
   @Input() provider!: string;
   @Input() key!: string;
+
+  private readonly destroy$ = new Subject<void>();
+
   @Input() data?: any;
 
   submissionsInfo: SubmissionsData[] = [];
@@ -27,69 +32,16 @@ export class SubmissionsComponent implements OnInit {
   error: string | null = null;
 
   constructor(private readonly applicantInfoService: ApplicantInfoService) {}
-  // // Sample data - replace with actual service call
-  // mockSubmissions: Submission[] = [
-  //   {
-  //     id: '368GBJ783',
-  //     confirmationNo: '123456789',
-  //     projectName: 'Your project name here',
-  //     submissionDate: new Date('2024-02-28'),
-  //     status: 'In Progress',
-  //     updatedOn: '28/02/2024',
-  //     paidAmount: 5000,
-  //     submissionLink: 'https://example.com/submission/368GBJ783',
-  //   },
-  //   {
-  //     id: '237456DDD',
-  //     confirmationNo: '3453463463',
-  //     projectName: 'Your project name here',
-  //     submissionDate: new Date('2024-01-21'),
-  //     status: 'Approved',
-  //     updatedOn: '28/02/2024',
-  //     paidAmount: 9000,
-  //     submissionLink: 'https://example.com/submission/237456DDD',
-  //   },
-  //   {
-  //     id: '16IHND333',
-  //     confirmationNo: '897856754',
-  //     projectName: 'Infrastructure Enhancement Project',
-  //     submissionDate: new Date('2023-12-22'),
-  //     status: 'Declined',
-  //     updatedOn: '28/06/2025',
-  //     paidAmount: 10000,
-  //     submissionLink: 'https://example.com/submission/16IHND333',
-  //   },
-  //   {
-  //     id: '985789DDD',
-  //     confirmationNo: '887564738',
-  //     projectName: 'Test project name',
-  //     submissionDate: new Date('2024-01-21'),
-  //     status: 'In Progress',
-  //     updatedOn: '07/08/2025',
-  //     paidAmount: 150000,
-  //     submissionLink: 'https://example.com/submission/985789DDD',
-  //   },
-  //   {
-  //     id: '98IHNA444',
-  //     confirmationNo: '173646726',
-  //     projectName: 'Project portal',
-  //     submissionDate: new Date('2023-12-22'),
-  //     status: 'Approved',
-  //     updatedOn: '28/06/2025',
-  //     paidAmount: 20000,
-  //     submissionLink: 'https://example.com/submission/98IHNA444',
-  //   },
-  // ];
 
   ngOnInit(): void {
-    // If no submissions are passed in, use mock data
-    // if (this.submissions.length === 0) {
-    //   this.submissions = this.mockSubmissions;
-    // }
-
     if (this.profileId && this.pluginId && this.provider && this.key) {
       this.loadSubmissions();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadSubmissions(): void {
@@ -104,6 +56,7 @@ export class SubmissionsComponent implements OnInit {
         this.key,
         this.data
       )
+      .pipe(take(1), takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
           this.isHydratingSubmissionsInfo = false;

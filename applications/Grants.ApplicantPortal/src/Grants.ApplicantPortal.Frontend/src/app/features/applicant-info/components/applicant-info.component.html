@@ -5,229 +5,12 @@
   </div>
 
   <div class="content-grid">
-    <!-- Organization Information -->
-    <div class="card">
-      <div class="card-header d-flex align-items-center">
-        <div class="flex-grow-1">
-          <h3 class="mb-0">Organization Information</h3>
-        </div>
-        <div>
-          <button
-            class="btn btn-primary btn-floating"
-            (click)="saveOrganization()"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-      <div class="card-body">
-        @if (isLoading) {
-        <div
-          class="loading-spinner-container d-flex justify-content-center align-items-center"
-          style="min-height: 300px"
-        >
-          <div class="text-center">
-            <div class="spinner-border">
-              <span class="sr-only">Loading organization...</span>
-            </div>
-            <p class="loading-text mt-3">Loading your organization...</p>
-          </div>
-        </div>
-        } @else {
-        <div class="container-fluid form-section">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="field">
-                <label for="orgSearch">Organization Book Search</label>
-                <div class="search-container">
-                  <div class="input-group">
-                    <input
-                      id="orgSearch"
-                      type="text"
-                      [(ngModel)]="searchTerm"
-                      (input)="onSearchInput($event)"
-                      (focus)="onSearchFocus()"
-                      (blur)="onSearchBlur()"
-                      class="form-control"
-                      placeholder="Type at least 3 characters to search registered name..."
-                      autocomplete="off"
-                    />
-
-                    @if (isSearching) {
-                    <div class="ap-spinner">
-                      <div class="spinner-border spinner-border-sm float-end">
-                        <span class="sr-only">Loading...</span>
-                      </div>
-                    </div>
-                    }
-                  </div>
-
-                  <!-- Search Results Dropdown -->
-                  @if (showDropdown && searchResults.length > 0) {
-                  <div class="search-dropdown">
-                    @for (result of searchResults; track result.id) {
-                    <div
-                      class="search-result-item"
-                      (click)="onSearchResultSelect(result)"
-                    >
-                      <div class="result-name">{{ result.orgName }}</div>
-                      <div class="result-details">
-                        <span class="reg-number">{{ result.orgNumber }}</span>
-                        <span
-                          class="status"
-                          [class.active]="result.orgStatus === 'Active'"
-                          >{{ result.orgStatus }}</span
-                        >
-                        <span class="type">{{ result.organizationType }}</span>
-                      </div>
-                    </div>
-                    }
-                  </div>
-                  }
-
-                  <!-- No Results Message -->
-                  @if (showDropdown && searchResults.length === 0 &&
-                  searchTerm.length >= 3 && !isSearching) {
-                  <div class="search-dropdown">
-                    <div class="no-results">No organizations found</div>
-                  </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="field">
-                <label for="orgName">Registered Organization Name</label>
-                <input
-                  id="orgName"
-                  type="text"
-                  [value]="organizationInfo?.orgName"
-                  disabled
-                  class="form-control"
-                />
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="field">
-                <label for="regNumber">Registered Organization Number</label>
-                <input
-                  id="regNumber"
-                  type="text"
-                  [value]="organizationInfo?.orgNumber"
-                  disabled
-                  class="form-control"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div class="field">
-                <label for="orgStatus">Organization Book Status</label>
-                <input
-                  id="orgStatus"
-                  [value]="organizationInfo?.orgStatus"
-                  disabled
-                  class="form-control"
-                />
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="field">
-                <label for="orgType">Organization Type</label>
-                <input
-                  id="orgType"
-                  type="text"
-                  [value]="
-                    organizationInfo?.organizationType
-                      ? organizationInfo?.organizationType
-                      : 'N/A'
-                  "
-                  disabled
-                  class="form-control"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-8">
-              <div class="field">
-                <label for="nonRegOrgName"
-                  >Non-Registered Organization Name</label
-                >
-                <input
-                  id="nonRegOrgName"
-                  type="text"
-                  [value]="organizationInfo?.nonRegOrgName"
-                  class="form-control"
-                />
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="field">
-                <label for="orgSize">Organization Size</label>
-                <input
-                  id="orgSize"
-                  type="text"
-                  [value]="organizationInfo?.orgSize"
-                  class="form-control"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div class="field">
-                <label for="fiscalMonth">Fiscal Year End Month</label>
-                <select
-                  class="form-select"
-                  id="fiscalMonth"
-                  [(ngModel)]="selectedFiscalMonth"
-                  (change)="onFiscalMonthChange($event)"
-                >
-                  <option selected>Select Month</option>
-                  <option value="Jan">January</option>
-                  <option value="Feb">February</option>
-                  <option value="Mar">March</option>
-                  <option value="Apr">April</option>
-                  <option value="May">May</option>
-                  <option value="Jun">June</option>
-                  <option value="Jul">July</option>
-                  <option value="Aug">August</option>
-                  <option value="Sep">September</option>
-                  <option value="Oct">October</option>
-                  <option value="Nov">November</option>
-                  <option value="Dec">December</option>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="field">
-                <label for="fiscalDay">Fiscal Year End Day</label>
-                <select
-                  class="form-select"
-                  id="fiscalDay"
-                  [(ngModel)]="selectedFiscalDay"
-                >
-                  <option selected>Select Day</option>
-                  @for (day of daysArray; track day) {
-                  <option [value]="day">
-                    {{ day }}
-                  </option>
-                  }
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-        }
-      </div>
-    </div>
+    <app-organization-info
+      [organizationInfo]="organizationInfo"
+      [isLoading]="isLoading"
+      (saveOrganization)="onSaveOrganization()"
+      (searchResultSelected)="onSearchResultSelected($event)"
+    ></app-organization-info>
 
     <div class="card">
       <div class="card-header d-flex align-items-center">
@@ -259,12 +42,13 @@
     </div>
 
     <div class="card">
-      <div class="card-header d-flex align-items-center">
+      <!-- <div class="card-header d-flex align-items-center">
         <div>
           <h3 class="mb-0 ap-pad-10">Address Information</h3>
         </div>
       </div>
       <div class="card-body"></div>
+       -->
     </div>
   </div>
 </div>
