@@ -1,20 +1,23 @@
 <div class="submissions-container">
+  @if (isLoading) {
+  <div
+    class="loading-spinner-container d-flex justify-content-center align-items-center"
+    style="min-height: 300px"
+  >
+    <div class="text-center">
+      <div class="spinner-border">
+        <span class="sr-only">Loading submissions...</span>
+      </div>
+      <p class="loading-text mt-3">Loading your submissions...</p>
+    </div>
+  </div>
+  } @else {
   <div class="submissions-table-wrapper">
     <table
       class="table table-responsive table-striped table-hover submissions-table"
     >
       <thead>
         <tr>
-          <!-- <th
-            class="sortable"
-            (click)="sortSubmissions('id')"
-            (keydown.enter)="sortSubmissions('id')"
-            (keydown.space)="sortSubmissions('id')"
-            tabindex="0"
-          >
-            ID
-            <i class="fas fa-sort"></i>
-          </th> -->
           <th
             class="sortable"
             (click)="sortSubmissions('confirmationNo')"
@@ -23,7 +26,7 @@
             tabindex="0"
           >
             Confirmation No
-            <i class="fas fa-sort"></i>
+            <!-- <i class="fas fa-sort"></i> -->
           </th>
           <th
             class="sortable"
@@ -33,7 +36,7 @@
             tabindex="0"
           >
             Date
-            <i class="fas fa-sort"></i>
+            <!-- <i class="fas fa-sort"></i> -->
           </th>
 
           <th
@@ -44,7 +47,7 @@
             tabindex="0"
           >
             Project Name
-            <i class="fas fa-sort"></i>
+            <!-- <i class="fas fa-sort"></i> -->
           </th>
           <th
             class="sortable"
@@ -54,7 +57,7 @@
             tabindex="0"
           >
             Status
-            <i class="fas fa-sort"></i>
+            <!-- <i class="fas fa-sort"></i> -->
           </th>
           <th
             class="sortable"
@@ -64,7 +67,7 @@
             tabindex="0"
           >
             Updated On
-            <i class="fas fa-sort"></i>
+            <!-- <i class="fas fa-sort"></i> -->
           </th>
           <th
             class="sortable"
@@ -74,22 +77,21 @@
             tabindex="0"
           >
             Paid Amount
-            <i class="fas fa-sort"></i>
+            <!-- <i class="fas fa-sort"></i> -->
           </th>
           <th class="actions-column"></th>
         </tr>
       </thead>
       <tbody>
-        @for (submission of submissions; track submission.id) {
+        @for (submission of submissionsInfo; track submission.applicationId) {
         <tr
           class="submission-row"
+          tabindex="0"
           (click)="onSubmissionClick(submission)"
           (keydown.enter)="onSubmissionClick(submission)"
           (keydown.space)="onSubmissionClick(submission)"
-          tabindex="0"
         >
-          <!-- <td class="id-column">{{ submission.id }}</td> -->
-          <td class="date-column">{{ submission.confirmationNo }}</td>
+          <td class="date-column">{{ submission.submissionId }}</td>
           <td class="submission-date-column">
             {{ submission.submissionDate | date : "mediumDate" }}
           </td>
@@ -103,7 +105,7 @@
             </span>
           </td>
           <td class="updated-on-column">
-            <span>{{ submission.updatedOn }}</span>
+            <span>{{ submission.lastModified }}</span>
           </td>
           <td class="paid-amount-column">
             <span>{{ submission.paidAmount | currency }}</span>
@@ -124,9 +126,9 @@
     </table>
   </div>
 
-  @if (submissions.length === 0) {
+  @if (submissionsInfo.length === 0) {
   <div class="no-submissions">
     <p>No submissions were found with your BCeID.</p>
   </div>
-  }
+  } }
 </div>

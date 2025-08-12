@@ -10,16 +10,19 @@ import {
 } from 'rxjs/operators';
 
 import { ApplicantService } from '../../../core/services/applicant.service';
-import { OrganizationService } from '../../../core/services/organization.service';
-import {
-  ApplicantInfo,
-  Submission,
-} from '../../../shared/models/applicant.interface';
+import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { ApplicantInfo } from '../../../shared/models/applicant.interface';
 import { SubmissionsComponent } from './submissions.component';
 import {
   OrganizationData,
   OrgSearchResult,
 } from '../../../shared/models/applicant-info.interface';
+import {
+  Key,
+  PluginId,
+  ProfileId,
+  Provider,
+} from '../../../shared/models/applicantion-info.enums';
 
 @Component({
   selector: 'app-applicant-info',
@@ -29,10 +32,16 @@ import {
   styleUrls: ['./applicant-info.component.scss'],
 })
 export class ApplicantInfoComponent implements OnInit, OnDestroy {
+  // Profile properties
+  profileId = ProfileId.DEFAULT;
+  pluginId = PluginId.DEMO;
+  provider = Provider.DEMO;
+  keyOrgInfo = Key.ORGINFO;
+  keySubmissions = Key.SUBMISSIONS;
+
   // Data properties
   applicantInfo: ApplicantInfo | null = null;
-  organizationData: OrganizationData | null = null;
-  submissions: Submission[] = [];
+  organizationInfo: OrganizationData | null = null;
 
   // Search properties
   searchTerm = '';
@@ -44,6 +53,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   selectedFiscalMonth = '';
   selectedFiscalDay = '';
 
+  isLoading = true;
   isHydratingOrgInfo = false;
 
   // Constants
@@ -70,7 +80,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly applicantService: ApplicantService,
-    private readonly organizationService: OrganizationService
+    private readonly applicantInfoService: ApplicantInfoService
   ) {
     this.setupSearch();
   }
@@ -99,20 +109,27 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   private loadOrganizationInfo(): void {
     this.isHydratingOrgInfo = true;
 
-    this.organizationService
-      .hydrateAndGetOrganizationInfo({})
+    this.applicantInfoService
+      .hydrateAndGetOrganizationInfo(
+        ProfileId.DEFAULT,
+        PluginId.DEMO,
+        Provider.DEMO,
+        Key.ORGINFO,
+        {}
+      )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
           this.isHydratingOrgInfo = false;
-          this.organizationData = result.organizationData;
-          console.log('Organization data loaded:', result.organizationData);
+          this.organizationInfo = result.organizationData;
+          console.log('Organization data loaded:', this.organizationInfo);
 
-          this.selectedFiscalMonth = result?.organizationData.fiscalMonth || '';
+          this.selectedFiscalMonth = this.organizationInfo?.fiscalMonth || '';
           this.selectedFiscalDay =
-            result?.organizationData.fiscalDay != null
-              ? String(result.organizationData.fiscalDay)
+            this.organizationInfo?.fiscalDay != null
+              ? String(this.organizationInfo?.fiscalDay)
               : '';
+          this.isLoading = false;
         },
         error: (error) => {
           this.isHydratingOrgInfo = false;
@@ -214,21 +231,21 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   onFiscalMonthChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     this.selectedFiscalMonth = target.value;
-    if (this.organizationData) {
-      this.organizationData.fiscalMonth = this.selectedFiscalMonth;
+    if (this.organizationInfo) {
+      this.organizationInfo.fiscalMonth = this.selectedFiscalMonth;
     }
   }
 
   onFiscalDayChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     this.selectedFiscalDay = target.value;
-    if (this.organizationData) {
-      this.organizationData.fiscalDay = Number(this.selectedFiscalDay);
+    if (this.organizationInfo) {
+      this.organizationInfo.fiscalDay = Number(this.selectedFiscalDay);
     }
   }
 
   saveOrganization(): void {
-    console.log('Saving organization...', this.organizationData);
+    console.log('Saving organization...', this.organizationInfo);
     // Implement save logic
   }
 
@@ -240,10 +257,10 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   }
 
   private updateOrganizationFromSearch(result: OrgSearchResult): void {
-    if (!this.organizationData) return;
+    if (!this.organizationInfo) return;
 
-    this.organizationData = {
-      ...this.organizationData,
+    this.organizationInfo = {
+      ...this.organizationInfo,
       orgName: result.orgName,
       orgNumber: result.orgNumber,
       orgStatus: result.orgStatus,

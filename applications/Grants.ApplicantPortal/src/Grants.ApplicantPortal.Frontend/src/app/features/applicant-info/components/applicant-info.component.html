@@ -21,6 +21,19 @@
         </div>
       </div>
       <div class="card-body">
+        @if (isLoading) {
+        <div
+          class="loading-spinner-container d-flex justify-content-center align-items-center"
+          style="min-height: 300px"
+        >
+          <div class="text-center">
+            <div class="spinner-border">
+              <span class="sr-only">Loading organization...</span>
+            </div>
+            <p class="loading-text mt-3">Loading your organization...</p>
+          </div>
+        </div>
+        } @else {
         <div class="container-fluid form-section">
           <div class="row">
             <div class="col-md-12">
@@ -90,7 +103,7 @@
                 <input
                   id="orgName"
                   type="text"
-                  [value]="organizationData?.orgName"
+                  [value]="organizationInfo?.orgName"
                   disabled
                   class="form-control"
                 />
@@ -102,7 +115,7 @@
                 <input
                   id="regNumber"
                   type="text"
-                  [value]="organizationData?.orgNumber"
+                  [value]="organizationInfo?.orgNumber"
                   disabled
                   class="form-control"
                 />
@@ -116,7 +129,7 @@
                 <label for="orgStatus">Organization Book Status</label>
                 <input
                   id="orgStatus"
-                  [value]="organizationData?.orgStatus"
+                  [value]="organizationInfo?.orgStatus"
                   disabled
                   class="form-control"
                 />
@@ -129,8 +142,8 @@
                   id="orgType"
                   type="text"
                   [value]="
-                    organizationData?.organizationType
-                      ? organizationData?.organizationType
+                    organizationInfo?.organizationType
+                      ? organizationInfo?.organizationType
                       : 'N/A'
                   "
                   disabled
@@ -149,7 +162,7 @@
                 <input
                   id="nonRegOrgName"
                   type="text"
-                  [value]="organizationData?.nonRegOrgName"
+                  [value]="organizationInfo?.nonRegOrgName"
                   class="form-control"
                 />
               </div>
@@ -160,7 +173,7 @@
                 <input
                   id="orgSize"
                   type="text"
-                  [value]="organizationData?.orgSize"
+                  [value]="organizationInfo?.orgSize"
                   class="form-control"
                 />
               </div>
@@ -212,6 +225,7 @@
             </div>
           </div>
         </div>
+        }
       </div>
     </div>
 
@@ -222,7 +236,12 @@
         </div>
       </div>
       <div class="card-body">
-        <app-submissions [submissions]="submissions"></app-submissions>
+        <app-submissions
+          [profileId]="profileId"
+          [pluginId]="pluginId"
+          [provider]="provider"
+          [key]="keySubmissions"
+        ></app-submissions>
       </div>
     </div>
   </div>

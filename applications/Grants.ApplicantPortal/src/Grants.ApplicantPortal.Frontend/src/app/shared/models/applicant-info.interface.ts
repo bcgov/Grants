@@ -11,6 +11,17 @@ export interface BackendResponse {
   populatedAt: string;
 }
 
+export interface Submission {
+  applicationId: string;
+  submissionId: string;
+  submissionDate: Date;
+  projectName: string;
+  status: string;
+  updatedOn?: string;
+  paidAmount?: number;
+  submissionLink?: string;
+}
+
 export interface Address {
   street: string;
   city: string;
@@ -65,6 +76,18 @@ export interface OrganizationData {
   program1Specific: Program1Specific;
 }
 
+export interface SubmissionsData {
+  submissionId: string;
+  applicationId: string;
+  projectName: string;
+  programName: string;
+  requestedAmount: number;
+  paidAmount: number;
+  status: string;
+  submissionDate: Date;
+  lastModified: Date;
+}
+
 // Single response interface for parsed data
 export interface OrganizationResponse {
   metadata: {
@@ -75,6 +98,17 @@ export interface OrganizationResponse {
     populatedAt: string;
   };
   organizationData: OrganizationData;
+}
+
+export interface SubmissionsResponse {
+  metadata: {
+    profileId: string;
+    pluginId: string;
+    provider: string;
+    key: string;
+    populatedAt: string;
+  };
+  submissionsData: SubmissionsData;
 }
 
 export interface OrgSearchResult {

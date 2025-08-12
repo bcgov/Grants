@@ -88,11 +88,12 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                     {
                         SubmissionId = "PROG1-SUB-001",
                         ApplicationId = "APP-2024-0001",
-                        Title = "Community Health Initiative",
-                        ProgramName = "Program1 - Health & Wellness",
+                        ProjectName = "Project title",
+                        ProgramName = "Program1 - Fitness",
                         RequestedAmount = 150000,
-                        Status = "Under Review",
-                        SubmittedDate = DateTime.UtcNow.AddDays(-15),
+                        PaidAmount = 100000,
+                        Status = "In progress",
+                        SubmissionDate = DateTime.UtcNow.AddDays(-15),
                         LastModified = DateTime.UtcNow.AddDays(-2),
                         ProjectPeriod = new
                         {
@@ -104,12 +105,13 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                     new
                     {
                         SubmissionId = "PROG1-SUB-002",
-                        ApplicationId = "APP-2024-0045",
-                        Title = "Youth Mental Health Support Program",
+                        ApplicationId = "APP-2024-0002",
+                        ProjectName = "Youth Mental Health Support Program",
                         ProgramName = "Program1 - Health & Wellness",
                         RequestedAmount = 85000,
+                        PaidAmount = 82000,
                         Status = "Approved",
-                        SubmittedDate = DateTime.UtcNow.AddDays(-45),
+                        SubmissionDate = DateTime.UtcNow.AddDays(-45),
                         LastModified = DateTime.UtcNow.AddDays(-10),
                         ProjectPeriod = new
                         {
@@ -117,14 +119,51 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                             EndDate = DateTime.UtcNow.AddMonths(13)
                         },
                         Categories = new[] { "Mental Health", "Youth Services", "Community Support" }
+                    },
+                     new
+                    {
+                        SubmissionId = "PROG1-SUB-003",
+                        ApplicationId = "APP-2024-0003",
+                        ProjectName = "Community Health Initiative",
+                        ProgramName = "Program1 - Health & Wellness",
+                        RequestedAmount = 150000,
+                        PaidAmount = 120000,
+                        Status = "Declined",
+                        SubmissionDate = DateTime.UtcNow.AddDays(-15),
+                        LastModified = DateTime.UtcNow.AddDays(-2),
+                        ProjectPeriod = new
+                        {
+                            StartDate = DateTime.UtcNow.AddMonths(1),
+                            EndDate = DateTime.UtcNow.AddMonths(17)
+                        },
+                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
+                    },
+                     new
+                    {
+                        SubmissionId = "PROG1-SUB-004",
+                        ApplicationId = "APP-2024-0004",
+                        ProjectName = "Digital Community Program",
+                        ProgramName = "",
+                        RequestedAmount = 250000,
+                        PaidAmount = 220000,
+                        Status = "In progress",
+                        SubmissionDate = DateTime.UtcNow.AddDays(-18),
+                        LastModified = DateTime.UtcNow.AddDays(-5),
+                        ProjectPeriod = new
+                        {
+                            StartDate = DateTime.UtcNow.AddMonths(4),
+                            EndDate = DateTime.UtcNow.AddMonths(14)
+                        },
+                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
                     }
                 },
                 Summary = new
                 {
-                    TotalSubmissions = 2,
+                    TotalSubmissions = 4,
                     TotalRequestedAmount = 235000,
                     ApprovedCount = 1,
-                    UnderReviewCount = 1
+                    InProgressCount = 3,
+                    DeclinedCount = 1
                 }
             }
         };
@@ -274,11 +313,12 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                     {
                         SubmissionId = "PROG2-SUB-001",
                         ApplicationId = "APP-2024-0078",
-                        Title = "STEM Education Excellence Initiative",
+                        ProjectName = "STEM Education Excellence Initiative",
                         ProgramName = "Program2 - Education & Technology",
                         RequestedAmount = 275000,
+                        PaidAmount = 10000,
                         Status = "Approved",
-                        SubmittedDate = DateTime.UtcNow.AddDays(-30),
+                        SubmissionDate = DateTime.UtcNow.AddDays(-30),
                         LastModified = DateTime.UtcNow.AddDays(-5),
                         ProjectPeriod = new
                         {
@@ -291,11 +331,12 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                     {
                         SubmissionId = "PROG2-SUB-002",
                         ApplicationId = "APP-2024-0089",
-                        Title = "Digital Literacy for Seniors",
+                        ProjectName = "Digital Literacy for Seniors",
                         ProgramName = "Program2 - Education & Technology",
                         RequestedAmount = 120000,
+                        PaidAmount = 2000,
                         Status = "Under Review",
-                        SubmittedDate = DateTime.UtcNow.AddDays(-20),
+                        SubmissionDate = DateTime.UtcNow.AddDays(-20),
                         LastModified = DateTime.UtcNow.AddDays(-1),
                         ProjectPeriod = new
                         {
@@ -308,11 +349,12 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                     {
                         SubmissionId = "PROG2-SUB-003",
                         ApplicationId = "APP-2024-0095",
-                        Title = "Rural Broadband Access Project",
+                        ProjectName = "Rural Broadband Access Project",
                         ProgramName = "Program2 - Education & Technology",
                         RequestedAmount = 450000,
+                        PaidAmount = 40000,
                         Status = "In Review",
-                        SubmittedDate = DateTime.UtcNow.AddDays(-10),
+                        SubmissionDate = DateTime.UtcNow.AddDays(-10),
                         LastModified = DateTime.UtcNow.AddDays(-3),
                         ProjectPeriod = new
                         {
@@ -342,11 +384,18 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
             {
                 OrganizationInfo = new
                 {
+                    OrgName = "Hub Tech",
+                    OrgNumber = "S1113734",
+                    OrgStatus = "Active",
+                    OrganizationType = "Educational Nonprofit",
+                    NonRegOrgName = "Digi Org",
+                    OrgSize = "30",
+                    FiscalMonth = "Jul",
+                    FiscalDay = 23,
                     OrganizationId = "ORG-DEMO-002",
                     LegalName = "Demo Educational Technology Consortium",
                     DoingBusinessAs = "DETC",
                     EIN = "98-7654321",
-                    OrganizationType = "Educational Nonprofit",
                     Founded = 2015,
                     Address = new
                     {
