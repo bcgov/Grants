@@ -12,4 +12,5 @@ export enum Provider {
 
 export enum Key {
   ORGINFO = 'ORGINFO',
+  SUBMISSIONS = 'SUBMISSIONS',
 }

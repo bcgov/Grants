@@ -6,7 +6,6 @@ import {
   ContactInfo,
   AddressInfo,
 } from '../../shared/models/applicant.interface';
-import { OrganizationData } from '../../shared/models/applicant-info.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -64,10 +63,5 @@ export class ApplicantService {
         postalCode: 'V9B 0Z3',
       },
     ]);
-  }
-
-  saveOrganizationInfo(orgInfo: OrganizationData): Observable<any> {
-    // Replace with actual API call
-    return of({ success: true });
   }
 }

@@ -20,14 +20,3 @@ export interface AddressInfo {
   province: string;
   postalCode: string;
 }
-
-export interface Submission {
-  id: string;
-  confirmationNo: string;
-  submissionDate: Date;
-  projectName: string;
-  status: 'In Progress' | 'Approved' | 'Declined';
-  updatedOn?: string;
-  paidAmount?: number;
-  submissionLink?: string;
-}
