@@ -22,6 +22,7 @@ export class SubmissionsComponent implements OnInit {
   @Input() data?: any;
 
   submissionsInfo: SubmissionsData[] = [];
+  isLoading = true;
   isHydratingSubmissionsInfo = false;
   error: string | null = null;
 
@@ -111,6 +112,7 @@ export class SubmissionsComponent implements OnInit {
             : [result.submissionsData];
 
           console.log('Submissions data loaded:', this.submissionsInfo);
+          this.isLoading = false;
         },
         error: (error) => {
           this.isHydratingSubmissionsInfo = false;

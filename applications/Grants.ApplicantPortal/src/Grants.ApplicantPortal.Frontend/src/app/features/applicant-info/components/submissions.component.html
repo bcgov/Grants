@@ -1,4 +1,17 @@
 <div class="submissions-container">
+  @if (isLoading) {
+  <div
+    class="loading-spinner-container d-flex justify-content-center align-items-center"
+    style="min-height: 300px"
+  >
+    <div class="text-center">
+      <div class="spinner-border">
+        <span class="sr-only">Loading submissions...</span>
+      </div>
+      <p class="loading-text mt-3">Loading your submissions...</p>
+    </div>
+  </div>
+  } @else {
   <div class="submissions-table-wrapper">
     <table
       class="table table-responsive table-striped table-hover submissions-table"
@@ -117,5 +130,5 @@
   <div class="no-submissions">
     <p>No submissions were found with your BCeID.</p>
   </div>
-  }
+  } }
 </div>

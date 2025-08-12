@@ -53,6 +53,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   selectedFiscalMonth = '';
   selectedFiscalDay = '';
 
+  isLoading = true;
   isHydratingOrgInfo = false;
 
   // Constants
@@ -128,6 +129,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
             this.organizationInfo?.fiscalDay != null
               ? String(this.organizationInfo?.fiscalDay)
               : '';
+          this.isLoading = false;
         },
         error: (error) => {
           this.isHydratingOrgInfo = false;

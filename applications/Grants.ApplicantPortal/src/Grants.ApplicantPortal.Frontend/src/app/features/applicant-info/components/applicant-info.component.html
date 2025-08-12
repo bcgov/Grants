@@ -21,6 +21,19 @@
         </div>
       </div>
       <div class="card-body">
+        @if (isLoading) {
+        <div
+          class="loading-spinner-container d-flex justify-content-center align-items-center"
+          style="min-height: 300px"
+        >
+          <div class="text-center">
+            <div class="spinner-border">
+              <span class="sr-only">Loading organization...</span>
+            </div>
+            <p class="loading-text mt-3">Loading your organization...</p>
+          </div>
+        </div>
+        } @else {
         <div class="container-fluid form-section">
           <div class="row">
             <div class="col-md-12">
@@ -212,6 +225,7 @@
             </div>
           </div>
         </div>
+        }
       </div>
     </div>
 
@@ -222,7 +236,6 @@
         </div>
       </div>
       <div class="card-body">
-        <!-- [submissions]="submissions" -->
         <app-submissions
           [profileId]="profileId"
           [pluginId]="pluginId"
