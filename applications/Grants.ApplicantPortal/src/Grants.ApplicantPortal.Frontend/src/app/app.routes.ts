@@ -3,6 +3,13 @@ import { LayoutComponent } from './layout/components/layout.component';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(
+        (m) => m.LoginComponent
+      ),
+  },
+  {
     path: '',
     component: LayoutComponent,
     children: [
@@ -30,5 +37,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: '/applicant-info' },
+  { path: '**', redirectTo: '/login' },
 ];
