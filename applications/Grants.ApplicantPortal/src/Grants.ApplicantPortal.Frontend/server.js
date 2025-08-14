@@ -1,6 +1,21 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const { resolve } = require('path');
+const rateLimit = require('express-rate-limit');
+
+const rateLimitMax = process.env.RATE_LIMIT_MAX || 1000;
+const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); // 10 mins
+
+// Rate limiter for catch-all route serving index.html
+const catchAllLimiter = rateLimit({
+  windowMs: rateLimitWindow,
+  max: rateLimitMax,
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: {
+    error: 'Too many requests from this IP, please try again later.'
+  }
+});
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -49,7 +64,7 @@ app.use(express.static(staticPath, {
 }));
 
 // Handle Angular routing - serve index.html for all routes
-app.get('*', (req, res) => {
+app.get('*', catchAllLimiter, (req, res) => {
   console.log(`Request: ${req.method} ${req.url}`);
   res.sendFile(resolve(staticPath, 'index.html'));
 });
