@@ -21,11 +21,8 @@ const catchAllLimiter = rateLimit({
   max: rateLimitMax,
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  // Use a more specific key generator for container environments
-  keyGenerator: (req) => {
-    // In container environments, use X-Forwarded-For if available, otherwise fall back to connection IP
-    return req.ip || req.connection.remoteAddress || 'unknown';
-  },
+  // Remove custom keyGenerator - let express-rate-limit handle IP detection properly
+  // This automatically handles IPv4, IPv6, and proxy headers correctly
   message: {
     error: 'Too many requests from this IP, please try again later.'
   }
