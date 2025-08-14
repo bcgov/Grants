@@ -13,8 +13,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    // Disable hydration completely to fix the issue
-    // provideClientHydration(),
+    // Hydration removed - not needed for SPA-only mode
     provideHttpClient(withInterceptorsFromDi(), withFetch()),
     provideAnimations(),
   ],
