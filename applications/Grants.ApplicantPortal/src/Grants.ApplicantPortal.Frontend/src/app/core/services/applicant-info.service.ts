@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, retry, catchError } from 'rxjs/operators';
 import {
   BackendResponse,
   HydrateRequest,
@@ -9,12 +9,13 @@ import {
   OrganizationResponse,
   SubmissionsResponse,
 } from '../../shared/models/applicant-info.interface';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApplicantInfoService {
-  private readonly baseUrl = 'https://localhost:7000';
+  private readonly baseUrl = environment.apiUrl;
   constructor(private readonly http: HttpClient) {}
 
   /**
@@ -105,7 +106,12 @@ export class ApplicantInfoService {
   ): Observable<OrganizationResponse> {
     return this.hydrateInfo(profileId, pluginId, provider, key, data).pipe(
       switchMap(() => this.getInfo(profileId, pluginId, provider, key)),
-      map((response) => this.parseOrganizationResponse(response))
+      map((response) => this.parseOrganizationResponse(response)),
+      retry({ count: 2, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to load organization info after retries:', error);
+        throw error;
+      })
     );
   }
 
@@ -124,7 +130,12 @@ export class ApplicantInfoService {
   ): Observable<SubmissionsResponse> {
     return this.hydrateInfo(profileId, pluginId, provider, key, data).pipe(
       switchMap(() => this.getInfo(profileId, pluginId, provider, key)),
-      map((response) => this.parseSubmissionsResponse(response))
+      map((response) => this.parseSubmissionsResponse(response)),
+      retry({ count: 2, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to load submissions info after retries:', error);
+        throw error;
+      })
     );
   }
 }

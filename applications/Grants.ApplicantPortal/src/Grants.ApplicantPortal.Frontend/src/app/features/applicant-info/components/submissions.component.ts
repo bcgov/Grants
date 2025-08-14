@@ -29,7 +29,9 @@ export class SubmissionsComponent implements OnInit, OnDestroy {
   isHydratingSubmissionsInfo = false;
   error: string | null = null;
 
-  constructor(private readonly applicantInfoService: ApplicantInfoService) {}
+  constructor(
+    private readonly applicantInfoService: ApplicantInfoService
+  ) {}
 
   ngOnInit(): void {
     if (this.profileId && this.pluginId && this.provider && this.key) {
