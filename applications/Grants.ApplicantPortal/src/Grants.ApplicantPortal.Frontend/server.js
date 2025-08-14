@@ -11,8 +11,9 @@ const port = process.env.PORT || 4000;
 const enableProxy = process.env.ENABLE_API_PROXY === 'true';
 const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
 
-// Configure Express to trust proxy headers (required for rate limiting in container environments)
-app.set('trust proxy', true);
+// Configure Express to trust proxy headers properly for container environments
+// This tells Express to trust the first proxy (OpenShift router) but not beyond that
+app.set('trust proxy', 1);
 
 // Rate limiter for catch-all route serving index.html
 const catchAllLimiter = rateLimit({
@@ -20,6 +21,11 @@ const catchAllLimiter = rateLimit({
   max: rateLimitMax,
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Use a more specific key generator for container environments
+  keyGenerator: (req) => {
+    // In container environments, use X-Forwarded-For if available, otherwise fall back to connection IP
+    return req.ip || req.connection.remoteAddress || 'unknown';
+  },
   message: {
     error: 'Too many requests from this IP, please try again later.'
   }
