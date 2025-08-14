@@ -1,0 +1,12 @@
+{
+  "/api/*": {
+    "target": "http://backend:5100",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "timeout": 60000,
+    "pathRewrite": {
+      "^/api": ""
+    }
+  }
+}

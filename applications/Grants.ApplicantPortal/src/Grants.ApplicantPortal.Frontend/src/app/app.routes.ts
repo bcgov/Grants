@@ -4,9 +4,13 @@ import { LayoutComponent } from './layout/components/layout.component';
 export const routes: Routes = [
   {
     path: '',
+    redirectTo: '/applicant-info',
+    pathMatch: 'full'
+  },
+  {
+    path: '',
     component: LayoutComponent,
     children: [
-      { path: '', redirectTo: '/applicant-info', pathMatch: 'full' },
       {
         path: 'applicant-info',
         loadComponent: () =>
