@@ -6,6 +6,14 @@ const rateLimit = require('express-rate-limit');
 const rateLimitMax = process.env.RATE_LIMIT_MAX || 1000;
 const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); // 10 mins
 
+const app = express();
+const port = process.env.PORT || 4000;
+const enableProxy = process.env.ENABLE_API_PROXY === 'true';
+const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
+
+// Configure Express to trust proxy headers (required for rate limiting in container environments)
+app.set('trust proxy', true);
+
 // Rate limiter for catch-all route serving index.html
 const catchAllLimiter = rateLimit({
   windowMs: rateLimitWindow,
@@ -16,11 +24,6 @@ const catchAllLimiter = rateLimit({
     error: 'Too many requests from this IP, please try again later.'
   }
 });
-
-const app = express();
-const port = process.env.PORT || 4000;
-const enableProxy = process.env.ENABLE_API_PROXY === 'true';
-const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
 
 console.log(`Starting server...`);
 
@@ -39,8 +42,9 @@ if (enableProxy) {
       console.log(`Proxying ${req.method} ${req.url} to ${backendServiceUrl}`);
     }
   }));
+  console.log(`API proxy enabled - routing /api/* to ${backendServiceUrl}`);
 } else {
-  console.log(`API proxy disabled - using direct routing or platform-level routing`);
+  console.log(`API proxy disabled - using platform-level routing`);
 }
 
 // Health check endpoints
@@ -70,6 +74,10 @@ app.get('*', catchAllLimiter, (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`SPA server listening on http://localhost:${port}`);
-  console.log(`API proxy configured to: ${backendServiceUrl}`);
+  console.log(`Server listening on http://localhost:${port}`);
+  if (enableProxy) {
+    console.log(`API proxy: ENABLED - /api/* → ${backendServiceUrl}`);
+  } else {
+    console.log(`API proxy: DISABLED - relying on platform routing`);
+  }
 });
