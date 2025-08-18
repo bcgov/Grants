@@ -14,27 +14,29 @@ RUN npm install
 COPY . .
 
 # Build the Angular application
-RUN npm run build
+RUN echo "Building..." && npm run build
 
-# The final stage now only runs the Angular Universal server
+# The final stage now runs the appropriate server
 FROM node:22-slim AS runtime
 
 # Set the working directory
 WORKDIR /app
 
 # Copy the built application from the build stage
-COPY --from=build /app /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/server.js ./
 
-# Install production dependencies only
+# Install deployment dependencies only
 RUN npm install --omit=dev
 
-# Set environment variables for the backend service
-# This can be overridden at deployment time
+# Set environment variables
 ENV PORT=4000
-ENV BACKEND_SERVICE_URL=http://backend-service
+ENV BACKEND_SERVICE_URL=http://backend:5100
+ENV ENABLE_API_PROXY=false
 
-# Expose port 4000 for the Angular Universal server
+# Expose port 4000
 EXPOSE 4000
 
-# Start the Angular Universal server
-CMD ["npm", "run", "serve:ssr"]
+# Start the SPA server directly
+CMD ["node", "server.js"]
