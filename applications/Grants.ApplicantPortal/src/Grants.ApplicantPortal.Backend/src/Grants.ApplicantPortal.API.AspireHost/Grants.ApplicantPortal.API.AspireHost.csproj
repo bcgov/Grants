@@ -18,12 +18,24 @@
   <ItemGroup>
     <ProjectReference Include="..\Grants.ApplicantPortal.API.Web\Grants.ApplicantPortal.API.Web.csproj" />
   </ItemGroup>
+  
   <ItemGroup>
     <!-- The IsAspireProjectResource attribute tells .NET Aspire to treat this 
         reference as a standard project reference and not attempt to generate
         a metadata file -->
     <ProjectReference Include="..\Grants.ApplicantPortal.API.ServiceDefaults\Grants.ApplicantPortal.API.ServiceDefaults.csproj"
                       IsAspireProjectResource="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Remove auto-included appsettings files and re-add with proper nesting -->
+    <Content Remove="appsettings.Development.json" />
+    
+    <!-- Add back with DependentUpon nesting -->
+    <Content Include="appsettings.Development.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

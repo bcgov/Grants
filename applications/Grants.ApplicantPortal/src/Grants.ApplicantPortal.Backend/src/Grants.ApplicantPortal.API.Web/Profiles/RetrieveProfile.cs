@@ -1,10 +1,9 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Profiles.Retrieve;
-using Grants.ApplicantPortal.API.Web.Auth;
 
 namespace Grants.ApplicantPortal.API.Web.Profiles;
 
 /// <summary>
-/// Retrieves a profile by its unique identifier and plugin ID.
+/// Retrieves a profile by its unique identifier and plugin ID, with automatic cache hydration.
 /// </summary>
 /// <param name="mediator"></param>
 public class RetrieveProfile(IMediator mediator)
@@ -17,12 +16,12 @@ public class RetrieveProfile(IMediator mediator)
     AllowAnonymous(); // Allow anonymous access for testing purposes
     Summary(s =>
     {
-      s.Summary = "Retrieve profile";
-      s.Description = "Retrieves cached profile data by ProfileId and PluginId";
-      s.Responses[200] = "Profile retrieved successfully";
+      s.Summary = "Retrieve profile with automatic hydration";
+      s.Description = "Retrieves cached profile data by ProfileId and PluginId. If data is not cached, it will automatically hydrate the cache using the specified plugin and return the results. Cache stampede protection is included to prevent multiple concurrent hydration requests for the same data.";
+      s.Responses[200] = "Profile retrieved successfully (either from cache or after hydration)";
       s.Responses[401] = "Unauthorized - valid JWT token required";
-      s.Responses[404] = "Profile not found in cache for the specified plugin";
-      s.Responses[400] = "Invalid request";
+      s.Responses[404] = "Profile not found or plugin unable to retrieve data";
+      s.Responses[400] = "Invalid request or plugin validation failed";
     });
   }
 

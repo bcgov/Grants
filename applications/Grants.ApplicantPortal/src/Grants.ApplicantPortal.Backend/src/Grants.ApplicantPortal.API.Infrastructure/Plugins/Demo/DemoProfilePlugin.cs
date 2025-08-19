@@ -10,9 +10,48 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
 {
     public string PluginId => "DEMO";
 
+    private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
+    {
+        new("PROGRAM1", "SUBMISSIONS", "Demo submissions data for Program1"),
+        new("PROGRAM1", "ORGINFO", "Demo organization information for Program1"),
+        new("PROGRAM1", "PAYMENTS", "Demo payment information for Program1"),
+        new("PROGRAM2", "SUBMISSIONS", "Demo submissions data for Program2"),
+        new("PROGRAM2", "ORGINFO", "Demo organization information for Program2")
+    };
+
+    public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
+    {
+        return SupportedFeatures;
+    }
+
+    public IReadOnlyList<string> GetSupportedProviders()
+    {
+        return SupportedFeatures
+            .Select(f => f.Provider)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public IReadOnlyList<string> GetSupportedKeys(string provider)
+    {
+        if (string.IsNullOrWhiteSpace(provider))
+            return new List<string>();
+
+        return SupportedFeatures
+            .Where(f => f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase))
+            .Select(f => f.Key)
+            .ToList();
+    }
+
     public bool CanHandle(ProfilePopulationMetadata metadata)
     {
-        return metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);
+        if (!metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // Check if the provider/key combination is supported
+        return SupportedFeatures.Any(f => 
+            f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
+            f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
@@ -65,12 +104,11 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
 
         return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
         {
-            ("DEMO", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
-            ("DEMO", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
-            ("DEMO", "PAYMENTS") => GenerateProgram1Payments(baseData),
-            ("UNITY", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
-            ("UNITY", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
-            ("UNITY", "PAYMENTS") => GenerateProgram2Payments(baseData),
+            ("PROGRAM1", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
+            ("PROGRAM1", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
+            ("PROGRAM1", "PAYMENTS") => GenerateProgram1Payments(baseData),
+            ("PROGRAM2", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
+            ("PROGRAM2", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
             _ => GenerateDefaultData(baseData)
         };
     }
@@ -437,88 +475,6 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                         SpecialDesignations = new[] { "STEM Education Hub", "Rural Technology Center" },
                         Partnerships = new[] { "State University System", "Tech Industry Coalition", "Rural Education Network" }
                     }
-                }
-            }
-        };
-    }
-
-    private object GenerateProgram2Payments(object baseData)
-    {
-        return new
-        {
-            baseData,
-            Data = new
-            {
-                Payments = new[]
-                {
-                    new
-                    {
-                        PaymentId = "PAY-PROG2-001",
-                        SubmissionId = "PROG2-SUB-001",
-                        ApplicationId = "APP-2024-0078",
-                        GrantTitle = "STEM Education Excellence Initiative",
-                        AwardAmount = 275000,
-                        PaymentSchedule = new[]
-                        {
-                            new
-                            {
-                                PaymentNumber = 1,
-                                Amount = 55000,
-                                DueDate = DateTime.UtcNow.AddMonths(1),
-                                Status = "Scheduled",
-                                Description = "Initial funding - 20%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 2,
-                                Amount = 82500,
-                                DueDate = DateTime.UtcNow.AddMonths(7),
-                                Status = "Pending",
-                                Description = "Mid-term payment - 30%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 3,
-                                Amount = 82500,
-                                DueDate = DateTime.UtcNow.AddMonths(13),
-                                Status = "Pending",
-                                Description = "Progress payment - 30%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 4,
-                                Amount = 55000,
-                                DueDate = DateTime.UtcNow.AddMonths(24),
-                                Status = "Pending",
-                                Description = "Final payment - 20%"
-                            }
-                        },
-                        PaymentMethod = "Electronic Transfer",
-                        BankAccount = "****-****-****-9012",
-                        TaxReporting = new
-                        {
-                            TaxYear = DateTime.UtcNow.Year,
-                            Form1099Required = true,
-                            ReportingStatus = "Pending"
-                        },
-                        PerformanceMilestones = new[]
-                        {
-                            new { Milestone = "Program Launch", DueDate = DateTime.UtcNow.AddMonths(2), Status = "Pending" },
-                            new { Milestone = "50% Student Enrollment", DueDate = DateTime.UtcNow.AddMonths(8), Status = "Pending" },
-                            new { Milestone = "Mid-term Evaluation", DueDate = DateTime.UtcNow.AddMonths(14), Status = "Pending" },
-                            new { Milestone = "Final Report", DueDate = DateTime.UtcNow.AddMonths(25), Status = "Pending" }
-                        }
-                    }
-                },
-                PaymentSummary = new
-                {
-                    TotalAwardAmount = 275000,
-                    TotalPaid = 0,
-                    TotalPending = 275000,
-                    NextPaymentDue = DateTime.UtcNow.AddMonths(1),
-                    NextPaymentAmount = 55000,
-                    PaymentType = "Milestone-Based",
-                    RequiresPerformanceReporting = true
                 }
             }
         };

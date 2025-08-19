@@ -1,5 +1,6 @@
 ﻿using Ardalis.ListStartupServices;
 using Grants.ApplicantPortal.API.Infrastructure.Email;
+using Grants.ApplicantPortal.API.UseCases.Profiles;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
@@ -12,6 +13,7 @@ public static class OptionConfigs
   {
     services.Configure<MailserverConfiguration>(configuration.GetSection("Mailserver"))
             .Configure<KeycloakConfiguration>(configuration.GetSection(KeycloakConfiguration.SectionName))
+            .Configure<ProfileCacheOptions>(configuration.GetSection(ProfileCacheOptions.SectionName))
     // Configure Web Behavior
     .Configure<CookiePolicyOptions>(options =>
     {

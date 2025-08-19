@@ -10,6 +10,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Remove the auto-included appsettings files and re-add them with proper nesting -->
+    <Content Remove="appsettings.Development.json" />
+    
+    <!-- Add them back with proper DependentUpon nesting -->
+    <Content Include="appsettings.Development.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ardalis.ListStartupServices" />
     <PackageReference Include="Ardalis.Result" />
     <PackageReference Include="Ardalis.Result.AspNetCore" />
@@ -22,6 +33,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Serilog.AspNetCore" />
   </ItemGroup>
 

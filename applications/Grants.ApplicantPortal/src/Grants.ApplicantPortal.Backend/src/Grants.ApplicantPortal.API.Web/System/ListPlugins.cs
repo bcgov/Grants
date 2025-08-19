@@ -1,4 +1,6 @@
-using Grants.ApplicantPortal.API.Infrastructure.Plugins;
+﻿using Grants.ApplicantPortal.API.Infrastructure.Plugins;
+using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Core.Plugins;
 
 namespace Grants.ApplicantPortal.API.Web.System;
 
@@ -15,8 +17,8 @@ public class ListPlugins : EndpointWithoutRequest<ListPluginsResponse>
         Summary(s =>
         {
             s.Summary = "List all available plugins";
-            s.Description = "Returns a list of all registered plugins with their IDs and descriptions across all system features";
-            s.Responses[200] = "List of available plugins";
+            s.Description = "Returns a list of all registered plugins with their IDs, descriptions, and supported features across all system features";
+            s.Responses[200] = "List of available plugins with supported features";
         });
         
         // Add tags for better Swagger organization
@@ -26,7 +28,10 @@ public class ListPlugins : EndpointWithoutRequest<ListPluginsResponse>
     public override async Task HandleAsync(CancellationToken ct)
     {
         var plugins = PluginRegistry.GetAllPlugins()
-            .Select(p => new PluginInfoDto(p.PluginId, p.Description))
+            .Select(p => new PluginInfoDto(
+                p.PluginId, 
+                p.Description,
+                p.SupportedFeatures.ToList()))
             .OrderBy(p => p.PluginId)
             .ToList();
 
@@ -43,4 +48,7 @@ public record ListPluginsResponse(IReadOnlyList<PluginInfoDto> Plugins);
 /// <summary>
 /// Plugin information for API responses
 /// </summary>
-public record PluginInfoDto(string PluginId, string Description);
+public record PluginInfoDto(
+    string PluginId, 
+    string Description,
+    IReadOnlyList<PluginSupportedFeature> SupportedFeatures);
