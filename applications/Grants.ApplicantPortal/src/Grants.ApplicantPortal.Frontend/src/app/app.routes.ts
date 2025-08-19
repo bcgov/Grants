@@ -1,7 +1,16 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/components/layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // Public routes
+  {
+    path: 'auth-callback',
+    loadComponent: () =>
+      import('./features/auth/callback/callback.component').then(
+        (m) => m.CallbackComponent
+      ),
+  },
   {
     path: 'login',
     loadComponent: () =>
@@ -9,15 +18,18 @@ export const routes: Routes = [
         (m) => m.LoginComponent
       ),
   },
-  {
-    path: '',
-    redirectTo: '/applicant-info',
-    pathMatch: 'full'
-  },
+
+  // Protected routes
   {
     path: '',
     component: LayoutComponent,
+    canActivate: [authGuard],
     children: [
+      {
+        path: '',
+        redirectTo: 'applicant-info',
+        pathMatch: 'full',
+      },
       {
         path: 'applicant-info',
         loadComponent: () =>
