@@ -8,9 +8,9 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Plugins.Demo;
 /// </summary>
 public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlugin
 {
-    public string PluginId => "DEMO";
+  public string PluginId => "DEMO";
 
-    private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
+  private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
     {
         new("PROGRAM1", "SUBMISSIONS", "Demo submissions data for Program1"),
         new("PROGRAM1", "ORGINFO", "Demo organization information for Program1"),
@@ -19,109 +19,109 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
         new("PROGRAM2", "ORGINFO", "Demo organization information for Program2")
     };
 
-    public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
+  public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
+  {
+    return SupportedFeatures;
+  }
+
+  public IReadOnlyList<string> GetSupportedProviders()
+  {
+    return SupportedFeatures
+        .Select(f => f.Provider)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+  }
+
+  public IReadOnlyList<string> GetSupportedKeys(string provider)
+  {
+    if (string.IsNullOrWhiteSpace(provider))
+      return new List<string>();
+
+    return SupportedFeatures
+        .Where(f => f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase))
+        .Select(f => f.Key)
+        .ToList();
+  }
+
+  public bool CanHandle(ProfilePopulationMetadata metadata)
+  {
+    if (!metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase))
+      return false;
+
+    // Check if the provider/key combination is supported
+    return SupportedFeatures.Any(f =>
+        f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
+        f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
+  }
+
+  public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
+  {
+    logger.LogInformation("Demo plugin populating profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+        metadata.ProfileId, metadata.Provider, metadata.Key);
+
+    try
     {
-        return SupportedFeatures;
+      // Simulate some processing time
+      await Task.Delay(50, cancellationToken);
+
+      var mockProfileData = GenerateMockData(metadata);
+
+      var jsonData = JsonSerializer.Serialize(mockProfileData, new JsonSerializerOptions
+      {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+      });
+
+      logger.LogInformation("Demo plugin successfully populated profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+          metadata.ProfileId, metadata.Provider, metadata.Key);
+
+      return new ProfileData(
+          metadata.ProfileId,
+          metadata.PluginId,
+          metadata.Provider,
+          metadata.Key,
+          jsonData);
     }
-
-    public IReadOnlyList<string> GetSupportedProviders()
+    catch (Exception ex)
     {
-        return SupportedFeatures
-            .Select(f => f.Provider)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+      logger.LogError(ex, "Demo plugin failed to populate profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+          metadata.ProfileId, metadata.Provider, metadata.Key);
+      throw;
     }
+  }
 
-    public IReadOnlyList<string> GetSupportedKeys(string provider)
+  private object GenerateMockData(ProfilePopulationMetadata metadata)
+  {
+    var baseData = new
     {
-        if (string.IsNullOrWhiteSpace(provider))
-            return new List<string>();
+      ProfileId = metadata.ProfileId,
+      Provider = metadata.Provider,
+      Key = metadata.Key,
+      Source = "Demo System",
+      PopulatedAt = DateTime.UtcNow,
+      PopulatedBy = PluginId
+    };
 
-        return SupportedFeatures
-            .Where(f => f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase))
-            .Select(f => f.Key)
-            .ToList();
-    }
-
-    public bool CanHandle(ProfilePopulationMetadata metadata)
+    return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
     {
-        if (!metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase))
-            return false;
+      ("PROGRAM1", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
+      ("PROGRAM1", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
+      ("PROGRAM1", "PAYMENTS") => GenerateProgram1Payments(baseData),
+      ("PROGRAM2", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
+      ("PROGRAM2", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
+      _ => GenerateDefaultData(baseData)
+    };
+  }
 
-        // Check if the provider/key combination is supported
-        return SupportedFeatures.Any(f => 
-            f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
-            f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
+  private object GenerateProgram1Submissions(object baseData)
+  {
+    return new
     {
-        logger.LogInformation("Demo plugin populating profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}", 
-            metadata.ProfileId, metadata.Provider, metadata.Key);
-
-        try
-        {
-            // Simulate some processing time
-            await Task.Delay(50, cancellationToken);
-
-            var mockProfileData = GenerateMockData(metadata);
-
-            var jsonData = JsonSerializer.Serialize(mockProfileData, new JsonSerializerOptions
+      baseData,
+      Data = new
+      {
+        Submissions = new[]
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            });
-
-            logger.LogInformation("Demo plugin successfully populated profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}", 
-                metadata.ProfileId, metadata.Provider, metadata.Key);
-
-            return new ProfileData(
-                metadata.ProfileId,
-                metadata.PluginId,
-                metadata.Provider,
-                metadata.Key,
-                jsonData);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Demo plugin failed to populate profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}", 
-                metadata.ProfileId, metadata.Provider, metadata.Key);
-            throw;
-        }
-    }
-
-    private object GenerateMockData(ProfilePopulationMetadata metadata)
-    {
-        var baseData = new
-        {
-            ProfileId = metadata.ProfileId,
-            Provider = metadata.Provider,
-            Key = metadata.Key,
-            Source = "Demo System",
-            PopulatedAt = DateTime.UtcNow,
-            PopulatedBy = PluginId
-        };
-
-        return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
-        {
-            ("PROGRAM1", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
-            ("PROGRAM1", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
-            ("PROGRAM1", "PAYMENTS") => GenerateProgram1Payments(baseData),
-            ("PROGRAM2", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
-            ("PROGRAM2", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
-            _ => GenerateDefaultData(baseData)
-        };
-    }
-
-    private object GenerateProgram1Submissions(object baseData)
-    {
-        return new
-        {
-            baseData,
-            Data = new
-            {
-                Submissions = new[]
-                {
                     new
                     {
                         SubmissionId = "PROG1-SUB-001",
@@ -195,93 +195,93 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                         Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
                     }
                 },
-                Summary = new
-                {
-                    TotalSubmissions = 4,
-                    TotalRequestedAmount = 235000,
-                    ApprovedCount = 1,
-                    InProgressCount = 3,
-                    DeclinedCount = 1
-                }
-            }
-        };
-    }
-
-    private object GenerateProgram1OrgInfo(object baseData)
-    {
-        return new
+        Summary = new
         {
-            baseData,
-            Data = new
+          TotalSubmissions = 4,
+          TotalRequestedAmount = 235000,
+          ApprovedCount = 1,
+          InProgressCount = 3,
+          DeclinedCount = 1
+        }
+      }
+    };
+  }
+
+  private object GenerateProgram1OrgInfo(object baseData)
+  {
+    return new
+    {
+      baseData,
+      Data = new
+      {
+        OrganizationInfo = new
+        {
+          OrgName = "Cowichan Exhibition",
+          OrgNumber = "S0003748",
+          OrgStatus = "Active",
+          OrganizationType = "Society",
+          NonRegOrgName = "Shrine Org",
+          OrgSize = "50",
+          FiscalMonth = "Aug",
+          FiscalDay = 1,
+          OrganizationId = "ORG-DEMO-001",
+          LegalName = "Demo Community Health Foundation",
+          DoingBusinessAs = "DCHF",
+          EIN = "12-3456789",
+          Founded = 2010,
+          Address = new
+          {
+            Street = "123 Health Avenue",
+            City = "Wellness City",
+            State = "CA",
+            ZipCode = "90210",
+            Country = "USA"
+          },
+          ContactInfo = new
+          {
+            PrimaryContact = new
             {
-                OrganizationInfo = new
+              Name = "Dr. Sarah Johnson",
+              Title = "Executive Director",
+              Email = "sarah.johnson@dchf.org",
+              Phone = "+1-555-HEALTH"
+            },
+            GrantsContact = new
+            {
+              Name = "Michael Chen",
+              Title = "Grants Manager",
+              Email = "michael.chen@dchf.org",
+              Phone = "+1-555-GRANTS"
+            }
+          },
+          Mission = "To improve community health outcomes through innovative programs and partnerships.",
+          ServicesAreas = new[] { "Healthcare", "Community Wellness", "Health Education", "Prevention Programs" },
+          Certifications = new[]
                 {
-                    OrgName = "Cowichan Exhibition",
-                    OrgNumber = "S0003748",
-                    OrgStatus =  "Active", 
-                    OrganizationType = "Society",
-                    NonRegOrgName = "Shrine Org",
-                    OrgSize = "50",
-                    FiscalMonth = "Aug",
-                    FiscalDay = 1,
-                    OrganizationId = "ORG-DEMO-001",
-                    LegalName = "Demo Community Health Foundation",
-                    DoingBusinessAs = "DCHF",
-                    EIN = "12-3456789",
-                    Founded = 2010,
-                    Address = new
-                    {
-                        Street = "123 Health Avenue",
-                        City = "Wellness City",
-                        State = "CA",
-                        ZipCode = "90210",
-                        Country = "USA"
-                    },
-                    ContactInfo = new
-                    {
-                        PrimaryContact = new
-                        {
-                            Name = "Dr. Sarah Johnson",
-                            Title = "Executive Director",
-                            Email = "sarah.johnson@dchf.org",
-                            Phone = "+1-555-HEALTH"
-                        },
-                        GrantsContact = new
-                        {
-                            Name = "Michael Chen",
-                            Title = "Grants Manager",
-                            Email = "michael.chen@dchf.org",
-                            Phone = "+1-555-GRANTS"
-                        }
-                    },
-                    Mission = "To improve community health outcomes through innovative programs and partnerships.",
-                    ServicesAreas = new[] { "Healthcare", "Community Wellness", "Health Education", "Prevention Programs" },
-                    Certifications = new[]
-                    {
                         new { Type = "CARF Accreditation", ValidUntil = DateTime.UtcNow.AddYears(2) },
                         new { Type = "State Health Department License", ValidUntil = DateTime.UtcNow.AddYears(1) }
                     },
-                    Program1Specific = new
-                    {
-                        EligibilityStatus = "Verified",
-                        LastAuditDate = DateTime.UtcNow.AddMonths(-6),
-                        ComplianceScore = 95,
-                        SpecialDesignations = new[] { "Rural Health Clinic", "FQHC Look-Alike" }
-                    }
-                }
-            }
-        };
-    }
+          Program1Specific = new
+          {
+            EligibilityStatus = "Verified",
+            LastAuditDate = DateTime.UtcNow.AddMonths(-6),
+            ComplianceScore = 95,
+            SpecialDesignations = new[] { "Rural Health Clinic", "FQHC Look-Alike" }
+          }
+        }
+      }
+    };
+  }
 
-    private object GenerateProgram1Payments(object baseData)
+  private object GenerateProgram1Payments(object baseData)
+  {
+    return new
     {
-        return new
-        {
-            baseData,
-            Data = new
+      baseData,
+      Data = new
+      {
+        Payments = new[]
             {
-                Payments = new[]
-                {
                     new
                     {
                         PaymentId = "PAY-PROG1-001",
@@ -326,27 +326,27 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                         }
                     }
                 },
-                PaymentSummary = new
-                {
-                    TotalAwardAmount = 85000,
-                    TotalPaid = 0,
-                    TotalPending = 85000,
-                    NextPaymentDue = DateTime.UtcNow.AddMonths(1),
-                    NextPaymentAmount = 25500
-                }
-            }
-        };
-    }
-
-    private object GenerateProgram2Submissions(object baseData)
-    {
-        return new
+        PaymentSummary = new
         {
-            baseData,
-            Data = new
+          TotalAwardAmount = 85000,
+          TotalPaid = 0,
+          TotalPending = 85000,
+          NextPaymentDue = DateTime.UtcNow.AddMonths(1),
+          NextPaymentAmount = 25500
+        }
+      }
+    };
+  }
+
+  private object GenerateProgram2Submissions(object baseData)
+  {
+    return new
+    {
+      baseData,
+      Data = new
+      {
+        Submissions = new[]
             {
-                Submissions = new[]
-                {
                     new
                     {
                         SubmissionId = "PROG2-SUB-001",
@@ -402,97 +402,97 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                         Categories = new[] { "Infrastructure", "Rural Development", "Technology Access" }
                     }
                 },
-                Summary = new
-                {
-                    TotalSubmissions = 3,
-                    TotalRequestedAmount = 845000,
-                    ApprovedCount = 1,
-                    UnderReviewCount = 2
-                }
-            }
-        };
-    }
-
-    private object GenerateProgram2OrgInfo(object baseData)
-    {
-        return new
+        Summary = new
         {
-            baseData,
-            Data = new
+          TotalSubmissions = 3,
+          TotalRequestedAmount = 845000,
+          ApprovedCount = 1,
+          UnderReviewCount = 2
+        }
+      }
+    };
+  }
+
+  private object GenerateProgram2OrgInfo(object baseData)
+  {
+    return new
+    {
+      baseData,
+      Data = new
+      {
+        OrganizationInfo = new
+        {
+          OrgName = "Hub Tech",
+          OrgNumber = "S1113734",
+          OrgStatus = "Active",
+          OrganizationType = "Educational Nonprofit",
+          NonRegOrgName = "Digi Org",
+          OrgSize = "30",
+          FiscalMonth = "Jul",
+          FiscalDay = 23,
+          OrganizationId = "ORG-DEMO-002",
+          LegalName = "Demo Educational Technology Consortium",
+          DoingBusinessAs = "DETC",
+          EIN = "98-7654321",
+          Founded = 2015,
+          Address = new
+          {
+            Street = "456 Innovation Drive",
+            City = "Tech Valley",
+            State = "TX",
+            ZipCode = "75001",
+            Country = "USA"
+          },
+          ContactInfo = new
+          {
+            PrimaryContact = new
             {
-                OrganizationInfo = new
+              Name = "Dr. Maria Rodriguez",
+              Title = "Chief Executive Officer",
+              Email = "maria.rodriguez@detc.edu",
+              Phone = "+1-555-TECH-ED"
+            },
+            GrantsContact = new
+            {
+              Name = "James Liu",
+              Title = "Director of Development",
+              Email = "james.liu@detc.edu",
+              Phone = "+1-555-DEV-FUND"
+            }
+          },
+          Mission = "To bridge the digital divide through innovative educational technology solutions and comprehensive training programs.",
+          ServicesAreas = new[] { "Educational Technology", "Digital Literacy", "STEM Education", "Teacher Training" },
+          Certifications = new[]
                 {
-                    OrgName = "Hub Tech",
-                    OrgNumber = "S1113734",
-                    OrgStatus = "Active",
-                    OrganizationType = "Educational Nonprofit",
-                    NonRegOrgName = "Digi Org",
-                    OrgSize = "30",
-                    FiscalMonth = "Jul",
-                    FiscalDay = 23,
-                    OrganizationId = "ORG-DEMO-002",
-                    LegalName = "Demo Educational Technology Consortium",
-                    DoingBusinessAs = "DETC",
-                    EIN = "98-7654321",
-                    Founded = 2015,
-                    Address = new
-                    {
-                        Street = "456 Innovation Drive",
-                        City = "Tech Valley",
-                        State = "TX",
-                        ZipCode = "75001",
-                        Country = "USA"
-                    },
-                    ContactInfo = new
-                    {
-                        PrimaryContact = new
-                        {
-                            Name = "Dr. Maria Rodriguez",
-                            Title = "Chief Executive Officer",
-                            Email = "maria.rodriguez@detc.edu",
-                            Phone = "+1-555-TECH-ED"
-                        },
-                        GrantsContact = new
-                        {
-                            Name = "James Liu",
-                            Title = "Director of Development",
-                            Email = "james.liu@detc.edu",
-                            Phone = "+1-555-DEV-FUND"
-                        }
-                    },
-                    Mission = "To bridge the digital divide through innovative educational technology solutions and comprehensive training programs.",
-                    ServicesAreas = new[] { "Educational Technology", "Digital Literacy", "STEM Education", "Teacher Training" },
-                    Certifications = new[]
-                    {
                         new { Type = "Department of Education Partnership", ValidUntil = DateTime.UtcNow.AddYears(3) },
                         new { Type = "Technology Integration Certification", ValidUntil = DateTime.UtcNow.AddYears(2) }
                     },
-                    Program2Specific = new
-                    {
-                        EligibilityStatus = "Verified",
-                        LastTechAudit = DateTime.UtcNow.AddMonths(-3),
-                        InnovationScore = 88,
-                        SpecialDesignations = new[] { "STEM Education Hub", "Rural Technology Center" },
-                        Partnerships = new[] { "State University System", "Tech Industry Coalition", "Rural Education Network" }
-                    }
-                }
-            }
-        };
-    }
+          Program2Specific = new
+          {
+            EligibilityStatus = "Verified",
+            LastTechAudit = DateTime.UtcNow.AddMonths(-3),
+            InnovationScore = 88,
+            SpecialDesignations = new[] { "STEM Education Hub", "Rural Technology Center" },
+            Partnerships = new[] { "State University System", "Tech Industry Coalition", "Rural Education Network" }
+          }
+        }
+      }
+    };
+  }
 
-    private object GenerateDefaultData(object baseData)
+  private object GenerateDefaultData(object baseData)
+  {
+    return new
     {
-        return new
-        {
-            baseData,
-            Data = new
+      baseData,
+      Data = new
+      {
+        Message = "Demo data available for:",
+        AvailableProviders = new[] { "Program1", "Program2" },
+        AvailableKeys = new[] { "Submissions", "OrgInfo", "Payments" },
+        Instructions = "Use Provider and Key parameters to get specific mock data",
+        Examples = new[]
             {
-                Message = "Demo data available for:",
-                AvailableProviders = new[] { "Program1", "Program2" },
-                AvailableKeys = new[] { "Submissions", "OrgInfo", "Payments" },
-                Instructions = "Use Provider and Key parameters to get specific mock data",
-                Examples = new[]
-                {
                     "Provider=Program1, Key=Submissions - Get grant application submissions for Program1",
                     "Provider=Program1, Key=OrgInfo - Get organization information for Program1",
                     "Provider=Program1, Key=Payments - Get payment information for Program1",
@@ -500,7 +500,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
                     "Provider=Program2, Key=OrgInfo - Get organization information for Program2",
                     "Provider=Program2, Key=Payments - Get payment information for Program2"
                 }
-            }
-        };
-    }
+      }
+    };
+  }
 }

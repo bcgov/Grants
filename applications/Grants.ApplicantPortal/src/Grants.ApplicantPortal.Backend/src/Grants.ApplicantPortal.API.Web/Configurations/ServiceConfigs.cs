@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.Email;
 using Grants.ApplicantPortal.API.Infrastructure;
+using Grants.ApplicantPortal.API.DataAccess;
 using Grants.ApplicantPortal.API.Infrastructure.Email;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
@@ -19,6 +20,7 @@ public static class ServiceConfigs
     logger.LogInformation("=== END DIAGNOSTICS ===");
 
     services.AddInfrastructureServices(builder.Configuration, logger)
+            .AddDataAcccessServices(logger)
             .AddMediatrConfigs()
             .AddKeycloakAuthentication(builder.Configuration, logger)
             .AddAuthorizationPolicies(logger)

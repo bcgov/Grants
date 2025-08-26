@@ -7,7 +7,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Grants.ApplicantPortal.API.Core\Grants.ApplicantPortal.API.Core.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Core.Features\Grants.ApplicantPortal.API.Core.Features.csproj" />
   </ItemGroup>
 
 </Project>

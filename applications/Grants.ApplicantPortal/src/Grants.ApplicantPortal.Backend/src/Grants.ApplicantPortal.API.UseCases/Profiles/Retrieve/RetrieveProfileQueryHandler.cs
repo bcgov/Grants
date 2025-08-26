@@ -1,5 +1,5 @@
-﻿using Grants.ApplicantPortal.API.Core.Plugins;
-using Grants.ApplicantPortal.API.Core.Profiles.ProfileAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Microsoft.Extensions.Options;
 
 namespace Grants.ApplicantPortal.API.UseCases.Profiles.Retrieve;

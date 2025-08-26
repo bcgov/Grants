@@ -1,6 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
-
-namespace Grants.ApplicantPortal.API.UnitTests.Core.ContributorAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
 
 public class ContributorConstructor
 {

@@ -1,4 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Core.Plugins.External;
 using System.Text.Json;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Plugins.Unity;
@@ -6,15 +7,26 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Plugins.Unity;
 /// <summary>
 /// Unity profile plugin for populating profile data from Unity systems
 /// </summary>
-public class UnityProfilePlugin(ILogger<UnityProfilePlugin> logger) : IProfilePlugin
+public class UnityProfilePlugin : IProfilePlugin
 {
+    private readonly ILogger<UnityProfilePlugin> _logger;
+    private readonly IExternalServiceClient _externalServiceClient;
+
+    public UnityProfilePlugin(
+        ILogger<UnityProfilePlugin> logger,
+        IExternalServiceClient externalServiceClient)
+    {
+        _logger = logger;
+        _externalServiceClient = externalServiceClient;
+    }
+
     public string PluginId => "UNITY";
 
     private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
     {
-        new("GRANT1", "SUBMISSIONS", "Unity submissions profile data"),
-        new("GRANT2", "ORGINFO", "Unity organization information"),
-        new("GRANT3", "PAYMENTS", "Unity payments information")
+        new("UNITY", "PROFILE", "Unity user profile data"),
+        new("UNITY", "EMPLOYMENT", "Unity employment information"),
+        new("UNITY", "SECURITY", "Unity security clearance data")
     };
 
     public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
@@ -54,35 +66,90 @@ public class UnityProfilePlugin(ILogger<UnityProfilePlugin> logger) : IProfilePl
 
     public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Unity plugin populating profile for ProfileId: {ProfileId}", metadata.ProfileId);
+        _logger.LogInformation("Unity plugin populating profile for ProfileId: {ProfileId}", metadata.ProfileId);
 
         try
         {
-            // Mock implementation - in real scenario, this would call Unity APIs
-            await Task.Delay(100, cancellationToken); // Simulate API call delay
+            // Use the external service client to get data from Unity APIs
+            var response = await CallUnityServiceAsync(metadata, cancellationToken);
 
-            var mockProfileData = GenerateMockData(metadata);
-
-            var jsonData = JsonSerializer.Serialize(mockProfileData, new JsonSerializerOptions
+            if (!response.IsSuccess)
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            });
+                _logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}", 
+                    metadata.ProfileId, response.ErrorMessage);
+                
+                // Fall back to mock data if external service fails
+                _logger.LogWarning("Falling back to mock data for ProfileId: {ProfileId}", metadata.ProfileId);
+                var mockData = GenerateMockData(metadata);
+                var mockJsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true
+                });
 
-            logger.LogInformation("Unity plugin successfully populated profile for ProfileId: {ProfileId}", metadata.ProfileId);
+                return new ProfileData(
+                    metadata.ProfileId,
+                    metadata.PluginId,
+                    metadata.Provider,
+                    metadata.Key,
+                    mockJsonData);
+            }
+
+            _logger.LogInformation("Unity plugin successfully populated profile for ProfileId: {ProfileId}", metadata.ProfileId);
 
             return new ProfileData(
                 metadata.ProfileId,
                 metadata.PluginId,
                 metadata.Provider,
                 metadata.Key,
-                jsonData);
+                response.Data!);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unity plugin failed to populate profile for ProfileId: {ProfileId}", metadata.ProfileId);
+            _logger.LogError(ex, "Unity plugin failed to populate profile for ProfileId: {ProfileId}", metadata.ProfileId);
             throw;
         }
+    }
+
+    private async Task<ExternalServiceResponse<string>> CallUnityServiceAsync(
+        ProfilePopulationMetadata metadata, 
+        CancellationToken cancellationToken)
+    {
+        var endpoint = BuildEndpoint(metadata.Provider, metadata.Key, metadata.ProfileId);
+        
+        var request = new ExternalServiceRequest
+        {
+            Endpoint = endpoint,
+            Method = HttpMethod.Get,
+            QueryParameters = new Dictionary<string, string>
+            {
+                ["profileId"] = metadata.ProfileId.ToString(),
+                ["provider"] = metadata.Provider,
+                ["key"] = metadata.Key
+            }
+        };
+
+        // Add any additional data as query parameters
+        if (metadata.AdditionalData?.Any() == true)
+        {
+            foreach (var kvp in metadata.AdditionalData)
+            {
+                request.QueryParameters[kvp.Key] = kvp.Value?.ToString() ?? string.Empty;
+            }
+        }
+
+        return await _externalServiceClient.CallAsync(PluginId, request, cancellationToken);
+    }
+
+    private static string BuildEndpoint(string provider, string key, Guid profileId)
+    {
+        return (provider?.ToUpper(), key?.ToUpper()) switch
+        {
+            ("UNITY", "PROFILE") => $"/api/v1/profiles/{profileId}",
+            ("UNITY", "EMPLOYMENT") => $"/api/v1/profiles/{profileId}/employment",
+            ("UNITY", "SECURITY") => $"/api/v1/profiles/{profileId}/security",
+            _ => $"/api/v1/profiles/{profileId}/data"
+        };
     }
 
     private object GenerateMockData(ProfilePopulationMetadata metadata)
@@ -92,9 +159,10 @@ public class UnityProfilePlugin(ILogger<UnityProfilePlugin> logger) : IProfilePl
             ProfileId = metadata.ProfileId,
             Provider = metadata.Provider,
             Key = metadata.Key,
-            Source = "Unity",
+            Source = "Unity (Mock)",
             PopulatedAt = DateTime.UtcNow,
-            PopulatedBy = PluginId
+            PopulatedBy = PluginId,
+            IsMockData = true
         };
 
         return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch

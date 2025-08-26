@@ -1,4 +1,7 @@
-﻿namespace Grants.ApplicantPortal.API.UnitTests.UseCases.Contributors;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
+using Grants.ApplicantPortal.API.UseCases.Contributors.Create;
+
+namespace Grants.ApplicantPortal.API.UnitTests.UseCases.Contributors;
 
 public class CreateContributorHandlerHandle
 {
