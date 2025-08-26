@@ -21,6 +21,62 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Nest Create-related files under Create.cs -->
+    <Compile Update="Contributors\Create.CreateContributorRequest.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Create.CreateContributorResponse.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Create.CreateContributorValidator.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest Delete-related files under Delete.cs -->
+    <Compile Update="Contributors\Delete.DeleteContributorRequest.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Delete.DeleteContributorValidator.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest GetById-related files under GetById.cs -->
+    <Compile Update="Contributors\GetById.GetContributorByIdRequest.cs">
+      <DependentUpon>GetById.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\GetById.GetContributorValidator.cs">
+      <DependentUpon>GetById.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest List-related files under List.cs -->
+    <Compile Update="Contributors\List.ContributorListResponse.cs">
+      <DependentUpon>List.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest Update-related files under Update.cs -->
+    <Compile Update="Contributors\Update.UpdateContributorRequest.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Update.UpdateContributorResponse.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Update.UpdateContributorValidator.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest RetrieveProfile-related files under RetrieveProfile.cs -->
+    <Compile Update="Profiles\RetrieveProfile.Request.cs">
+      <DependentUpon>RetrieveProfile.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Profiles\RetrieveProfile.Response.cs">
+      <DependentUpon>RetrieveProfile.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Profiles\RetrieveProfile.Validator.cs">
+      <DependentUpon>RetrieveProfile.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ardalis.ListStartupServices" />
     <PackageReference Include="Ardalis.Result" />
     <PackageReference Include="Ardalis.Result.AspNetCore" />
