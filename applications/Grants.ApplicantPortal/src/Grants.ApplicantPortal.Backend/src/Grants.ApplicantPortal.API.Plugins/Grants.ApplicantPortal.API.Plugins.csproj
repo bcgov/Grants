@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Core.Features\Grants.ApplicantPortal.API.Core.Features.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Core\Grants.ApplicantPortal.API.Core.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Infrastructure\Grants.ApplicantPortal.API.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

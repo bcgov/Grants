@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Plugins.External;
+﻿using Grants.ApplicantPortal.API.Core;
 
 namespace Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints.Contributors.Mocks;
 

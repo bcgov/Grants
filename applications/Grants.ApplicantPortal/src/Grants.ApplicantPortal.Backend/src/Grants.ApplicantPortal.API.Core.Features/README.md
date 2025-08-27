@@ -1,4 +1,4 @@
-﻿## Core (Domain Model) Project
+﻿## Core Project + Core.Features (Domain Model)
 
 In Clean Architecture, the central focus should be on Entities and business rules.
 

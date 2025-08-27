@@ -30,7 +30,7 @@ public class RetrieveProfileRequest
   public string Key { get; set; } = string.Empty;
 
   /// <summary>
-  /// Additional metadata for plugin-specific requests as key-value pairs
+  /// Additional parameters for plugin-specific requests as key-value pairs
   /// </summary>
-  public Dictionary<string, object>? AdditionalData { get; set; }
+  public Dictionary<string, object>? Parameters { get; set; }
 }

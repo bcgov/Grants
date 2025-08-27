@@ -2,7 +2,7 @@
 
 namespace Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
 
-public class Contributor(string name) : AuditedEntity, IAggregateRoot
+public class Contributor(string name) : FullAuditedEntity<int>, IAggregateRoot
 {
   // Example of validating primary constructor inputs
   // See: https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/primary-constructors#initialize-base-class

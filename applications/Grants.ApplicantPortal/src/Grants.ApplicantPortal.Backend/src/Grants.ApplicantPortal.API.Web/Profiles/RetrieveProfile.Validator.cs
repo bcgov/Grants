@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Grants.ApplicantPortal.API.Infrastructure.Plugins;
+using Grants.ApplicantPortal.API.Plugins;
 
 namespace Grants.ApplicantPortal.API.Web.Profiles;
 
@@ -39,10 +39,10 @@ public class RetrieveProfileValidator : Validator<RetrieveProfileRequest>
       .When(x => !string.IsNullOrWhiteSpace(x.PluginId) && !string.IsNullOrWhiteSpace(x.Provider) && !string.IsNullOrWhiteSpace(x.Key))
       .WithMessage(x => $"Key '{x.Key}' is not supported by provider '{x.Provider}' in plugin '{x.PluginId}'. Valid keys for this provider: {GetValidKeysMessage(x.PluginId, x.Provider)}");
 
-    RuleFor(x => x.AdditionalData)
+    RuleFor(x => x.Parameters)
       .Must(BeValidDictionary)
-      .When(x => x.AdditionalData != null)
-      .WithMessage("AdditionalData must be a valid dictionary when provided");
+      .When(x => x.Parameters != null)
+      .WithMessage("Parameters must be a valid dictionary when provided");
   }
 
   private static bool BeValidPluginId(string? pluginId)
@@ -116,7 +116,7 @@ public class RetrieveProfileValidator : Validator<RetrieveProfileRequest>
     return keys.Any() ? string.Join(", ", keys) : "none";
   }
 
-  private static bool BeValidDictionary(Dictionary<string, object>? additionalData)
+  private static bool BeValidDictionary(Dictionary<string, object>? parameters)
   {
     // Since we're using a typed Dictionary, basic validation is sufficient
     // Additional business rules can be added here if needed

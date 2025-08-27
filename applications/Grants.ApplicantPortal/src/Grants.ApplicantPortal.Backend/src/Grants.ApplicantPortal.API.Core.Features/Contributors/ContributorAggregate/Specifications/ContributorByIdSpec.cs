@@ -1,6 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
-
-namespace Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate.Specifications;
+﻿namespace Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate.Specifications;
 
 public class ContributorByIdSpec : Specification<Contributor>
 {

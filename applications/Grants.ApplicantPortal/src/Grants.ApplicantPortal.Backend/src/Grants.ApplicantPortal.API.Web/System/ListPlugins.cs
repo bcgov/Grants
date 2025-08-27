@@ -1,5 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Infrastructure.Plugins;
-using Grants.ApplicantPortal.API.Core.Plugins;
+﻿using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.Core.Plugins;
 
 namespace Grants.ApplicantPortal.API.Web.System;

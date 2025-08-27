@@ -26,13 +26,13 @@ public class RetrieveProfileQueryHandler(
 
     try
     {
-      // First, validate that the ProfileId exists in the database
-      var profile = await profileRepository.GetByIdAsync(request.ProfileId, cancellationToken);
-      if (profile == null)
-      {
-        logger.LogWarning("Profile not found in database for ProfileId: {ProfileId}", request.ProfileId);
-        return Result.NotFound($"Profile with ID {request.ProfileId} not found");
-      }
+      // First, validate that the ProfileId exists in the database -- excluded for now
+      //var profile = await profileRepository.GetByIdAsync(request.ProfileId, cancellationToken);
+      //if (profile == null)
+      //{
+      //  logger.LogWarning("Profile not found in database for ProfileId: {ProfileId}", request.ProfileId);
+      //  return Result.NotFound($"Profile with ID {request.ProfileId} not found");
+      //}
 
       var cacheKey = $"{profileCacheOptions.Value.CacheKeyPrefix}{request.ProfileId}:{request.PluginId}:{request.Provider}:{request.Key}";
 

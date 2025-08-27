@@ -28,7 +28,7 @@ public class RetrieveProfile(IMediator mediator)
   public override async Task HandleAsync(RetrieveProfileRequest request,
     CancellationToken ct)
   {
-    var query = new RetrieveProfileQuery(request.ProfileId, request.PluginId, request.Provider, request.Key, request.AdditionalData);
+    var query = new RetrieveProfileQuery(request.ProfileId, request.PluginId, request.Provider, request.Key, request.Parameters);
 
     var result = await mediator.Send(query, ct);
 

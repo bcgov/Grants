@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Plugins.PluginConfigurations.PluginConfigurationAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.PluginConfigurations.PluginConfigurationAggregate;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Data.Config;
 

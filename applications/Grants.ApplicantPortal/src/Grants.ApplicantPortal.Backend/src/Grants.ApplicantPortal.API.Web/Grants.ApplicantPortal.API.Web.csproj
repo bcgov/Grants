@@ -22,45 +22,45 @@
 
   <ItemGroup>
     <!-- Nest Create-related files under Create.cs -->
-    <Compile Update="Contributors\Create.CreateContributorRequest.cs">
+    <Compile Update="Contributors\Create.Request.cs">
       <DependentUpon>Create.cs</DependentUpon>
     </Compile>
-    <Compile Update="Contributors\Create.CreateContributorResponse.cs">
+    <Compile Update="Contributors\Create.Response.cs">
       <DependentUpon>Create.cs</DependentUpon>
     </Compile>
-    <Compile Update="Contributors\Create.CreateContributorValidator.cs">
+    <Compile Update="Contributors\Create.Validator.cs">
       <DependentUpon>Create.cs</DependentUpon>
     </Compile>
     
     <!-- Nest Delete-related files under Delete.cs -->
-    <Compile Update="Contributors\Delete.DeleteContributorRequest.cs">
+    <Compile Update="Contributors\Delete.Request.cs">
       <DependentUpon>Delete.cs</DependentUpon>
     </Compile>
-    <Compile Update="Contributors\Delete.DeleteContributorValidator.cs">
+    <Compile Update="Contributors\Delete.Validator.cs">
       <DependentUpon>Delete.cs</DependentUpon>
     </Compile>
     
     <!-- Nest GetById-related files under GetById.cs -->
-    <Compile Update="Contributors\GetById.GetContributorByIdRequest.cs">
+    <Compile Update="Contributors\GetById.Request.cs">
       <DependentUpon>GetById.cs</DependentUpon>
     </Compile>
-    <Compile Update="Contributors\GetById.GetContributorValidator.cs">
+    <Compile Update="Contributors\GetById.Validator.cs">
       <DependentUpon>GetById.cs</DependentUpon>
     </Compile>
     
     <!-- Nest List-related files under List.cs -->
-    <Compile Update="Contributors\List.ContributorListResponse.cs">
+    <Compile Update="Contributors\List.Response.cs">
       <DependentUpon>List.cs</DependentUpon>
     </Compile>
     
     <!-- Nest Update-related files under Update.cs -->
-    <Compile Update="Contributors\Update.UpdateContributorRequest.cs">
+    <Compile Update="Contributors\Update.Request.cs">
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
-    <Compile Update="Contributors\Update.UpdateContributorResponse.cs">
+    <Compile Update="Contributors\Update.Response.cs">
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
-    <Compile Update="Contributors\Update.UpdateContributorValidator.cs">
+    <Compile Update="Contributors\Update.Validator.cs">
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
     
@@ -74,6 +74,29 @@
     <Compile Update="Profiles\RetrieveProfile.Validator.cs">
       <DependentUpon>RetrieveProfile.cs</DependentUpon>
     </Compile>
+
+    <!-- Nest CreatePluginConfiguration-related files under Create.cs -->
+    <Compile Update="PluginConfigurations\Create.Request.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Create.Response.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Create.Validator.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest UpdatePluginConfiguration-related files under Update.cs -->
+    <Compile Update="PluginConfigurations\Update.Request.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Update.Response.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Update.Validator.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    
   </ItemGroup>
 
   <ItemGroup>
@@ -94,8 +117,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Grants.ApplicantPortal.API.DataAccess\Grants.ApplicantPortal.API.DataAccess.csproj" />
     <ProjectReference Include="..\Grants.ApplicantPortal.API.Infrastructure\Grants.ApplicantPortal.API.Infrastructure.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Plugins\Grants.ApplicantPortal.API.Plugins.csproj" />
     <ProjectReference Include="..\Grants.ApplicantPortal.API.UseCases\Grants.ApplicantPortal.API.UseCases.csproj" />
     <ProjectReference Include="..\Grants.ApplicantPortal.API.ServiceDefaults\Grants.ApplicantPortal.API.ServiceDefaults.csproj" />
   </ItemGroup>

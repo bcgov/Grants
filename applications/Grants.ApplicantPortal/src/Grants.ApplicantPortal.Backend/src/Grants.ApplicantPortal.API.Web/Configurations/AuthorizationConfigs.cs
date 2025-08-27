@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Grants.ApplicantPortal.API.Web.Auth;
-using System.Security.Claims;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;

@@ -1,7 +1,8 @@
 ﻿using Grants.ApplicantPortal.API.Core.Email;
 using Grants.ApplicantPortal.API.Infrastructure;
-using Grants.ApplicantPortal.API.DataAccess;
 using Grants.ApplicantPortal.API.Infrastructure.Email;
+using Grants.ApplicantPortal.API.Core.Features;
+using Grants.ApplicantPortal.API.Plugins;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
@@ -19,8 +20,9 @@ public static class ServiceConfigs
     logger.LogInformation("Redis Connection String: {RedisConnectionString}", string.IsNullOrEmpty(redisConnectionString) ? "NOT SET" : redisConnectionString);
     logger.LogInformation("=== END DIAGNOSTICS ===");
 
-    services.AddInfrastructureServices(builder.Configuration, logger)
-            .AddDataAcccessServices(logger)
+    services.AddInfrastructureServices(builder.Configuration, logger)            
+            .AddFeatureServices(logger)
+            .AddPluginServices(logger)
             .AddMediatrConfigs()
             .AddKeycloakAuthentication(builder.Configuration, logger)
             .AddAuthorizationPolicies(logger)
