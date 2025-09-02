@@ -1,5 +1,5 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
-using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate.Specifications;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate.Specifications;
+using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
 
 namespace Grants.ApplicantPortal.API.UseCases.Contributors.Get;
 

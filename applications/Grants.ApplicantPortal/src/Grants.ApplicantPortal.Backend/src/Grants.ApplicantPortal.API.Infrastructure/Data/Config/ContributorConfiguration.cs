@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Data.Config;
 

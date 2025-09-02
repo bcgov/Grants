@@ -1,8 +1,7 @@
 ﻿using Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints.Contributors.Mocks;
 using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.UseCases.Contributors.List;
-using Microsoft.EntityFrameworkCore;
-using Ardalis.SharedKernel;
+using Microsoft.Extensions.Configuration;
 
 namespace Grants.ApplicantPortal.API.FunctionalTests;
 
@@ -10,7 +9,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 {
   protected override IHost CreateHost(IHostBuilder builder)
   {
-    builder.UseEnvironment("Development");
+    builder.UseEnvironment("Testing"); // Use a specific testing environment
     var host = builder.Build();
     host.Start();
 
@@ -89,6 +88,15 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 
       // Register the test-specific query service that works with in-memory database
       services.AddScoped<IListContributorsQueryService, InMemoryListContributorsQueryService>();
+    });
+
+    // Override configuration for testing to disable resilience
+    builder.ConfigureAppConfiguration((context, config) =>
+    {
+      config.AddInMemoryCollection(new Dictionary<string, string?>
+      {
+        ["HttpClient:DisableResilience"] = "true"
+      });
     });
   }
 }

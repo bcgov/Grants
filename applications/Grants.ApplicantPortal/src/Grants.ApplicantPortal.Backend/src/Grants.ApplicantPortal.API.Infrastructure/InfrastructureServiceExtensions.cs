@@ -1,17 +1,6 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.Interfaces;
-using Grants.ApplicantPortal.API.Core.Contributors.Services;
-using Grants.ApplicantPortal.API.Infrastructure.Data;
-using Grants.ApplicantPortal.API.Infrastructure.Plugins;
-using Grants.ApplicantPortal.API.Infrastructure.Plugins.Unity;
-using Grants.ApplicantPortal.API.Infrastructure.Plugins.Demo;
+﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
+using Grants.ApplicantPortal.API.Infrastructure.Queries.Contributors;
 using Grants.ApplicantPortal.API.UseCases.Contributors.List;
-using Grants.ApplicantPortal.API.Core.Plugins;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Ardalis.GuardClauses;
-using Grants.ApplicantPortal.API.Infrastructure.Data.Queries.Contributors;
 
 namespace Grants.ApplicantPortal.API.Infrastructure;
 
@@ -24,21 +13,38 @@ public static class InfrastructureServiceExtensions
   {
     string? connectionString = config.GetConnectionString("DefaultConnection");
     Guard.Against.Null(connectionString);
-    services.AddDbContext<AppDbContext>(options =>
-     options.UseNpgsql(connectionString));
 
-    services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>))
-           .AddScoped(typeof(IReadRepository<>), typeof(EfRepository<>))
-           .AddScoped<IListContributorsQueryService, ListContributorsQueryService>()
-           .AddScoped<IDeleteContributorService, DeleteContributorService>();
-
-    // Register profile plugins
-    services.AddScoped<IProfilePlugin, UnityProfilePlugin>();
-    services.AddScoped<IProfilePlugin, DemoProfilePlugin>();
-    services.AddScoped<IProfilePluginFactory, ProfilePluginFactory>();
+    // Add DbContext with PostgreSQL provider
+    services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+    // Register repository support services
+    services.AddRepositorySupport();
+    // Register Custom Queries
+    services.AddQueries();
 
     logger.LogInformation("{Project} services registered", "Infrastructure");
 
+    return services;
+  }
+
+  /// <summary>
+  /// Adds repository support services including generic repositories and unit of work
+  /// </summary>
+  internal static IServiceCollection AddRepositorySupport(this IServiceCollection services)
+  {
+    // Register any additional repository support services here
+    services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+    services.AddScoped(typeof(IReadRepository<>), typeof(EfRepository<>));
+    return services;
+  }
+
+  /// <summary>
+  /// Adds custom queries
+  /// </summary>
+  /// <param name="services"></param>
+  /// <returns></returns>
+  internal static IServiceCollection AddQueries(this IServiceCollection services)
+  {
+    services.AddScoped(typeof(IListContributorsQueryService), typeof(ListContributorsQueryService));
     return services;
   }
 }

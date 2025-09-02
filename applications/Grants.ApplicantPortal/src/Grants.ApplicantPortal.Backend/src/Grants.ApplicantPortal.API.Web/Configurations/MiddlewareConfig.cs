@@ -1,6 +1,6 @@
 ﻿using Ardalis.ListStartupServices;
 using Grants.ApplicantPortal.API.Infrastructure.Data;
-using Grants.ApplicantPortal.API.Infrastructure.Plugins;
+using Grants.ApplicantPortal.API.Plugins;
 using Microsoft.EntityFrameworkCore;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;

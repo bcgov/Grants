@@ -3,8 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, retry, catchError } from 'rxjs/operators';
 import {
-  BackendResponse,
-  HydrateRequest,
+  BackendResponse,  
   OrganizationData,
   OrganizationResponse,
   SubmissionsResponse,
@@ -19,31 +18,17 @@ export class ApplicantInfoService {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Hydrates profile information
-   */
-  private hydrateInfo(
-    profileId: string,
-    pluginId: string,
-    provider: string,
-    key: string,
-    data?: any
-  ): Observable<BackendResponse> {
-    const url = `${this.baseUrl}/Profiles/${profileId}/${pluginId}/${provider}/${key}/hydrate`;
-    const body: HydrateRequest = { data };
-    return this.http.post<BackendResponse>(url, body);
-  }
-
-  /**
    * Gets profile information
    */
   private getInfo(
     profileId: string,
     pluginId: string,
     provider: string,
-    key: string
+    key: string,
+    parameters?: any
   ): Observable<BackendResponse> {
     const url = `${this.baseUrl}/Profiles/${profileId}/${pluginId}/${provider}/${key}`;
-    return this.http.get<BackendResponse>(url);
+    return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
   /**
@@ -94,18 +79,17 @@ export class ApplicantInfoService {
   }
 
   /**
-   * Main method: Hydrates and returns formatted organization information
+   * Main method: Gets formatted organization information
    * This is the only public method you need to call
    */
-  hydrateAndGetOrganizationInfo(
+  getOrganizationInfo(
     profileId: string,
     pluginId: string,
     provider: string,
     key: string,
-    data?: any
+    parameters?: any
   ): Observable<OrganizationResponse> {
-    return this.hydrateInfo(profileId, pluginId, provider, key, data).pipe(
-      switchMap(() => this.getInfo(profileId, pluginId, provider, key)),
+    return this.getInfo(profileId, pluginId, provider, key, parameters).pipe(
       map((response) => this.parseOrganizationResponse(response)),
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
@@ -121,15 +105,14 @@ export class ApplicantInfoService {
   }
 
   //Submissions information
-  hydrateAndGetSubmissionsInfo(
+  getSubmissionsInfo(
     profileId: string,
     pluginId: string,
     provider: string,
     key: string,
-    data?: any
+    parameters?: any
   ): Observable<SubmissionsResponse> {
-    return this.hydrateInfo(profileId, pluginId, provider, key, data).pipe(
-      switchMap(() => this.getInfo(profileId, pluginId, provider, key)),
+    return this.getInfo(profileId, pluginId, provider, key, parameters).pipe(      
       map((response) => this.parseSubmissionsResponse(response)),
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {

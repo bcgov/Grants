@@ -1,5 +1,5 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
-using Grants.ApplicantPortal.API.Core.Contributors.Services;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
+using Grants.ApplicantPortal.API.Core.Features.Contributors.Services;
 
 namespace Grants.ApplicantPortal.API.UnitTests.Core.Services;
 

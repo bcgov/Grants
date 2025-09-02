@@ -1,7 +1,3 @@
-export interface HydrateRequest {
-  data?: any;
-}
-
 export interface BackendResponse {
   profileId: string;
   pluginId: string;

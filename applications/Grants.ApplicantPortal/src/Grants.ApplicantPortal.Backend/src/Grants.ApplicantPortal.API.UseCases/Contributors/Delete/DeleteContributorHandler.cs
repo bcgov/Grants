@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.Interfaces;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.Interfaces;
 
 namespace Grants.ApplicantPortal.API.UseCases.Contributors.Delete;
 

@@ -1,6 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Web.Auth;
-
-namespace Grants.ApplicantPortal.API.Web.Auth;
+﻿namespace Grants.ApplicantPortal.API.Web.Auth;
 
 /// <summary>
 /// Authentication example endpoint showing how to work with user claims and roles

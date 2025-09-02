@@ -1,5 +1,5 @@
-﻿using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
-using Grants.ApplicantPortal.API.Core.Profiles.ProfileAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
+using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Data;
 
