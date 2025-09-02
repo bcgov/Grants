@@ -1,7 +1,6 @@
 ﻿using Ardalis.SharedKernel;
-using Grants.ApplicantPortal.API.Core.Contributors.ContributorAggregate;
+using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
 using Grants.ApplicantPortal.API.UseCases.Contributors.Create;
-using MediatR;
 using System.Reflection;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;

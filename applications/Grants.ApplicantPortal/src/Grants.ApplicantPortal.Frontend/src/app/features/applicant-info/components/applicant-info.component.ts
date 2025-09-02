@@ -37,7 +37,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   // Profile properties
   profileId = ProfileId.DEFAULT;
   pluginId = PluginId.DEMO;
-  provider = Provider.DEMO;
+  provider = Provider.PROGRAM1;
   keyOrgInfo = Key.ORGINFO;
   keySubmissions = Key.SUBMISSIONS;
 
@@ -81,10 +81,10 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
     this.isHydratingOrgInfo = true;
 
     this.applicantInfoService
-      .hydrateAndGetOrganizationInfo(
+      .getOrganizationInfo(
         ProfileId.DEFAULT,
         PluginId.DEMO,
-        Provider.DEMO,
+        Provider.PROGRAM1,
         Key.ORGINFO,
         {}
       )

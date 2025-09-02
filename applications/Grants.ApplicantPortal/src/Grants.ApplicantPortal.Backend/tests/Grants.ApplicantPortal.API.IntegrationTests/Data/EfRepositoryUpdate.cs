@@ -8,7 +8,7 @@ public class EfRepositoryUpdate : BaseEfRepoTestFixture
     // add a Contributor
     var repository = GetRepository();
     var initialName = Guid.NewGuid().ToString();
-    var Contributor = new Core.Contributors.ContributorAggregate.Contributor(initialName);
+    var Contributor = new Core.Features.Contributors.ContributorAggregate.Contributor(initialName);
 
     await repository.AddAsync(Contributor);
 

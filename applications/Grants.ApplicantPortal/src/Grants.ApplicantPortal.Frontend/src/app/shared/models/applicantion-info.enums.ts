@@ -7,7 +7,8 @@ export enum PluginId {
 }
 
 export enum Provider {
-  DEMO = 'DEMO',
+  PROGRAM1 = 'PROGRAM1',
+  PROGRAM2 = 'PROGRAM2',
 }
 
 export enum Key {

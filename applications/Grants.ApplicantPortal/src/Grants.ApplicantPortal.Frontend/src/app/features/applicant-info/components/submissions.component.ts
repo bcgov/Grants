@@ -49,7 +49,7 @@ export class SubmissionsComponent implements OnInit, OnDestroy {
     this.error = null;
 
     this.applicantInfoService
-      .hydrateAndGetSubmissionsInfo(
+      .getSubmissionsInfo(
         this.profileId,
         this.pluginId,
         this.provider,
