@@ -4,6 +4,7 @@ export enum ProfileId {
 
 export enum PluginId {
   DEMO = 'DEMO',
+  UNITY = 'UNITY',
 }
 
 export enum Provider {
