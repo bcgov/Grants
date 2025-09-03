@@ -1,0 +1,138 @@
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  height: 75px;
+  border-bottom: 1px solid var(--bc-blue-80);
+  padding: 1rem;
+
+  // Hide logo section on mobile devices
+  @media (max-width: 767.98px) {
+    display: none;
+  }
+}
+
+.bc-logo {
+  max-width: 60px;
+  height: auto;
+}
+
+.system-title {
+  line-height: 1.5;
+  color: var(--bc-white);
+
+  @media (max-width: 1200px) {
+    .main-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .sub-title {
+      font-size: 0.7rem;
+      color: var(--bc-white);
+    }
+  }
+}
+
+.main-title {
+  font-size: var(--bc-font-size-16);
+  font-weight: 600;
+}
+
+.sub-title {
+  font-size: var(--bc-font-size-14);
+  color: var(--bc-white);
+}
+
+// Make the entire sidebar component a flex container
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// Make aside element flex to fill remaining space
+aside {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.nav-menu {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem;
+  color: var(--bc-white);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.nav-item .nav-icon {
+  font-size: var(--bc-font-size-20);
+  width: 20px;
+  text-align: center;
+}
+
+.info-icon {
+  font-size: var(--bc-font-size-16);
+  margin-right: 0.5rem;
+}
+
+.nav-item:hover {
+  background-color: var(--bc-blue-90);
+}
+
+.nav-item.active {
+  background-color: var(--bc-blue-light);
+}
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--bc-blue-80);
+  color: var(--bc-white);
+  margin-top: auto; // Push footer to the bottom
+}
+
+.funding-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.funding-info i {
+  font-size: var(--bc-font-size-16);
+  color: var(--bc-gold);
+}
+
+.funding-title {
+  font-size: var(--bc-font-size-14);
+  font-weight: 600;
+  color: var(--bc-white);
+  margin-bottom: 0.25rem;
+}
+
+.funding-subtitle {
+  font-size: var(--bc-font-size-14);
+  color: var(--bc-white);
+}
+
+.version {
+  font-size: var(--bc-font-size-13);
+  color: var(--bc-gray);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}

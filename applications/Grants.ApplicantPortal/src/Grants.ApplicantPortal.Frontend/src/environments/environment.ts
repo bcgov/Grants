@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: '/api' // This will be proxied by the frontend server
+  apiUrl: 'https://localhost:7000' // Direct connection to backend for local development
 };
