@@ -1,32 +1,194 @@
-# Frontend Docker Setup
+# Grants Applicant Portal - Frontend
 
-This document provides instructions for building and running the Frontend application using Docker.
+Angular-based frontend application.
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Ensure Docker is installed and running on your system.
+### Local Development
 
-## Build and Run Steps
+```powershell
+# Default mode (fastest for development)
+npm start
 
-1. Navigate to the Frontend directory:
-   ```bash
-   cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
-   ```
+# With API proxy (if backend is not running locally)
+npm run start:with-proxy
+```
 
-2. Build the Docker image:
-   ```bash
-   docker build -t grants-frontend .
-   ```
+### Docker Development
 
-3. Run the Docker container:
-   ```bash
-   docker run -p 8080:80 grants-frontend
-   ```
+```powershell
+# Build and run in Docker
+docker build -t grants-frontend .
+docker run -p 4000:4000 grants-frontend
+```
 
-4. Access the application:
-   - The application will be available at `http://localhost:8080/`.
+## 📋 Architecture
 
-## Notes
+### Server Architecture
 
-- The `Dockerfile` uses a multi-stage build to first compile the Angular application and then serve it using Nginx.
-- Update the `Dockerfile` if additional dependencies or configurations are required.
+| **File** | **Language** | **Purpose** | **Notes** |
+|----------|-------------|-------------|-----------|
+| **`server.js`** | JavaScript | Static files + API proxy | Simple, fast, reliable |
+
+### Key Features
+
+- 🎯 **Fast rendering**: Client-side rendering and routing
+- 🔧 **API proxy support**: Optional backend proxying for development
+- 🐳 **Docker ready**: Containerized deployment
+- 🌍 **Environment-aware**: Different configs for dev/deploy
+
+## 🛠️ Development
+
+### Available Scripts
+
+#### Development
+
+- **Usage**: `npm start`, `npm run start:with-proxy`
+- **Purpose**: Local development server with hot reload
+- **Proxy**: Optional API proxy to backend (when `start:with-proxy`)
+
+#### Building
+
+```powershell
+npm run build              # Deployment build
+npm run build:dev          # Development build  
+npm run watch              # Development build with file watching
+```
+
+#### Serving Built App
+
+```powershell
+npm run serve              # Serve built application
+```
+
+## 🔧 Configuration
+
+### Environment Files
+
+- **environment.ts**: Local development settings
+- **environment.deploy.ts**: Deployment/Docker settings
+
+### Environment Variables
+
+| Variable | Values | Default | Description |
+|----------|--------|---------|-------------|
+| `PORT` | Number | `4000` | Server port |
+| `BACKEND_SERVICE_URL` | URL | `http://backend:5100` | Backend API URL |
+| `ENABLE_API_PROXY` | `true`, `false` | `false` | Enable API proxying |
+
+## 📚 Usage Scenarios
+
+### Docker Deployment
+
+```powershell
+# Build for deployment
+docker build -t grants-frontend .
+
+# Run with custom backend URL
+docker run -e BACKEND_SERVICE_URL=https://api.example.com -p 4000:4000 grants-frontend
+```
+
+## 🏗️ Build Process
+
+| **Scenario** | **Command** | **Output** | **Notes** |
+|-------------|-------------|------------|-----------|
+| **Local Dev** | `npm start` | Dev server | Hot reload, source maps |
+| **Deployment Build** | `npm run build` | `dist/frontend/browser` | Optimized, minified |
+| **Docker** | `docker build` | Container | Deployment build + server |
+
+## 🐳 Docker
+
+### Docker Build
+
+```powershell
+docker build -t grants-frontend .
+```
+
+### Docker Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3000` | Application server port |
+| `BACKEND_SERVICE_URL` | `http://backend:5100` | Backend API URL for Docker environments |
+| `ENABLE_API_PROXY` | `false` | Enable API proxy for local Docker testing |
+
+### API Connection Strategies
+
+1. **Local Development**: Direct connection to `https://localhost:7000`
+2. **Docker Deployment**: Uses `/api` with OpenShift routing to backend
+3. **Local Docker Testing**: Enable proxy with `ENABLE_API_PROXY=true`
+
+### Docker Compose
+
+```powershell
+# Build and run with default settings
+docker-compose up --build frontend
+
+# With API proxy for local testing
+$env:ENABLE_API_PROXY="true"; docker-compose up --build frontend
+
+# Full stack
+docker-compose up --build
+```
+
+## 🎯 Deployment
+
+### Local Testing
+
+```powershell
+npm start                  # Development server with hot reload
+npm run start:with-proxy   # With API proxy to backend
+npm run serve              # Serve built application
+```
+
+### OpenShift Deployment
+
+```yaml
+# Example deployment configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grants-frontend
+spec:
+  template:
+    spec:
+      containers:
+      - name: frontend
+        image: grants-frontend:latest
+        env:
+        - name: PORT
+          value: "3000"
+        # OpenShift handles /api routing to backend service
+```
+
+## 📁 Project Structure
+
+```text
+src/
+├── app/                    # Angular application
+├── environments/          # Environment configurations
+└── styles/                # Global styles
+
+server.js               # Application server (JavaScript)
+package.json               # Dependencies and scripts
+angular.json               # Angular CLI configuration
+Dockerfile                 # Docker build configuration
+```
+
+## 🔍 Troubleshooting
+
+### Port Issues
+
+- Default port: 4000
+- Change with: `PORT=3000 npm run serve`
+
+### API Connection
+
+- Check `BACKEND_SERVICE_URL` environment variable
+- Verify backend is running and accessible
+- Use `ENABLE_API_PROXY=true` for development
+
+### Build Issues
+
+- Clear cache: `ng cache clean`
+- Fresh install: `rm -rf node_modules && npm install`

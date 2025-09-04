@@ -1,0 +1,126 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <Sdk Name="Microsoft.Build.CentralPackageVersions" Version="2.1.3" />
+
+  <PropertyGroup>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <OutputType>Exe</OutputType>
+    <WebProjectMode>true</WebProjectMode>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <UserSecretsId>grants-applicant-portal-web-secrets</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Remove the auto-included appsettings files and re-add them with proper nesting -->
+    <Content Remove="appsettings.Development.json" />
+    
+    <!-- Add them back with proper DependentUpon nesting -->
+    <Content Include="appsettings.Development.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Nest Create-related files under Create.cs -->
+    <Compile Update="Contributors\Create.Request.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Create.Response.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Create.Validator.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest Delete-related files under Delete.cs -->
+    <Compile Update="Contributors\Delete.Request.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Delete.Validator.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest GetById-related files under GetById.cs -->
+    <Compile Update="Contributors\GetById.Request.cs">
+      <DependentUpon>GetById.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\GetById.Validator.cs">
+      <DependentUpon>GetById.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest List-related files under List.cs -->
+    <Compile Update="Contributors\List.Response.cs">
+      <DependentUpon>List.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest Update-related files under Update.cs -->
+    <Compile Update="Contributors\Update.Request.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Update.Response.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contributors\Update.Validator.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    
+    <!-- Nest RetrieveProfile-related files under RetrieveProfile.cs -->
+    <Compile Update="Profiles\RetrieveProfile.Request.cs">
+      <DependentUpon>RetrieveProfile.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Profiles\RetrieveProfile.Response.cs">
+      <DependentUpon>RetrieveProfile.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Profiles\RetrieveProfile.Validator.cs">
+      <DependentUpon>RetrieveProfile.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest CreatePluginConfiguration-related files under Create.cs -->
+    <Compile Update="PluginConfigurations\Create.Request.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Create.Response.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Create.Validator.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest UpdatePluginConfiguration-related files under Update.cs -->
+    <Compile Update="PluginConfigurations\Update.Request.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Update.Response.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="PluginConfigurations\Update.Validator.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.ListStartupServices" />
+    <PackageReference Include="Ardalis.Result" />
+    <PackageReference Include="Ardalis.Result.AspNetCore" />
+    <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="FastEndpoints.Swagger" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Infrastructure\Grants.ApplicantPortal.API.Infrastructure.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.Plugins\Grants.ApplicantPortal.API.Plugins.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.UseCases\Grants.ApplicantPortal.API.UseCases.csproj" />
+    <ProjectReference Include="..\Grants.ApplicantPortal.API.ServiceDefaults\Grants.ApplicantPortal.API.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

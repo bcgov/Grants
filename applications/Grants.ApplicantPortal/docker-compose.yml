@@ -1,0 +1,87 @@
+name: grants
+
+services:
+  backend:
+    build:
+      context: ./src/Grants.ApplicantPortal.Backend
+      dockerfile: Dockerfile
+    image: grants-backend
+    container_name: grants-backend
+    ports:
+      - "5100:5100"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=GrantsDB;Username=postgres;Password=localdev
+      - ConnectionStrings__Redis=redis:6379
+    networks:
+      - grants-network
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./src/Grants.ApplicantPortal.Frontend
+      dockerfile: Dockerfile
+    image: grants-frontend
+    container_name: grants-frontend
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - ENABLE_API_PROXY=true
+      - BACKEND_SERVICE_URL=http://backend:5100
+    networks:
+      - grants-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    container_name: grants-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=GrantsDB
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=localdev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - grants-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: grants-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - grants-network
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: grants-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    networks:
+      - grants-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+networks:
+  grants-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:

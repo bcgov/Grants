@@ -1,0 +1,49 @@
+.dropdown {
+  .btn {
+    border: none;
+    background: none;
+    color: inherit;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: inherit;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+    }
+  }
+}
+
+.dropdown-menu {
+  border: 1px solid var(--bs-border-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  min-width: 200px;
+  margin-top: 0.5rem;
+}
+
+// Mobile specific styles
+.mobile-dropdown {
+  .btn {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: var(--bc-white);
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+      color: var(--bc-white);
+    }
+  }
+}
+
+// Desktop header specific styles
+.header-dropdown {
+  .btn {
+    color: var(--bc-blue);
+
+    &:hover {
+      background-color: var(--bs-light);
+      color: var(--bc-blue);
+    }
+  }
+}

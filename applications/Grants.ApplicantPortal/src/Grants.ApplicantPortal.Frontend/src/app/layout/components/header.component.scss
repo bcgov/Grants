@@ -1,0 +1,45 @@
+.header {
+  background-color: var(--bc-white);
+  color: var(--bc-primary);
+  padding: 1.1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.page-title {
+  font-size: var(--bc-font-size-18);
+  font-weight: 600;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logout-btn {
+  color: var(--bc-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  align-items: center;
+  text-decoration: none;
+}
+
+@media (max-width: 767.98px) {
+  .header-right app-user-dropdown {
+    display: none;
+  }
+
+  .header {
+    padding: 0.8rem 2rem 0.6rem 2rem;
+  }
+}

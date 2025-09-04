@@ -1,0 +1,53 @@
+<div class="applicant-info-content">
+  <div class="app-info">
+    <span class="app-id">{{ applicantInfo?.id }}</span>
+    <span class="app-name">{{ applicantInfo?.organization }}</span>
+  </div>
+
+  <div class="content-grid">
+    <app-organization-info
+      [organizationInfo]="organizationInfo"
+      [isLoading]="isLoading"
+      (saveOrganization)="onSaveOrganization()"
+      (searchResultSelected)="onSearchResultSelected($event)"
+    ></app-organization-info>
+
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div>
+          <h3 class="mb-0 ap-pad-10">Submissions</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <app-submissions
+          [profileId]="profileId"
+          [pluginId]="pluginId"
+          [provider]="provider"
+          [key]="keySubmissions"
+        ></app-submissions>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div>
+          <h3 class="mb-0 ap-pad-10">Contact Information</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        &nbsp;<br />&nbsp;<br />&nbsp;<br />&nbsp;<br />&nbsp;<br />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <div>
+          <h3 class="mb-0 ap-pad-10">Address Information</h3>
+        </div>
+      </div>
+      <div class="card-body"></div>
+    </div>
+  </div>
+</div>

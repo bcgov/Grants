@@ -3,22 +3,21 @@ import { BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
+import { routes } from './app.routes';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  declarations: [
-    AppComponent,
-  ],
   imports: [
     BrowserModule,
     CommonModule,
     FormsModule,
+    RouterModule.forRoot(routes),
+    AppComponent,
   ],
-  providers: [
-    provideHttpClient(),
-  ],
-  bootstrap: [AppComponent]
+  providers: [provideHttpClient()],
+  bootstrap: [],
 })
-export class AppModule { }
+export class AppModule {}

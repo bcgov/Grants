@@ -209,3 +209,7 @@ jobs:
     - name: Disconnect docker from OpenShift container registry
       run: |
         docker logout
+    - name: Trigger OpenShift deployment restart
+      run: |
+        oc rollout restart statefulset main-grants-web
+        oc rollout restart statefulset main-grants-api

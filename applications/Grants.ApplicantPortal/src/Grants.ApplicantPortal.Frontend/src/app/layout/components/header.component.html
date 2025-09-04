@@ -1,0 +1,18 @@
+<header class="header">
+  <div class="header-left">
+    <div class="page-title">
+      <h3 class="m-0">{{ pageTitle }}</h3>
+    </div>
+  </div>
+  <div class="header-right">
+    <app-user-dropdown
+      [userInfo]="applicantInfo"
+      dropdownId="headerUserDropdown"
+      buttonClass="btn btn-link dropdown-toggle"
+      dropdownClass="header-dropdown"
+      iconClass="fa-regular fa-circle-user fa-2xl"
+      (logout)="onLogout($event)"
+    >
+    </app-user-dropdown>
+  </div>
+</header>
