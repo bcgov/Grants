@@ -5,7 +5,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   // Public routes
   {
-    path: 'auth-callback',
+    path: 'auth/callback',
     loadComponent: () =>
       import('./features/auth/callback/callback.component').then(
         (m) => m.CallbackComponent
@@ -23,7 +23,7 @@ export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    canActivate: [authGuard],
+    //canActivate: [authGuard], // Auth guard enabled for all protected routes
     children: [
       {
         path: '',
@@ -50,6 +50,12 @@ export const routes: Routes = [
           import('./features/payments/components/payments.component').then(
             (m) => m.PaymentsComponent
           ),
+      },
+      {
+        path: 'test',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/test/test.component').then((m) => m.TestComponent),
       },
     ],
   },

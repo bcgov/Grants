@@ -33,28 +33,9 @@ export class LoginComponent implements OnInit {
   }
 
   loginWithBCeID(): void {
-    // Implement BCeID authentication redirect
-    // This would typically redirect to the BCeID authentication service
-    console.log('Redirecting to BCeID authentication...');
+    console.log('Initiating BCeID authentication...');
 
-    // For development, simulate successful login
-    // Replace with actual BCeID integration
-    // this.simulateLogin();
-
-    this.authService.login();
-  }
-
-  private simulateLogin(): void {
-    // Simulate successful authentication
-    localStorage.setItem('authToken', 'mock-bceid-token');
-    localStorage.setItem(
-      'userProfile',
-      JSON.stringify({
-        id: 'BCEID123',
-        organization: 'Sample Organization',
-      })
-    );
-
-    this.router.navigate(['/applicant-info']);
+    // Use OidcSecurityService directly instead of AuthService
+    this.oidcSecurityService.authorize();
   }
 }
