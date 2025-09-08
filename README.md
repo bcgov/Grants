@@ -17,7 +17,7 @@ This project provides a grants application system with the following features:
 - Secure authentication and authorization BC Government Single Sign-On
 - Modern web architecture with Angular frontend and .NET backend
 - Containerized deployment for cloud infrastructure
-- Highly availible PostgreSQL database for secure data storage
+- Highly available PostgreSQL database for secure data storage
 - Containerized deployment on OpenShift infrastructure
 - Security compliance with BC Government standards
 - Health monitoring for all system components
@@ -29,11 +29,8 @@ This project provides a grants application system with the following features:
     ├── Grants.ApplicantPortal/ - Applicant Information solution
     ├── Grants.AutoUI/          - Automated User Interface testing
     ├── Grants.Tools/           - DevOps tools
-    database/                  - Database configuration files
     documentation/             - Solution documentation and assets
-    openshift/                 - OpenShift deployment files
     COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
-    CONTRIBUTING.md            - How to contribute
     LICENSE                    - License
     SECURITY.md                - Security Policy and Reporting
 
