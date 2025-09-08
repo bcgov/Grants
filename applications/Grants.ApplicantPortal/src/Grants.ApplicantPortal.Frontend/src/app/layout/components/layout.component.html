@@ -1,7 +1,7 @@
 <div class="container-fluid p-0">
   <div class="row g-0 min-vh-100">
     <!-- Mobile Header with Hamburger -->
-    <div class="mobile-header d-md-none">
+    <div class="mobile-header d-lg-none">
       <div class="mobile-header-content">
         <button
           class="hamburger-btn"
@@ -48,14 +48,14 @@
 
     <!-- Sidebar Column -->
     <div
-      class="col-md-2 sidebar-column"
+      class="col-lg-2 sidebar-column"
       [class.mobile-open]="sidebarOpen"
       [class.d-none]="!sidebarOpen"
-      [class.d-md-block]="true"
+      [class.d-lg-block]="true"
     >
       <div class="sidebar-container">
         <!-- Close button for mobile -->
-        <button class="mobile-close-btn d-md-none" (click)="closeSidebar()">
+        <button class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
           <i class="fa-solid fa-times"></i>
         </button>
         <app-sidebar (menuItemClicked)="closeSidebar()"></app-sidebar>
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Main Content Column -->
-    <div class="col-md-10 main-content-column">
+    <div class="col-lg-10 main-content-column">
       <div class="main-content-container">
         <!-- Header Section -->
         <header class="main-header">
