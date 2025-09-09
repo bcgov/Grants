@@ -53,7 +53,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   onLogout(event: Event): void {
+    event.preventDefault();
     console.log('Desktop logout clicked');
     // Implement logout logic here
+    this.clearSession();
+  }
+
+  private clearSession(): void {
+    try {
+      // Clear sessionStorage
+      sessionStorage.clear();
+      // Redirect to login page
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Error clearing session:', error);
+      this.router.navigate(['/login']);
+    }
   }
 }

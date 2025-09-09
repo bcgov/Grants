@@ -180,8 +180,27 @@
   }
 }
 
+// Mobile Header Styles
+.mobile-header {
+  background-color: var(--bc-blue);
+  padding: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .mobile-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
 // Mobile Responsive Styles
-@media (max-width: 767.98px) {
+@media (max-width: 912px) {
   .main-content-column {
     margin-top: 70px; // Account for mobile header height
   }
