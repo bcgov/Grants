@@ -23,7 +23,7 @@ export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    //canActivate: [authGuard], // Auth guard enabled for all protected routes
+    canActivate: [authGuard], // Auth guard enabled for all protected routes
     children: [
       {
         path: '',
@@ -50,12 +50,6 @@ export const routes: Routes = [
           import('./features/payments/components/payments.component').then(
             (m) => m.PaymentsComponent
           ),
-      },
-      {
-        path: 'test',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/test/test.component').then((m) => m.TestComponent),
       },
     ],
   },
