@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
 import { ApplicantService } from '../../core/services/applicant.service';
@@ -24,7 +24,10 @@ export class LayoutComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
 
-  constructor(private readonly applicantService: ApplicantService) {}
+  constructor(
+    private readonly applicantService: ApplicantService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.applicantService
@@ -43,14 +46,26 @@ export class LayoutComponent implements OnInit {
   }
 
   onMobileLogout(event: Event): void {
-    console.log('Mobile logout clicked');
-    // Implement logout logic here
+    event.preventDefault();
+    this.clearSession();
   }
 
   // Close sidebar when clicking on main content on mobile
   onMainContentClick(): void {
     if (window.innerWidth < 768) {
       this.closeSidebar();
+    }
+  }
+
+  private clearSession(): void {
+    try {
+      // Clear sessionStorage
+      sessionStorage.clear();
+      // Redirect to login page
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Error clearing session:', error);
+      this.router.navigate(['/login']);
     }
   }
 }
