@@ -6,6 +6,7 @@
     "start": "ng serve --configuration=development",
     "build": "ng build --configuration=deploy",
     "build:dev": "ng build --configuration=development",
+    "build:docker": "ng build --configuration=development",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve": "node server.js"

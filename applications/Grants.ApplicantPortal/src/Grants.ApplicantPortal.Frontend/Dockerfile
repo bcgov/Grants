@@ -14,7 +14,8 @@ RUN npm install
 COPY . .
 
 # Build the Angular application
-RUN echo "Building..." && npm run build
+ARG BUILD_CONFIG=docker
+RUN echo "Building with config: ${BUILD_CONFIG}" && npm run build:${BUILD_CONFIG}
 
 # The final stage now runs the appropriate server
 FROM node:22-slim AS runtime
@@ -31,12 +32,12 @@ COPY --from=build /app/server.js ./
 RUN npm install --omit=dev
 
 # Set environment variables
-ENV PORT=4000
+ENV PORT=4200
 ENV BACKEND_SERVICE_URL=http://backend:5100
 ENV ENABLE_API_PROXY=false
 
-# Expose port 4000
-EXPOSE 4000
+# Expose port 4200
+EXPOSE 4200
 
 # Start the SPA server directly
 CMD ["node", "server.js"]

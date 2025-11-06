@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://localhost:7000', // Direct connection to backend for local development
+  apiUrl: '/api', // Use proxy for Docker development
   keycloak: {
     authority: 'https://dev.loginproxy.gov.bc.ca/auth',
     realm: 'standard',
