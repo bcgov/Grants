@@ -24,10 +24,8 @@ export class LoginComponent implements OnInit {
     this.oidcSecurityService.checkAuth().subscribe(({ isAuthenticated }) => {
       console.log('Login page auth check:', isAuthenticated);
       if (isAuthenticated) {
-        console.log(
-          'User already authenticated, redirecting to applicant-info'
-        );
-        this.router.navigate(['/applicant-info']);
+        console.log('User already authenticated, redirecting to app');
+        this.router.navigate(['/app']);
       }
     });
   }

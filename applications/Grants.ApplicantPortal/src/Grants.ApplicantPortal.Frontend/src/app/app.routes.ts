@@ -3,6 +3,13 @@ import { LayoutComponent } from './layout/components/layout.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // Default route - always redirect to login first
+  {
+    path: '',
+    redirectTo: '/login',
+    pathMatch: 'full',
+  },
+
   // Public routes
   {
     path: 'auth/callback',
@@ -19,9 +26,9 @@ export const routes: Routes = [
       ),
   },
 
-  // Protected routes
+  // Protected routes under 'app' path
   {
-    path: '',
+    path: 'app',
     component: LayoutComponent,
     canActivate: [authGuard], // Auth guard enabled for all protected routes
     children: [
