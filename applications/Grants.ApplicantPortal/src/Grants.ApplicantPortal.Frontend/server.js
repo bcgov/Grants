@@ -24,6 +24,12 @@ const envVars = {
 // This tells Express to trust the first proxy (OpenShift router) but not beyond that
 app.set('trust proxy', 1);
 
+// Global request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Rate limiter for catch-all route serving index.html
 const catchAllLimiter = rateLimit({
   windowMs: rateLimitWindow,
@@ -127,35 +133,53 @@ const staticPath = resolve(__dirname, 'dist/frontend/browser');
 console.log(`Serving static files from: ${staticPath}`);
 
 // Custom middleware for JavaScript files that need environment variable substitution
+// This MUST come BEFORE the static file middleware
 app.get('*.js', (req, res, next) => {
   const filePath = resolve(staticPath, req.path.substring(1));
   
+  console.log(`JavaScript request: ${req.path}`);
+  console.log(`Looking for file: ${filePath}`);
+  
   if (fs.existsSync(filePath)) {
+    console.log(`File exists, reading for substitution: ${filePath}`);
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
         console.error('Error reading JS file:', filePath, err);
         return next();
       }
       
-      console.log(`Processing JS file for env substitution: ${req.path}`);
+      console.log(`Processing JS file for env substitution: ${req.path} (${data.length} characters)`);
       const substitutedContent = substituteEnvironmentVariables(data);
       
       // Log if substitution occurred
       if (substitutedContent !== data) {
         console.log('Environment variable substitution applied to:', req.path);
+      } else {
+        console.log('No substitutions needed for:', req.path);
       }
       
       res.setHeader('Content-Type', 'application/javascript');
-      res.setHeader('Cache-Control', 'no-cache'); // Prevent caching of substituted files
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.send(substitutedContent);
     });
   } else {
+    console.log(`File does not exist: ${filePath}`);
     next();
   }
 });
 
+// Static file middleware - serves all other files except .js (which are handled above)
 app.use(express.static(staticPath, {
-  maxAge: '1y'
+  maxAge: '1y',
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      // This should not happen since .js files are handled above
+      console.log('WARNING: JavaScript file served by static middleware:', path);
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
 }));
 
 // Handle Angular routing - serve index.html for all routes
