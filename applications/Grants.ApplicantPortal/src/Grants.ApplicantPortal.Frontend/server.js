@@ -38,6 +38,13 @@ const catchAllLimiter = rateLimit({
 });
 
 console.log(`Starting server...`);
+console.log('Environment variables:');
+console.log('  PORT:', port);
+console.log('  ENABLE_API_PROXY:', enableProxy);
+console.log('  BACKEND_SERVICE_URL:', backendServiceUrl);
+console.log('  KEYCLOAK__AUTHSERVERURL:', envVars.KEYCLOAK__AUTHSERVERURL);
+console.log('  KEYCLOAK__REALM:', envVars.KEYCLOAK__REALM);
+console.log('  KEYCLOAK__RESOURCE:', envVars.KEYCLOAK__RESOURCE);
 
 if (enableProxy) {
   console.log(`Configuring API proxy to backend at: ${backendServiceUrl}`);
@@ -74,10 +81,44 @@ app.get('/healthz/ready', (req, res) => {
 // Function to substitute environment variables in file content
 function substituteEnvironmentVariables(content) {
   let result = content;
+  let substitutionsMade = false;
+  
   Object.keys(envVars).forEach(key => {
+    const value = envVars[key];
+    
+    // Handle regular ${VARIABLE} pattern
     const placeholder = `\${${key}}`;
-    result = result.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), envVars[key]);
+    const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regularMatches = content.match(new RegExp(escapedPlaceholder, 'g'));
+    if (regularMatches) {
+      console.log(`Found ${regularMatches.length} regular placeholder(s) for ${key}: ${placeholder}`);
+      result = result.replace(new RegExp(escapedPlaceholder, 'g'), value);
+      substitutionsMade = true;
+    }
+    
+    // Handle URL-encoded ${VARIABLE} pattern (%7B = {, %7D = })
+    const urlEncodedPlaceholder = `$%7B${key}%7D`;
+    const urlMatches = content.match(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+    if (urlMatches) {
+      console.log(`Found ${urlMatches.length} URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholder}`);
+      result = result.replace(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+      substitutionsMade = true;
+    }
+    
+    // Handle mixed case URL encoding
+    const urlEncodedPlaceholderLower = `$%7b${key}%7d`;
+    const lowerMatches = content.match(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+    if (lowerMatches) {
+      console.log(`Found ${lowerMatches.length} lowercase URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholderLower}`);
+      result = result.replace(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+      substitutionsMade = true;
+    }
   });
+  
+  if (substitutionsMade) {
+    console.log('Environment variable substitutions completed');
+  }
+  
   return result;
 }
 
@@ -92,11 +133,20 @@ app.get('*.js', (req, res, next) => {
   if (fs.existsSync(filePath)) {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
+        console.error('Error reading JS file:', filePath, err);
         return next();
       }
       
+      console.log(`Processing JS file for env substitution: ${req.path}`);
       const substitutedContent = substituteEnvironmentVariables(data);
+      
+      // Log if substitution occurred
+      if (substitutedContent !== data) {
+        console.log('Environment variable substitution applied to:', req.path);
+      }
+      
       res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Cache-Control', 'no-cache'); // Prevent caching of substituted files
       res.send(substitutedContent);
     });
   } else {

@@ -27,6 +27,12 @@ env:
     value: "grants-portal-5361"
 ```
 
+**Important Notes:**
+- Environment variables are substituted at **runtime** by the Node.js server
+- The server.js middleware processes JavaScript files and replaces `${VARIABLE_NAME}` placeholders
+- All Keycloak environment variables are **required** for proper authentication
+- Container logs will show environment variable values and substitution activity
+
 ### Backend Service Environment Variables
 
 ```yaml
