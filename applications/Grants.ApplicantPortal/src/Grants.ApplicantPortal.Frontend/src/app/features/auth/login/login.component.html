@@ -1,0 +1,65 @@
+<div class="login-page">
+  <div class="login-background">
+    <div class="bc-logo-header">
+      <img
+        src="images/logo/BCID_H_rgb_pos.png"
+        alt="British Columbia Government"
+        class="bc-header-logo"
+      />
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>Enterprise Grant</h1>
+          <h2>Management System Portal</h2>
+        </div>
+        <div class="mobile-preview-image">
+          <img
+            src="images/dashboard-preview.png"
+            alt="Dashboard Preview"
+            class="dashboard-preview"
+          />
+        </div>
+        <div class="login-description">
+          <p>
+            Access to information on all your grant submissions using your BCeID
+            to login below
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary bceid-login-btn"
+          (click)="loginWithBCeID()"
+        >
+          Login with BCeID
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right side preview/dashboard image -->
+  <div class="preview-section">
+    <div class="bc-logo-corner">
+      <img
+        src="images/logo/BCID_H_rgb_pos.png"
+        alt="British Columbia"
+        class="bc-corner-logo"
+      />
+    </div>
+
+    <div class="preview-image">
+      <img
+        src="images/dashboard-preview.png"
+        alt="Dashboard Preview"
+        class="dashboard-preview"
+      />
+    </div>
+
+    <div class="footer-link">
+      <a href="https://grants.gov.bc.ca" target="_blank">grants.gov.bc.ca</a>
+    </div>
+  </div>
+</div>

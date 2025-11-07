@@ -1,16 +1,42 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/components/layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // Default route - always redirect to login first
   {
     path: '',
-    redirectTo: '/applicant-info',
-    pathMatch: 'full'
+    redirectTo: '/login',
+    pathMatch: 'full',
+  },
+
+  // Public routes
+  {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./features/auth/callback/callback.component').then(
+        (m) => m.CallbackComponent
+      ),
   },
   {
-    path: '',
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(
+        (m) => m.LoginComponent
+      ),
+  },
+
+  // Protected routes under 'app' path
+  {
+    path: 'app',
     component: LayoutComponent,
+    canActivate: [authGuard], // Auth guard enabled for all protected routes
     children: [
+      {
+        path: '',
+        redirectTo: 'applicant-info',
+        pathMatch: 'full',
+      },
       {
         path: 'applicant-info',
         loadComponent: () =>
@@ -34,5 +60,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: '/applicant-info' },
+  { path: '**', redirectTo: '/login' },
 ];

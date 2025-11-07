@@ -13,6 +13,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=GrantsDB;Username=postgres;Password=localdev
       - ConnectionStrings__Redis=redis:6379
+      - KEYCLOAK__CREDENTIALS__SECRET=placeholder-client-secret
+      - KEYCLOAK__AUTHSERVERURL=https://dev.loginproxy.gov.bc.ca/auth
+      - KEYCLOAK__REALM=standard
+      - KEYCLOAK__RESOURCE=grants-portal-5361
     networks:
       - grants-network
     depends_on:
@@ -24,14 +28,20 @@ services:
     build:
       context: ./src/Grants.ApplicantPortal.Frontend
       dockerfile: Dockerfile
+      args:
+        BUILD_CONFIG: docker
     image: grants-frontend
     container_name: grants-frontend
     ports:
-      - "4000:4000"
+      - "4200:4200"
     environment:
-      - PORT=4000
+      - PORT=4200
       - ENABLE_API_PROXY=true
       - BACKEND_SERVICE_URL=http://backend:5100
+      - KEYCLOAK__CREDENTIALS__SECRET=placeholder-client-secret
+      - KEYCLOAK__AUTHSERVERURL=https://dev.loginproxy.gov.bc.ca/auth
+      - KEYCLOAK__REALM=standard
+      - KEYCLOAK__RESOURCE=grants-portal-5361
     networks:
       - grants-network
     depends_on:

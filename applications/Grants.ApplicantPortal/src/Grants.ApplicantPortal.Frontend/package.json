@@ -6,6 +6,8 @@
     "start": "ng serve --configuration=development",
     "build": "ng build --configuration=deploy",
     "build:dev": "ng build --configuration=development",
+    "build:docker": "ng build --configuration=development",
+    "build:deploy": "ng build --configuration=deploy",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve": "node server.js"
@@ -22,6 +24,7 @@
     "@angular/router": "^20.1.1",
     "@bcgov/bootstrap-v5-theme": "^1.0.1",
     "@fortawesome/fontawesome-free": "^6.7.2",
+    "angular-auth-oidc-client": "^19.0.2",
     "express": "^4.21.2",
     "http-proxy-middleware": "^2.0.9",
     "rxjs": "~7.8.2",

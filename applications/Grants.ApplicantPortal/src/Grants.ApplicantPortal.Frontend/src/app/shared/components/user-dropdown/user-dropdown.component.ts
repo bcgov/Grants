@@ -16,10 +16,11 @@ export class UserDropdownComponent {
   @Input() iconClass: string = 'fa-regular fa-circle-user fa-2xl';
   @Input() showLogout: boolean = true;
 
-  @Output() logout = new EventEmitter<Event>();
+  @Output() logoutEvent = new EventEmitter<Event>();
 
   onLogout(event: Event): void {
     event.preventDefault();
-    this.logout.emit(event);
+    console.log('User dropdown logout clicked');
+    this.logoutEvent.emit(event);
   }
 }

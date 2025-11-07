@@ -147,6 +147,8 @@ rcf/
 
 # Others
 ClientBin/
+CLAUDE.*
+.claude
 ~$*
 *~
 *.dbmdl
