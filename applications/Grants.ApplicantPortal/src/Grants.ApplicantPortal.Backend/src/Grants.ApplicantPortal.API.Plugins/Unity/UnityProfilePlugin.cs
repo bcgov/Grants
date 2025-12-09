@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
+using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core;
+using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Core.Plugins;
 
 namespace Grants.ApplicantPortal.API.Plugins.Unity;
@@ -7,7 +9,7 @@ namespace Grants.ApplicantPortal.API.Plugins.Unity;
 /// <summary>
 /// Unity profile plugin for populating profile data from Unity systems
 /// </summary>
-public class UnityProfilePlugin : IProfilePlugin
+public class UnityProfilePlugin : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
 {
     private readonly ILogger<UnityProfilePlugin> _logger;
     private readonly IExternalServiceClient _externalServiceClient;
@@ -251,5 +253,289 @@ public class UnityProfilePlugin : IProfilePlugin
                 }
             }
         };
+    }
+
+    public async Task<Result<Guid>> CreateContactAsync(
+        CreateContactRequest contactRequest, 
+        ProfileContext profileContext, 
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
+            profileContext.ProfileId, contactRequest.Name, contactRequest.Type);
+
+        try
+        {
+            // For now, stub out the actual Unity API call and return a mock result
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(200, cancellationToken); // Simulate API call delay
+
+            var newContactId = Guid.NewGuid();
+
+            _logger.LogInformation("Unity plugin created contact (stubbed) - ID: {ContactId}, Name: {Name}, Type: {Type}",
+                newContactId, contactRequest.Name, contactRequest.Type);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnityContactCreationRequest
+            // {
+            //     Name = contactRequest.Name,
+            //     Type = contactRequest.Type,
+            //     IsPrimary = contactRequest.IsPrimary,
+            //     Title = contactRequest.Title,
+            //     Email = contactRequest.Email,
+            //     Phone = contactRequest.PhoneNumber,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result<Guid>.Success(newContactId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to create contact for ProfileId: {ProfileId}, Name: {Name}",
+                profileContext.ProfileId, contactRequest.Name);
+            return Result<Guid>.Error("Failed to create contact in Unity system");
+        }
+    }
+
+    public async Task<Result> EditContactAsync(
+        EditContactRequest editRequest,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin editing contact {ContactId} for ProfileId: {ProfileId}",
+            editRequest.ContactId, profileContext.ProfileId);
+
+        try
+        {
+            // For now, stub out the actual Unity API call
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(150, cancellationToken); // Simulate API call delay
+
+            _logger.LogInformation("Unity plugin edited contact (stubbed) - ID: {ContactId}, Name: {Name}, Type: {Type}",
+                editRequest.ContactId, editRequest.Name, editRequest.Type);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnityContactEditRequest
+            // {
+            //     ContactId = editRequest.ContactId,
+            //     Name = editRequest.Name,
+            //     Type = editRequest.Type,
+            //     IsPrimary = editRequest.IsPrimary,
+            //     Title = editRequest.Title,
+            //     Email = editRequest.Email,
+            //     Phone = editRequest.PhoneNumber,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to edit contact {ContactId} for ProfileId: {ProfileId}",
+                editRequest.ContactId, profileContext.ProfileId);
+            return Result.Error("Failed to edit contact in Unity system");
+        }
+    }
+
+    public async Task<Result> SetAsPrimaryContactAsync(
+        Guid contactId,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
+            contactId, profileContext.ProfileId);
+
+        try
+        {
+            // For now, stub out the actual Unity API call
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(120, cancellationToken); // Simulate API call delay
+
+            _logger.LogInformation("Unity plugin set contact {ContactId} as primary (stubbed) for ProfileId: {ProfileId}",
+                contactId, profileContext.ProfileId);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnitySetPrimaryContactRequest
+            // {
+            //     ContactId = contactId,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to set contact {ContactId} as primary for ProfileId: {ProfileId}",
+                contactId, profileContext.ProfileId);
+            return Result.Error("Failed to set contact as primary in Unity system");
+        }
+    }
+
+    public async Task<Result> DeleteContactAsync(
+        Guid contactId,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
+            contactId, profileContext.ProfileId);
+
+        try
+        {
+            // For now, stub out the actual Unity API call
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(180, cancellationToken); // Simulate API call delay
+
+            _logger.LogInformation("Unity plugin deleted contact {ContactId} (stubbed) for ProfileId: {ProfileId}",
+                contactId, profileContext.ProfileId);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnityDeleteContactRequest
+            // {
+            //     ContactId = contactId,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to delete contact {ContactId} for ProfileId: {ProfileId}",
+                contactId, profileContext.ProfileId);
+            return Result.Error("Failed to delete contact in Unity system");
+        }
+    }
+
+    public async Task<Result> EditAddressAsync(
+        EditAddressRequest editRequest,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin editing address {AddressId} for ProfileId: {ProfileId}",
+            editRequest.AddressId, profileContext.ProfileId);
+
+        try
+        {
+            // For now, stub out the actual Unity API call
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(160, cancellationToken); // Simulate API call delay
+
+            _logger.LogInformation("Unity plugin edited address (stubbed) - ID: {AddressId}, Type: {Type}, Address: {Address}",
+                editRequest.AddressId, editRequest.Type, editRequest.Address);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnityAddressEditRequest
+            // {
+            //     AddressId = editRequest.AddressId,
+            //     Type = editRequest.Type,
+            //     Address = editRequest.Address,
+            //     City = editRequest.City,
+            //     Province = editRequest.Province,
+            //     PostalCode = editRequest.PostalCode,
+            //     Country = editRequest.Country,
+            //     IsPrimary = editRequest.IsPrimary,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to edit address {AddressId} for ProfileId: {ProfileId}",
+                editRequest.AddressId, profileContext.ProfileId);
+            return Result.Error("Failed to edit address in Unity system");
+        }
+    }
+
+    public async Task<Result> SetAsPrimaryAddressAsync(
+        Guid addressId,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin setting address {AddressId} as primary for ProfileId: {ProfileId}",
+            addressId, profileContext.ProfileId);
+
+        try
+        {
+            // For now, stub out the actual Unity API call
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(130, cancellationToken); // Simulate API call delay
+
+            _logger.LogInformation("Unity plugin set address {AddressId} as primary (stubbed) for ProfileId: {ProfileId}",
+                addressId, profileContext.ProfileId);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnitySetPrimaryAddressRequest
+            // {
+            //     AddressId = addressId,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
+                addressId, profileContext.ProfileId);
+            return Result.Error("Failed to set address as primary in Unity system");
+        }
+    }
+
+    public async Task<Result> EditOrganizationAsync(
+        EditOrganizationRequest editRequest,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Unity plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
+            editRequest.OrganizationId, profileContext.ProfileId);
+
+        try
+        {
+            // For now, stub out the actual Unity API call
+            // TODO: Replace with actual Unity API integration when available
+            await Task.Delay(180, cancellationToken); // Simulate API call delay
+
+            _logger.LogInformation("Unity plugin edited organization (stubbed) - ID: {OrganizationId}, Name: {Name}, Type: {Type}",
+                editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType);
+
+            // TODO: Implement actual Unity API call
+            // var unityRequest = new UnityOrganizationEditRequest
+            // {
+            //     OrganizationId = editRequest.OrganizationId,
+            //     Name = editRequest.Name,
+            //     OrganizationType = editRequest.OrganizationType,
+            //     OrganizationNumber = editRequest.OrganizationNumber,
+            //     Status = editRequest.Status,
+            //     LegalName = editRequest.LegalName,
+            //     DoingBusinessAs = editRequest.DoingBusinessAs,
+            //     Ein = editRequest.Ein,
+            //     Founded = editRequest.Founded,
+            //     FiscalMonth = editRequest.FiscalMonth,
+            //     FiscalDay = editRequest.FiscalDay,
+            //     Mission = editRequest.Mission,
+            //     ServiceAreas = editRequest.ServiceAreas,
+            //     ProfileId = profileContext.ProfileId,
+            //     Provider = profileContext.Provider
+            // };
+            // var response = await _externalServiceClient.CallAsync("UNITY", unityRequest, cancellationToken);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unity plugin failed to edit organization {OrganizationId} for ProfileId: {ProfileId}",
+                editRequest.OrganizationId, profileContext.ProfileId);
+            return Result.Error("Failed to edit organization in Unity system");
+        }
     }
 }

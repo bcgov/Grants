@@ -18,16 +18,54 @@ export class ApplicantInfoService {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Gets profile information
+   * Gets organization information using the new endpoint structure
    */
-  private getInfo(
+  private getOrganizationData(
     profileId: string,
     pluginId: string,
     provider: string,
-    key: string,
     parameters?: any
   ): Observable<BackendResponse> {
-    const url = `${this.baseUrl}/Profiles/${profileId}/${pluginId}/${provider}/${key}`;
+    const url = `${this.baseUrl}/Organizations/${profileId}/${pluginId}/${provider}`;
+    return this.http.get<BackendResponse>(url, { params: parameters });
+  }
+
+  /**
+   * Gets submissions information using the new endpoint structure
+   */
+  private getSubmissionsData(
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<BackendResponse> {
+    const url = `${this.baseUrl}/Submissions/${profileId}/${pluginId}/${provider}`;
+    return this.http.get<BackendResponse>(url, { params: parameters });
+  }
+
+  /**
+   * Gets contacts information using the new endpoint structure
+   */
+  private getContactsData(
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<BackendResponse> {
+    const url = `${this.baseUrl}/Contacts/${profileId}/${pluginId}/${provider}`;
+    return this.http.get<BackendResponse>(url, { params: parameters });
+  }
+
+  /**
+   * Gets addresses information using the new endpoint structure
+   */
+  private getAddressesData(
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<BackendResponse> {
+    const url = `${this.baseUrl}/Addresses/${profileId}/${pluginId}/${provider}`;
     return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
@@ -80,16 +118,14 @@ export class ApplicantInfoService {
 
   /**
    * Main method: Gets formatted organization information
-   * This is the only public method you need to call
    */
   getOrganizationInfo(
     profileId: string,
     pluginId: string,
     provider: string,
-    key: string,
     parameters?: any
   ): Observable<OrganizationResponse> {
-    return this.getInfo(profileId, pluginId, provider, key, parameters).pipe(
+    return this.getOrganizationData(profileId, pluginId, provider, parameters).pipe(
       map((response) => this.parseOrganizationResponse(response)),
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
@@ -109,14 +145,94 @@ export class ApplicantInfoService {
     profileId: string,
     pluginId: string,
     provider: string,
-    key: string,
     parameters?: any
   ): Observable<SubmissionsResponse> {
-    return this.getInfo(profileId, pluginId, provider, key, parameters).pipe(      
+    return this.getSubmissionsData(profileId, pluginId, provider, parameters).pipe(      
       map((response) => this.parseSubmissionsResponse(response)),
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to load submissions info after retries:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Gets contacts information
+   */
+  getContactsInfo(
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<any> {
+    return this.getContactsData(profileId, pluginId, provider, parameters).pipe(      
+      retry({ count: 2, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to load contacts info after retries:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Gets addresses information
+   */
+  getAddressesInfo(
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<any> {
+    return this.getAddressesData(profileId, pluginId, provider, parameters).pipe(      
+      retry({ count: 2, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to load addresses info after retries:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Creates a new contact
+   */
+  createContact(
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    contactData: {
+      name: string;
+      email: string;
+      title?: string;
+      type: string;
+      phoneNumber?: string;
+      isPrimary: boolean;
+    }
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Contacts/${profileId}/${pluginId}/${provider}`;
+    return this.http.post<any>(url, contactData).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to create contact:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Sets a contact as primary
+   */
+  setContactAsPrimary(
+    contactId: string,
+    profileId: string,
+    pluginId: string,
+    provider: string
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Contacts/${contactId}/${profileId}/${pluginId}/${provider}/set-primary`;
+    return this.http.patch<any>(url, {}).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to set contact as primary:', error);
         throw error;
       })
     );

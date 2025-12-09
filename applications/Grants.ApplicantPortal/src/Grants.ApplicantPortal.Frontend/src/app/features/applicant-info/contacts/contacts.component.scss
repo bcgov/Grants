@@ -1,0 +1,50 @@
+.contacts-container {
+  padding: 0;
+
+  // Primary contact info styles
+  .primary-contact-info {
+    background-color: #faf9f8;
+    border-width: 0px;
+    margin-bottom: 1rem;
+    border-radius: 4px 0px 0px 4px;
+    padding: 1rem;
+    border-left: 8px solid var(--bc-blue);
+
+    .form-label {
+      font-weight: 600;
+      font-size: var(--bc-font-size-13);
+      color: var(--bc-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .contact-value {
+      margin-bottom: 0;
+      padding: 0.5rem 0;
+      font-size: var(--bc-font-size-13);
+      color: var(--bc-primary);
+    }
+  }
+
+  .no-primary-contact {
+    padding: 2rem;
+    color: var(--bc-gray);
+
+    p {
+      margin-bottom: 0;
+      font-style: italic;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .contacts-container {
+    .primary-contact-info {
+      .row {
+        [class*="col-"] {
+          margin-bottom: 1rem;
+        }
+      }
+    }
+  }
+}

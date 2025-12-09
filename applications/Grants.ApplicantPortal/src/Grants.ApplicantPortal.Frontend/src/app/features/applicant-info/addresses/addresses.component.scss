@@ -1,0 +1,137 @@
+// Primary address display styles
+.primary-address-info {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--bc-gray-50);
+  background-color: #faf9f8;
+  border-width: 0px;
+  margin-bottom: 1rem;
+  border-radius: 4px 0px 0px 4px;
+  padding: 1rem;
+  border-left: 8px solid var(--bc-blue);
+
+  .form-label {
+    font-weight: 600;
+    color: var(--bc-primary);
+    margin-bottom: 0.5rem;
+    font-size: var(--bc-font-size-13);
+  }
+
+  .address-value {
+    color: var(--bc-primary);
+    margin-bottom: 1.5rem;
+    font-size: var(--bc-font-size-14);
+    line-height: 1.5;
+
+    @media (max-width: 768px) {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+// No primary address state
+.no-primary-address {
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--bc-gray-50);
+
+  p {
+    margin: 0;
+    font-size: var(--bc-font-size-14);
+    color: var(--bc-gray);
+  }
+}
+
+// Address type badges
+.address-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: var(--bc-font-size-12);
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.address-type-primary {
+    background-color: var(--bc-bg-info);
+    color: var(--bc-white);
+  }
+
+  &.address-type-billing {
+    background-color: var(--bc-bg-success);
+    color: var(--bc-white);
+  }
+
+  &.address-type-mailing {
+    background-color: var(--bc-bg-warning);
+    color: var(--bc-primary);
+  }
+
+  &.address-type-office {
+    background-color: var(--bc-bg-error);
+    color: var(--bc-white);
+  }
+}
+
+// Loading state styles
+.loading-spinner-container {
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    color: var(--bc-blue);
+  }
+
+  .loading-text {
+    color: var(--bc-gray);
+    font-size: var(--bc-font-size-13);
+    margin-bottom: 0;
+  }
+}
+
+// Card styling
+.addresses-container {
+  .card {
+    border: 1px solid var(--bc-gray-50);
+    border-radius: 8px;
+    
+    .card-header {
+      // Remove custom background - use default styling like other cards
+      border-bottom: 1px solid var(--bc-gray-50);
+      padding: 1rem 1.5rem;
+
+      h3 {
+        color: var(--bc-primary);
+        font-size: var(--bc-font-size-18);
+        font-weight: 600;
+      }
+    }    .card-body {
+      padding: 1.5rem;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .primary-address-info {
+    .row > [class*="col-"] {
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .addresses-container {
+    .card {
+      .card-header {
+        padding: 1rem;
+      }
+
+      .card-body {
+        padding: 1rem;
+      }
+    }
+  }
+}

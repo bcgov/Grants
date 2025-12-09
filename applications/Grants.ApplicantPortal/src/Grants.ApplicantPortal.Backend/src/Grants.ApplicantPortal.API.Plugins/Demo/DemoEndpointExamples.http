@@ -1,0 +1,41 @@
+// Example API calls for the new structured data:
+
+### Get Contacts for Program1
+GET /Contacts/{{profileId}}/DEMO/PROGRAM1
+
+### Get Addresses for Program1  
+GET /Addresses/{{profileId}}/DEMO/PROGRAM1
+
+### Get Submissions for Program1
+GET /Submissions/{{profileId}}/DEMO/PROGRAM1
+
+### Get Organizations for Program1
+GET /Organizations/{{profileId}}/DEMO/PROGRAM1
+
+### Get Contacts for Program2
+GET /Contacts/{{profileId}}/DEMO/PROGRAM2
+
+### Get Addresses for Program2
+GET /Addresses/{{profileId}}/DEMO/PROGRAM2
+
+### Get Submissions for Program2  
+GET /Submissions/{{profileId}}/DEMO/PROGRAM2
+
+### Get Organizations for Program2
+GET /Organizations/{{profileId}}/DEMO/PROGRAM2
+
+### Test with sample profile ID
+@profileId = 123e4567-e89b-12d3-a456-426614174000
+
+### Get Contacts Sample
+GET /Contacts/{{profileId}}/DEMO/PROGRAM1
+Authorization: Bearer {{token}}
+
+### Expected Response Structure for Contacts:
+// {
+//   "profileId": "123e4567-e89b-12d3-a456-426614174000",
+//   "pluginId": "DEMO", 
+//   "provider": "PROGRAM1",
+//   "jsonData": "{\"profileId\":\"...\",\"data\":{\"contacts\":[{\"id\":\"1\",\"firstName\":\"John\",\"lastName\":\"Doe\",...}]}}",
+//   "populatedAt": "2024-01-15T10:30:00Z"
+// }

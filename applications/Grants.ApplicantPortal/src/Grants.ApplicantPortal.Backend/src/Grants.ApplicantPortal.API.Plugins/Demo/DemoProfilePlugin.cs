@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using Ardalis.Result;
+using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Core.Plugins;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
@@ -6,41 +8,23 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 /// <summary>
 /// Demo profile plugin for testing and demonstration purposes
 /// </summary>
-public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlugin
+public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
 {
   public string PluginId => "DEMO";
 
-  private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
-    {
-        new("PROGRAM1", "SUBMISSIONS", "Demo submissions data for Program1"),
-        new("PROGRAM1", "ORGINFO", "Demo organization information for Program1"),
-        new("PROGRAM1", "PAYMENTS", "Demo payment information for Program1"),
-        new("PROGRAM2", "SUBMISSIONS", "Demo submissions data for Program2"),
-        new("PROGRAM2", "ORGINFO", "Demo organization information for Program2")
-    };
-
   public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
   {
-    return SupportedFeatures;
+    return DemoPluginFeatures.SupportedFeatures;
   }
 
   public IReadOnlyList<string> GetSupportedProviders()
   {
-    return SupportedFeatures
-        .Select(f => f.Provider)
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .ToList();
+    return DemoPluginFeatures.GetSupportedProviders();
   }
 
   public IReadOnlyList<string> GetSupportedKeys(string provider)
   {
-    if (string.IsNullOrWhiteSpace(provider))
-      return new List<string>();
-
-    return SupportedFeatures
-        .Where(f => f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase))
-        .Select(f => f.Key)
-        .ToList();
+    return DemoPluginFeatures.GetSupportedKeys(provider);
   }
 
   public bool CanHandle(ProfilePopulationMetadata metadata)
@@ -48,10 +32,8 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     if (!metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase))
       return false;
 
-    // Check if the provider/key combination is supported
-    return SupportedFeatures.Any(f =>
-        f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
-        f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
+    // Use the centralized feature validation
+    return DemoPluginFeatures.IsProviderKeySupported(metadata.Provider, metadata.Key);
   }
 
   public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
@@ -104,403 +86,239 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
 
     return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
     {
-      ("PROGRAM1", "SUBMISSIONS") => GenerateProgram1Submissions(baseData),
-      ("PROGRAM1", "ORGINFO") => GenerateProgram1OrgInfo(baseData),
-      ("PROGRAM1", "PAYMENTS") => GenerateProgram1Payments(baseData),
-      ("PROGRAM2", "SUBMISSIONS") => GenerateProgram2Submissions(baseData),
-      ("PROGRAM2", "ORGINFO") => GenerateProgram2OrgInfo(baseData),
-      _ => GenerateDefaultData(baseData)
+      // Use dedicated data classes for each type
+      ("PROGRAM1", "SUBMISSIONS") => SubmissionsData.GenerateProgram1Submissions(baseData),
+      ("PROGRAM1", "ORGINFO") => OrganizationsData.GenerateProgram1OrgInfo(baseData),
+      ("PROGRAM1", "PAYMENTS") => OrganizationsData.GenerateProgram1Payments(baseData),
+      ("PROGRAM1", "CONTACTS") => ContactsData.GenerateProgram1Contacts(baseData),
+      ("PROGRAM1", "ADDRESSES") => AddressesData.GenerateProgram1Addresses(baseData),
+      ("PROGRAM2", "SUBMISSIONS") => SubmissionsData.GenerateProgram2Submissions(baseData),
+      ("PROGRAM2", "ORGINFO") => OrganizationsData.GenerateProgram2OrgInfo(baseData),
+      ("PROGRAM2", "CONTACTS") => ContactsData.GenerateProgram2Contacts(baseData),
+      ("PROGRAM2", "ADDRESSES") => AddressesData.GenerateProgram2Addresses(baseData),
+      _ => OrganizationsData.GenerateDefaultData(baseData)
     };
   }
 
-  private object GenerateProgram1Submissions(object baseData)
+  public async Task<Result<Guid>> CreateContactAsync(
+    CreateContactRequest contactRequest, 
+    ProfileContext profileContext, 
+    CancellationToken cancellationToken = default)
   {
-    return new
+    logger.LogInformation("Demo plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
+      profileContext.ProfileId, contactRequest.Name, contactRequest.Type);
+
+    try
     {
-      baseData,
-      Data = new
-      {
-        Submissions = new[]
-            {
-                    new
-                    {
-                        SubmissionId = "PROG1-SUB-001",
-                        ApplicationId = "APP-2024-0001",
-                        ProjectName = "Project title",
-                        ProgramName = "Program1 - Fitness",
-                        RequestedAmount = 150000,
-                        PaidAmount = 100000,
-                        Status = "In progress",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-15),
-                        LastModified = DateTime.UtcNow.AddDays(-2),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(2),
-                            EndDate = DateTime.UtcNow.AddMonths(14)
-                        },
-                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
-                    },
-                    new
-                    {
-                        SubmissionId = "PROG1-SUB-002",
-                        ApplicationId = "APP-2024-0002",
-                        ProjectName = "Youth Mental Health Support Program",
-                        ProgramName = "Program1 - Health & Wellness",
-                        RequestedAmount = 85000,
-                        PaidAmount = 82000,
-                        Status = "Approved",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-45),
-                        LastModified = DateTime.UtcNow.AddDays(-10),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(1),
-                            EndDate = DateTime.UtcNow.AddMonths(13)
-                        },
-                        Categories = new[] { "Mental Health", "Youth Services", "Community Support" }
-                    },
-                     new
-                    {
-                        SubmissionId = "PROG1-SUB-003",
-                        ApplicationId = "APP-2024-0003",
-                        ProjectName = "Community Health Initiative",
-                        ProgramName = "Program1 - Health & Wellness",
-                        RequestedAmount = 150000,
-                        PaidAmount = 120000,
-                        Status = "Declined",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-15),
-                        LastModified = DateTime.UtcNow.AddDays(-2),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(1),
-                            EndDate = DateTime.UtcNow.AddMonths(17)
-                        },
-                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
-                    },
-                     new
-                    {
-                        SubmissionId = "PROG1-SUB-004",
-                        ApplicationId = "APP-2024-0004",
-                        ProjectName = "Digital Community Program",
-                        ProgramName = "",
-                        RequestedAmount = 250000,
-                        PaidAmount = 220000,
-                        Status = "In progress",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-18),
-                        LastModified = DateTime.UtcNow.AddDays(-5),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(4),
-                            EndDate = DateTime.UtcNow.AddMonths(14)
-                        },
-                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
-                    }
-                },
-        Summary = new
-        {
-          TotalSubmissions = 4,
-          TotalRequestedAmount = 235000,
-          ApprovedCount = 1,
-          InProgressCount = 3,
-          DeclinedCount = 1
-        }
-      }
-    };
+      // Simulate some processing time
+      await Task.Delay(100, cancellationToken);
+
+      // Add the contact to our in-memory store
+      var newContactId = ContactsData.AddContact(profileContext.Provider, profileContext.ProfileId, contactRequest);
+
+      // Log the contact creation details
+      logger.LogInformation("Demo plugin created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
+        newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);
+
+      return Result<Guid>.Success(Guid.Parse(newContactId));
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to create contact for ProfileId: {ProfileId}, Name: {Name}",
+        profileContext.ProfileId, contactRequest.Name);
+      return Result<Guid>.Error("Failed to create contact in demo system");
+    }
   }
 
-  private object GenerateProgram1OrgInfo(object baseData)
+  public async Task<Result> EditContactAsync(
+    EditContactRequest editRequest,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken = default)
   {
-    return new
+    logger.LogInformation("Demo plugin editing contact {ContactId} for ProfileId: {ProfileId}",
+      editRequest.ContactId, profileContext.ProfileId);
+
+    try
     {
-      baseData,
-      Data = new
+      // Simulate some processing time
+      await Task.Delay(80, cancellationToken);
+
+      // Update the contact in our in-memory store
+      var success = ContactsData.UpdateContact(profileContext.Provider, profileContext.ProfileId, editRequest.ContactId, editRequest);
+      
+      if (!success)
       {
-        OrganizationInfo = new
-        {
-          OrgName = "Cowichan Exhibition",
-          OrgNumber = "S0003748",
-          OrgStatus = "Active",
-          OrganizationType = "Society",
-          NonRegOrgName = "Shrine Org",
-          OrgSize = "50",
-          FiscalMonth = "Aug",
-          FiscalDay = 1,
-          OrganizationId = "ORG-DEMO-001",
-          LegalName = "Demo Community Health Foundation",
-          DoingBusinessAs = "DCHF",
-          EIN = "12-3456789",
-          Founded = 2010,
-          Address = new
-          {
-            Street = "123 Health Avenue",
-            City = "Wellness City",
-            State = "CA",
-            ZipCode = "90210",
-            Country = "USA"
-          },
-          ContactInfo = new
-          {
-            PrimaryContact = new
-            {
-              Name = "Dr. Sarah Johnson",
-              Title = "Executive Director",
-              Email = "sarah.johnson@dchf.org",
-              Phone = "+1-555-HEALTH"
-            },
-            GrantsContact = new
-            {
-              Name = "Michael Chen",
-              Title = "Grants Manager",
-              Email = "michael.chen@dchf.org",
-              Phone = "+1-555-GRANTS"
-            }
-          },
-          Mission = "To improve community health outcomes through innovative programs and partnerships.",
-          ServicesAreas = new[] { "Healthcare", "Community Wellness", "Health Education", "Prevention Programs" },
-          Certifications = new[]
-                {
-                        new { Type = "CARF Accreditation", ValidUntil = DateTime.UtcNow.AddYears(2) },
-                        new { Type = "State Health Department License", ValidUntil = DateTime.UtcNow.AddYears(1) }
-                    },
-          Program1Specific = new
-          {
-            EligibilityStatus = "Verified",
-            LastAuditDate = DateTime.UtcNow.AddMonths(-6),
-            ComplianceScore = 95,
-            SpecialDesignations = new[] { "Rural Health Clinic", "FQHC Look-Alike" }
-          }
-        }
+        logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+          editRequest.ContactId, profileContext.ProfileId);
+        return Result.NotFound();
       }
-    };
+
+      // Log the contact edit details
+      logger.LogInformation("Demo plugin edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
+        editRequest.ContactId, editRequest.Name, editRequest.Type, editRequest.Email, editRequest.PhoneNumber);
+
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to edit contact {ContactId} for ProfileId: {ProfileId}",
+        editRequest.ContactId, profileContext.ProfileId);
+      return Result.Error("Failed to edit contact in demo system");
+    }
   }
 
-  private object GenerateProgram1Payments(object baseData)
+  public async Task<Result> SetAsPrimaryContactAsync(
+    Guid contactId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken = default)
   {
-    return new
+    logger.LogInformation("Demo plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
+      contactId, profileContext.ProfileId);
+
+    try
     {
-      baseData,
-      Data = new
+      // Simulate some processing time
+      await Task.Delay(60, cancellationToken);
+
+      // Set the contact as primary in our in-memory store
+      var success = ContactsData.SetContactAsPrimary(profileContext.Provider, profileContext.ProfileId, contactId);
+      
+      if (!success)
       {
-        Payments = new[]
-            {
-                    new
-                    {
-                        PaymentId = "PAY-PROG1-001",
-                        SubmissionId = "PROG1-SUB-002",
-                        ApplicationId = "APP-2024-0045",
-                        GrantTitle = "Youth Mental Health Support Program",
-                        AwardAmount = 85000,
-                        PaymentSchedule = new[]
-                        {
-                            new
-                            {
-                                PaymentNumber = 1,
-                                Amount = 25500,
-                                DueDate = DateTime.UtcNow.AddMonths(1),
-                                Status = "Scheduled",
-                                Description = "Initial funding - 30%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 2,
-                                Amount = 29750,
-                                DueDate = DateTime.UtcNow.AddMonths(6),
-                                Status = "Pending",
-                                Description = "Mid-term payment - 35%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 3,
-                                Amount = 29750,
-                                DueDate = DateTime.UtcNow.AddMonths(12),
-                                Status = "Pending",
-                                Description = "Final payment - 35%"
-                            }
-                        },
-                        PaymentMethod = "Electronic Transfer",
-                        BankAccount = "****-****-****-5678",
-                        TaxReporting = new
-                        {
-                            TaxYear = DateTime.UtcNow.Year,
-                            Form1099Required = true,
-                            ReportingStatus = "Pending"
-                        }
-                    }
-                },
-        PaymentSummary = new
-        {
-          TotalAwardAmount = 85000,
-          TotalPaid = 0,
-          TotalPending = 85000,
-          NextPaymentDue = DateTime.UtcNow.AddMonths(1),
-          NextPaymentAmount = 25500
-        }
+        logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+          contactId, profileContext.ProfileId);
+        return Result.NotFound();
       }
-    };
+
+      // Log the contact set as primary operation
+      logger.LogInformation("Demo plugin set contact {ContactId} as primary for ProfileId: {ProfileId}",
+        contactId, profileContext.ProfileId);
+
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to set contact {ContactId} as primary for ProfileId: {ProfileId}",
+        contactId, profileContext.ProfileId);
+      return Result.Error("Failed to set contact as primary in demo system");
+    }
   }
 
-  private object GenerateProgram2Submissions(object baseData)
+  public async Task<Result> DeleteContactAsync(
+    Guid contactId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken = default)
   {
-    return new
+    logger.LogInformation("Demo plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
+      contactId, profileContext.ProfileId);
+
+    try
     {
-      baseData,
-      Data = new
+      // Simulate some processing time
+      await Task.Delay(90, cancellationToken);
+
+      // Delete the contact from our in-memory store
+      var success = ContactsData.DeleteContact(profileContext.Provider, profileContext.ProfileId, contactId);
+      
+      if (!success)
       {
-        Submissions = new[]
-            {
-                    new
-                    {
-                        SubmissionId = "PROG2-SUB-001",
-                        ApplicationId = "APP-2024-0078",
-                        ProjectName = "STEM Education Excellence Initiative",
-                        ProgramName = "Program2 - Education & Technology",
-                        RequestedAmount = 275000,
-                        PaidAmount = 10000,
-                        Status = "Approved",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-30),
-                        LastModified = DateTime.UtcNow.AddDays(-5),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(1),
-                            EndDate = DateTime.UtcNow.AddMonths(25)
-                        },
-                        Categories = new[] { "Education", "STEM", "Technology", "K-12" }
-                    },
-                    new
-                    {
-                        SubmissionId = "PROG2-SUB-002",
-                        ApplicationId = "APP-2024-0089",
-                        ProjectName = "Digital Literacy for Seniors",
-                        ProgramName = "Program2 - Education & Technology",
-                        RequestedAmount = 120000,
-                        PaidAmount = 2000,
-                        Status = "Under Review",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-20),
-                        LastModified = DateTime.UtcNow.AddDays(-1),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(3),
-                            EndDate = DateTime.UtcNow.AddMonths(15)
-                        },
-                        Categories = new[] { "Digital Literacy", "Senior Services", "Community Education" }
-                    },
-                    new
-                    {
-                        SubmissionId = "PROG2-SUB-003",
-                        ApplicationId = "APP-2024-0095",
-                        ProjectName = "Rural Broadband Access Project",
-                        ProgramName = "Program2 - Education & Technology",
-                        RequestedAmount = 450000,
-                        PaidAmount = 40000,
-                        Status = "In Review",
-                        SubmissionDate = DateTime.UtcNow.AddDays(-10),
-                        LastModified = DateTime.UtcNow.AddDays(-3),
-                        ProjectPeriod = new
-                        {
-                            StartDate = DateTime.UtcNow.AddMonths(4),
-                            EndDate = DateTime.UtcNow.AddMonths(28)
-                        },
-                        Categories = new[] { "Infrastructure", "Rural Development", "Technology Access" }
-                    }
-                },
-        Summary = new
-        {
-          TotalSubmissions = 3,
-          TotalRequestedAmount = 845000,
-          ApprovedCount = 1,
-          UnderReviewCount = 2
-        }
+        logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+          contactId, profileContext.ProfileId);
+        return Result.NotFound();
       }
-    };
+
+      // Log the contact deletion
+      logger.LogInformation("Demo plugin deleted contact {ContactId} for ProfileId: {ProfileId}",
+        contactId, profileContext.ProfileId);
+
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to delete contact {ContactId} for ProfileId: {ProfileId}",
+        contactId, profileContext.ProfileId);
+      return Result.Error("Failed to delete contact in demo system");
+    }
   }
 
-  private object GenerateProgram2OrgInfo(object baseData)
+  public async Task<Result> EditAddressAsync(
+    EditAddressRequest editRequest,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken = default)
   {
-    return new
+    logger.LogInformation("Demo plugin editing address {AddressId} for ProfileId: {ProfileId}",
+      editRequest.AddressId, profileContext.ProfileId);
+
+    try
     {
-      baseData,
-      Data = new
-      {
-        OrganizationInfo = new
-        {
-          OrgName = "Hub Tech",
-          OrgNumber = "S1113734",
-          OrgStatus = "Active",
-          OrganizationType = "Educational Nonprofit",
-          NonRegOrgName = "Digi Org",
-          OrgSize = "30",
-          FiscalMonth = "Jul",
-          FiscalDay = 23,
-          OrganizationId = "ORG-DEMO-002",
-          LegalName = "Demo Educational Technology Consortium",
-          DoingBusinessAs = "DETC",
-          EIN = "98-7654321",
-          Founded = 2015,
-          Address = new
-          {
-            Street = "456 Innovation Drive",
-            City = "Tech Valley",
-            State = "TX",
-            ZipCode = "75001",
-            Country = "USA"
-          },
-          ContactInfo = new
-          {
-            PrimaryContact = new
-            {
-              Name = "Dr. Maria Rodriguez",
-              Title = "Chief Executive Officer",
-              Email = "maria.rodriguez@detc.edu",
-              Phone = "+1-555-TECH-ED"
-            },
-            GrantsContact = new
-            {
-              Name = "James Liu",
-              Title = "Director of Development",
-              Email = "james.liu@detc.edu",
-              Phone = "+1-555-DEV-FUND"
-            }
-          },
-          Mission = "To bridge the digital divide through innovative educational technology solutions and comprehensive training programs.",
-          ServicesAreas = new[] { "Educational Technology", "Digital Literacy", "STEM Education", "Teacher Training" },
-          Certifications = new[]
-                {
-                        new { Type = "Department of Education Partnership", ValidUntil = DateTime.UtcNow.AddYears(3) },
-                        new { Type = "Technology Integration Certification", ValidUntil = DateTime.UtcNow.AddYears(2) }
-                    },
-          Program2Specific = new
-          {
-            EligibilityStatus = "Verified",
-            LastTechAudit = DateTime.UtcNow.AddMonths(-3),
-            InnovationScore = 88,
-            SpecialDesignations = new[] { "STEM Education Hub", "Rural Technology Center" },
-            Partnerships = new[] { "State University System", "Tech Industry Coalition", "Rural Education Network" }
-          }
-        }
-      }
-    };
+      // Simulate some processing time
+      await Task.Delay(75, cancellationToken);
+
+      // Log the mock address edit details
+      logger.LogInformation("Demo plugin edited mock address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
+        editRequest.AddressId, editRequest.Type, editRequest.Address, editRequest.City);
+
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to edit address {AddressId} for ProfileId: {ProfileId}",
+        editRequest.AddressId, profileContext.ProfileId);
+      return Result.Error("Failed to edit address in demo system");
+    }
   }
 
-  private object GenerateDefaultData(object baseData)
+  public async Task<Result> SetAsPrimaryAddressAsync(
+    Guid addressId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken = default)
   {
-    return new
+    logger.LogInformation("Demo plugin setting address {AddressId} as primary for ProfileId: {ProfileId}",
+      addressId, profileContext.ProfileId);
+
+    try
     {
-      baseData,
-      Data = new
-      {
-        Message = "Demo data available for:",
-        AvailableProviders = new[] { "Program1", "Program2" },
-        AvailableKeys = new[] { "Submissions", "OrgInfo", "Payments" },
-        Instructions = "Use Provider and Key parameters to get specific mock data",
-        Examples = new[]
-            {
-                    "Provider=Program1, Key=Submissions - Get grant application submissions for Program1",
-                    "Provider=Program1, Key=OrgInfo - Get organization information for Program1",
-                    "Provider=Program1, Key=Payments - Get payment information for Program1",
-                    "Provider=Program2, Key=Submissions - Get grant application submissions for Program2",
-                    "Provider=Program2, Key=OrgInfo - Get organization information for Program2",
-                    "Provider=Program2, Key=Payments - Get payment information for Program2"
-                }
-      }
-    };
+      // Simulate some processing time
+      await Task.Delay(55, cancellationToken);
+
+      // Log the mock address set as primary operation
+      logger.LogInformation("Demo plugin set mock address {AddressId} as primary for ProfileId: {ProfileId}",
+        addressId, profileContext.ProfileId);
+
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
+        addressId, profileContext.ProfileId);
+      return Result.Error("Failed to set address as primary in demo system");
+    }
+  }
+
+  public async Task<Result> EditOrganizationAsync(
+    EditOrganizationRequest editRequest,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken = default)
+  {
+    logger.LogInformation("Demo plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
+      editRequest.OrganizationId, profileContext.ProfileId);
+
+    try
+    {
+      // Simulate some processing time
+      await Task.Delay(85, cancellationToken);
+
+      // Log the mock organization edit details
+      logger.LogInformation("Demo plugin edited mock organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
+        editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType, editRequest.Status);
+
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Demo plugin failed to edit organization {OrganizationId} for ProfileId: {ProfileId}",
+        editRequest.OrganizationId, profileContext.ProfileId);
+      return Result.Error("Failed to edit organization in demo system");
+    }
   }
 }

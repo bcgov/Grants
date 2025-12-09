@@ -1,6 +1,6 @@
 ﻿using Ardalis.ListStartupServices;
 using Grants.ApplicantPortal.API.Infrastructure.Email;
-using Grants.ApplicantPortal.API.UseCases.Profiles;
+using Grants.ApplicantPortal.API.UseCases;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
