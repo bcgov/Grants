@@ -35,6 +35,10 @@ export interface DatatableConfig {
   loadingMessage?: string;
   tableClass?: string;
   containerClass?: string;
+  // New sorting properties
+  tableId?: string; // Unique identifier for the table (for localStorage)
+  defaultSortField?: string; // Field representing original server order (e.g., 'lastUpdated')
+  enableSortPersistence?: boolean; // Whether to persist sort state in localStorage
 }
 
 export interface DatatableRowClickEvent {
@@ -50,5 +54,10 @@ export interface DatatableActionEvent {
 
 export interface DatatableSortEvent {
   column: string;
-  direction: 'asc' | 'desc';
+  direction: 'asc' | 'desc' | 'none';
+}
+
+export interface DatatableSortState {
+  column: string;
+  direction: 'asc' | 'desc' | 'none';
 }

@@ -9,8 +9,7 @@ import { ApplicantInfoService } from '../../../core/services/applicant-info.serv
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
-  DatatableConfig, 
-  DatatableColumn,
+  DatatableConfig,
   DatatableActionEvent,
   DatatableRowClickEvent,
   DatatableSortEvent
@@ -54,6 +53,9 @@ export class AddressesComponent implements OnInit, OnDestroy {
 
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
+    tableId: 'addresses-table',
+    defaultSortField: 'lastUpdated',
+    enableSortPersistence: true,
     columns: [
       { key: 'type', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
@@ -151,11 +153,6 @@ export class AddressesComponent implements OnInit, OnDestroy {
     // TODO: Navigate to address detail view
   }
 
-  sortAddresses(column: string): void {
-    console.log('Sort by:', column);
-    // TODO: Implement sorting functionality
-  }
-
   // Datatable event handlers
   onAddressRowClick(event: DatatableRowClickEvent): void {
     console.log('Clicked address:', event.row);
@@ -197,8 +194,9 @@ export class AddressesComponent implements OnInit, OnDestroy {
   }
 
   onAddressSort(event: DatatableSortEvent): void {
-    console.log('Sort by:', event.column, event.direction);
-    // TODO: Implement sorting functionality
+    console.log('Addresses sorted by:', event.column, event.direction);
+    // The datatable component now handles all sorting internally
+    // This event is emitted for any additional logic you might need
   }
 
   // Helper method to format addresses for datatable

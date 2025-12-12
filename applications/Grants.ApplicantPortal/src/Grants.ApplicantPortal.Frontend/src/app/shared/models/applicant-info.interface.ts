@@ -59,6 +59,8 @@ export interface OrganizationData {
   orgSize: string;
   fiscalMonth: string;
   fiscalDay: number;
+  fiscalYearEndMonth?: number;
+  fiscalYearEndDay?: number;
   organizationId: string;
   legalName: string;
   doingBusinessAs: string;

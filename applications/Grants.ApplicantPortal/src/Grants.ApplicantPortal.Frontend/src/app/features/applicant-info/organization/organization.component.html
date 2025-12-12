@@ -1,4 +1,10 @@
-<div class="organization-container">
+<div class="organization-container position-relative">
+  <app-loading-overlay
+    [isVisible]="isSaving"
+    message="Saving organization information..."
+    [showMessage]="true">
+  </app-loading-overlay>
+  
   @if (isLoading) {
   <div
     class="loading-spinner-container d-flex justify-content-center align-items-center"

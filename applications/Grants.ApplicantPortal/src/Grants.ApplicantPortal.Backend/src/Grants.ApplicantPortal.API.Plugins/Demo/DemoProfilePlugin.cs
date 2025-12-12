@@ -328,8 +328,18 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       // Simulate some processing time
       await Task.Delay(85, cancellationToken);
 
-      // Log the mock organization edit details
-      logger.LogInformation("Demo plugin edited mock organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
+      // Update the organization in our in-memory store
+      var success = OrganizationsData.UpdateOrganization(profileContext.Provider, profileContext.ProfileId, editRequest.OrganizationId, editRequest);
+      
+      if (!success)
+      {
+        logger.LogWarning("Organization {OrganizationId} not found for ProfileId: {ProfileId}",
+          editRequest.OrganizationId, profileContext.ProfileId);
+        return Result.NotFound();
+      }
+
+      // Log the organization edit details
+      logger.LogInformation("Demo plugin edited organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
         editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType, editRequest.Status);
 
       return Result.Success();

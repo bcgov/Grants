@@ -45,14 +45,43 @@
               user-select: none;
               color: var(--bc-primary) !important;
               transition: background-color 0.2s ease;
+              position: relative;
+
+              .column-label {
+                display: inline-block;
+              }
+
+              .sort-icon {
+                opacity: 0.4;
+                transition: opacity 0.2s ease;
+                font-size: 0.9em;
+                
+                &.active {
+                  opacity: 1;
+                  color: var(--bc-blue) !important;
+                }
+              }
 
               &:hover {
                 background-color: var(--bc-gray-20) !important;
+                
+                .sort-icon {
+                  opacity: 0.7;
+                }
               }
 
               &:focus {
                 outline: 2px solid var(--bc-blue);
                 outline-offset: -2px;
+              }
+
+              &.sorted {
+                background-color: var(--bc-gray-20) !important;
+                
+                .sort-icon {
+                  opacity: 1;
+                  color: var(--bc-blue) !important;
+                }
               }
             }
 

@@ -32,17 +32,13 @@ public class Update(IMediator _mediator)
         OrganizationType = "Corporation",
         OrganizationNumber = "BC1234567",
         Status = "Active",
-        LegalName = "Updated Organization Legal Name Inc.",
-        DoingBusinessAs = "Updated DBA Name",
-        Ein = "12-3456789",
-        Founded = 2020,
+        NonRegOrgName = "Updated Organization Legal Name Inc.",        
         FiscalMonth = "December",
-        FiscalDay = 31,
-        Mission = "To provide exceptional services to our community",
-        ServiceAreas = new[] { "Technology", "Consulting", "Development" },
+        FiscalDay = 31,        
         ProfileId = Guid.NewGuid(),
         PluginId = "DEMO",
-        Provider = "PROGRAM1"
+        Provider = "PROGRAM1",
+        OrganizationSize = 500
       };
     });
     
@@ -59,14 +55,10 @@ public class Update(IMediator _mediator)
       request.OrganizationType!,
       request.OrganizationNumber!,
       request.Status!,
-      request.LegalName,
-      request.DoingBusinessAs,
-      request.Ein,
-      request.Founded,
+      request.NonRegOrgName,
       request.FiscalMonth,
       request.FiscalDay,
-      request.Mission,
-      request.ServiceAreas,
+      request.OrganizationSize,
       request.ProfileId,
       request.PluginId,
       request.Provider);

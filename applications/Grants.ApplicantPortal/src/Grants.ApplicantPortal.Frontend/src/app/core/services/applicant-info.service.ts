@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, switchMap, retry, catchError } from 'rxjs/operators';
 import {
   BackendResponse,  
@@ -136,8 +136,48 @@ export class ApplicantInfoService {
   }
 
   saveOrganizationInfo(orgInfo: OrganizationData): Observable<any> {
-    // Replace with actual API call
-    return of({ success: true });
+    console.log('ApplicantInfoService - Saving organization info:', orgInfo);
+    
+    // Get the required parameters for the API endpoint
+    // Using the pattern from your example: /Organizations/{addressId}/{profileId}/{pluginId}/{provider}
+    const addressId = orgInfo.organizationId || orgInfo.orgNumber || 'CD12E345-6789-0ABC-DEF1-234567890ABC';
+    const profileId = '01985d4b-946c-7dee-90f1-8e2b947ffa83'; // You may need to get this from user context/auth service
+    const pluginId = 'DEMO';   // You may need to get this from configuration
+    const provider = 'PROGRAM1'; // You may need to get this from configuration
+    
+    // Map to the API payload structure with required properties
+    const apiPayload = {
+      Name: orgInfo.orgName,
+      OrganizationType: orgInfo.organizationType,
+      OrganizationNumber: orgInfo.orgNumber,
+      Status: orgInfo.orgStatus,
+      NonRegOrgName: orgInfo.nonRegOrgName,
+      OrganizationSize: orgInfo.orgSize ? parseInt(orgInfo.orgSize) : null,
+      FiscalMonth: orgInfo.fiscalMonth,
+      FiscalDay: orgInfo.fiscalDay
+    };
+    
+    const endpoint = `${this.baseUrl}/Organizations/${addressId}/${profileId}/${pluginId}/${provider}`;
+    
+    return this.http.put(endpoint, apiPayload, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).pipe(
+      map(response => ({
+        success: true,
+        message: 'Organization information saved successfully',
+        data: response
+      })),
+      catchError(error => {
+        console.error('Error saving organization:', error);
+        return throwError(() => ({
+          error: 'Failed to save organization information',
+          message: error.error?.message || 'Please try again later',
+          details: error
+        }));
+      })
+    );
   }
 
   //Submissions information

@@ -7,18 +7,20 @@ import {
   OrganizationData,
   OrgSearchResult,
 } from '../../../shared/models/applicant-info.interface';
+import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-organization-info',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingOverlayComponent],
   templateUrl: './organization.component.html',
   styleUrls: ['./organization.component.scss'],
 })
 export class OrganizationInfoComponent {
   @Input() organizationInfo: OrganizationData | null = null;
   @Input() isLoading = false;
-  @Output() saveOrganization = new EventEmitter<void>();
+  @Input() isSaving = false;
+  @Output() saveOrganization = new EventEmitter<OrganizationData>();
   @Output() searchResultSelected = new EventEmitter<OrgSearchResult>();
 
   // Search properties
@@ -174,11 +176,22 @@ export class OrganizationInfoComponent {
   }
 
   onSave(): void {
+    if (this.isSaving || !this.organizationInfo) return;
+    
+    // Update organization info with fiscal year data
+    const updatedOrgInfo: OrganizationData = {
+      ...this.organizationInfo,
+      fiscalYearEndMonth: this.selectedFiscalMonth ? parseInt(this.selectedFiscalMonth) : this.organizationInfo.fiscalYearEndMonth,
+      fiscalYearEndDay: this.selectedFiscalDay ? parseInt(this.selectedFiscalDay) : this.organizationInfo.fiscalYearEndDay
+    };
+    
     this.isEditMode = false;
-    this.saveOrganization.emit();
+    this.saveOrganization.emit(updatedOrgInfo);
   }
 
   onCancel(): void {
+    if (this.isSaving) return;
+    
     this.isEditMode = false;
     // Restore from backup
     if (this.backupOrganizationInfo) {

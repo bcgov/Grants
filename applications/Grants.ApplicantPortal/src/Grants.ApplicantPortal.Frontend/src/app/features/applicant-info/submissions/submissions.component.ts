@@ -39,6 +39,9 @@ export class SubmissionsComponent implements OnInit, OnDestroy {
 
   // Datatable configuration
   submissionsTableConfig: DatatableConfig = {
+    tableId: 'submissions-table',
+    defaultSortField: 'lastModified',
+    enableSortPersistence: true,
     columns: [
       { key: 'submissionId', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
       { key: 'submissionDate', label: 'Date', sortable: true, type: 'date', cssClass: 'submission-date-column' },
@@ -152,7 +155,8 @@ export class SubmissionsComponent implements OnInit, OnDestroy {
   }
 
   onSubmissionSort(event: DatatableSortEvent): void {
-    console.log('Sort by:', event.column, event.direction);
-    // TODO: Implement sorting functionality
+    console.log('Submissions sorted by:', event.column, event.direction);
+    // The datatable component now handles all sorting internally
+    // This event is emitted for any additional logic you might need
   }
 }

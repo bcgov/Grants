@@ -23,13 +23,20 @@
             <button
               type="button"
               class="btn btn-primary btn-sm"
+              [disabled]="isSavingOrganization"
               (click)="organizationComponent.onSave()"
             >
-              Save
+              @if (isSavingOrganization) {
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                  <span class="sr-only">Saving...</span>
+                </div>
+              }
+              {{ isSavingOrganization ? 'Saving...' : 'Save' }}
             </button>
             <button
               type="button"
               class="btn btn-secondary btn-sm"
+              [disabled]="isSavingOrganization"
               (click)="organizationComponent.onCancel()"
             >
               Cancel
@@ -38,11 +45,28 @@
         </div>
       </div>
       <div class="card-body">
+        <!-- Success Message -->
+        @if (saveSuccess) {
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            Organization information saved successfully!
+          </div>
+        }
+        
+        <!-- Error Message -->
+        @if (saveError) {
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ saveError }}
+          </div>
+        }
+        
         <app-organization-info
           #organizationComponent
           [organizationInfo]="organizationInfo"
           [isLoading]="isLoading"
-          (saveOrganization)="onSaveOrganization()"
+          [isSaving]="isSavingOrganization"
+          (saveOrganization)="onSaveOrganization($event)"
           (searchResultSelected)="onSearchResultSelected($event)"
         ></app-organization-info>
       </div>

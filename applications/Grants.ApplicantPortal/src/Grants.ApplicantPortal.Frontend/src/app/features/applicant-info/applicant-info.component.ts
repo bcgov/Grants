@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, finalize } from 'rxjs/operators';
 
 import { ApplicantService } from '../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../core/services/applicant-info.service';
@@ -52,6 +52,9 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
 
   isLoading = true;
   isHydratingOrgInfo = false;
+  isSavingOrganization = false;
+  saveError: string | null = null;
+  saveSuccess = false;
 
   // Subjects for cleanup
   private readonly destroy$ = new Subject<void>();
@@ -107,9 +110,41 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   }
 
   // Event handlers for organization info component
-  onSaveOrganization(): void {
-    console.log('Saving organization...', this.organizationInfo);
-    // Implement save logic
+  onSaveOrganization(organizationData: OrganizationData): void {
+    console.log('Saving organization...', organizationData);
+    
+    this.isSavingOrganization = true;
+    this.saveError = null;
+    this.saveSuccess = false;
+    
+    this.applicantInfoService.saveOrganizationInfo(organizationData)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isSavingOrganization = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('Organization saved successfully:', response);
+          this.saveSuccess = true;
+          this.organizationInfo = organizationData; // Update local state
+          
+          // Show success message briefly
+          setTimeout(() => {
+            this.saveSuccess = false;
+          }, 3000);
+        },
+        error: (error) => {
+          console.error('Failed to save organization:', error);
+          this.saveError = 'Failed to save organization information. Please try again.';
+          
+          // Clear error message after 5 seconds
+          setTimeout(() => {
+            this.saveError = null;
+          }, 5000);
+        }
+      });
   }
 
   onSearchResultSelected(result: OrgSearchResult): void {

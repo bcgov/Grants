@@ -10,10 +10,7 @@ public record EditOrganizationRequest(
   string OrganizationNumber,
   string Status,
   string? LegalName = null,
-  string? DoingBusinessAs = null,
-  string? Ein = null,
-  int? Founded = null,
+  string? NonRegOrgName = null,
   string? FiscalMonth = null,
   int? FiscalDay = null,
-  string? Mission = null,
-  string[]? ServiceAreas = null);
+  uint? OrganizationSize = null);

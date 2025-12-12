@@ -1,5 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { 
   DatatableConfig, 
   DatatableColumn,
@@ -7,8 +9,10 @@ import {
   DatatableActionEvent,
   DatatableSortEvent,
   DatatableActionItem,
-  DatatableBadgeConfig
+  DatatableBadgeConfig,
+  DatatableSortState
 } from './datatable.models';
+import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
 
 @Component({
   selector: 'app-datatable',
@@ -18,7 +22,7 @@ import {
   styleUrls: ['./datatable.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class DatatableComponent implements OnInit {
+export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   @Input() config!: DatatableConfig;
   @Input() data: any[] = [];
   @Input() loading = false;
@@ -26,10 +30,17 @@ export class DatatableComponent implements OnInit {
   @Output() rowClick = new EventEmitter<DatatableRowClickEvent>();
   @Output() actionClick = new EventEmitter<DatatableActionEvent>();
   @Output() sort = new EventEmitter<DatatableSortEvent>();
+  @Output() dataChange = new EventEmitter<any[]>(); // Emit sorted data
 
-  currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
+  // Sorting properties
+  currentSortState: SortState | null = null;
+  sortedData: any[] = [];
+  private sortConfig: TableSortConfig | null = null;
+  private readonly destroy$ = new Subject<void>();
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
+
+  constructor(private tableSortService: TableSortService) {}
 
   ngOnInit(): void {
     // Set default configuration values
@@ -45,6 +56,34 @@ export class DatatableComponent implements OnInit {
     this.config.actionsType = this.config.actionsType ?? 'chevron';
     this.config.noDataMessage = this.config.noDataMessage ?? 'No data available.';
     this.config.loadingMessage = this.config.loadingMessage ?? 'Loading data...';
+    this.config.enableSortPersistence = this.config.enableSortPersistence ?? true;
+    this.config.defaultSortField = this.config.defaultSortField ?? 'lastUpdated';
+    
+    // Setup sorting configuration
+    if (this.config.tableId) {
+      this.sortConfig = {
+        tableId: this.config.tableId,
+        defaultSortField: this.config.defaultSortField
+      };
+      
+      // Restore sort state from localStorage if persistence is enabled
+      if (this.config.enableSortPersistence) {
+        this.currentSortState = this.tableSortService.getSortState(this.config.tableId);
+      }
+    }
+    
+    // Initial sort of data
+    this.applySorting();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  
+  ngOnChanges(): void {
+    // Re-apply sorting when data changes
+    this.applySorting();
   }
 
   onRowClick(row: any, index: number, event: Event): void {
@@ -66,16 +105,41 @@ export class DatatableComponent implements OnInit {
 
   onSort(column: string): void {
     const columnConfig = this.config.columns.find(col => col.key === column);
-    if (!columnConfig?.sortable) return;
+    if (!columnConfig?.sortable || !this.sortConfig) return;
 
-    let direction: 'asc' | 'desc' = 'asc';
-    
-    if (this.currentSort?.column === column) {
-      direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+    // Use the 3-state sorting service
+    this.currentSortState = this.tableSortService.cycleSort(
+      this.sortConfig.tableId, 
+      column, 
+      this.sortConfig
+    );
+
+    // Apply sorting to data
+    this.applySorting();
+
+    // Emit sort event
+    this.sort.emit({ 
+      column, 
+      direction: this.currentSortState.direction 
+    });
+  }
+
+  /**
+   * Applies sorting to the data and emits the sorted result
+   */
+  private applySorting(): void {
+    if (!this.sortConfig) {
+      this.sortedData = [...this.data];
+    } else {
+      this.sortedData = this.tableSortService.sortData(
+        this.data,
+        this.currentSortState,
+        this.sortConfig
+      );
     }
-
-    this.currentSort = { column, direction };
-    this.sort.emit({ column, direction });
+    
+    // Emit the sorted data
+    this.dataChange.emit(this.sortedData);
   }
 
   getCellValue(row: any, column: DatatableColumn): any {
@@ -145,14 +209,30 @@ export class DatatableComponent implements OnInit {
   }
 
   getSortIcon(column: string): string {
-    if (!this.currentSort || this.currentSort.column !== column) {
-      return '';
-    }
-    return this.currentSort.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    if (!this.sortConfig) return 'fa-sort';
+    
+    return this.tableSortService.getSortIcon(column, this.currentSortState);
+  }
+
+  getSortAriaLabel(column: string): string {
+    if (!this.sortConfig) return `Sort ${column}`;
+    
+    return this.tableSortService.getSortAriaLabel(column, this.currentSortState);
+  }
+
+  isColumnSorted(column: string): boolean {
+    return this.tableSortService.isColumnSorted(column, this.currentSortState);
   }
 
   trackByFn(index: number, item: any): any {
     return item.id || item.key || index;
+  }
+
+  /**
+   * Gets the data to display (sorted data)
+   */
+  getDisplayData(): any[] {
+    return this.sortedData.length > 0 ? this.sortedData : this.data;
   }
 
   shouldShowActions(row: any): boolean {

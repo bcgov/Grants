@@ -23,16 +23,19 @@
           <tr>
             @for (column of config.columns; track column.key) {
               <th 
-                [class]="(column.sortable ? 'sortable ' : '') + (column.cssClass || '')"
+                [class]="(column.sortable ? 'sortable ' : '') + (column.cssClass || '') + (isColumnSorted(column.key) ? ' sorted' : '')"
                 [style.width]="column.width"
                 [tabindex]="column.sortable ? 0 : -1"
+                [attr.aria-label]="column.sortable ? getSortAriaLabel(column.key) : column.label"
                 (click)="column.sortable ? onSort(column.key) : null"
                 (keydown.enter)="column.sortable ? onSort(column.key) : null"
                 (keydown.space)="column.sortable ? onSort(column.key) : null"
               >
-                {{ column.label }}
-                @if (column.sortable && getSortIcon(column.key)) {
-                  <i class="fas {{ getSortIcon(column.key) }} ms-1"></i>
+                <span class="column-label">{{ column.label }}</span>
+                @if (column.sortable) {
+                  <i class="fas {{ getSortIcon(column.key) }} ms-1 sort-icon"
+                     [class.active]="isColumnSorted(column.key)"
+                     aria-hidden="true"></i>
                 }
               </th>
             }
@@ -44,7 +47,7 @@
 
         <!-- Table Body -->
         <tbody>
-          @for (row of data; track trackByFn($index, row); let i = $index) {
+          @for (row of getDisplayData(); track trackByFn($index, row); let i = $index) {
             <tr 
               [class]="config.tableClass ? config.tableClass + '-row' : 'datatable-row'"
               [tabindex]="config.rowClickable ? 0 : -1"
@@ -131,7 +134,7 @@
     </div>
 
     <!-- No Data State -->
-    @if (data.length === 0) {
+    @if (getDisplayData().length === 0) {
       <div class="no-data">
         <p>{{ config.noDataMessage }}</p>
       </div>

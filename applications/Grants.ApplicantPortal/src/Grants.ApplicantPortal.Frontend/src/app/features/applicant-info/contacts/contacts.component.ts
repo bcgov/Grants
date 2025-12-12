@@ -87,6 +87,9 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   // Datatable configuration
   contactsTableConfig: DatatableConfig = {
+    tableId: 'contacts-table',
+    defaultSortField: 'lastUpdated',
+    enableSortPersistence: true,
     columns: [
       { key: 'name', label: 'Name', sortable: true, cssClass: 'name-column' },
       { key: 'email', label: 'Email', sortable: true, type: 'email', cssClass: 'email-column' },
@@ -341,11 +344,6 @@ export class ContactsComponent implements OnInit, OnDestroy {
     // TODO: Implement delete contact logic
   }
 
-  sortContacts(column: string): void {
-    console.log('Sort by:', column);
-    // TODO: Implement sorting functionality
-  }
-
   onSetAsPrimary(contact: Contact): void {
     console.log('Setting as primary contact...', contact);
     
@@ -414,7 +412,8 @@ export class ContactsComponent implements OnInit, OnDestroy {
   }
 
   onContactSort(event: DatatableSortEvent): void {
-    console.log('Sort by:', event.column, event.direction);
-    // TODO: Implement sorting functionality
+    console.log('Contacts sorted by:', event.column, event.direction);
+    // The datatable component now handles all sorting internally
+    // This event is emitted for any additional logic you might need
   }
 }

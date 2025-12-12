@@ -5,6 +5,7 @@ namespace Grants.ApplicantPortal.API.UseCases.Organizations.Edit;
 
 public class EditOrganizationHandler(
   IOrganizationManagementService organizationManagementService,
+  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<EditOrganizationHandler> logger)
   : ICommandHandler<EditOrganizationCommand, Result>
 {
@@ -21,14 +22,11 @@ public class EditOrganizationHandler(
         request.OrganizationType,
         request.OrganizationNumber,
         request.Status,
-        request.LegalName,
-        request.DoingBusinessAs,
-        request.Ein,
-        request.Founded,
+        LegalName: null, // We don't have LegalName in the command, keeping it null for now
+        NonRegOrgName: request.NonRegOrgName,
         request.FiscalMonth,
         request.FiscalDay,
-        request.Mission,
-        request.ServiceAreas);
+        request.OrganizationSize);
 
       var profileContext = new ProfileContext(
         request.ProfileId,
@@ -44,6 +42,16 @@ public class EditOrganizationHandler(
       {
         logger.LogInformation("Successfully edited organization {OrganizationId} for ProfileId: {ProfileId}",
           request.OrganizationId, request.ProfileId);
+          
+        // Invalidate organization cache so the updated organization appears immediately
+        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
+          request.ProfileId,
+          request.PluginId,
+          request.Provider,
+          "ORGINFO");
+          
+        logger.LogDebug("Invalidated organization cache for ProfileId: {ProfileId} after organization edit", 
+          request.ProfileId);
       }
       else
       {

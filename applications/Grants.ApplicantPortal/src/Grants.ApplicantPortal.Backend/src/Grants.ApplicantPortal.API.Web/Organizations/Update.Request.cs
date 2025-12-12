@@ -12,7 +12,7 @@ public class UpdateOrganizationRequest
             .Replace("{Provider}", provider);
 
   [Required]
-  public string? Name { get; set; }
+  public string? Name { get; set; }  
   
   [Required]
   public string? OrganizationType { get; set; }
@@ -22,15 +22,18 @@ public class UpdateOrganizationRequest
   
   [Required]
   public string? Status { get; set; }
-  
-  public string? LegalName { get; set; }
-  public string? DoingBusinessAs { get; set; }
-  public string? Ein { get; set; }
-  public int? Founded { get; set; }
+
+  [Required]
+  public string? NonRegOrgName { get; set; }
+
+  [Required]
+  public uint? OrganizationSize { get; set; }
+
+  [Required]
   public string? FiscalMonth { get; set; }
+
+  [Required]
   public int? FiscalDay { get; set; }
-  public string? Mission { get; set; }
-  public string[]? ServiceAreas { get; set; }
   
   // Route parameters
   public Guid OrganizationId { get; set; }
