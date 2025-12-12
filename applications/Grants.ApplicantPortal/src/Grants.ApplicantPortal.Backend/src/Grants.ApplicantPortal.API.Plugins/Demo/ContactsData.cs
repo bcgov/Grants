@@ -113,7 +113,7 @@ public static class ContactsData
       }
 
       var contacts = _contactsByProviderProfile[key];
-      var contactIndex = contacts.FindIndex(c => c.Id == contactId.ToString());
+      var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactId.ToString(), StringComparison.OrdinalIgnoreCase));
       
       if (contactIndex == -1)
       {
@@ -168,21 +168,34 @@ public static class ContactsData
     {
       var key = $"{provider}-{profileId}";
       
+      // Debug logging
+      System.Diagnostics.Debug.WriteLine($"SetContactAsPrimary called with ContactId: {contactId}, Provider: {provider}, ProfileId: {profileId}");
+      
       // Ensure the contact is materialized if it's a default contact
       MaterializeDefaultContactIfNeeded(provider, profileId, contactId.ToString());
       
       if (!_contactsByProviderProfile.ContainsKey(key))
       {
+        System.Diagnostics.Debug.WriteLine($"No stored contacts found for key: {key}");
         return false;
       }
 
       var contacts = _contactsByProviderProfile[key];
-      var contactIndex = contacts.FindIndex(c => c.Id == contactId.ToString());
+      System.Diagnostics.Debug.WriteLine($"Found {contacts.Count} stored contacts");
+      foreach (var contact in contacts)
+      {
+        System.Diagnostics.Debug.WriteLine($"  Contact ID: {contact.Id}, Name: {contact.Name}");
+      }
+      
+      var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactId.ToString(), StringComparison.OrdinalIgnoreCase));
       
       if (contactIndex == -1)
       {
+        System.Diagnostics.Debug.WriteLine($"Contact with ID {contactId} not found in stored contacts");
         return false;
       }
+
+      System.Diagnostics.Debug.WriteLine($"Found contact at index {contactIndex}, setting as primary");
 
       // Update all stored contacts to not be primary, then set the target as primary
       // Note: We only manage primary status within stored contacts; default contacts 
@@ -192,7 +205,8 @@ public static class ContactsData
         contacts[i] = contacts[i] with 
         { 
           IsPrimary = i == contactIndex,
-          PreferredContact = i == contactIndex
+          PreferredContact = i == contactIndex,
+          LastUpdated = i == contactIndex ? DateTime.UtcNow : contacts[i].LastUpdated // Update timestamp for primary contact
         };
       }
 
@@ -218,7 +232,7 @@ public static class ContactsData
       }
 
       var contacts = _contactsByProviderProfile[key];
-      var contactIndex = contacts.FindIndex(c => c.Id == contactId.ToString());
+      var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactId.ToString(), StringComparison.OrdinalIgnoreCase));
       
       if (contactIndex == -1)
       {
@@ -329,6 +343,9 @@ public static class ContactsData
   {
     var key = $"{provider}-{profileId}";
     
+    // Debug logging
+    System.Diagnostics.Debug.WriteLine($"MaterializeDefaultContactIfNeeded called with ContactId: {contactId}, Provider: {provider}");
+    
     if (!_contactsByProviderProfile.ContainsKey(key))
     {
       _contactsByProviderProfile[key] = new List<ContactInfo>();
@@ -336,20 +353,32 @@ public static class ContactsData
 
     var contacts = _contactsByProviderProfile[key];
     
-    // Check if this contact is already stored
-    if (contacts.Any(c => c.Id == contactId))
+    // Check if this contact is already stored (case-insensitive comparison)
+    if (contacts.Any(c => string.Equals(c.Id, contactId, StringComparison.OrdinalIgnoreCase)))
     {
+      System.Diagnostics.Debug.WriteLine($"Contact {contactId} already materialized");
       return; // Already materialized
     }
 
-    // Check if this is a default contact
+    // Check if this is a default contact (case-insensitive comparison)
     var defaultContacts = GetDefaultContacts(provider);
-    var defaultContact = defaultContacts.FirstOrDefault(c => c.Id == contactId);
+    System.Diagnostics.Debug.WriteLine($"Found {defaultContacts.Length} default contacts for provider {provider}");
+    foreach (var dc in defaultContacts)
+    {
+      System.Diagnostics.Debug.WriteLine($"  Default Contact ID: {dc.Id}, Name: {dc.Name}");
+    }
+    
+    var defaultContact = defaultContacts.FirstOrDefault(c => string.Equals(c.Id, contactId, StringComparison.OrdinalIgnoreCase));
     
     if (defaultContact != null)
     {
+      System.Diagnostics.Debug.WriteLine($"Materializing default contact: {defaultContact.Name} (ID: {defaultContact.Id})");
       // Materialize the default contact into stored contacts
       contacts.Add(defaultContact);
+    }
+    else
+    {
+      System.Diagnostics.Debug.WriteLine($"No default contact found with ID: {contactId}");
     }
   }
 
@@ -383,9 +412,9 @@ public static class ContactsData
     var defaultContacts = GetDefaultContacts("PROGRAM1");
     
     // Filter out any default contacts that have been materialized into stored contacts
-    // to avoid duplication
+    // to avoid duplication (case-insensitive comparison)
     var nonMaterializedDefaults = defaultContacts.Where(dc => 
-      !storedContacts.Any(sc => sc.Id == dc.Id)).ToArray();
+      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
 
     // Combine non-materialized defaults and stored contacts
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
@@ -420,25 +449,27 @@ public static class ContactsData
       baseData,
       Data = new
       {
-        Contacts = allContacts.Select(c => new
-        {
-          c.Id,
-          c.ContactId,
-          c.Type,
-          c.FirstName,
-          c.LastName,
-          c.Name,
-          c.Email,
-          c.Phone,
-          c.Title,
-          c.Extension,
-          c.Department,
-          c.IsPrimary,
-          c.IsActive,
-          c.PreferredContact,
-          c.LastUpdated,
-          c.AllowEdit
-        }).ToArray(),
+        Contacts = allContacts
+          .OrderByDescending(c => c.LastUpdated) // Most recently updated first
+          .Select(c => new
+          {
+            c.Id,
+            c.ContactId,
+            c.Type,
+            c.FirstName,
+            c.LastName,
+            c.Name,
+            c.Email,
+            c.Phone,
+            c.Title,
+            c.Extension,
+            c.Department,
+            c.IsPrimary,
+            c.IsActive,
+            c.PreferredContact,
+            c.LastUpdated,
+            c.AllowEdit
+          }).ToArray(),
         Summary = new
         {
           TotalContacts = allContacts.Count,
@@ -467,9 +498,9 @@ public static class ContactsData
     var defaultContacts = GetDefaultContacts("PROGRAM2");
     
     // Filter out any default contacts that have been materialized into stored contacts
-    // to avoid duplication
+    // to avoid duplication (case-insensitive comparison)
     var nonMaterializedDefaults = defaultContacts.Where(dc => 
-      !storedContacts.Any(sc => sc.Id == dc.Id)).ToArray();
+      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
 
     // Combine non-materialized defaults and stored contacts
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
@@ -504,25 +535,27 @@ public static class ContactsData
       baseData,
       Data = new
       {
-        Contacts = allContacts.Select(c => new
-        {
-          c.Id,
-          c.ContactId,
-          c.Type,
-          c.FirstName,
-          c.LastName,
-          c.Name,
-          c.Email,
-          c.Phone,
-          c.Title,
-          c.Extension,
-          c.Department,
-          c.IsPrimary,
-          c.IsActive,
-          c.PreferredContact,
-          c.LastUpdated,
-          AllowEdit = true // All stored contacts are editable; default contacts have their own AllowEdit setting
-        }).ToArray(),
+        Contacts = allContacts
+          .OrderByDescending(c => c.LastUpdated) // Most recently updated first
+          .Select(c => new
+          {
+            c.Id,
+            c.ContactId,
+            c.Type,
+            c.FirstName,
+            c.LastName,
+            c.Name,
+            c.Email,
+            c.Phone,
+            c.Title,
+            c.Extension,
+            c.Department,
+            c.IsPrimary,
+            c.IsActive,
+            c.PreferredContact,
+            c.LastUpdated,
+            AllowEdit = true // All stored contacts are editable; default contacts have their own AllowEdit setting
+          }).ToArray(),
         Summary = new
         {
           TotalContacts = allContacts.Count,

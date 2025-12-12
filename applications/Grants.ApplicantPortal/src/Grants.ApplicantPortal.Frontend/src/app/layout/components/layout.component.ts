@@ -4,6 +4,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
 import { ApplicantService } from '../../core/services/applicant.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
 
@@ -26,6 +27,7 @@ export class LayoutComponent implements OnInit {
 
   constructor(
     private readonly applicantService: ApplicantService,
+    private readonly authService: AuthService,
     private router: Router
   ) {}
 
@@ -47,7 +49,8 @@ export class LayoutComponent implements OnInit {
 
   onMobileLogout(event: Event): void {
     event.preventDefault();
-    this.clearSession();
+    console.log('Mobile logout clicked');
+    this.authService.logout();
   }
 
   // Close sidebar when clicking on main content on mobile

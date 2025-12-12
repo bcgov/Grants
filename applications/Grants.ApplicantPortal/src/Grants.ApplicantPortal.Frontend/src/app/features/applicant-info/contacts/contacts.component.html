@@ -56,7 +56,9 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addContactModalLabel">Add New Contact</h5>
+        <h5 class="modal-title" id="addContactModalLabel">
+          {{ isEditMode ? 'Edit Contact' : 'Add New Contact' }}
+        </h5>
         <button type="button" class="btn-close" (click)="onCancelAddContact()" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -109,12 +111,19 @@
                 <input 
                   type="text" 
                   class="form-control" 
+                  [class.is-invalid]="nameValidationError"
                   id="fullName" 
                   [(ngModel)]="newContact.name" 
+                  (input)="onNameChange()"
                   name="fullName"
                   placeholder="First and Last Name"
                   [disabled]="isSavingContact"
                   required>
+                @if (nameValidationError) {
+                  <div class="invalid-feedback">
+                    {{ nameValidationError }}
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-6">
@@ -134,15 +143,21 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                <label for="email" class="form-label">Email</label>
                 <input 
                   type="email" 
                   class="form-control" 
+                  [class.is-invalid]="emailValidationError"
                   id="email" 
                   [(ngModel)]="newContact.email" 
+                  (input)="onEmailChange()"
                   name="email"
-                  [disabled]="isSavingContact"
-                  required>
+                  [disabled]="isSavingContact">
+                @if (emailValidationError) {
+                  <div class="invalid-feedback">
+                    {{ emailValidationError }}
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-6">
@@ -175,9 +190,9 @@
           [disabled]="!isValidContact(newContact) || isSavingContact">
           @if (isSavingContact) {
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Saving...
+            {{ isEditMode ? 'Updating...' : 'Saving...' }}
           } @else {
-            Save Contact
+            {{ isEditMode ? 'Update Contact' : 'Save Contact' }}
           }
         </button>
       </div>

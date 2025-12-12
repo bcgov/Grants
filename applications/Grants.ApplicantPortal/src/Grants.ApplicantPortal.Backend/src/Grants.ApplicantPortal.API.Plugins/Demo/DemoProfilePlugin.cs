@@ -254,8 +254,18 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       // Simulate some processing time
       await Task.Delay(75, cancellationToken);
 
-      // Log the mock address edit details
-      logger.LogInformation("Demo plugin edited mock address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
+      // Update the address in our in-memory store
+      var success = AddressesData.UpdateAddress(profileContext.Provider, profileContext.ProfileId, editRequest.AddressId, editRequest);
+      
+      if (!success)
+      {
+        logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+          editRequest.AddressId, profileContext.ProfileId);
+        return Result.NotFound();
+      }
+
+      // Log the address edit details
+      logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
         editRequest.AddressId, editRequest.Type, editRequest.Address, editRequest.City);
 
       return Result.Success();
@@ -281,8 +291,18 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       // Simulate some processing time
       await Task.Delay(55, cancellationToken);
 
-      // Log the mock address set as primary operation
-      logger.LogInformation("Demo plugin set mock address {AddressId} as primary for ProfileId: {ProfileId}",
+      // Set the address as primary in our in-memory store
+      var success = AddressesData.SetAddressAsPrimary(profileContext.Provider, profileContext.ProfileId, addressId);
+      
+      if (!success)
+      {
+        logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+          addressId, profileContext.ProfileId);
+        return Result.NotFound();
+      }
+
+      // Log the address set as primary operation
+      logger.LogInformation("Demo plugin set address {AddressId} as primary for ProfileId: {ProfileId}",
         addressId, profileContext.ProfileId);
 
       return Result.Success();

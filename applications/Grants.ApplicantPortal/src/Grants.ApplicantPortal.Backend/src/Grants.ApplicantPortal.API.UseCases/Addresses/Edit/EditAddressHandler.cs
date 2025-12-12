@@ -5,6 +5,7 @@ namespace Grants.ApplicantPortal.API.UseCases.Addresses.Edit;
 
 public class EditAddressHandler(
   IAddressManagementService addressManagementService,
+  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<EditAddressHandler> logger)
   : ICommandHandler<EditAddressCommand, Result>
 {
@@ -39,6 +40,16 @@ public class EditAddressHandler(
       {
         logger.LogInformation("Successfully edited address {AddressId} for ProfileId: {ProfileId}",
           request.AddressId, request.ProfileId);
+          
+        // Invalidate addresses cache so the updated address appears immediately
+        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
+          request.ProfileId,
+          request.PluginId,
+          request.Provider,
+          "ADDRESSES");
+          
+        logger.LogDebug("Invalidated addresses cache for ProfileId: {ProfileId} after address edit", 
+          request.ProfileId);
       }
       else
       {

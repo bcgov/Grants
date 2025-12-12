@@ -16,6 +16,7 @@ public static class SubmissionsData
             {
                     new
                     {
+                        Id = "S1234E56-789A-BC01-23DE-F4567890AB12", // Added GUID ID
                         SubmissionId = "PROG1-SUB-001",
                         ApplicationId = "APP-2024-0001",
                         ProjectName = "Community Health Initiative",
@@ -34,6 +35,7 @@ public static class SubmissionsData
                     },
                     new
                     {
+                        Id = "S2345E67-890A-BC12-34DE-F5678901AB23", // Added GUID ID
                         SubmissionId = "PROG1-SUB-002",
                         ApplicationId = "APP-2024-0002",
                         ProjectName = "Youth Mental Health Support Program",
@@ -52,6 +54,7 @@ public static class SubmissionsData
                     },
                      new
                     {
+                        Id = "S3456E78-901A-BC23-45DE-F6789012AB34", // Added GUID ID
                         SubmissionId = "PROG1-SUB-003",
                         ApplicationId = "APP-2024-0003",
                         ProjectName = "Wellness Fitness Program",
@@ -70,6 +73,7 @@ public static class SubmissionsData
                     },
                      new
                     {
+                        Id = "S4567E89-012A-BC34-56DE-F7890123AB45", // Added GUID ID
                         SubmissionId = "PROG1-SUB-004",
                         ApplicationId = "APP-2024-0004",
                         ProjectName = "Digital Community Program",
@@ -78,7 +82,7 @@ public static class SubmissionsData
                         PaidAmount = 220000,
                         Status = "In progress",
                         SubmissionDate = DateTime.UtcNow.AddDays(-18),
-                        LastModified = DateTime.UtcNow.AddDays(-5),
+                        LastModified = DateTime.UtcNow.AddDays(-1), // More recent than submission 003
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(4),
@@ -86,7 +90,9 @@ public static class SubmissionsData
                         },
                         Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
                     }
-                },
+                }
+                .OrderByDescending(s => s.LastModified) // Sort by most recently modified first
+                .ToArray(),
         Summary = new
         {
           TotalSubmissions = 4,
@@ -111,6 +117,7 @@ public static class SubmissionsData
             {
                     new
                     {
+                        Id = "S5678E90-123A-BC45-67DE-F8901234AB56", // Added GUID ID
                         SubmissionId = "PROG2-SUB-001",
                         ApplicationId = "APP-2024-0078",
                         ProjectName = "STEM Education Excellence Initiative",
@@ -129,6 +136,7 @@ public static class SubmissionsData
                     },
                     new
                     {
+                        Id = "S6789E01-234A-BC56-78DE-F9012345AB67", // Added GUID ID
                         SubmissionId = "PROG2-SUB-002",
                         ApplicationId = "APP-2024-0089",
                         ProjectName = "Digital Literacy for Seniors",
@@ -137,7 +145,7 @@ public static class SubmissionsData
                         PaidAmount = 2000,
                         Status = "Under Review",
                         SubmissionDate = DateTime.UtcNow.AddDays(-20),
-                        LastModified = DateTime.UtcNow.AddDays(-1),
+                        LastModified = DateTime.UtcNow.AddDays(-1), // Most recent
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(3),
@@ -147,6 +155,7 @@ public static class SubmissionsData
                     },
                     new
                     {
+                        Id = "S7890E12-345A-BC67-89DE-F0123456AB78", // Added GUID ID
                         SubmissionId = "PROG2-SUB-003",
                         ApplicationId = "APP-2024-0095",
                         ProjectName = "Rural Broadband Access Project",
@@ -163,7 +172,9 @@ public static class SubmissionsData
                         },
                         Categories = new[] { "Infrastructure", "Rural Development", "Technology Access" }
                     }
-                },
+                }
+                .OrderByDescending(s => s.LastModified) // Sort by most recently modified first
+                .ToArray(),
         Summary = new
         {
           TotalSubmissions = 3,

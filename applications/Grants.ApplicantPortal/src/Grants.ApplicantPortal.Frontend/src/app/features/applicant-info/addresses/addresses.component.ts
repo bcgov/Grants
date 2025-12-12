@@ -59,11 +59,12 @@ export class AddressesComponent implements OnInit, OnDestroy {
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
-      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' }
+      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
+      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
     ],
     actionsType: 'dropdown',
     actionItems: [
-      { label: 'Set as primary', icon: 'fa-phone', action: 'setAsPrimary' },
+      { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
     ],
     badgeConfig: {
       field: 'type',
@@ -172,7 +173,27 @@ export class AddressesComponent implements OnInit, OnDestroy {
   }
 
   onSetAsPrimary(address: Address): void {
-    console.log('Setting as main address...', address);
+    console.log('Setting as primary address...', address);
+    
+    this.applicantInfoService.setAddressAsPrimary(
+      address.id,
+      this.profileId,
+      this.pluginId,
+      this.provider
+    ).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        console.log('Address set as primary successfully:', response);
+        // Refresh the addresses list to update the display
+        this.loadAddresses();
+      },
+      error: (error) => {
+        console.error('Failed to set address as primary:', error);
+        // Could add a toast notification here
+        this.error = 'Failed to set address as primary. Please try again.';
+      }
+    });
   }
 
   onAddressSort(event: DatatableSortEvent): void {

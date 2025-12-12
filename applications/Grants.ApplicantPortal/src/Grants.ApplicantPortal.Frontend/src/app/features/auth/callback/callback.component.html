@@ -1,11 +1,17 @@
 <div class="callback-container">
   <div class="callback-content">
-    <div class="spinner-container">
+    <div *ngIf="isProcessing" class="spinner-container">
       <div class="spinner-border text-primary">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <h3>Authenticating...</h3>
-    <p>Please wait while we complete your authentication.</p>
+    <div *ngIf="errorMessage" class="alert alert-danger">
+      <i class="fa fa-exclamation-triangle"></i>
+      {{ errorMessage }}
+    </div>
+    <h3 *ngIf="isProcessing">Authenticating...</h3>
+    <h3 *ngIf="errorMessage">Authentication Error</h3>
+    <p *ngIf="isProcessing">Please wait while we complete your authentication.</p>
+    <p *ngIf="errorMessage">Redirecting you back to login...</p>
   </div>
 </div>

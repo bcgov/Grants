@@ -237,4 +237,50 @@ export class ApplicantInfoService {
       })
     );
   }
+
+  /**
+   * Sets an address as primary
+   */
+  setAddressAsPrimary(
+    addressId: string,
+    profileId: string,
+    pluginId: string,
+    provider: string
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${addressId}/${profileId}/${pluginId}/${provider}/set-primary`;
+    return this.http.patch<any>(url, {}).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to set address as primary:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Updates an existing contact
+   */
+  updateContact(
+    contactId: string,
+    profileId: string,
+    pluginId: string,
+    provider: string,
+    contactData: {
+      name: string;
+      email: string;
+      title?: string;
+      type: string;
+      phoneNumber?: string;
+      isPrimary: boolean;
+    }
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Contacts/${contactId}/${profileId}/${pluginId}/${provider}`;
+    return this.http.put<any>(url, contactData).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to update contact:', error);
+        throw error;
+      })
+    );
+  }
 }

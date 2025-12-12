@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
+import { AuthService } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
@@ -18,7 +19,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   pageTitle = 'Applicant Info';
   private routerSubscription?: Subscription;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     // Set initial title
@@ -55,8 +59,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onLogout(event: Event): void {
     event.preventDefault();
     console.log('Desktop logout clicked');
-    // Implement logout logic here
-    this.clearSession();
+    this.authService.logout();
   }
 
   private clearSession(): void {

@@ -58,6 +58,13 @@ export class ContactsComponent implements OnInit, OnDestroy {
   showAddContactModal = false;
   isSavingContact = false;
   saveContactError: string | null = null;
+  emailValidationError: string | null = null;
+  nameValidationError: string | null = null;
+  
+  // Edit mode properties
+  isEditMode = false;
+  editingContactId: string | null = null;
+  
   newContact: Partial<Contact> = {
     firstName: '',
     lastName: '',
@@ -166,6 +173,8 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   // Event handlers
   onAddContact(): void {
+    this.isEditMode = false;
+    this.editingContactId = null;
     this.resetNewContactForm();
     this.showAddContactModal = true;
   }
@@ -181,23 +190,33 @@ export class ContactsComponent implements OnInit, OnDestroy {
     // Prepare the API payload
     const contactPayload = {
       name: this.newContact.name!,
-      email: this.newContact.email!,
+      email: this.newContact.email || '',
       title: this.newContact.title || '',
       type: this.newContact.type!,
       phoneNumber: this.newContact.phone || '',
       isPrimary: this.newContact.isPrimary!
     };
 
-    this.applicantInfoService.createContact(
-      this.profileId,
-      this.pluginId,
-      this.provider,
-      contactPayload
-    ).pipe(
+    const apiCall = this.isEditMode
+      ? this.applicantInfoService.updateContact(
+          this.editingContactId!,
+          this.profileId,
+          this.pluginId,
+          this.provider,
+          contactPayload
+        )
+      : this.applicantInfoService.createContact(
+          this.profileId,
+          this.pluginId,
+          this.provider,
+          contactPayload
+        );
+
+    apiCall.pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (response) => {
-        console.log('Contact created successfully:', response);
+        console.log(`Contact ${this.isEditMode ? 'updated' : 'created'} successfully:`, response);
         this.isSavingContact = false;
         this.showAddContactModal = false;
         this.resetNewContactForm();
@@ -205,9 +224,9 @@ export class ContactsComponent implements OnInit, OnDestroy {
         this.loadContacts();
       },
       error: (error) => {
-        console.error('Failed to create contact:', error);
+        console.error(`Failed to ${this.isEditMode ? 'update' : 'create'} contact:`, error);
         this.isSavingContact = false;
-        this.saveContactError = error?.error?.message || 'Failed to create contact. Please try again.';
+        this.saveContactError = error?.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} contact. Please try again.`;
       }
     });
   }
@@ -216,26 +235,33 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.showAddContactModal = false;
     this.isSavingContact = false;
     this.saveContactError = null;
+    this.isEditMode = false;
+    this.editingContactId = null;
     this.resetNewContactForm();
   }
 
   private resetNewContactForm(): void {
     this.saveContactError = null;
-    this.newContact = {
-      firstName: '',
-      lastName: '',
-      name: '',
-      email: '',
-      phone: '',
-      title: '',
-      extension: '',
-      department: '',
-      type: 'General',
-      isPrimary: false,
-      isActive: true,
-      preferredContact: false,
-      allowEdit: true
-    };
+    this.emailValidationError = null;
+    this.nameValidationError = null;
+    
+    if (!this.isEditMode) {
+      this.newContact = {
+        firstName: '',
+        lastName: '',
+        name: '',
+        email: '',
+        phone: '',
+        title: '',
+        extension: '',
+        department: '',
+        type: 'General',
+        isPrimary: false,
+        isActive: true,
+        preferredContact: false,
+        allowEdit: true
+      };
+    }
   }
 
   getContactsForTable(): any[] {
@@ -246,7 +272,39 @@ export class ContactsComponent implements OnInit, OnDestroy {
   }
 
   isValidContact(contact: Partial<Contact>): boolean {
-    return !!(contact.name && contact.email);
+    this.validateName();
+    this.validateEmail();
+    
+    return this.nameValidationError === null && this.emailValidationError === null;
+  }
+
+  validateName(): void {
+    if (!this.newContact.name || this.newContact.name.trim().length === 0) {
+      this.nameValidationError = 'Name is required';
+    } else {
+      this.nameValidationError = null;
+    }
+  }
+
+  validateEmail(): void {
+    if (this.newContact.email && this.newContact.email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(this.newContact.email)) {
+        this.emailValidationError = 'Please enter a valid email address';
+      } else {
+        this.emailValidationError = null;
+      }
+    } else {
+      this.emailValidationError = null;
+    }
+  }
+
+  onNameChange(): void {
+    this.validateName();
+  }
+
+  onEmailChange(): void {
+    this.validateEmail();
   }
 
   onContactClick(contact: Contact): void {
@@ -256,7 +314,26 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   onEditContact(contact: Contact): void {
     console.log('Editing contact...', contact);
-    // TODO: Implement edit contact logic
+    this.isEditMode = true;
+    this.editingContactId = contact.id;
+    this.resetNewContactForm();
+    
+    // Populate form with existing contact data
+    this.newContact = {
+      name: contact.name,
+      email: contact.email,
+      title: contact.title,
+      type: contact.type,
+      phone: contact.phone,
+      isPrimary: contact.isPrimary,
+      extension: contact.extension,
+      department: contact.department,
+      isActive: contact.isActive,
+      preferredContact: contact.preferredContact,
+      allowEdit: contact.allowEdit
+    };
+    
+    this.showAddContactModal = true;
   }
 
   onDeleteContact(contactId: string): void {

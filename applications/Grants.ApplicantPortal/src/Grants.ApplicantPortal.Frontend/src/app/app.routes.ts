@@ -25,6 +25,13 @@ export const routes: Routes = [
         (m) => m.LoginComponent
       ),
   },
+  {
+    path: 'logout',
+    loadComponent: () =>
+      import('./features/auth/logout/logout.component').then(
+        (m) => m.LogoutComponent
+      ),
+  },
 
   // Protected routes under 'app' path
   {
