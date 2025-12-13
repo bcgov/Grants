@@ -323,4 +323,23 @@ export class ApplicantInfoService {
       })
     );
   }
+
+  /**
+   * Deletes a contact
+   */
+  deleteContact(
+    contactId: string,
+    profileId: string,
+    pluginId: string,
+    provider: string
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Contacts/${contactId}/${profileId}/${pluginId}/${provider}`;
+    return this.http.delete<any>(url).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to delete contact:', error);
+        throw error;
+      })
+    );
+  }
 }

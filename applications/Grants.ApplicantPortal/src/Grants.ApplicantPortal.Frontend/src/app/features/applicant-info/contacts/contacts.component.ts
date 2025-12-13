@@ -61,6 +61,12 @@ export class ContactsComponent implements OnInit, OnDestroy {
   emailValidationError: string | null = null;
   nameValidationError: string | null = null;
   
+  // Delete confirmation properties
+  showDeleteConfirmModal = false;
+  isDeletingContact = false;
+  deleteContactError: string | null = null;
+  contactToDelete: Contact | null = null;
+  
   // Edit mode properties
   isEditMode = false;
   editingContactId: string | null = null;
@@ -101,7 +107,8 @@ export class ContactsComponent implements OnInit, OnDestroy {
     actionsType: 'dropdown',
     actionItems: [
       { label: 'Set as primary', icon: 'fa-phone', action: 'setAsPrimary' },
-      { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' }
+      { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
+      { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
     ],
     actionsVisibilityField: 'allowEdit',
 
@@ -339,9 +346,50 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.showAddContactModal = true;
   }
 
-  onDeleteContact(contactId: string): void {
-    console.log('Deleting contact...', contactId);
-    // TODO: Implement delete contact logic
+  onDeleteContact(contact: Contact): void {
+    console.log('Preparing to delete contact...', contact);
+    this.contactToDelete = contact;
+    this.deleteContactError = null;
+    this.showDeleteConfirmModal = true;
+  }
+
+  onConfirmDeleteContact(): void {
+    if (!this.contactToDelete) {
+      return;
+    }
+
+    this.isDeletingContact = true;
+    this.deleteContactError = null;
+
+    this.applicantInfoService.deleteContact(
+      this.contactToDelete.id,
+      this.profileId,
+      this.pluginId,
+      this.provider
+    ).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        console.log('Contact deleted successfully:', response);
+        this.isDeletingContact = false;
+        this.showDeleteConfirmModal = false;
+        this.contactToDelete = null;
+        // Refresh the contacts list
+        this.loadContacts();
+      },
+      error: (error) => {
+        console.error('Failed to delete contact:', error);
+        this.isDeletingContact = false;
+        this.deleteContactError = error?.error?.message || 'Failed to delete contact. Please try again.';
+      }
+    });
+  }
+
+  onCancelDeleteContact(): void {
+    this.showDeleteConfirmModal = false;
+    this.isDeletingContact = false;
+    this.deleteContactError = null;
+    this.contactToDelete = null;
   }
 
   onSetAsPrimary(contact: Contact): void {
@@ -394,7 +442,7 @@ export class ContactsComponent implements OnInit, OnDestroy {
     const contact = event.row as Contact;
     
     // Check if the contact can be edited for actions that require it
-    if ((event.action === 'edit' || event.action === 'setAsPrimary') && !contact.allowEdit) {
+    if ((event.action === 'edit' || event.action === 'setAsPrimary' || event.action === 'delete') && !contact.allowEdit) {
       console.log('Action not allowed: Contact cannot be edited');
       return;
     }
@@ -405,6 +453,9 @@ export class ContactsComponent implements OnInit, OnDestroy {
         break;
       case 'edit':
         this.onEditContact(contact);
+        break;
+      case 'delete':
+        this.onDeleteContact(contact);
         break;
       default:
         console.log('Unknown action:', event.action);

@@ -8,29 +8,24 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 public static class ContactsData
 {
   private static readonly Dictionary<string, List<ContactInfo>> _contactsByProviderProfile = new();
+  private static readonly Dictionary<string, HashSet<string>> _deletedDefaultContactIds = new();
   private static readonly object _lock = new object();
 
   /// <summary>
   /// Internal contact information structure
   /// </summary>
-  private record ContactInfo
+  private sealed record ContactInfo
   {
     public string Id { get; init; } = string.Empty;
-    public string ContactId { get; init; } = string.Empty;
     public string Type { get; init; } = string.Empty;
-    public string FirstName { get; init; } = string.Empty;
-    public string LastName { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
     public string Phone { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
-    public string Extension { get; init; } = string.Empty;
-    public string Department { get; init; } = string.Empty;
     public bool IsPrimary { get; init; }
     public bool IsActive { get; init; } = true;
-    public bool PreferredContact { get; init; }
     public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
-    public bool AllowEdit { get; init; } = true;
+    public bool AllowEdit { get; init; } = true;    
   }
 
   /// <summary>
@@ -56,37 +51,25 @@ public static class ContactsData
       {
         for (int i = 0; i < contacts.Count; i++)
         {
-          contacts[i] = contacts[i] with { IsPrimary = false, PreferredContact = false };
+          contacts[i] = contacts[i] with { IsPrimary = false };
         }
       }
 
       // Generate a new contact ID
       var newContactId = Guid.NewGuid();
-      var contactId = $"CON-{provider.ToUpper()}-{contacts.Count + 1:D3}";
-
-      // Parse name into first and last name
-      var nameParts = contactRequest.Name?.Split(' ', 2) ?? new[] { "", "" };
-      var firstName = nameParts.Length > 0 ? nameParts[0] : "";
-      var lastName = nameParts.Length > 1 ? nameParts[1] : "";
 
       var newContact = new ContactInfo
       {
         Id = newContactId.ToString(),
-        ContactId = contactId,
         Type = contactRequest.Type ?? "Secondary",
-        FirstName = firstName,
-        LastName = lastName,
         Name = contactRequest.Name ?? "",
         Email = contactRequest.Email ?? "",
         Phone = contactRequest.PhoneNumber ?? "",
         Title = contactRequest.Title ?? "",
-        Extension = "",
-        Department = "",
         IsPrimary = contactRequest.IsPrimary,
         IsActive = true,
-        PreferredContact = contactRequest.IsPrimary,
         LastUpdated = DateTime.UtcNow,
-        AllowEdit = true
+        AllowEdit = true        
       };
 
       contacts.Add(newContact);
@@ -129,29 +112,21 @@ public static class ContactsData
         {
           if (i != contactIndex)
           {
-            contacts[i] = contacts[i] with { IsPrimary = false, PreferredContact = false };
+            contacts[i] = contacts[i] with { IsPrimary = false };
           }
         }
       }
-
-      // Parse name into first and last name
-      var nameParts = editRequest.Name?.Split(' ', 2) ?? new[] { "", "" };
-      var firstName = nameParts.Length > 0 ? nameParts[0] : "";
-      var lastName = nameParts.Length > 1 ? nameParts[1] : "";
 
       // Update the contact
       var existingContact = contacts[contactIndex];
       contacts[contactIndex] = existingContact with
       {
         Type = editRequest.Type,
-        FirstName = firstName,
-        LastName = lastName,
-        Name = editRequest.Name,
+        Name = editRequest.Name ?? "",
         Email = editRequest.Email ?? "",
         Phone = editRequest.PhoneNumber ?? "",
         Title = editRequest.Title ?? "",
         IsPrimary = editRequest.IsPrimary,
-        PreferredContact = editRequest.IsPrimary,
         LastUpdated = DateTime.UtcNow
       };
 
@@ -205,7 +180,6 @@ public static class ContactsData
         contacts[i] = contacts[i] with 
         { 
           IsPrimary = i == contactIndex,
-          PreferredContact = i == contactIndex,
           LastUpdated = i == contactIndex ? DateTime.UtcNow : contacts[i].LastUpdated // Update timestamp for primary contact
         };
       }
@@ -222,25 +196,119 @@ public static class ContactsData
     lock (_lock)
     {
       var key = $"{provider}-{profileId}";
+      var contactIdStr = contactId.ToString();
       
-      // Ensure the contact is materialized if it's a default contact
-      MaterializeDefaultContactIfNeeded(provider, profileId, contactId.ToString());
+      // Check if it's a default contact
+      var defaultContacts = GetDefaultContacts(provider);
+      var isDefaultContact = defaultContacts.Any(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
       
-      if (!_contactsByProviderProfile.ContainsKey(key))
+      bool wasPrimary = false;
+      
+      if (isDefaultContact)
       {
-        return false;
+        // Check if the default contact being deleted is primary
+        var defaultContact = defaultContacts.FirstOrDefault(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
+        wasPrimary = defaultContact?.IsPrimary ?? false;
+        
+        // Track deletion of default contact
+        if (!_deletedDefaultContactIds.ContainsKey(key))
+        {
+          _deletedDefaultContactIds[key] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+        _deletedDefaultContactIds[key].Add(contactIdStr);
+        
+        // Also remove from stored contacts if it was materialized
+        if (_contactsByProviderProfile.ContainsKey(key))
+        {
+          var contacts = _contactsByProviderProfile[key];
+          var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
+          if (contactIndex != -1)
+          {
+            wasPrimary = contacts[contactIndex].IsPrimary;
+            contacts.RemoveAt(contactIndex);
+          }
+        }
       }
-
-      var contacts = _contactsByProviderProfile[key];
-      var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactId.ToString(), StringComparison.OrdinalIgnoreCase));
-      
-      if (contactIndex == -1)
+      else
       {
-        return false;
-      }
+        // Handle stored contacts
+        if (!_contactsByProviderProfile.ContainsKey(key))
+        {
+          return false;
+        }
 
-      contacts.RemoveAt(contactIndex);
+        var storedContacts = _contactsByProviderProfile[key];
+        var storedContactIndex = storedContacts.FindIndex(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
+        
+        if (storedContactIndex == -1)
+        {
+          return false;
+        }
+
+        wasPrimary = storedContacts[storedContactIndex].IsPrimary;
+        storedContacts.RemoveAt(storedContactIndex);
+      }
+      
+      // If we deleted a primary contact, find the next contact to make primary
+      if (wasPrimary)
+      {
+        PromoteNextContactToPrimary(provider, profileId);
+      }
+      
       return true;
+    }
+  }
+
+  /// <summary>
+  /// Promotes the most recently modified contact to primary when the current primary is deleted
+  /// </summary>
+  private static void PromoteNextContactToPrimary(string provider, Guid profileId)
+  {
+    var key = $"{provider}-{profileId}";
+    
+    // Get all remaining contacts (stored + non-deleted defaults)
+    var storedContacts = GetStoredContacts(provider, profileId);
+    var defaultContacts = GetDefaultContacts(provider);
+    var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
+    
+    // Get non-deleted, non-materialized default contacts
+    var nonMaterializedDefaults = defaultContacts.Where(dc => 
+      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase)) &&
+      !deletedDefaultIds.Contains(dc.Id)).ToArray();
+    
+    var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
+    
+    if (allContacts.Count == 0)
+    {
+      return; // No contacts left
+    }
+    
+    // Find the most recently modified contact
+    var newPrimaryContact = allContacts.OrderByDescending(c => c.LastUpdated).First();
+    
+    // If it's a default contact, we need to materialize it first
+    if (nonMaterializedDefaults.Any(c => c.Id == newPrimaryContact.Id))
+    {
+      MaterializeDefaultContactIfNeeded(provider, profileId, newPrimaryContact.Id);
+      
+      // Get the updated stored contacts after materialization
+      storedContacts = GetStoredContacts(provider, profileId);
+    }
+    
+    // Set the new primary contact in stored contacts
+    if (_contactsByProviderProfile.ContainsKey(key))
+    {
+      var contacts = _contactsByProviderProfile[key];
+      var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, newPrimaryContact.Id, StringComparison.OrdinalIgnoreCase));
+      
+      if (contactIndex != -1)
+      {
+        contacts[contactIndex] = contacts[contactIndex] with 
+        { 
+          IsPrimary = true, 
+          LastUpdated = DateTime.UtcNow 
+        };
+      }
     }
   }
 
@@ -251,84 +319,62 @@ public static class ContactsData
   {
     return provider?.ToUpper() switch
     {
-      "PROGRAM1" => new[]
-      {
+      "PROGRAM1" =>
+      [
         new ContactInfo
         {
           Id = "437675A8-D642-455C-B3E0-388D75E6203F",
-          ContactId = "CON-P1-001",
           Type = "Primary",
-          FirstName = "John",
-          LastName = "Doe",
           Name = "John Doe",
           Email = "john.doe@example.com",
           Phone = "(555) 123-4567",
           Title = "Project Manager",
-          Extension = "101",
-          Department = "Administration",
           IsPrimary = true,
           IsActive = true,
-          PreferredContact = true,
           LastUpdated = DateTime.UtcNow.AddDays(-5),
           AllowEdit = true
         },
         new ContactInfo
         {
           Id = "5A017931-E247-48C7-8257-25B0ED239883",
-          ContactId = "CON-P1-002", 
           Type = "Secondary",
-          FirstName = "Jane",
-          LastName = "Smith",
           Name = "Jane Smith",
           Email = "jane.smith@example.com",
           Phone = "(555) 987-6543",
           Title = "Financial Officer",
-          Extension = "205",
-          Department = "Finance",
           IsPrimary = false,
           IsActive = true,
-          PreferredContact = false,
           LastUpdated = DateTime.UtcNow.AddDays(-2),
-          AllowEdit = true
+          AllowEdit = false
         }
-      },
+      ],
       "PROGRAM2" => new[]
       {
         new ContactInfo
         {
-          Id = "1",
-          ContactId = "CON-P2-001",
+          Id = "127675A8-D653-455C-B3E0-388D75E6203F",
           Type = "Primary",
-          FirstName = "Dr. Maria",
-          LastName = "Rodriguez",
           Name = "Dr. Maria Rodriguez",
           Email = "maria.rodriguez@detc.edu",
           Phone = "+1-555-TECH-ED",
           Title = "Chief Executive Officer",
-          Extension = "100",
-          Department = "Executive",
           IsPrimary = true,
           IsActive = true,
-          PreferredContact = true,
-          LastUpdated = DateTime.UtcNow.AddDays(-3)
+          LastUpdated = DateTime.UtcNow.AddDays(-3),
+          AllowEdit = false
         },
         new ContactInfo
         {
-          Id = "2",
-          ContactId = "CON-P2-002",
+          Id = "6B017931-E247-48C7-8257-25B0ED239872",
           Type = "Secondary",
-          FirstName = "James",
-          LastName = "Liu",
           Name = "James Liu",
           Email = "james.liu@detc.edu",
           Phone = "+1-555-DEV-FUND",
           Title = "Director of Development",
-          Extension = "150",
-          Department = "Development",
           IsPrimary = false,
           IsActive = true,
-          PreferredContact = false,
-          LastUpdated = DateTime.UtcNow.AddDays(-1)
+          LastUpdated = DateTime.UtcNow.AddDays(-1),
+          AllowEdit = true
         }
       },
       _ => Array.Empty<ContactInfo>()
@@ -411,10 +457,15 @@ public static class ContactsData
     // Default contacts (always present as baseline) - use shared method
     var defaultContacts = GetDefaultContacts("PROGRAM1");
     
+    // Get deleted default contact IDs for this provider/profile
+    var key = $"PROGRAM1-{profileId}";
+    var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
+    
     // Filter out any default contacts that have been materialized into stored contacts
-    // to avoid duplication (case-insensitive comparison)
+    // or have been deleted (case-insensitive comparison)
     var nonMaterializedDefaults = defaultContacts.Where(dc => 
-      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
+      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase)) &&
+      !deletedDefaultIds.Contains(dc.Id)).ToArray();
 
     // Combine non-materialized defaults and stored contacts
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
@@ -434,11 +485,11 @@ public static class ContactsData
         {
           if (allContacts[i].Id == storedPrimary.Id)
           {
-            allContacts[i] = allContacts[i] with { IsPrimary = true, PreferredContact = true };
+            allContacts[i] = allContacts[i] with { IsPrimary = true };
           }
           else if (allContacts[i].IsPrimary)
           {
-            allContacts[i] = allContacts[i] with { IsPrimary = false, PreferredContact = false };
+            allContacts[i] = allContacts[i] with { IsPrimary = false };
           }
         }
       }
@@ -454,19 +505,13 @@ public static class ContactsData
           .Select(c => new
           {
             c.Id,
-            c.ContactId,
             c.Type,
-            c.FirstName,
-            c.LastName,
             c.Name,
             c.Email,
             c.Phone,
             c.Title,
-            c.Extension,
-            c.Department,
             c.IsPrimary,
             c.IsActive,
-            c.PreferredContact,
             c.LastUpdated,
             c.AllowEdit
           }).ToArray(),
@@ -497,10 +542,15 @@ public static class ContactsData
     // Default contacts (always present as baseline) - use shared method
     var defaultContacts = GetDefaultContacts("PROGRAM2");
     
+    // Get deleted default contact IDs for this provider/profile
+    var key = $"PROGRAM2-{profileId}";
+    var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
+    
     // Filter out any default contacts that have been materialized into stored contacts
-    // to avoid duplication (case-insensitive comparison)
+    // or have been deleted (case-insensitive comparison)
     var nonMaterializedDefaults = defaultContacts.Where(dc => 
-      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
+      !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase)) &&
+      !deletedDefaultIds.Contains(dc.Id)).ToArray();
 
     // Combine non-materialized defaults and stored contacts
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
@@ -520,11 +570,11 @@ public static class ContactsData
         {
           if (allContacts[i].Id == storedPrimary.Id)
           {
-            allContacts[i] = allContacts[i] with { IsPrimary = true, PreferredContact = true };
+            allContacts[i] = allContacts[i] with { IsPrimary = true };
           }
           else if (allContacts[i].IsPrimary)
           {
-            allContacts[i] = allContacts[i] with { IsPrimary = false, PreferredContact = false };
+            allContacts[i] = allContacts[i] with { IsPrimary = false };
           }
         }
       }
@@ -540,19 +590,13 @@ public static class ContactsData
           .Select(c => new
           {
             c.Id,
-            c.ContactId,
             c.Type,
-            c.FirstName,
-            c.LastName,
             c.Name,
             c.Email,
             c.Phone,
             c.Title,
-            c.Extension,
-            c.Department,
             c.IsPrimary,
             c.IsActive,
-            c.PreferredContact,
             c.LastUpdated,
             AllowEdit = true // All stored contacts are editable; default contacts have their own AllowEdit setting
           }).ToArray(),

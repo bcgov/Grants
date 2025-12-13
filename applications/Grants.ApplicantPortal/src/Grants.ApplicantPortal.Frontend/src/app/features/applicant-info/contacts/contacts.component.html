@@ -202,3 +202,70 @@
 
 <!-- Modal Backdrop -->
 <div class="modal-backdrop fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" *ngIf="showAddContactModal"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteContactModalLabel" [attr.aria-hidden]="!showDeleteConfirmModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content delete-modal">
+      <div class="modal-header delete-modal-header">
+        <h5 class="modal-title delete-modal-title" id="deleteContactModalLabel">
+          Remove Contact
+        </h5>
+        <button type="button" class="btn-close delete-modal-close" (click)="onCancelDeleteContact()" aria-label="Close" [disabled]="isDeletingContact"></button>
+      </div>
+      <div class="modal-body delete-modal-body">
+        <!-- Error Display -->
+        @if (deleteContactError) {
+          <div class="alert delete-modal-error" role="alert">
+            {{ deleteContactError }}
+          </div>
+        }
+        
+        @if (contactToDelete) {
+          <p class="delete-modal-question">Are you sure you want to remove <strong>{{ contactToDelete.name }}</strong> from your contacts?</p>
+          <p class="delete-modal-warning">This action cannot be undone.</p>
+          
+          <div class="delete-modal-details">
+            <div class="details-header">Contact Information</div>
+            <div class="details-row">
+              <span class="details-label">Name:</span>
+              <span class="details-value">{{ contactToDelete.name }}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Email:</span>
+              <span class="details-value">{{ contactToDelete.email }}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Type:</span>
+              <span class="details-value">{{ contactToDelete.type }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer delete-modal-footer">
+        <button 
+          type="button" 
+          class="btn delete-modal-cancel" 
+          (click)="onCancelDeleteContact()"
+          [disabled]="isDeletingContact">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn delete-modal-confirm" 
+          (click)="onConfirmDeleteContact()"
+          [disabled]="isDeletingContact">
+          @if (isDeletingContact) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Removing...
+          } @else {
+            Remove Contact
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" *ngIf="showDeleteConfirmModal"></div>
