@@ -1,27 +1,25 @@
-// Primary address display styles
+// Address-specific customizations only
 .primary-address-info {
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--bc-gray-50);
+  // Use same styles as .primary-info-display
   background-color: #faf9f8;
   border-width: 0px;
   margin-bottom: 1rem;
   border-radius: 4px 0px 0px 4px;
   padding: 1rem;
   border-left: 8px solid var(--bc-blue);
-
+  
   .form-label {
     font-weight: 600;
+    font-size: var(--bc-font-size-13);
     color: var(--bc-primary);
     margin-bottom: 0.5rem;
-    font-size: var(--bc-font-size-13);
   }
 
   .address-value {
     color: var(--bc-primary);
-    margin-bottom: 1.5rem;
     font-size: var(--bc-font-size-14);
     line-height: 1.5;
+    margin-bottom: 1.5rem;
 
     @media (max-width: 768px) {
       margin-bottom: 1rem;
@@ -29,20 +27,23 @@
   }
 }
 
-// No primary address state
 .no-primary-address {
   padding: 2rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--bc-gray-50);
+  text-align: center;
+  color: var(--bc-gray);
 
   p {
     margin: 0;
     font-size: var(--bc-font-size-14);
-    color: var(--bc-gray);
+    font-style: italic;
   }
 }
 
-// Address type badges
+.addresses-container {
+  padding: 0;
+}
+
+// Address type badges - using base badge styles
 .address-type-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -84,67 +85,5 @@
   &.address-type-other {
     background-color: #606060; // Neutral gray
     color: #ffffff;
-  }
-}
-
-// Loading state styles
-.loading-spinner-container {
-  .spinner-border {
-    width: 2rem;
-    height: 2rem;
-    color: var(--bc-blue);
-  }
-
-  .loading-text {
-    color: var(--bc-gray);
-    font-size: var(--bc-font-size-13);
-    margin-bottom: 0;
-  }
-}
-
-// Card styling
-.addresses-container {
-  .card {
-    border: 1px solid var(--bc-gray-50);
-    border-radius: 8px;
-    
-    .card-header {
-      // Remove custom background - use default styling like other cards
-      border-bottom: 1px solid var(--bc-gray-50);
-      padding: 1rem 1.5rem;
-
-      h3 {
-        color: var(--bc-primary);
-        font-size: var(--bc-font-size-18);
-        font-weight: 600;
-      }
-    }    .card-body {
-      padding: 1.5rem;
-    }
-  }
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .primary-address-info {
-    .row > [class*="col-"] {
-      margin-bottom: 1rem;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  .addresses-container {
-    .card {
-      .card-header {
-        padding: 1rem;
-      }
-
-      .card-body {
-        padding: 1rem;
-      }
-    }
   }
 }

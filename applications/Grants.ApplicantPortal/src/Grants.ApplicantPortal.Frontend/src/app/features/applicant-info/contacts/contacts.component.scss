@@ -1,55 +1,46 @@
+// Contact-specific customizations only
 .contacts-container {
   padding: 0;
+}
 
-  // Primary contact info styles
-  .primary-contact-info {
-    background-color: #faf9f8;
-    border-width: 0px;
-    margin-bottom: 1rem;
-    border-radius: 4px 0px 0px 4px;
-    padding: 1rem;
-    border-left: 8px solid var(--bc-blue);
-
-    .form-label {
-      font-weight: 600;
-      font-size: var(--bc-font-size-13);
-      color: var(--bc-primary);
-      margin-bottom: 0.25rem;
-    }
-
-    .contact-value {
-      margin-bottom: 0;
-      padding: 0.5rem 0;
-      font-size: var(--bc-font-size-13);
-      color: var(--bc-primary);
-    }
+.primary-contact-info {
+  // Use same styles as .primary-info-display
+  background-color: #faf9f8;
+  border-width: 0px;
+  margin-bottom: 1rem;
+  border-radius: 4px 0px 0px 4px;
+  padding: 1rem;
+  border-left: 8px solid var(--bc-blue);
+  
+  .form-label {
+    font-weight: 600;
+    font-size: var(--bc-font-size-13);
+    color: var(--bc-primary);
+    margin-bottom: 0.25rem; // Override global for tighter spacing
   }
 
-  .no-primary-contact {
-    padding: 2rem;
-    color: var(--bc-gray);
-
-    p {
-      margin-bottom: 0;
-      font-style: italic;
-    }
+  .contact-value {
+    color: var(--bc-primary);
+    font-size: var(--bc-font-size-14);
+    line-height: 1.5;
+    margin-bottom: 0;
+    padding: 0.5rem 0;
   }
 }
 
-// Responsive adjustments
-@media (max-width: 768px) {
-  .contacts-container {
-    .primary-contact-info {
-      .row {
-        [class*="col-"] {
-          margin-bottom: 1rem;
-        }
-      }
-    }
+.no-primary-contact {
+  padding: 2rem;
+  text-align: center;
+  color: var(--bc-gray);
+
+  p {
+    margin: 0;
+    font-size: var(--bc-font-size-14);
+    font-style: italic;
   }
 }
 
-// Delete Modal Styling - BC Gov inspired
+// Delete Modal - using BC modal pattern with specific styling
 .delete-modal {
   border: none;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -57,12 +48,12 @@
 
   .delete-modal-header {
     background-color: #f8f9fa;
-    border-bottom: 2px solid #003366; // BC Gov navy blue
+    border-bottom: 2px solid #003366;
     padding: 1.25rem 1.5rem;
     border-radius: 6px 6px 0 0;
 
     .delete-modal-title {
-      color: #003366; // BC Gov navy blue
+      color: #003366;
       font-weight: 600;
       font-size: 1.1rem;
       margin: 0;
