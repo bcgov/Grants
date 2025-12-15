@@ -23,15 +23,15 @@ public static class SubmissionsData
                         ProgramName = "Program1 - Health & Wellness",
                         RequestedAmount = 150000,
                         PaidAmount = 100000,
-                        Status = "In progress",
+                        Status = "On hold",
+                        StatusCode = "ON_HOLD",
                         SubmissionDate = DateTime.UtcNow.AddDays(-15),
                         LastModified = DateTime.UtcNow.AddDays(-2),
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(2),
                             EndDate = DateTime.UtcNow.AddMonths(14)
-                        },
-                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
+                        }
                     },
                     new
                     {
@@ -43,14 +43,14 @@ public static class SubmissionsData
                         RequestedAmount = 85000,
                         PaidAmount = 82000,
                         Status = "Approved",
+                        StatusCode = "GRANT_APPROVED",
                         SubmissionDate = DateTime.UtcNow.AddDays(-45),
                         LastModified = DateTime.UtcNow.AddDays(-10),
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(1),
                             EndDate = DateTime.UtcNow.AddMonths(13)
-                        },
-                        Categories = new[] { "Mental Health", "Youth Services", "Community Support" }
+                        }
                     },
                      new
                     {
@@ -62,14 +62,14 @@ public static class SubmissionsData
                         RequestedAmount = 120000,
                         PaidAmount = 75000,
                         Status = "Declined",
+                        StatusCode = "GRANT_NOT_APPROVED",
                         SubmissionDate = DateTime.UtcNow.AddDays(-30),
                         LastModified = DateTime.UtcNow.AddDays(-5),
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(1),
                             EndDate = DateTime.UtcNow.AddMonths(17)
-                        },
-                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
+                        }
                     },
                      new
                     {
@@ -80,15 +80,15 @@ public static class SubmissionsData
                         ProgramName = "Program1 - Digital Health",
                         RequestedAmount = 250000,
                         PaidAmount = 220000,
-                        Status = "In progress",
+                        Status = "Submitted",
+                        StatusCode = "SUBMITTED",
                         SubmissionDate = DateTime.UtcNow.AddDays(-18),
                         LastModified = DateTime.UtcNow.AddDays(-1), // More recent than submission 003
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(4),
                             EndDate = DateTime.UtcNow.AddMonths(14)
-                        },
-                        Categories = new[] { "Healthcare", "Community Outreach", "Prevention" }
+                        }
                     }
                 }
                 .OrderByDescending(s => s.LastModified) // Sort by most recently modified first
@@ -125,14 +125,14 @@ public static class SubmissionsData
                         RequestedAmount = 275000,
                         PaidAmount = 10000,
                         Status = "Approved",
+                        StatusCode = "GRANT_APPROVED",
                         SubmissionDate = DateTime.UtcNow.AddDays(-30),
                         LastModified = DateTime.UtcNow.AddDays(-5),
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(1),
                             EndDate = DateTime.UtcNow.AddMonths(25)
-                        },
-                        Categories = new[] { "Education", "STEM", "Technology", "K-12" }
+                        }
                     },
                     new
                     {
@@ -144,14 +144,14 @@ public static class SubmissionsData
                         RequestedAmount = 120000,
                         PaidAmount = 2000,
                         Status = "Under Review",
+                        StatusCode = "UNDER_INITIAL_REVIEW",
                         SubmissionDate = DateTime.UtcNow.AddDays(-20),
                         LastModified = DateTime.UtcNow.AddDays(-1), // Most recent
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(3),
                             EndDate = DateTime.UtcNow.AddMonths(15)
-                        },
-                        Categories = new[] { "Digital Literacy", "Senior Services", "Community Education" }
+                        }
                     },
                     new
                     {
@@ -162,15 +162,15 @@ public static class SubmissionsData
                         ProgramName = "Program2 - Education & Technology",
                         RequestedAmount = 450000,
                         PaidAmount = 40000,
-                        Status = "In Review",
+                        Status = "Under Review",
+                        StatusCode = "INITITAL_REVIEW_COMPLETED",
                         SubmissionDate = DateTime.UtcNow.AddDays(-10),
                         LastModified = DateTime.UtcNow.AddDays(-3),
                         ProjectPeriod = new
                         {
                             StartDate = DateTime.UtcNow.AddMonths(4),
                             EndDate = DateTime.UtcNow.AddMonths(28)
-                        },
-                        Categories = new[] { "Infrastructure", "Rural Development", "Technology Access" }
+                        }                        
                     }
                 }
                 .OrderByDescending(s => s.LastModified) // Sort by most recently modified first

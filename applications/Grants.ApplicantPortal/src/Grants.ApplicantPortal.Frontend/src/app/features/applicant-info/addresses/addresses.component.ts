@@ -72,11 +72,13 @@ export class AddressesComponent implements OnInit, OnDestroy {
       field: 'type',
       badgeClassPrefix: 'address-type-badge',
       badgeClasses: {
+        'Physical': 'address-type-physical',
+        'Mailing': 'address-type-mailing',
         'Primary': 'address-type-primary',
         'Billing': 'address-type-billing',
-        'Mailing': 'address-type-mailing',
         'Office': 'address-type-office'
-      }
+      },
+      fallbackClass: 'address-type-other'
     },
     noDataMessage: 'No addresses found.',
     loadingMessage: 'Loading your addresses...'

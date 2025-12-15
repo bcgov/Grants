@@ -59,7 +59,7 @@
                 <td [class]="column.cssClass || column.key + '-column'">
                   @if (column.type === 'badge' && config.badgeConfig) {
                     <span [class]="getBadgeClass(row)">
-                      {{ getCellValue(row, column) }}
+                      {{ getBadgeDisplayValue(row, column) }}
                     </span>
                   } @else if (column.type === 'date') {
                     {{ getCellValue(row, column) | date:'mediumDate' }}

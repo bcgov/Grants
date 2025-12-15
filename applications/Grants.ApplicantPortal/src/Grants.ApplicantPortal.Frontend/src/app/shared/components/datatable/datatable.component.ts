@@ -162,10 +162,19 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   getBadgeClass(row: any): string {
     if (!this.config.badgeConfig) return '';
     
+    // Use field for styling determination
     const badgeValue = this.getNestedProperty(row, this.config.badgeConfig.field);
-    const baseClass = this.config.badgeConfig.badgeClasses[badgeValue] || '';
+    const baseClass = this.config.badgeConfig.badgeClasses[badgeValue] || this.config.badgeConfig.fallbackClass || '';
     
     return `${this.config.badgeConfig.badgeClassPrefix} ${baseClass}`.trim();
+  }
+
+  getBadgeDisplayValue(row: any, column: any): string {
+    if (!this.config.badgeConfig) return this.getCellValue(row, column);
+    
+    // Use displayField for text, or fall back to the column's field
+    const displayField = this.config.badgeConfig.displayField || column.key;
+    return this.getNestedProperty(row, displayField) || '';
   }
 
   closeDropdown(dropdownToggle: any): void {

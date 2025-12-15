@@ -52,14 +52,24 @@ export class SubmissionsComponent implements OnInit, OnDestroy {
     ],
     actionsType: 'chevron',
     badgeConfig: {
-      field: 'status',
+      field: 'statusCode', // Field used for styling
+      displayField: 'status', // Field displayed as text
       badgeClassPrefix: 'status-badge',
       badgeClasses: {
-        'In Progress': 'status-in-progress',
-        'Approved': 'status-approved',
-        'Rejected': 'status-rejected',
-        'Draft': 'status-draft'
-      }
+        'ASSIGNED': 'status-assigned',
+        'WITHDRAWN': 'status-withdrawn',
+        'CLOSED': 'status-closed',
+        'UNDER_INITIAL_REVIEW': 'status-under-initial-review',
+        'INITIAL_REVIEW_COMPLETED': 'status-initial-review-completed',
+        'ON_HOLD': 'status-on-hold',
+        'DEFER': 'status-defer',
+        'ASSESSMENT_COMPLETED': 'status-assessment-completed',
+        'GRANT_APPROVED': 'status-grant-approved',
+        'UNDER_ASSESSMENT': 'status-under-assessment',
+        'SUBMITTED': 'status-submitted',
+        'GRANT_NOT_APPROVED': 'status-grant-not-approved'
+      },
+      fallbackClass: 'status-unknown'
     },
 
     noDataMessage: 'No submissions were found with your BCeID.',

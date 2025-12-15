@@ -44,7 +44,7 @@ public static class AddressesData
         {
           Id = "AD12E345-6789-0ABC-DEF1-234567890ABC",
           AddressId = "ADDR-P1-001",
-          Type = "Primary",
+          Type = "Physical",
           AddressLine1 = "123 Main Street",
           AddressLine2 = "Suite 100",
           Street = "123 Main Street, Suite 100",
@@ -61,7 +61,7 @@ public static class AddressesData
         {
           Id = "BD12E345-6789-0ABC-DEF1-234567890ABC",
           AddressId = "ADDR-P1-002",
-          Type = "Billing",
+          Type = "Mailing",
           AddressLine1 = "456 Business Ave",
           AddressLine2 = "",
           Street = "456 Business Ave",
@@ -98,7 +98,7 @@ public static class AddressesData
         {
           Id = "DD12E345-6789-0ABC-DEF1-234567890ABC",
           AddressId = "ADDR-P2-001",
-          Type = "Primary",
+          Type = "Physical",
           AddressLine1 = "456 Innovation Drive",
           AddressLine2 = "Building A",
           Street = "456 Innovation Drive, Building A",
@@ -114,7 +114,7 @@ public static class AddressesData
         {
           Id = "ED12E345-6789-0ABC-DEF1-234567890ABC",
           AddressId = "ADDR-P2-002",
-          Type = "Billing",
+          Type = "Mailing",
           AddressLine1 = "789 Research Blvd",
           AddressLine2 = "Suite 200",
           Street = "789 Research Blvd, Suite 200",

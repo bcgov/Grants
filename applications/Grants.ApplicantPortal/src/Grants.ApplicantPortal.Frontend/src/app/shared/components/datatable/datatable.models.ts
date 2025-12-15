@@ -8,9 +8,11 @@ export interface DatatableColumn {
 }
 
 export interface DatatableBadgeConfig {
-  field: string;
+  field: string; // Field used for badge styling
+  displayField?: string; // Optional field used for display text (defaults to field)
   badgeClassPrefix: string;
   badgeClasses: { [key: string]: string };
+  fallbackClass?: string; // Optional fallback class for unknown badge values
 }
 
 export interface DatatableActionItem {

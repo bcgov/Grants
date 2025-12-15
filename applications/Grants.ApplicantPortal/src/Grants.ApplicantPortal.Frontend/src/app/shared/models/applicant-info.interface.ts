@@ -82,6 +82,7 @@ export interface SubmissionsData {
   requestedAmount: number;
   paidAmount: number;
   status: string;
+  statusCode: string; // Used for badge styling
   submissionDate: Date;
   lastModified: Date;
 }

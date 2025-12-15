@@ -235,7 +235,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
 
-      // Status badge variations
+      // Legacy status badge variations
       &.status-in-progress {
         background-color: var(--bc-bg-info);
         color: var(--bc-white);
@@ -256,6 +256,72 @@
         color: var(--bc-primary);
       }
 
+      // New comprehensive status badge variations
+      &.status-submitted {
+        background-color: #003366; // BC Gov navy blue
+        color: #ffffff;
+      }
+
+      &.status-assigned {
+        background-color: #2E8540; // BC Gov green
+        color: #ffffff;
+      }
+
+      &.status-under-initial-review {
+        background-color: #1976D2; // Blue
+        color: #ffffff;
+      }
+
+      &.status-initial-review-completed {
+        background-color: #388E3C; // Green
+        color: #ffffff;
+      }
+
+      &.status-under-assessment {
+        background-color: #7B1FA2; // Purple
+        color: #ffffff;
+      }
+
+      &.status-assessment-completed {
+        background-color: #689F38; // Light green
+        color: #ffffff;
+      }
+
+      &.status-grant-approved {
+        background-color: #2E8540; // BC Gov green
+        color: #ffffff;
+      }
+
+      &.status-on-hold {
+        background-color: #FF9800; // Orange
+        color: #ffffff;
+      }
+
+      &.status-defer {
+        background-color: #FF9800; // Orange
+        color: #ffffff;
+      }
+
+      &.status-grant-not-approved {
+        background-color: #D8292F; // BC Gov red
+        color: #ffffff;
+      }
+
+      &.status-withdrawn {
+        background-color: #757575; // Gray
+        color: #ffffff;
+      }
+
+      &.status-closed {
+        background-color: #424242; // Dark gray
+        color: #ffffff;
+      }
+
+      &.status-unknown {
+        background-color: #606060; // Neutral gray
+        color: #ffffff;
+      }
+
       // Contact type badge variations
       &.contact-type-primary {
         background-color: var(--bc-bg-info);
@@ -273,24 +339,34 @@
       }
 
       // Address type badge variations
+      &.address-type-physical {
+        background-color: #003366; // BC Gov navy blue
+        color: #ffffff;
+      }
+
+      &.address-type-mailing {
+        background-color: #2E8540; // BC Gov green
+        color: #ffffff;
+      }
+
       &.address-type-primary {
         background-color: var(--bc-bg-info);
         color: var(--bc-white);
       }
 
       &.address-type-billing {
-        background-color: var(--bc-bg-success);
-        color: var(--bc-white);
-      }
-
-      &.address-type-mailing {
-        background-color: var(--bc-bg-warning);
-        color: var(--bc-primary);
+        background-color: #7F4098; // BC Gov purple
+        color: #ffffff;
       }
 
       &.address-type-office {
-        background-color: var(--bc-bg-error);
-        color: var(--bc-white);
+        background-color: #D8292F; // BC Gov red
+        color: #ffffff;
+      }
+
+      &.address-type-other {
+        background-color: #606060; // Neutral gray
+        color: #ffffff;
       }
     }
 
