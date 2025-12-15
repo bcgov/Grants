@@ -59,6 +59,8 @@ export interface OrganizationData {
   orgSize: string;
   fiscalMonth: string;
   fiscalDay: number;
+  fiscalYearEndMonth?: number;
+  fiscalYearEndDay?: number;
   organizationId: string;
   legalName: string;
   doingBusinessAs: string;
@@ -80,6 +82,7 @@ export interface SubmissionsData {
   requestedAmount: number;
   paidAmount: number;
   status: string;
+  statusCode: string; // Used for badge styling
   submissionDate: Date;
   lastModified: Date;
 }

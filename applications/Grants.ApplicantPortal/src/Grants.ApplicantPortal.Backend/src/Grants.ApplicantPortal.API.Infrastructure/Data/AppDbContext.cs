@@ -1,6 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
 using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
-using Grants.ApplicantPortal.API.Core.Features.PluginConfigurations.PluginConfigurationAggregate;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Data;
 
@@ -14,8 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,
 
   // Add your DbSets here
   public DbSet<Contributor> Contributors => Set<Contributor>();
-  public DbSet<Profile> Profiles => Set<Profile>();
-  public DbSet<PluginConfiguration> PluginConfigurations => Set<PluginConfiguration>();
+  public DbSet<Profile> Profiles => Set<Profile>();  
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {

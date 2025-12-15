@@ -4,6 +4,7 @@ import {
   provideHttpClient,
   withInterceptorsFromDi,
   withFetch,
+  HTTP_INTERCEPTORS,
 } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
@@ -14,6 +15,7 @@ import {
 } from '@angular/platform-browser';
 import { authConfig } from './core/auth/auth.config';
 import { provideAuth } from 'angular-auth-oidc-client';
+import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,5 +25,11 @@ export const appConfig: ApplicationConfig = {
     // Hydration removed - not needed for SPA-only mode
     provideHttpClient(withInterceptorsFromDi(), withFetch()),
     provideAnimations(),
+    // Register the auth interceptor
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },
   ],
 };

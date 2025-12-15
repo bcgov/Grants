@@ -1,4 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contributors.Get;
+using Grants.ApplicantPortal.API.UseCases.Contributors;
 
 namespace Grants.ApplicantPortal.API.Web.Contributors;
 

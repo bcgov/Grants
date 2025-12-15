@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.UseCases.Profiles;
+﻿using Grants.ApplicantPortal.API.UseCases;
 using Microsoft.Extensions.Caching.Hybrid;
 using StackExchange.Redis;
 
