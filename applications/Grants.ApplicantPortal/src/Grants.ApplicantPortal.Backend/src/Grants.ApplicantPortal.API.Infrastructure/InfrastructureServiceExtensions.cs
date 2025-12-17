@@ -1,6 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
-using Grants.ApplicantPortal.API.Infrastructure.Queries.Contributors;
-using Grants.ApplicantPortal.API.UseCases.Contributors.List;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging;
 
 namespace Grants.ApplicantPortal.API.Infrastructure;
 
@@ -15,11 +14,24 @@ public static class InfrastructureServiceExtensions
     Guard.Against.Null(connectionString);
 
     // Add DbContext with PostgreSQL provider
-    services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+    // The IDomainEventDispatcher dependency will be injected by the Web layer's MediatrConfigs
+    services.AddDbContext<AppDbContext>((serviceProvider, options) => 
+    {
+      options.UseNpgsql(connectionString, npgsqlOptions =>
+      {
+        // Configure to use the default naming convention (no snake_case conversion)
+        // This ensures column names match exactly as defined in migrations
+      });
+    });
+    
     // Register repository support services
     services.AddRepositorySupport();
+    
     // Register Custom Queries
     services.AddQueries();
+
+    // Add messaging services (Inbox/Outbox pattern with background jobs)
+    services.AddMessagingServices(config, logger);
 
     logger.LogInformation("{Project} services registered", "Infrastructure");
 
@@ -44,7 +56,8 @@ public static class InfrastructureServiceExtensions
   /// <returns></returns>
   internal static IServiceCollection AddQueries(this IServiceCollection services)
   {
-    services.AddScoped(typeof(IListContributorsQueryService), typeof(ListContributorsQueryService));
+    // Register custom query services here
+    // Example: services.AddScoped<IYourQueryService, YourQueryService>();
     return services;
   }
 }

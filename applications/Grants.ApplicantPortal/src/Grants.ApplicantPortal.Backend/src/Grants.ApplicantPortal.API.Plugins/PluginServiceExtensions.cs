@@ -31,7 +31,7 @@ public static class PluginServiceExtensions
   internal static IServiceCollection AddPluginSupport(this IServiceCollection services)
   {
     // Register profile plugins
-    services.AddScoped<IProfilePlugin, UnityProfilePlugin>();
+    services.AddScoped<IProfilePlugin, UnityPlugin>();
     services.AddScoped<IProfilePlugin, DemoProfilePlugin>();
     services.AddScoped<IProfilePluginFactory, ProfilePluginFactory>();
 

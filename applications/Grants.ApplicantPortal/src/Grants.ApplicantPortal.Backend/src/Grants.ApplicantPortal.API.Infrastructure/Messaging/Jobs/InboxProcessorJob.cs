@@ -1,0 +1,342 @@
+﻿using System.Text.Json;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.BackgroundJobs;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
+using Quartz;
+
+namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
+
+/// <summary>
+/// Background job that processes inbox messages and routes them to appropriate handlers
+/// </summary>
+public class InboxProcessorJob : IJob
+{
+    private readonly IInboxRepository _inboxRepository;
+    private readonly IDistributedLock _distributedLock;
+    private readonly IMessageHandlerResolver? _messageHandlerResolver;
+    private readonly IPluginMessageRouter? _pluginMessageRouter;
+    private readonly ILogger<InboxProcessorJob> _logger;
+    
+    // Configuration - these could come from appsettings
+    private readonly string _lockKey = "inbox-processor";
+    private readonly TimeSpan _lockDuration = TimeSpan.FromMinutes(5);
+    private readonly int _batchSize = 50;
+    private readonly int _maxRetries = 3;
+    private readonly JsonSerializerOptions _jsonOptions;
+
+    public InboxProcessorJob(
+        IInboxRepository inboxRepository,
+        IDistributedLock distributedLock,
+        ILogger<InboxProcessorJob> logger,
+        IMessageHandlerResolver? messageHandlerResolver = null,
+        IPluginMessageRouter? pluginMessageRouter = null)
+    {
+        _inboxRepository = inboxRepository;
+        _distributedLock = distributedLock;
+        _messageHandlerResolver = messageHandlerResolver;
+        _pluginMessageRouter = pluginMessageRouter;
+        _logger = logger;
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
+        };
+    }
+
+    public async Task Execute(IJobExecutionContext context)
+    {
+        var cancellationToken = context.CancellationToken;
+        
+        _logger.LogDebug("Inbox processor job starting");
+
+        // First, release any expired locks
+        await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
+
+        // Acquire distributed lock to ensure only one instance processes messages
+        var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
+        
+        if (!lockResult.IsSuccess)
+        {
+            _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", string.Join(", ", lockResult.Errors));
+            return;
+        }
+
+        var lockToken = lockResult.Value;
+        
+        try
+        {
+            var processed = 0;
+            var startTime = DateTime.UtcNow;
+            
+            // Process messages in batches
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var messages = await _inboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
+                
+                if (!messages.Any())
+                {
+                    break; // No more messages to process
+                }
+
+                foreach (var message in messages)
+                {
+                    await ProcessMessage(message, cancellationToken);
+                    processed++;
+                }
+
+                // Renew lock if we're still processing
+                if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
+                {
+                    await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                    startTime = DateTime.UtcNow;
+                }
+            }
+
+            if (processed > 0)
+            {
+                _logger.LogInformation("Inbox processor job completed. Processed {Count} messages", processed);
+            }
+            else
+            {
+                _logger.LogDebug("Inbox processor job completed. No messages to process");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during inbox processing");
+        }
+        finally
+        {
+            // Release the lock
+            await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+        }
+    }
+
+    private async Task ProcessMessage(InboxMessage message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Lock the message for processing
+            var lockToken = Guid.NewGuid().ToString();
+            message.MarkAsProcessing(lockToken, TimeSpan.FromMinutes(5));
+            
+            var updateResult = await _inboxRepository.UpdateAsync(message, cancellationToken);
+            if (!updateResult.IsSuccess)
+            {
+                _logger.LogError("Failed to lock inbox message {MessageId} for processing", message.MessageId);
+                return;
+            }
+
+            _logger.LogDebug("Processing inbox message {MessageId} of type {MessageType}", 
+                message.MessageId, message.MessageType);
+
+            // Process the message based on available handlers
+            if (IsPluginSpecificMessage(message))
+            {
+                await ProcessWithPluginRouter(message, cancellationToken);
+            }
+            else if (_messageHandlerResolver != null)
+            {
+                await ProcessWithHandlers(message, cancellationToken);
+            }
+            else
+            {
+                await SimulateMessageProcessing(message, cancellationToken);
+            }
+
+            // Mark as successfully processed
+            message.MarkAsProcessed();
+            await _inboxRepository.UpdateAsync(message, cancellationToken);
+
+            _logger.LogDebug("Successfully processed inbox message {MessageId}", message.MessageId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process inbox message {MessageId}", message.MessageId);
+            
+            // Mark as failed
+            message.MarkAsFailed(ex.Message, _maxRetries);
+            await _inboxRepository.UpdateAsync(message, cancellationToken);
+        }
+    }
+
+    private async Task ProcessWithHandlers(InboxMessage message, CancellationToken cancellationToken)
+    {
+        if (_messageHandlerResolver == null)
+        {
+            throw new InvalidOperationException("Message handler resolver is not available");
+        }
+
+        try
+        {
+            // Deserialize the message based on its type
+            var messageObject = DeserializeMessage(message);
+            if (messageObject == null)
+            {
+                throw new InvalidOperationException($"Could not deserialize message of type {message.MessageType}");
+            }
+
+            // Get handlers for this message type
+            var handlers = _messageHandlerResolver.GetHandlers(messageObject).ToList();
+            
+            if (!handlers.Any())
+            {
+                _logger.LogWarning("No handlers found for message type {MessageType}", message.MessageType);
+                return;
+            }
+
+            // Create message context
+            var context = new MessageContext(messageObject)
+            {
+                CancellationToken = cancellationToken
+            };
+            context.SetProperty("InboxMessageId", message.Id);
+            context.SetProperty("ReceivedAt", message.ReceivedAt);
+
+            // Execute all handlers
+            foreach (var handler in handlers)
+            {
+                await ExecuteHandler(handler, messageObject, context);
+            }
+
+            _logger.LogDebug("Processed message {MessageId} with {HandlerCount} handlers", 
+                message.MessageId, handlers.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing message {MessageId} with handlers", message.MessageId);
+            throw;
+        }
+    }
+
+    private async Task ExecuteHandler(object handler, IMessage message, MessageContext context)
+    {
+        try
+        {
+            var handlerType = handler.GetType();
+            var messageType = message.GetType();
+            
+            // Find the HandleAsync method
+            var method = handlerType.GetMethod("HandleAsync", new[] { messageType, typeof(MessageContext) });
+            if (method == null)
+            {
+                _logger.LogWarning("Handler {HandlerType} does not have HandleAsync method for {MessageType}", 
+                    handlerType.Name, messageType.Name);
+                return;
+            }
+
+            // Invoke the handler
+            var task = (Task<Result>?)method.Invoke(handler, new object[] { message, context });
+            if (task != null)
+            {
+                var result = await task;
+                if (!result.IsSuccess)
+                {
+                    _logger.LogError("Handler {HandlerType} failed for message {MessageId}: {Errors}", 
+                        handlerType.Name, message.MessageId, string.Join(", ", result.Errors));
+                    throw new InvalidOperationException($"Handler {handlerType.Name} failed: {string.Join(", ", result.Errors)}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing handler {HandlerType} for message {MessageId}", 
+                handler.GetType().Name, message.MessageId);
+            throw;
+        }
+    }
+
+    private IMessage? DeserializeMessage(InboxMessage inboxMessage)
+    {
+        try
+        {
+            // Map message types to their corresponding classes
+            var messageType = inboxMessage.MessageType switch
+            {
+                "ProfileUpdatedMessage" => typeof(Messages.ProfileUpdatedMessage),
+                "ContactCreatedMessage" => typeof(Messages.ContactCreatedMessage),
+                "AddressUpdatedMessage" => typeof(Messages.AddressUpdatedMessage),
+                "OrganizationUpdatedMessage" => typeof(Messages.OrganizationUpdatedMessage),
+                "SystemEventMessage" => typeof(Messages.SystemEventMessage),
+                "MessageAcknowledgment" => typeof(Messages.MessageAcknowledgment),
+                "PluginDataMessage" => typeof(Messages.PluginDataMessage),
+                _ => null
+            };
+
+            if (messageType == null)
+            {
+                _logger.LogWarning("Unknown message type: {MessageType}", inboxMessage.MessageType);
+                return null;
+            }
+
+            var messageObject = JsonSerializer.Deserialize(inboxMessage.Payload, messageType, _jsonOptions);
+            return messageObject as IMessage;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deserialize message {MessageId} of type {MessageType}", 
+                inboxMessage.MessageId, inboxMessage.MessageType);
+            return null;
+        }
+    }
+
+    private bool IsPluginSpecificMessage(InboxMessage message)
+    {
+        // Check if this is a plugin-specific message (acknowledgment, plugin data, etc.)
+        var pluginMessageTypes = new[] { "MessageAcknowledgment", "PluginDataMessage" };
+        return pluginMessageTypes.Contains(message.MessageType);
+    }
+
+    private async Task ProcessWithPluginRouter(InboxMessage message, CancellationToken cancellationToken)
+    {
+        if (_pluginMessageRouter == null)
+        {
+            throw new InvalidOperationException("Plugin message router is not available");
+        }
+
+        try
+        {
+            // Deserialize the message based on its type
+            var messageObject = DeserializeMessage(message);
+            if (messageObject == null)
+            {
+                throw new InvalidOperationException($"Could not deserialize plugin message of type {message.MessageType}");
+            }
+
+            // Create message context
+            var context = new MessageContext(messageObject)
+            {
+                CancellationToken = cancellationToken
+            };
+            context.SetProperty("InboxMessageId", message.Id);
+            context.SetProperty("ReceivedAt", message.ReceivedAt);
+
+            // Route to plugin handler
+            var result = await _pluginMessageRouter.RouteToPluginAsync(messageObject, context);
+            
+            if (!result.IsSuccess)
+            {
+                var errorMessage = $"Plugin router failed: {string.Join(", ", result.Errors)}";
+                _logger.LogError(errorMessage);
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            _logger.LogDebug("Successfully processed plugin message {MessageId} of type {MessageType}", 
+                message.MessageId, message.MessageType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing plugin message {MessageId} with router", message.MessageId);
+            throw;
+        }
+    }
+
+    private async Task SimulateMessageProcessing(InboxMessage message, CancellationToken cancellationToken)
+    {
+        // Simulate some processing time
+        await Task.Delay(100, cancellationToken);
+        
+        _logger.LogWarning("Simulating message processing for {MessageId} - message handlers not configured", 
+            message.MessageId);
+    }
+}

@@ -2,14 +2,26 @@
 using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
 
 /// <summary>
 /// Demo profile plugin for testing and demonstration purposes
 /// </summary>
-public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
+public class DemoProfilePlugin : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
 {
+  private readonly ILogger<DemoProfilePlugin> _logger;
+  private readonly IMessagePublisher? _messagePublisher; // Optional for messaging
+
+  public DemoProfilePlugin(
+      ILogger<DemoProfilePlugin> logger, 
+      IMessagePublisher? messagePublisher = null)
+  {
+      _logger = logger;
+      _messagePublisher = messagePublisher;
+  }
   public string PluginId => "DEMO";
 
   public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
@@ -38,7 +50,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
 
   public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin populating profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+    _logger.LogInformation("Demo plugin populating profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
         metadata.ProfileId, metadata.Provider, metadata.Key);
 
     try
@@ -54,8 +66,11 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
         WriteIndented = true
       });
 
-      logger.LogInformation("Demo plugin successfully populated profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+      _logger.LogInformation("Demo plugin successfully populated profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
+
+      // 🔥 NEW: Fire a message when profile data is populated
+      await FireProfileUpdatedMessage(metadata, cancellationToken);
 
       return new ProfileData(
           metadata.ProfileId,
@@ -66,7 +81,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to populate profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+      _logger.LogError(ex, "Demo plugin failed to populate profile for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
       throw;
     }
@@ -105,7 +120,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext, 
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
+    _logger.LogInformation("Demo plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
       profileContext.ProfileId, contactRequest.Name, contactRequest.Type);
 
     try
@@ -117,14 +132,18 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       var newContactId = ContactsData.AddContact(profileContext.Provider, profileContext.ProfileId, contactRequest);
 
       // Log the contact creation details
-      logger.LogInformation("Demo plugin created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
+      _logger.LogInformation("Demo plugin created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
         newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);
 
-      return Result<Guid>.Success(Guid.Parse(newContactId));
+      // 🔥 NEW: Fire a message when contact is created
+      var contactId = Guid.Parse(newContactId);
+      await FireContactCreatedMessage(contactId, profileContext.ProfileId, contactRequest.Name, contactRequest.Type, cancellationToken);
+
+      return Result<Guid>.Success(contactId);
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to create contact for ProfileId: {ProfileId}, Name: {Name}",
+      _logger.LogError(ex, "Demo plugin failed to create contact for ProfileId: {ProfileId}, Name: {Name}",
         profileContext.ProfileId, contactRequest.Name);
       return Result<Guid>.Error("Failed to create contact in demo system");
     }
@@ -135,7 +154,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin editing contact {ContactId} for ProfileId: {ProfileId}",
+    _logger.LogInformation("Demo plugin editing contact {ContactId} for ProfileId: {ProfileId}",
       editRequest.ContactId, profileContext.ProfileId);
 
     try
@@ -148,20 +167,20 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       
       if (!success)
       {
-        logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+        _logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
           editRequest.ContactId, profileContext.ProfileId);
         return Result.NotFound();
       }
 
       // Log the contact edit details
-      logger.LogInformation("Demo plugin edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
+      _logger.LogInformation("Demo plugin edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
         editRequest.ContactId, editRequest.Name, editRequest.Type, editRequest.Email, editRequest.PhoneNumber);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to edit contact {ContactId} for ProfileId: {ProfileId}",
+      _logger.LogError(ex, "Demo plugin failed to edit contact {ContactId} for ProfileId: {ProfileId}",
         editRequest.ContactId, profileContext.ProfileId);
       return Result.Error("Failed to edit contact in demo system");
     }
@@ -172,7 +191,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
+    _logger.LogInformation("Demo plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
       contactId, profileContext.ProfileId);
 
     try
@@ -185,20 +204,20 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       
       if (!success)
       {
-        logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+        _logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
         return Result.NotFound();
       }
 
       // Log the contact set as primary operation
-      logger.LogInformation("Demo plugin set contact {ContactId} as primary for ProfileId: {ProfileId}",
+      _logger.LogInformation("Demo plugin set contact {ContactId} as primary for ProfileId: {ProfileId}",
         contactId, profileContext.ProfileId);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to set contact {ContactId} as primary for ProfileId: {ProfileId}",
+      _logger.LogError(ex, "Demo plugin failed to set contact {ContactId} as primary for ProfileId: {ProfileId}",
         contactId, profileContext.ProfileId);
       return Result.Error("Failed to set contact as primary in demo system");
     }
@@ -209,7 +228,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
+    _logger.LogInformation("Demo plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
       contactId, profileContext.ProfileId);
 
     try
@@ -222,20 +241,20 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       
       if (!success)
       {
-        logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+        _logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
         return Result.NotFound();
       }
 
       // Log the contact deletion
-      logger.LogInformation("Demo plugin deleted contact {ContactId} for ProfileId: {ProfileId}",
+      _logger.LogInformation("Demo plugin deleted contact {ContactId} for ProfileId: {ProfileId}",
         contactId, profileContext.ProfileId);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to delete contact {ContactId} for ProfileId: {ProfileId}",
+      _logger.LogError(ex, "Demo plugin failed to delete contact {ContactId} for ProfileId: {ProfileId}",
         contactId, profileContext.ProfileId);
       return Result.Error("Failed to delete contact in demo system");
     }
@@ -246,7 +265,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin editing address {AddressId} for ProfileId: {ProfileId}",
+    _logger.LogInformation("Demo plugin editing address {AddressId} for ProfileId: {ProfileId}",
       editRequest.AddressId, profileContext.ProfileId);
 
     try
@@ -259,20 +278,20 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       
       if (!success)
       {
-        logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+        _logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
           editRequest.AddressId, profileContext.ProfileId);
         return Result.NotFound();
       }
 
       // Log the address edit details
-      logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
+      _logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
         editRequest.AddressId, editRequest.Type, editRequest.Address, editRequest.City);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to edit address {AddressId} for ProfileId: {ProfileId}",
+      _logger.LogError(ex, "Demo plugin failed to edit address {AddressId} for ProfileId: {ProfileId}",
         editRequest.AddressId, profileContext.ProfileId);
       return Result.Error("Failed to edit address in demo system");
     }
@@ -283,7 +302,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin setting address {AddressId} as primary for ProfileId: {ProfileId}",
+    _logger.LogInformation("Demo plugin setting address {AddressId} as primary for ProfileId: {ProfileId}",
       addressId, profileContext.ProfileId);
 
     try
@@ -296,20 +315,20 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       
       if (!success)
       {
-        logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+        _logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
           addressId, profileContext.ProfileId);
         return Result.NotFound();
       }
 
       // Log the address set as primary operation
-      logger.LogInformation("Demo plugin set address {AddressId} as primary for ProfileId: {ProfileId}",
+      _logger.LogInformation("Demo plugin set address {AddressId} as primary for ProfileId: {ProfileId}",
         addressId, profileContext.ProfileId);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
+      _logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
         addressId, profileContext.ProfileId);
       return Result.Error("Failed to set address as primary in demo system");
     }
@@ -320,7 +339,7 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
-    logger.LogInformation("Demo plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
+    _logger.LogInformation("Demo plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
       editRequest.OrganizationId, profileContext.ProfileId);
 
     try
@@ -333,22 +352,87 @@ public class DemoProfilePlugin(ILogger<DemoProfilePlugin> logger) : IProfilePlug
       
       if (!success)
       {
-        logger.LogWarning("Organization {OrganizationId} not found for ProfileId: {ProfileId}",
+        _logger.LogWarning("Organization {OrganizationId} not found for ProfileId: {ProfileId}",
           editRequest.OrganizationId, profileContext.ProfileId);
         return Result.NotFound();
       }
 
       // Log the organization edit details
-      logger.LogInformation("Demo plugin edited organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
+      _logger.LogInformation("Demo plugin edited organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
         editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType, editRequest.Status);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Demo plugin failed to edit organization {OrganizationId} for ProfileId: {ProfileId}",
+      _logger.LogError(ex, "Demo plugin failed to edit organization {OrganizationId} for ProfileId: {ProfileId}",
         editRequest.OrganizationId, profileContext.ProfileId);
       return Result.Error("Failed to edit organization in demo system");
+    }
+  }
+
+  /// <summary>
+  /// Helper method to fire profile updated message
+  /// </summary>
+  private async Task FireProfileUpdatedMessage(ProfilePopulationMetadata metadata, CancellationToken cancellationToken)
+  {
+    if (_messagePublisher == null)
+    {
+      _logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
+      return;
+    }
+
+    try
+    {
+      var message = new ProfileUpdatedMessage(
+          metadata.ProfileId, 
+          PluginId, 
+          metadata.Provider, 
+          metadata.Key,
+          correlationId: $"profile-{metadata.ProfileId}");
+
+      await _messagePublisher.PublishAsync(message, cancellationToken);
+      
+      _logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}", 
+          metadata.ProfileId, metadata.Provider, metadata.Key);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
+      // Don't throw - messaging failures shouldn't break the main operation
+    }
+  }
+
+  /// <summary>
+  /// Helper method to fire contact created message
+  /// </summary>
+  private async Task FireContactCreatedMessage(Guid contactId, Guid profileId, string contactName, string contactType, CancellationToken cancellationToken)
+  {
+    if (_messagePublisher == null)
+    {
+      _logger.LogDebug("Message publisher not available - skipping ContactCreatedMessage");
+      return;
+    }
+
+    try
+    {
+      var message = new ContactCreatedMessage(
+          contactId,
+          profileId,
+          PluginId,
+          contactName,
+          contactType,
+          correlationId: $"profile-{profileId}");
+
+      await _messagePublisher.PublishAsync(message, cancellationToken);
+      
+      _logger.LogDebug("Published ContactCreatedMessage for contact {ContactId} in profile {ProfileId}", 
+          contactId, profileId);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Failed to publish ContactCreatedMessage for contact {ContactId}", contactId);
+      // Don't throw - messaging failures shouldn't break the main operation
     }
   }
 }
