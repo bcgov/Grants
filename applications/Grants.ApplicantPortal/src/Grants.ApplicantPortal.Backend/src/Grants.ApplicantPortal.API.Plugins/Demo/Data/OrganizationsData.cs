@@ -1,6 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.DTOs;
 
-namespace Grants.ApplicantPortal.API.Plugins.Demo;
+namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
 /// Static data provider for demo organization information with in-memory storage
@@ -98,17 +98,17 @@ public static class OrganizationsData
   private static void MaterializeDefaultOrganizationIfNeeded(string provider, Guid profileId, string organizationId)
   {
     var key = $"{provider}-{profileId}";
-    
+
     // Debug logging
     System.Diagnostics.Debug.WriteLine($"MaterializeDefaultOrganizationIfNeeded called with OrganizationId: {organizationId}, Provider: {provider}");
-    
+
     if (!_organizationsByProviderProfile.ContainsKey(key))
     {
       _organizationsByProviderProfile[key] = new List<OrganizationInfo>();
     }
 
     var organizations = _organizationsByProviderProfile[key];
-    
+
     // Check if this organization is already stored (case-insensitive comparison)
     if (organizations.Any(o => string.Equals(o.Id, organizationId, StringComparison.OrdinalIgnoreCase)))
     {
@@ -123,9 +123,9 @@ public static class OrganizationsData
     {
       System.Diagnostics.Debug.WriteLine($"  Default Organization ID: {defaultOrg.Id}, Name: {defaultOrg.OrgName}");
     }
-    
+
     var defaultOrganization = defaultOrganizations.FirstOrDefault(o => string.Equals(o.Id, organizationId, StringComparison.OrdinalIgnoreCase));
-    
+
     if (defaultOrganization != null)
     {
       System.Diagnostics.Debug.WriteLine($"Materializing default organization: {defaultOrganization.OrgName} (ID: {defaultOrganization.Id})");
@@ -146,10 +146,10 @@ public static class OrganizationsData
     lock (_lock)
     {
       var key = $"{provider}-{profileId}";
-      
+
       // Ensure the organization is materialized if it's a default organization
       MaterializeDefaultOrganizationIfNeeded(provider, profileId, organizationId.ToString());
-      
+
       if (!_organizationsByProviderProfile.ContainsKey(key))
       {
         return false;
@@ -157,7 +157,7 @@ public static class OrganizationsData
 
       var organizations = _organizationsByProviderProfile[key];
       var organizationIndex = organizations.FindIndex(o => string.Equals(o.Id, organizationId.ToString(), StringComparison.OrdinalIgnoreCase));
-      
+
       if (organizationIndex == -1)
       {
         return false;
@@ -210,15 +210,15 @@ public static class OrganizationsData
 
     // Default organizations (always present as baseline) - use shared method
     var defaultOrganizations = GetDefaultOrganizations("PROGRAM1");
-    
+
     // Filter out any default organizations that have been materialized into stored organizations
     // to avoid duplication (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultOrganizations.Where(defaultOrg => 
+    var nonMaterializedDefaults = defaultOrganizations.Where(defaultOrg =>
       !storedOrganizations.Any(so => string.Equals(so.Id, defaultOrg.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
 
     // Combine non-materialized defaults and stored organizations
     var allOrganizations = nonMaterializedDefaults.Concat(storedOrganizations).ToList();
-    
+
     // Get the first (and typically only) organization
     var organization = allOrganizations.OrderByDescending(o => o.LastUpdated).FirstOrDefault();
 
@@ -316,15 +316,15 @@ public static class OrganizationsData
 
     // Default organizations (always present as baseline) - use shared method
     var defaultOrganizations = GetDefaultOrganizations("PROGRAM2");
-    
+
     // Filter out any default organizations that have been materialized into stored organizations
     // to avoid duplication (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultOrganizations.Where(defaultOrg => 
+    var nonMaterializedDefaults = defaultOrganizations.Where(defaultOrg =>
       !storedOrganizations.Any(so => string.Equals(so.Id, defaultOrg.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
 
     // Combine non-materialized defaults and stored organizations
     var allOrganizations = nonMaterializedDefaults.Concat(storedOrganizations).ToList();
-    
+
     // Get the first (and typically only) organization
     var organization = allOrganizations.OrderByDescending(o => o.LastUpdated).FirstOrDefault();
 
@@ -468,36 +468,6 @@ public static class OrganizationsData
           NextPaymentDue = DateTime.UtcNow.AddMonths(1),
           NextPaymentAmount = 25500
         }
-      }
-    };
-  }
-
-  public static object GenerateDefaultData(object baseData)
-  {
-    var (providers, keys) = DemoPluginFeatures.GetProvidersAndKeys();
-    
-    return new
-    {
-      baseData,
-      Data = new
-      {
-        Message = "Demo data available for:",
-        AvailableProviders = providers,
-        AvailableKeys = keys,
-        Instructions = "Use Provider and Key parameters to get specific mock data",
-        SupportedCombinations = DemoPluginFeatures.GetAvailableCombinationsDescription(),
-        Examples = new[]
-            {
-                    "Provider=Program1, Key=Submissions - Get grant application submissions for Program1",
-                    "Provider=Program1, Key=OrgInfo - Get organization information for Program1",
-                    "Provider=Program1, Key=Payments - Get payment information for Program1",
-                    "Provider=Program1, Key=Contacts - Get contact information for Program1",
-                    "Provider=Program1, Key=Addresses - Get address information for Program1",
-                    "Provider=Program2, Key=Submissions - Get grant application submissions for Program2",
-                    "Provider=Program2, Key=OrgInfo - Get organization information for Program2",
-                    "Provider=Program2, Key=Contacts - Get contact information for Program2",
-                    "Provider=Program2, Key=Addresses - Get address information for Program2"
-                }
       }
     };
   }

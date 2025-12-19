@@ -1,4 +1,4 @@
-﻿namespace Grants.ApplicantPortal.API.Plugins.Demo;
+﻿namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
 /// Static data provider for demo submission information

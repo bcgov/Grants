@@ -1,7 +1,9 @@
 ﻿using Ardalis.ListStartupServices;
 using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.Plugins;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
@@ -47,11 +49,23 @@ public static class MiddlewareConfig
 
     try
     {
-      PluginRegistry.Initialize(services);
       var logger = services.GetRequiredService<ILogger<Program>>();
-      var pluginCount = PluginRegistry.GetAllPluginIds().Count();
-      logger.LogInformation("Plugin registry initialized with {PluginCount} plugins: {PluginIds}", 
-          pluginCount, string.Join(", ", PluginRegistry.GetAllPluginIds()));
+      
+      // Get plugin configuration from DI
+      var pluginConfigOptions = services.GetService<IOptions<PluginConfiguration>>();
+      var pluginConfig = pluginConfigOptions?.Value;
+      
+      PluginRegistry.Initialize(services, pluginConfig);
+      
+      var allPluginCount = PluginRegistry.GetAllPluginIds().Count();
+      var configuredPluginCount = PluginRegistry.GetConfiguredPlugins(enabledOnly: false).Count();
+      var enabledPluginCount = PluginRegistry.GetConfiguredPlugins(enabledOnly: true).Count();
+      
+      logger.LogInformation("Plugin registry initialized with {AllPluginCount} total plugins, {ConfiguredPluginCount} configured, {EnabledPluginCount} enabled", 
+          allPluginCount, configuredPluginCount, enabledPluginCount);
+          
+      var enabledPlugins = PluginRegistry.GetConfiguredPlugins(enabledOnly: true).Select(p => p.PluginId);
+      logger.LogInformation("Enabled plugins: {EnabledPlugins}", string.Join(", ", enabledPlugins));
     }
     catch (Exception ex)
     {

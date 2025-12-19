@@ -186,8 +186,8 @@ public class ExternalServiceClient : IExternalServiceClient
   {
     try
     {
-      // Get plugin configuration from app settings under "Plugins:{pluginId}"
-      var configSection = _configuration.GetSection($"Plugins:{pluginId}");
+      // Get plugin configuration from app settings under "Plugins:{pluginId}:Configuration"
+      var configSection = _configuration.GetSection($"Plugins:{pluginId}:Configuration");
       
       if (!configSection.Exists())
       {

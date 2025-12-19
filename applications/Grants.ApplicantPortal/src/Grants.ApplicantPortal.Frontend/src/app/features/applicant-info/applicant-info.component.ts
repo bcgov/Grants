@@ -2,11 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil, finalize } from 'rxjs/operators';
+import { takeUntil, finalize, filter } from 'rxjs/operators';
 
 import { ApplicantService } from '../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../core/services/applicant-info.service';
+import { WorkspaceService } from '../../core/services/workspace.service';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
+import { WorkspaceState } from '../../shared/models/workspace.interface';
 import { OrganizationInfoComponent } from './organization/organization.component';
 import { SubmissionsComponent } from './submissions/submissions.component';
 import { ContactsComponent } from './contacts/contacts.component';
@@ -40,7 +42,7 @@ import {
 export class ApplicantInfoComponent implements OnInit, OnDestroy {
   // Profile properties
   profileId = ProfileId.DEFAULT;
-  pluginId = PluginId.DEMO;
+  pluginId: string = PluginId.DEMO; // Default fallback
   provider = Provider.PROGRAM1;
   keyOrgInfo = Key.ORGINFO;
   keySubmissions = Key.SUBMISSIONS;
@@ -61,10 +63,26 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly applicantService: ApplicantService,
-    private readonly applicantInfoService: ApplicantInfoService
+    private readonly applicantInfoService: ApplicantInfoService,
+    private readonly workspaceService: WorkspaceService
   ) {}
 
   ngOnInit(): void {
+    // Subscribe to workspace changes and update pluginId
+    this.workspaceService.currentWorkspaceState$
+      .pipe(
+        takeUntil(this.destroy$),
+        filter((state: WorkspaceState) => state.selectedWorkspace !== null)
+      )
+      .subscribe((state: WorkspaceState) => {
+        if (state.selectedWorkspace) {
+          console.log('ApplicantInfoComponent - Workspace changed:', state.selectedWorkspace);
+          this.pluginId = state.selectedWorkspace.pluginId;
+          this.loadData(); // Reload data with new workspace
+        }
+      });
+
+    // Initial load
     this.loadData();
   }
 

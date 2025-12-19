@@ -1,6 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Email;
-using Grants.ApplicantPortal.API.Infrastructure;
-using Grants.ApplicantPortal.API.Infrastructure.Email;
+﻿using Grants.ApplicantPortal.API.Infrastructure;
 using Grants.ApplicantPortal.API.Core.Features;
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.UseCases;
@@ -31,22 +29,7 @@ public static class ServiceConfigs
             .AddCorsConfigs(builder, logger)
             .AddCacheConfigs(builder, logger);
 
-    if (builder.Environment.IsDevelopment())
-    {
-      // Use a local test email server
-      // See: https://ardalis.com/configuring-a-local-test-email-server/
-      services.AddScoped<IEmailSender, MimeKitEmailSender>();
-
-      // Otherwise use this:
-      //builder.Services.AddScoped<IEmailSender, FakeEmailSender>();
-
-    }
-    else
-    {
-      services.AddScoped<IEmailSender, MimeKitEmailSender>();
-    }
-
-    logger.LogInformation("{Project} services registered", "Mediatr, Email Sender, Authentication, Authorization, CORS and HybridCache");
+    logger.LogInformation("{Project} services registered", "Mediatr, Authentication, Authorization, CORS and HybridCache");
 
     return services;
   }

@@ -98,7 +98,7 @@ public partial class UnityPlugin
 
         try
         {
-            await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO");
+            await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO", cancellationToken);
             
             _logger.LogDebug("Invalidated ORGINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}", 
                 profileId, PluginId, provider);

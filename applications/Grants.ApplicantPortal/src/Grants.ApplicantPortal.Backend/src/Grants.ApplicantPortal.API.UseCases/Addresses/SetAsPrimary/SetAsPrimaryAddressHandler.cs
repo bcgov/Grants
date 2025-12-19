@@ -36,7 +36,8 @@ public class SetAsPrimaryAddressHandler(
           request.ProfileId,
           request.PluginId,
           request.Provider,
-          "ADDRESSES");
+          "ADDRESSES",
+          cancellationToken);
           
         logger.LogDebug("Invalidated addresses cache for ProfileId: {ProfileId} after setting primary address", 
           request.ProfileId);

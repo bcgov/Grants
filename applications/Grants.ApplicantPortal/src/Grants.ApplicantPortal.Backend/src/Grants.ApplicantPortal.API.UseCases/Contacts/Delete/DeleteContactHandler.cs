@@ -36,7 +36,8 @@ public class DeleteContactHandler(
           request.ProfileId,
           request.PluginId,
           request.Provider,
-          "CONTACTS");
+          "CONTACTS", 
+          cancellationToken);
           
         logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after contact deletion", 
           request.ProfileId);

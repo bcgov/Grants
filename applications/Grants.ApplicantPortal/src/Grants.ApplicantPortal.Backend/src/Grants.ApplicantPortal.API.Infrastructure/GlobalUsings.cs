@@ -1,5 +1,4 @@
-﻿global using System.Net.Mail;
-global using System.Reflection;
+﻿global using System.Reflection;
 global using Ardalis.GuardClauses;
 global using Ardalis.Result;
 global using Ardalis.SharedKernel;
@@ -9,5 +8,3 @@ global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
-global using Microsoft.Extensions.Options;
-global using MimeKit;

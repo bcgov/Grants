@@ -1,6 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.DTOs;
 
-namespace Grants.ApplicantPortal.API.Plugins.Demo;
+namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
 /// Static data provider for demo address information with in-memory storage
@@ -222,7 +222,7 @@ public static class AddressesData
       // If this is being set as primary, update other stored addresses to not be primary
       if (editRequest.IsPrimary)
       {
-        for (int i = 0; i < addresses.Count; i++)
+        for (var i = 0; i < addresses.Count; i++)
         {
           if (i != addressIndex)
           {
@@ -289,7 +289,7 @@ public static class AddressesData
       System.Diagnostics.Debug.WriteLine($"Found address at index {addressIndex}, setting as primary");
 
       // Update all stored addresses to not be primary, then set the target as primary
-      for (int i = 0; i < addresses.Count; i++)
+      for (var i = 0; i < addresses.Count; i++)
       {
         addresses[i] = addresses[i] with 
         { 
@@ -349,7 +349,7 @@ public static class AddressesData
       if (storedPrimary != null)
       {
         // Set stored address as primary and make all others non-primary
-        for (int i = 0; i < allAddresses.Count; i++)
+        for (var i = 0; i < allAddresses.Count; i++)
         {
           if (allAddresses[i].Id == storedPrimary.Id)
           {
@@ -433,7 +433,7 @@ public static class AddressesData
       if (storedPrimary != null)
       {
         // Set stored address as primary and make all others non-primary
-        for (int i = 0; i < allAddresses.Count; i++)
+        for (var i = 0; i < allAddresses.Count; i++)
         {
           if (allAddresses[i].Id == storedPrimary.Id)
           {

@@ -33,6 +33,16 @@ export const routes: Routes = [
       ),
   },
 
+  // Workspace selector route (protected but outside main layout)
+  {
+    path: 'workspace-selector',
+    loadComponent: () =>
+      import('./features/workspace/workspace-selector.component').then(
+        (m) => m.WorkspaceSelectorComponent
+      ),
+    canActivate: [authGuard],
+  },
+
   // Protected routes under 'app' path
   {
     path: 'app',

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { take, takeUntil, Subject } from 'rxjs';
 import {
@@ -21,7 +21,7 @@ import {
   templateUrl: './submissions.component.html',
   styleUrls: ['./submissions.component.scss'],
 })
-export class SubmissionsComponent implements OnInit, OnDestroy {
+export class SubmissionsComponent implements OnInit, OnDestroy, OnChanges {
   // @Input() submissions: Submission[] = [];
   @Input() profileId!: string;
   @Input() pluginId!: string;
@@ -82,6 +82,14 @@ export class SubmissionsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (this.profileId && this.pluginId && this.provider) {
+      this.loadSubmissions();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Reload data when pluginId changes (workspace switch)
+    if (changes['pluginId'] && !changes['pluginId'].firstChange) {
+      console.log('SubmissionsComponent - Plugin ID changed, reloading data');
       this.loadSubmissions();
     }
   }

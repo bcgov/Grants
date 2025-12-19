@@ -1,6 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.DTOs;
 
-namespace Grants.ApplicantPortal.API.Plugins.Demo;
+namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
 /// Static data provider for demo contact information with in-memory storage
@@ -49,7 +49,7 @@ public static class ContactsData
       // will be handled in the generation methods
       if (contactRequest.IsPrimary)
       {
-        for (int i = 0; i < contacts.Count; i++)
+        for (var i = 0; i < contacts.Count; i++)
         {
           contacts[i] = contacts[i] with { IsPrimary = false };
         }
@@ -108,7 +108,7 @@ public static class ContactsData
       // will be handled in the generation methods
       if (editRequest.IsPrimary)
       {
-        for (int i = 0; i < contacts.Count; i++)
+        for (var i = 0; i < contacts.Count; i++)
         {
           if (i != contactIndex)
           {
@@ -175,7 +175,7 @@ public static class ContactsData
       // Update all stored contacts to not be primary, then set the target as primary
       // Note: We only manage primary status within stored contacts; default contacts 
       // will be handled in the generation methods
-      for (int i = 0; i < contacts.Count; i++)
+      for (var i = 0; i < contacts.Count; i++)
       {
         contacts[i] = contacts[i] with 
         { 
@@ -202,7 +202,7 @@ public static class ContactsData
       var defaultContacts = GetDefaultContacts(provider);
       var isDefaultContact = defaultContacts.Any(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
       
-      bool wasPrimary = false;
+      var wasPrimary = false;
       
       if (isDefaultContact)
       {
@@ -331,7 +331,7 @@ public static class ContactsData
           Title = "Project Manager",
           IsPrimary = true,
           IsActive = true,
-          LastUpdated = DateTime.UtcNow.AddDays(-5),
+          LastUpdated = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc), // Fixed timestamp
           AllowEdit = true
         },
         new ContactInfo
@@ -344,7 +344,7 @@ public static class ContactsData
           Title = "Financial Officer",
           IsPrimary = false,
           IsActive = true,
-          LastUpdated = DateTime.UtcNow.AddDays(-2),
+          LastUpdated = new DateTime(2024, 1, 1, 12, 10, 0, DateTimeKind.Utc), // Fixed timestamp
           AllowEdit = false
         }
       ],
@@ -360,7 +360,7 @@ public static class ContactsData
           Title = "Chief Executive Officer",
           IsPrimary = true,
           IsActive = true,
-          LastUpdated = DateTime.UtcNow.AddDays(-3),
+          LastUpdated = new DateTime(2024, 1, 1, 12, 20, 0, DateTimeKind.Utc), // Fixed timestamp
           AllowEdit = false
         },
         new ContactInfo
@@ -373,7 +373,7 @@ public static class ContactsData
           Title = "Director of Development",
           IsPrimary = false,
           IsActive = true,
-          LastUpdated = DateTime.UtcNow.AddDays(-1),
+          LastUpdated = new DateTime(2024, 1, 1, 12, 30, 0, DateTimeKind.Utc), // Fixed timestamp
           AllowEdit = true
         }
       },
@@ -481,7 +481,7 @@ public static class ContactsData
       if (storedPrimary != null)
       {
         // Set stored contact as primary and make all others non-primary
-        for (int i = 0; i < allContacts.Count; i++)
+        for (var i = 0; i < allContacts.Count; i++)
         {
           if (allContacts[i].Id == storedPrimary.Id)
           {
@@ -566,7 +566,7 @@ public static class ContactsData
       if (storedPrimary != null)
       {
         // Set stored contact as primary and make all others non-primary
-        for (int i = 0; i < allContacts.Count; i++)
+        for (var i = 0; i < allContacts.Count; i++)
         {
           if (allContacts[i].Id == storedPrimary.Id)
           {

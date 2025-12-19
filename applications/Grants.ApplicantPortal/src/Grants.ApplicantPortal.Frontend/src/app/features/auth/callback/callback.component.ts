@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { take, timeout } from 'rxjs/operators';
+import { WorkspaceService } from '../../../core/services/workspace.service';
 
 @Component({
   selector: 'app-auth-callback',
@@ -17,7 +18,8 @@ export class CallbackComponent implements OnInit {
 
   constructor(
     private readonly oidcSecurityService: OidcSecurityService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly workspaceService: WorkspaceService
   ) {}
 
   ngOnInit(): void {
@@ -50,8 +52,28 @@ export class CallbackComponent implements OnInit {
           });
 
           if (result.isAuthenticated && result.accessToken) {
-            console.log('Authentication successful, redirecting to app');
-            this.router.navigate(['/app']);
+            console.log('Authentication successful, fetching workspaces');
+            
+            // Restore any previously selected workspace
+            this.workspaceService.restoreWorkspaceFromStorage();
+            
+            // Fetch available workspaces
+            this.workspaceService.getAvailableWorkspaces().subscribe({
+              next: (workspacesResponse) => {
+                if (this.workspaceService.isWorkspaceSelectionRequired()) {
+                  console.log('Multiple workspaces available, redirecting to selector');
+                  this.router.navigate(['/workspace-selector']);
+                } else {
+                  console.log('Workspace already selected or only one available, redirecting to app');
+                  this.router.navigate(['/app']);
+                }
+              },
+              error: (workspaceError) => {
+                console.error('Error fetching workspaces:', workspaceError);
+                // Continue to app even if workspace fetch fails
+                this.router.navigate(['/app']);
+              }
+            });
           } else {
             console.log('Authentication failed - no valid token received');
             this.errorMessage = 'Authentication failed. Please try logging in again.';
@@ -80,7 +102,7 @@ export class CallbackComponent implements OnInit {
 
   private clearAuthStorage(): void {
     try {
-      // Clear OIDC specific storage keys
+      // Clear OIDC specific storage keys but preserve workspace selection
       const keysToRemove = [
         'angular-auth-oidc-client',
         'oidc.user',

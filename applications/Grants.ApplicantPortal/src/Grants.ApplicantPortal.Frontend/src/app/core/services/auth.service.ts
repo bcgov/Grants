@@ -28,6 +28,11 @@ export class AuthService {
         this.authState$.next({ 
           isAuthenticated: result.isAuthenticated
         });
+
+        // If user logs out, clear workspace
+        if (!result.isAuthenticated) {
+          this.clearWorkspaceOnLogout();
+        }
       },
       error: (error) => {
         console.error('AuthService - Authentication state error:', error);
@@ -45,6 +50,15 @@ export class AuthService {
           });
         }
       }
+    });
+  }
+
+  private clearWorkspaceOnLogout(): void {
+    // Dynamic import to avoid circular dependency
+    import('./workspace.service').then(({ WorkspaceService }) => {
+      // Get service instance from injector if needed
+      // For now, just clear localStorage directly
+      localStorage.removeItem('selectedWorkspace');
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -45,7 +45,7 @@ interface Contact {
   templateUrl: './contacts.component.html',
   styleUrls: ['./contacts.component.scss'],
 })
-export class ContactsComponent implements OnInit, OnDestroy {
+export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   @Input() profileId!: string;
   @Input() pluginId!: string;
   @Input() provider!: string;
@@ -126,6 +126,14 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (this.profileId && this.pluginId && this.provider) {
+      this.loadData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Reload data when pluginId changes (workspace switch)
+    if (changes['pluginId'] && !changes['pluginId'].firstChange) {
+      console.log('ContactsComponent - Plugin ID changed, reloading data');
       this.loadData();
     }
   }

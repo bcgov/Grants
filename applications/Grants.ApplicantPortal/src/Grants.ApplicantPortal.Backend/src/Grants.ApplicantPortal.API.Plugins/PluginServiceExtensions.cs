@@ -32,8 +32,11 @@ public static class PluginServiceExtensions
   {
     // Register profile plugins
     services.AddScoped<IProfilePlugin, UnityPlugin>();
-    services.AddScoped<IProfilePlugin, DemoProfilePlugin>();
+    services.AddScoped<IProfilePlugin, DemoPlugin>();
     services.AddScoped<IProfilePluginFactory, ProfilePluginFactory>();
+
+    // Register plugin data seeding service
+    services.AddHostedService<Services.PluginDataSeedingService>();
 
     // Register contact management service
     services.AddScoped<IContactManagementService, Infrastructure.Services.ContactManagementService>();
