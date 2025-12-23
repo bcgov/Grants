@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Addresses.SetAsPrimary;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Addresses;
 
@@ -28,7 +29,6 @@ public class SetAsPrimary(IMediator _mediator)
       s.ExampleRequest = new SetAsPrimaryAddressRequest 
       { 
         AddressId = Guid.NewGuid(),
-        ProfileId = Guid.NewGuid(),
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -41,9 +41,12 @@ public class SetAsPrimary(IMediator _mediator)
     SetAsPrimaryAddressRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
     var command = new SetAsPrimaryAddressCommand(
       request.AddressId,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

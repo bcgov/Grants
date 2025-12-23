@@ -13,10 +13,6 @@ public class DeleteContactValidator : Validator<DeleteContactRequest>
       .NotEmpty()
       .WithMessage("ContactId is required.");
 
-    RuleFor(x => x.ProfileId)
-      .NotEmpty()
-      .WithMessage("ProfileId is required.");
-
     RuleFor(x => x.PluginId)
       .NotEmpty()
       .WithMessage("PluginId is required.")

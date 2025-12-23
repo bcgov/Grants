@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Addresses.Edit;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Addresses;
 
@@ -34,8 +35,7 @@ public class Update(IMediator _mediator)
         Province = "BC",
         PostalCode = "V8W 1A1",
         Country = "Canada",
-        IsPrimary = true,
-        ProfileId = Guid.NewGuid(),
+        IsPrimary = true,        
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -48,6 +48,9 @@ public class Update(IMediator _mediator)
     UpdateAddressRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
     var command = new EditAddressCommand(
       request.AddressId,
       request.Type!,
@@ -57,7 +60,7 @@ public class Update(IMediator _mediator)
       request.PostalCode!,
       request.IsPrimary,
       request.Country,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

@@ -31,11 +31,6 @@ public interface IProfilePlugin
   Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default);
 
   /// <summary>
-  /// Seeds initial data into cache (called on startup)
-  /// </summary>
-  Task SeedDataAsync(CancellationToken cancellationToken = default);
-
-  /// <summary>
   /// Validates if the plugin can handle the given metadata
   /// </summary>
   bool CanHandle(ProfilePopulationMetadata metadata);

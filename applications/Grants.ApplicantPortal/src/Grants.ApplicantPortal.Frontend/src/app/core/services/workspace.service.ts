@@ -78,7 +78,9 @@ export class WorkspaceService {
 
         // Auto-select workspace if only one available and no selection made
         if (response.plugins.length === 1 && !currentState.isWorkspaceSelected) {
-          this.selectWorkspace(response.plugins[0]);
+          console.log('WorkspaceService - Auto-selecting single workspace:', response.plugins[0]);
+          // Don't auto-select here - let the component handle it for better UX
+          // This allows the component to show a proper loading state
         }
       }),
       catchError(error => {

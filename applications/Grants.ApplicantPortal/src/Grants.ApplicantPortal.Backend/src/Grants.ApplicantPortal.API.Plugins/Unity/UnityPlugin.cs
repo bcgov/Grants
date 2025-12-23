@@ -73,13 +73,4 @@ public partial class UnityPlugin : IProfilePlugin, IContactManagementPlugin, IAd
             f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
             f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
     }
-
-    /// <summary>
-    /// Unity plugin doesn't seed data - it fetches from external Unity systems
-    /// </summary>
-    public Task SeedDataAsync(CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Unity plugin does not seed data - data is fetched from external Unity systems");
-        return Task.CompletedTask;
-    }
 }

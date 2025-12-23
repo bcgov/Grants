@@ -46,7 +46,6 @@ interface Contact {
   styleUrls: ['./contacts.component.scss'],
 })
 export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
-  @Input() profileId!: string;
   @Input() pluginId!: string;
   @Input() provider!: string;
 
@@ -125,7 +124,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    if (this.profileId && this.pluginId && this.provider) {
+    if (this.pluginId && this.provider) {
       this.loadData();
     }
   }
@@ -163,7 +162,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
     this.applicantInfoService
       .getContactsInfo(
-        this.profileId,
         this.pluginId,
         this.provider
       )
@@ -218,13 +216,11 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     const apiCall = this.isEditMode
       ? this.applicantInfoService.updateContact(
           this.editingContactId!,
-          this.profileId,
           this.pluginId,
           this.provider,
           contactPayload
         )
       : this.applicantInfoService.createContact(
-          this.profileId,
           this.pluginId,
           this.provider,
           contactPayload
@@ -371,7 +367,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
     this.applicantInfoService.deleteContact(
       this.contactToDelete.id,
-      this.profileId,
       this.pluginId,
       this.provider
     ).pipe(
@@ -405,7 +400,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     
     this.applicantInfoService.setContactAsPrimary(
       contact.id,
-      this.profileId,
       this.pluginId,
       this.provider
     ).pipe(

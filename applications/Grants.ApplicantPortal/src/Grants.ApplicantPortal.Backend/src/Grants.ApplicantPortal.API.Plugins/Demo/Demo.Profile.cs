@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
 
@@ -16,22 +17,36 @@ public partial class DemoPlugin
 
     try
     {
+      // FIRST: Ensure demo data is seeded for this user profile (on-demand seeding)
+      await SeedDataForProfileAsync(metadata.ProfileId, cancellationToken);
+
       // Simulate some processing time
-      await Task.Delay(5, cancellationToken); // Reduced since we're just reading from cache
+      await Task.Delay(5, cancellationToken);
 
       var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{metadata.ProfileId}:DEMO:{metadata.Provider}:{metadata.Key}";
 
       _logger.LogDebug("Looking for cached DEMO data with key: {CacheKey}", cacheKey);
 
-      // IMPORTANT: Don't use GetOrCreateAsync here to avoid infinite loop!
-      // The ProfileDataRetrievalService handles the GetOrCreateAsync logic
-      // This method should only generate data when explicitly called
+      // ALWAYS fetch from Redis first - this is our persistent "database"
+      var cachedBytes = await _distributedCache.GetAsync(cacheKey, cancellationToken);
+      if (cachedBytes != null)
+      {
+        var cachedProfileData = JsonSerializer.Deserialize<ProfileData>(cachedBytes);
+        if (cachedProfileData != null)
+        {
+          _logger.LogInformation("Demo plugin successfully retrieved cached profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+              metadata.ProfileId, metadata.Provider, metadata.Key);
+          
+          return cachedProfileData;
+        }
+      }
 
-      // If not in cache, this profile ID wasn't seeded - generate on demand but warn
-      _logger.LogWarning("Generating on-demand DEMO data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}. This should have been seeded on startup.",
+      // Cache miss after seeding attempt - this shouldn't happen often
+      // Generate fresh data but persist it with long expiration
+      _logger.LogWarning("DEMO data not found in Redis after seeding attempt for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}. Generating and persisting fresh data.",
           metadata.ProfileId, metadata.Provider, metadata.Key);
 
-      // Generate on-demand for non-seeded profile IDs
+      // Generate fresh data for this profile
       var mockProfileData = GenerateSeedingMockData(metadata);
 
       var jsonData = JsonSerializer.Serialize(mockProfileData, new JsonSerializerOptions
@@ -47,7 +62,15 @@ public partial class DemoPlugin
           metadata.Key,
           jsonData);
 
-      _logger.LogInformation("Demo plugin successfully generated on-demand profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+      // Store in Redis with long-term expiration
+      var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+      var longTermCacheOptions = new DistributedCacheEntryOptions
+      {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+      };
+      await _distributedCache.SetAsync(cacheKey, profileDataBytes, longTermCacheOptions, cancellationToken);
+
+      _logger.LogInformation("Demo plugin successfully generated and persisted fresh profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
 
       // Fire a message when profile data is populated

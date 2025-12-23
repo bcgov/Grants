@@ -23,7 +23,6 @@ import {
 })
 export class SubmissionsComponent implements OnInit, OnDestroy, OnChanges {
   // @Input() submissions: Submission[] = [];
-  @Input() profileId!: string;
   @Input() pluginId!: string;
   @Input() provider!: string;
   @Input() key!: string;
@@ -81,7 +80,7 @@ export class SubmissionsComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    if (this.profileId && this.pluginId && this.provider) {
+    if (this.pluginId && this.provider) {
       this.loadSubmissions();
     }
   }
@@ -105,7 +104,6 @@ export class SubmissionsComponent implements OnInit, OnDestroy, OnChanges {
 
     this.applicantInfoService
       .getSubmissionsInfo(
-        this.profileId,
         this.pluginId,
         this.provider,
         this.data

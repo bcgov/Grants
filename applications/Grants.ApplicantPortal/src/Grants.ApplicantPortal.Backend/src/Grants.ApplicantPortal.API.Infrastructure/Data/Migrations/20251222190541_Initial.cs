@@ -86,6 +86,33 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data.Migrations
                     table.PrimaryKey("PK_Profiles", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "SecurityLogs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventType = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    EventDescription = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    UserAgent = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    SessionId = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Metadata = table.Column<string>(type: "text", nullable: true),
+                    IsSuccessful = table.Column<bool>(type: "boolean", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SecurityLogs", x => x.Id);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_InboxMessages_MessageId",
                 schema: "public",
@@ -113,6 +140,9 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Profiles");
+
+            migrationBuilder.DropTable(
+                name: "SecurityLogs");
         }
     }
 }

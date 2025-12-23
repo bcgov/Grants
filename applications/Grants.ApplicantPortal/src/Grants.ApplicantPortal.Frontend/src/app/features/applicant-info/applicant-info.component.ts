@@ -21,7 +21,6 @@ import {
 import {
   Key,
   PluginId,
-  ProfileId,
   Provider,
 } from '../../shared/models/applicantion-info.enums';
 
@@ -41,7 +40,6 @@ import {
 })
 export class ApplicantInfoComponent implements OnInit, OnDestroy {
   // Profile properties
-  profileId = ProfileId.DEFAULT;
   pluginId: string = PluginId.DEMO; // Default fallback
   provider = Provider.PROGRAM1;
   keyOrgInfo = Key.ORGINFO;
@@ -108,7 +106,6 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
 
     this.applicantInfoService
       .getOrganizationInfo(
-        ProfileId.DEFAULT,
         PluginId.DEMO,
         Provider.PROGRAM1
       )

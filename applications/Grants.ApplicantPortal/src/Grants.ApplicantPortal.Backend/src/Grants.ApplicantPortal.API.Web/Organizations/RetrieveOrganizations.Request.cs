@@ -2,16 +2,10 @@
 
 public class RetrieveOrganizationsRequest
 {
-  public const string Route = "/Organizations/{ProfileId:Guid}/{PluginId}/{Provider}";
-  public static string BuildRoute(Guid profileId, string pluginId, string provider)
-    => Route.Replace("{ProfileId:Guid}", profileId.ToString())
-            .Replace("{PluginId}", pluginId)
+  public const string Route = "/Organizations/{PluginId}/{Provider}";
+  public static string BuildRoute(string pluginId, string provider)
+    => Route.Replace("{PluginId}", pluginId)
             .Replace("{Provider}", provider);
-
-  /// <summary>
-  /// The unique identifier for the profile to retrieve organization data for
-  /// </summary>
-  public Guid ProfileId { get; set; }
 
   /// <summary>
   /// Plugin identifier for plugin-specific organization retrieval

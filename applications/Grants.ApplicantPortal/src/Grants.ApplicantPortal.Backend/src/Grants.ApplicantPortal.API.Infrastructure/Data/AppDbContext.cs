@@ -1,4 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
+using Grants.ApplicantPortal.API.Core.Features.Security.SecurityLogAggregate;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
 
@@ -12,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,
 { 
   // Add your DbSets here
   public DbSet<Profile> Profiles => Set<Profile>();
+  public DbSet<SecurityLog> SecurityLogs => Set<SecurityLog>();
 
   // Messaging entities
   public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();

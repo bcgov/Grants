@@ -12,13 +12,15 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 /// <summary>
 /// Demo profile plugin for testing and demonstration purposes
 /// </summary>
-public partial class DemoPlugin : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
+public partial class DemoPlugin : IProfilePlugin, 
+  IContactManagementPlugin, 
+  IAddressManagementPlugin, 
+  IOrganizationManagementPlugin
 {
     private readonly ILogger<DemoPlugin> _logger;
     private readonly IMessagePublisher? _messagePublisher; // Optional for messaging
     private readonly IDistributedCache _distributedCache; // Direct Redis access only
-    private readonly IOptions<ProfileCacheOptions> _cacheOptions;
-    private readonly IConnectionMultiplexer? _connectionMultiplexer; // For Redis verification
+    private readonly IOptions<ProfileCacheOptions> _cacheOptions;    
 
     public DemoPlugin(
         ILogger<DemoPlugin> logger,
@@ -30,8 +32,7 @@ public partial class DemoPlugin : IProfilePlugin, IContactManagementPlugin, IAdd
         _logger = logger;
         _distributedCache = distributedCache;
         _cacheOptions = cacheOptions;
-        _messagePublisher = messagePublisher;
-        _connectionMultiplexer = connectionMultiplexer;
+        _messagePublisher = messagePublisher;        
     }
 
     public string PluginId => "DEMO";
@@ -86,61 +87,75 @@ public partial class DemoPlugin : IProfilePlugin, IContactManagementPlugin, IAdd
     }
 
     /// <summary>
-    /// Seeds demo data into cache on startup - this is our persistent demo "database"
-    /// Note: This does not clear existing data. Use the ClearRedisCache system endpoint for data reset.
+    /// Seeds demo data for a specific user profile on first request with distributed locking
     /// </summary>
-    public async Task SeedDataAsync(CancellationToken cancellationToken = default)
+    internal async Task SeedDataForProfileAsync(Guid profileId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("=== Seeding DEMO plugin data ===");
-
-        // Verify Redis connectivity if available
-        if (_connectionMultiplexer != null)
+        // Check if this profile has already been seeded
+        var seedingFlagKey = $"{_cacheOptions.Value.CacheKeyPrefix}SEEDED:DEMO:{profileId}";
+        var alreadySeeded = await _distributedCache.GetAsync(seedingFlagKey, cancellationToken);
+        
+        if (alreadySeeded != null)
         {
-            try
-            {
-                var database = _connectionMultiplexer.GetDatabase(1);
-                var testResult = await database.StringSetAsync("test:connectivity", "ok", TimeSpan.FromSeconds(5));
-                
-                if (!testResult)
-                {
-                    _logger.LogError("Redis connectivity test failed - skipping DEMO data seeding");
-                    return;
-                }
-                
-                await database.KeyDeleteAsync("test:connectivity");
-                _logger.LogDebug("Redis connectivity verified");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Redis connectivity test failed - skipping DEMO data seeding");
-                return;
-            }
-        }
-        else
-        {
-            _logger.LogInformation("Redis not available - skipping DEMO data seeding");
+            _logger.LogDebug("Demo data already seeded for ProfileId: {ProfileId}", profileId);
             return;
         }
 
-        // Pre-defined test profile IDs for consistent demo data
-        var testProfileIds = new[]
-        {
-            Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Guid.Parse("33333333-3333-3333-3333-333333333333")
-        };
+        // Use distributed lock to prevent concurrent seeding for the same profile
+        var lockKey = $"{_cacheOptions.Value.CacheKeyPrefix}LOCK:SEED:DEMO:{profileId}";
+        var lockValue = Environment.MachineName + "_" + Thread.CurrentThread.ManagedThreadId + "_" + Guid.NewGuid();
+        var lockExpiry = TimeSpan.FromMinutes(5); // Lock expires in 5 minutes
 
-        var scenarios = SupportedFeatures.ToList();
-        var seededCount = 0;
-        var errors = 0;
-
-        foreach (var profileId in testProfileIds)
+        try
         {
+            // Try to acquire distributed lock
+            var lockAcquired = await TryAcquireDistributedLock(lockKey, lockValue, lockExpiry, cancellationToken);
+            
+            if (!lockAcquired)
+            {
+                // Another process is seeding, wait briefly and check if seeding completed
+                await Task.Delay(100, cancellationToken);
+                var seedCheckAfterWait = await _distributedCache.GetAsync(seedingFlagKey, cancellationToken);
+                
+                if (seedCheckAfterWait != null)
+                {
+                    _logger.LogDebug("Demo data seeded by another process for ProfileId: {ProfileId}", profileId);
+                    return;
+                }
+                
+                _logger.LogWarning("Could not acquire seeding lock for ProfileId: {ProfileId}, skipping seeding", profileId);
+                return;
+            }
+
+            // Double-check if seeding is still needed (another process might have completed it)
+            var doubleCheckSeeded = await _distributedCache.GetAsync(seedingFlagKey, cancellationToken);
+            if (doubleCheckSeeded != null)
+            {
+                _logger.LogDebug("Demo data was seeded by another process during lock acquisition for ProfileId: {ProfileId}", profileId);
+                return;
+            }
+
+            _logger.LogInformation("=== Seeding DEMO data for ProfileId: {ProfileId} ===", profileId);
+
+            var scenarios = SupportedFeatures.ToList();
+            var seededCount = 0;
+            var errors = 0;
+
             foreach (var feature in scenarios)
             {
                 try
                 {
                     var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{feature.Provider}:{feature.Key}";
+
+                    // Check if this combination was previously deleted
+                    var deletionKey = $"{_cacheOptions.Value.CacheKeyPrefix}DELETED:{profileId}:DEMO:{feature.Provider}:{feature.Key}";
+                    var wasDeleted = await _distributedCache.GetAsync(deletionKey, cancellationToken);
+                    if (wasDeleted != null)
+                    {
+                        _logger.LogDebug("Skipping seeding for {ProfileId}:{Provider}:{Key} - was previously deleted",
+                            profileId, feature.Provider, feature.Key);
+                        continue; // Skip if this was deleted
+                    }
 
                     var metadata = new ProfilePopulationMetadata(
                         profileId, 
@@ -180,26 +195,116 @@ public partial class DemoPlugin : IProfilePlugin, IContactManagementPlugin, IAdd
                     errors++;
                 }
             }
+
+            // Mark this profile as seeded
+            var seedingFlag = JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                ProfileId = profileId,
+                SeededAt = DateTime.UtcNow,
+                SeededBy = PluginId,
+                MachineName = Environment.MachineName
+            });
+            
+            var flagCacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+            };
+            
+            await _distributedCache.SetAsync(seedingFlagKey, seedingFlag, flagCacheOptions, cancellationToken);
+
+            _logger.LogInformation("DEMO plugin seeding completed for ProfileId: {ProfileId} - {SeededCount} items seeded, {ErrorCount} errors", 
+                profileId, seededCount, errors);
         }
-
-        _logger.LogInformation("DEMO plugin seeding completed: {SeededCount} items seeded, {ErrorCount} errors", 
-            seededCount, errors);
-
-        // Quick verification of seeded data
-        if (_connectionMultiplexer?.IsConnected == true)
+        finally
         {
-            try
+            // Always release the lock
+            await ReleaseDistributedLock(lockKey, lockValue, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to acquire a distributed lock using Redis
+    /// </summary>
+    private async Task<bool> TryAcquireDistributedLock(string lockKey, string lockValue, TimeSpan expiry, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var lockData = JsonSerializer.SerializeToUtf8Bytes(new 
+            { 
+                Value = lockValue, 
+                AcquiredAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.Add(expiry)
+            });
+            
+            var cacheOptions = new DistributedCacheEntryOptions
             {
-                var database = _connectionMultiplexer.GetDatabase(1);
-                var server = _connectionMultiplexer.GetServer(_connectionMultiplexer.GetEndPoints().First());
-                var keyCount = server.Keys(database: 1, pattern: "ApplicantPortal*").Count();
+                AbsoluteExpirationRelativeToNow = expiry
+            };
+
+            // Try to set the lock only if it doesn't exist (atomic operation)
+            var existingLock = await _distributedCache.GetAsync(lockKey, cancellationToken);
+            if (existingLock == null)
+            {
+                await _distributedCache.SetAsync(lockKey, lockData, cacheOptions, cancellationToken);
                 
-                _logger.LogInformation("Redis verification: {KeyCount} total keys in database 1", keyCount);
+                // Verify we actually got the lock (race condition check)
+                await Task.Delay(10, cancellationToken); // Small delay to ensure consistency
+                var verifyLock = await _distributedCache.GetAsync(lockKey, cancellationToken);
+                if (verifyLock != null)
+                {
+                    try
+                    {
+                        var lockInfo = JsonSerializer.Deserialize<dynamic>(verifyLock);
+                        var storedValue = lockInfo?.GetProperty("Value").GetString();
+                        return storedValue == lockValue;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
             }
-            catch (Exception ex)
+            
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to acquire distributed lock for key: {LockKey}", lockKey);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Releases a distributed lock if we own it
+    /// </summary>
+    private async Task ReleaseDistributedLock(string lockKey, string lockValue, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var existingLock = await _distributedCache.GetAsync(lockKey, cancellationToken);
+            if (existingLock != null)
             {
-                _logger.LogDebug(ex, "Redis verification failed - this is not critical");
+                try
+                {
+                    var lockInfo = JsonSerializer.Deserialize<dynamic>(existingLock);
+                    var storedValue = lockInfo?.GetProperty("Value").GetString();
+                    
+                    if (storedValue == lockValue)
+                    {
+                        await _distributedCache.RemoveAsync(lockKey, cancellationToken);
+                        _logger.LogDebug("Released distributed lock for key: {LockKey}", lockKey);
+                    }
+                }
+                catch
+                {
+                    // If we can't parse the lock, just remove it to be safe
+                    await _distributedCache.RemoveAsync(lockKey, cancellationToken);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to release distributed lock for key: {LockKey}", lockKey);
         }
     }
 

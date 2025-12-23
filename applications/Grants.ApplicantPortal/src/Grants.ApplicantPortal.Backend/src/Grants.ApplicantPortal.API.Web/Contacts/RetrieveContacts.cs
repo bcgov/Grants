@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Retrieve;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Contacts;
 
@@ -31,7 +32,10 @@ public class RetrieveContacts(IMediator mediator)
   public override async Task HandleAsync(RetrieveContactsRequest request,
     CancellationToken ct)
   {
-    var query = new RetrieveContactsQuery(request.ProfileId,
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
+    var query = new RetrieveContactsQuery(profileId,
       request.PluginId,
       request.Provider,
       request.Parameters);

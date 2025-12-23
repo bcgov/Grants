@@ -35,8 +35,7 @@ public static class PluginServiceExtensions
     services.AddScoped<IProfilePlugin, DemoPlugin>();
     services.AddScoped<IProfilePluginFactory, ProfilePluginFactory>();
 
-    // Register plugin data seeding service
-    services.AddHostedService<Services.PluginDataSeedingService>();
+    // NOTE: Plugin data seeding service has been removed - plugins now use on-demand seeding per user profile
 
     // Register contact management service
     services.AddScoped<IContactManagementService, Infrastructure.Services.ContactManagementService>();

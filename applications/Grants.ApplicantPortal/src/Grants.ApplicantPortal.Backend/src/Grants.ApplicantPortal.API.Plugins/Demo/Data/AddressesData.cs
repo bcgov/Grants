@@ -13,7 +13,7 @@ public static class AddressesData
   /// <summary>
   /// Internal address information structure
   /// </summary>
-  private record AddressInfo
+  private sealed record AddressInfo
   {
     public string Id { get; init; } = string.Empty;
     public string AddressId { get; init; } = string.Empty;
@@ -38,8 +38,8 @@ public static class AddressesData
   {
     return provider?.ToUpper() switch
     {
-      "PROGRAM1" => new[]
-      {
+      "PROGRAM1" =>
+      [
         new AddressInfo
         {
           Id = "AD12E345-6789-0ABC-DEF1-234567890ABC",
@@ -91,9 +91,9 @@ public static class AddressesData
           LastVerified = DateTime.UtcNow.AddDays(-4),
           AllowEdit = true
         }
-      },
-      "PROGRAM2" => new[]
-      {
+      ],
+      "PROGRAM2" =>
+      [
         new AddressInfo
         {
           Id = "DD12E345-6789-0ABC-DEF1-234567890ABC",
@@ -142,7 +142,7 @@ public static class AddressesData
           IsActive = true,
           LastVerified = DateTime.UtcNow.AddDays(-3)
         }
-      },
+      ],
       _ => Array.Empty<AddressInfo>()
     };
   }

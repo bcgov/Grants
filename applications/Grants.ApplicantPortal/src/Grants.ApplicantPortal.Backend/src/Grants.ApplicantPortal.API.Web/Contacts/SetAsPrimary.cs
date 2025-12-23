@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contacts.SetAsPrimary;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Contacts;
 
@@ -27,8 +28,7 @@ public class SetAsPrimary(IMediator _mediator)
       s.Responses[422] = "Unprocessable entity - invalid data";
       s.ExampleRequest = new SetAsPrimaryContactRequest 
       { 
-        ContactId = Guid.NewGuid(),
-        ProfileId = Guid.NewGuid(),
+        ContactId = Guid.NewGuid(),        
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -41,9 +41,12 @@ public class SetAsPrimary(IMediator _mediator)
     SetAsPrimaryContactRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
     var command = new SetAsPrimaryContactCommand(
       request.ContactId,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

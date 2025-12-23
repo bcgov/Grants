@@ -98,17 +98,17 @@ public static class OrganizationsData
   private static void MaterializeDefaultOrganizationIfNeeded(string provider, Guid profileId, string organizationId)
   {
     var key = $"{provider}-{profileId}";
-
+    
     // Debug logging
     System.Diagnostics.Debug.WriteLine($"MaterializeDefaultOrganizationIfNeeded called with OrganizationId: {organizationId}, Provider: {provider}");
-
+    
     if (!_organizationsByProviderProfile.ContainsKey(key))
     {
       _organizationsByProviderProfile[key] = new List<OrganizationInfo>();
     }
 
     var organizations = _organizationsByProviderProfile[key];
-
+    
     // Check if this organization is already stored (case-insensitive comparison)
     if (organizations.Any(o => string.Equals(o.Id, organizationId, StringComparison.OrdinalIgnoreCase)))
     {
@@ -119,13 +119,13 @@ public static class OrganizationsData
     // Check if this is a default organization (case-insensitive comparison)
     var defaultOrganizations = GetDefaultOrganizations(provider);
     System.Diagnostics.Debug.WriteLine($"Found {defaultOrganizations.Length} default organizations for provider {provider}");
-    foreach (var defaultOrg in defaultOrganizations)
+    foreach (var org in defaultOrganizations)
     {
-      System.Diagnostics.Debug.WriteLine($"  Default Organization ID: {defaultOrg.Id}, Name: {defaultOrg.OrgName}");
+      System.Diagnostics.Debug.WriteLine($"  Default Organization ID: {org.Id}, Name: {org.OrgName}");
     }
-
+    
     var defaultOrganization = defaultOrganizations.FirstOrDefault(o => string.Equals(o.Id, organizationId, StringComparison.OrdinalIgnoreCase));
-
+    
     if (defaultOrganization != null)
     {
       System.Diagnostics.Debug.WriteLine($"Materializing default organization: {defaultOrganization.OrgName} (ID: {defaultOrganization.Id})");

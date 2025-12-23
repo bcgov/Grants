@@ -2,6 +2,7 @@
 using Grants.ApplicantPortal.API.Core.Features;
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.Web.Profiles;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
@@ -28,6 +29,8 @@ public static class ServiceConfigs
             .AddAuthorizationPolicies(logger)
             .AddCorsConfigs(builder, logger)
             .AddCacheConfigs(builder, logger);
+
+    services.AddScoped<IProfileService, ProfileService>();
 
     logger.LogInformation("{Project} services registered", "Mediatr, Authentication, Authorization, CORS and HybridCache");
 

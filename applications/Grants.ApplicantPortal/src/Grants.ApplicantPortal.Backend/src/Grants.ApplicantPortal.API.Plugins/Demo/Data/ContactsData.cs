@@ -25,7 +25,7 @@ public static class ContactsData
     public bool IsPrimary { get; init; }
     public bool IsActive { get; init; } = true;
     public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
-    public bool AllowEdit { get; init; } = true;    
+    public bool AllowEdit { get; init; } = true;
   }
 
   /// <summary>
@@ -36,14 +36,14 @@ public static class ContactsData
     lock (_lock)
     {
       var key = $"{provider}-{profileId}";
-      
+
       if (!_contactsByProviderProfile.ContainsKey(key))
       {
         _contactsByProviderProfile[key] = new List<ContactInfo>();
       }
 
       var contacts = _contactsByProviderProfile[key];
-      
+
       // If this is being set as primary, update existing stored contacts to not be primary
       // Note: We only manage primary status within stored contacts; default contacts 
       // will be handled in the generation methods
@@ -69,11 +69,11 @@ public static class ContactsData
         IsPrimary = contactRequest.IsPrimary,
         IsActive = true,
         LastUpdated = DateTime.UtcNow,
-        AllowEdit = true        
+        AllowEdit = true
       };
 
       contacts.Add(newContact);
-      
+
       return newContactId.ToString();
     }
   }
@@ -86,10 +86,10 @@ public static class ContactsData
     lock (_lock)
     {
       var key = $"{provider}-{profileId}";
-      
+
       // Ensure the contact is materialized if it's a default contact
       MaterializeDefaultContactIfNeeded(provider, profileId, contactId.ToString());
-      
+
       if (!_contactsByProviderProfile.ContainsKey(key))
       {
         return false;
@@ -97,7 +97,7 @@ public static class ContactsData
 
       var contacts = _contactsByProviderProfile[key];
       var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactId.ToString(), StringComparison.OrdinalIgnoreCase));
-      
+
       if (contactIndex == -1)
       {
         return false;
@@ -135,6 +135,53 @@ public static class ContactsData
   }
 
   /// <summary>
+  /// Ensures a contact is materialized into stored contacts if it's a default contact
+  /// This is needed when someone tries to manage a default contact
+  /// </summary>
+  private static void MaterializeDefaultContactIfNeeded(string provider, Guid profileId, string contactId)
+  {
+    var key = $"{provider}-{profileId}";
+
+    // Debug logging
+    System.Diagnostics.Debug.WriteLine($"MaterializeDefaultContactIfNeeded called with ContactId: {contactId}, Provider: {provider}");
+
+    if (!_contactsByProviderProfile.ContainsKey(key))
+    {
+      _contactsByProviderProfile[key] = new List<ContactInfo>();
+    }
+
+    var contacts = _contactsByProviderProfile[key];
+
+    // Check if this contact is already stored (case-insensitive comparison)
+    if (contacts.Any(c => string.Equals(c.Id, contactId, StringComparison.OrdinalIgnoreCase)))
+    {
+      System.Diagnostics.Debug.WriteLine($"Contact {contactId} already materialized");
+      return; // Already materialized
+    }
+
+    // Check if this is a default contact (case-insensitive comparison)
+    var defaultContacts = GetDefaultContacts(provider);
+    System.Diagnostics.Debug.WriteLine($"Found {defaultContacts.Length} default contacts for provider {provider}");
+    foreach (var dc in defaultContacts)
+    {
+      System.Diagnostics.Debug.WriteLine($"  Default Contact ID: {dc.Id}, Name: {dc.Name}");
+    }
+
+    var defaultContact = defaultContacts.FirstOrDefault(c => string.Equals(c.Id, contactId, StringComparison.OrdinalIgnoreCase));
+
+    if (defaultContact != null)
+    {
+      System.Diagnostics.Debug.WriteLine($"Materializing default contact: {defaultContact.Name} (ID: {defaultContact.Id})");
+      // Materialize the default contact into stored contacts
+      contacts.Add(defaultContact);
+    }
+    else
+    {
+      System.Diagnostics.Debug.WriteLine($"No default contact found with ID: {contactId}");
+    }
+  }
+
+  /// <summary>
   /// Sets a contact as primary
   /// </summary>
   public static bool SetContactAsPrimary(string provider, Guid profileId, Guid contactId)
@@ -142,13 +189,13 @@ public static class ContactsData
     lock (_lock)
     {
       var key = $"{provider}-{profileId}";
-      
+
       // Debug logging
       System.Diagnostics.Debug.WriteLine($"SetContactAsPrimary called with ContactId: {contactId}, Provider: {provider}, ProfileId: {profileId}");
-      
+
       // Ensure the contact is materialized if it's a default contact
       MaterializeDefaultContactIfNeeded(provider, profileId, contactId.ToString());
-      
+
       if (!_contactsByProviderProfile.ContainsKey(key))
       {
         System.Diagnostics.Debug.WriteLine($"No stored contacts found for key: {key}");
@@ -161,9 +208,9 @@ public static class ContactsData
       {
         System.Diagnostics.Debug.WriteLine($"  Contact ID: {contact.Id}, Name: {contact.Name}");
       }
-      
+
       var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, contactId.ToString(), StringComparison.OrdinalIgnoreCase));
-      
+
       if (contactIndex == -1)
       {
         System.Diagnostics.Debug.WriteLine($"Contact with ID {contactId} not found in stored contacts");
@@ -177,8 +224,8 @@ public static class ContactsData
       // will be handled in the generation methods
       for (var i = 0; i < contacts.Count; i++)
       {
-        contacts[i] = contacts[i] with 
-        { 
+        contacts[i] = contacts[i] with
+        {
           IsPrimary = i == contactIndex,
           LastUpdated = i == contactIndex ? DateTime.UtcNow : contacts[i].LastUpdated // Update timestamp for primary contact
         };
@@ -197,26 +244,26 @@ public static class ContactsData
     {
       var key = $"{provider}-{profileId}";
       var contactIdStr = contactId.ToString();
-      
+
       // Check if it's a default contact
       var defaultContacts = GetDefaultContacts(provider);
       var isDefaultContact = defaultContacts.Any(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
-      
+
       var wasPrimary = false;
-      
+
       if (isDefaultContact)
       {
         // Check if the default contact being deleted is primary
         var defaultContact = defaultContacts.FirstOrDefault(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
         wasPrimary = defaultContact?.IsPrimary ?? false;
-        
+
         // Track deletion of default contact
         if (!_deletedDefaultContactIds.ContainsKey(key))
         {
           _deletedDefaultContactIds[key] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
         _deletedDefaultContactIds[key].Add(contactIdStr);
-        
+
         // Also remove from stored contacts if it was materialized
         if (_contactsByProviderProfile.ContainsKey(key))
         {
@@ -239,7 +286,7 @@ public static class ContactsData
 
         var storedContacts = _contactsByProviderProfile[key];
         var storedContactIndex = storedContacts.FindIndex(c => string.Equals(c.Id, contactIdStr, StringComparison.OrdinalIgnoreCase));
-        
+
         if (storedContactIndex == -1)
         {
           return false;
@@ -248,13 +295,13 @@ public static class ContactsData
         wasPrimary = storedContacts[storedContactIndex].IsPrimary;
         storedContacts.RemoveAt(storedContactIndex);
       }
-      
+
       // If we deleted a primary contact, find the next contact to make primary
       if (wasPrimary)
       {
         PromoteNextContactToPrimary(provider, profileId);
       }
-      
+
       return true;
     }
   }
@@ -265,48 +312,48 @@ public static class ContactsData
   private static void PromoteNextContactToPrimary(string provider, Guid profileId)
   {
     var key = $"{provider}-{profileId}";
-    
+
     // Get all remaining contacts (stored + non-deleted defaults)
     var storedContacts = GetStoredContacts(provider, profileId);
     var defaultContacts = GetDefaultContacts(provider);
     var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
-    
+
     // Get non-deleted, non-materialized default contacts
-    var nonMaterializedDefaults = defaultContacts.Where(dc => 
+    var nonMaterializedDefaults = defaultContacts.Where(dc =>
       !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase)) &&
       !deletedDefaultIds.Contains(dc.Id)).ToArray();
-    
+
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
-    
+
     if (allContacts.Count == 0)
     {
       return; // No contacts left
     }
-    
+
     // Find the most recently modified contact
     var newPrimaryContact = allContacts.OrderByDescending(c => c.LastUpdated).First();
-    
+
     // If it's a default contact, we need to materialize it first
     if (nonMaterializedDefaults.Any(c => c.Id == newPrimaryContact.Id))
     {
       MaterializeDefaultContactIfNeeded(provider, profileId, newPrimaryContact.Id);
-      
+
       // Get the updated stored contacts after materialization
       storedContacts = GetStoredContacts(provider, profileId);
     }
-    
+
     // Set the new primary contact in stored contacts
     if (_contactsByProviderProfile.ContainsKey(key))
     {
       var contacts = _contactsByProviderProfile[key];
       var contactIndex = contacts.FindIndex(c => string.Equals(c.Id, newPrimaryContact.Id, StringComparison.OrdinalIgnoreCase));
-      
+
       if (contactIndex != -1)
       {
-        contacts[contactIndex] = contacts[contactIndex] with 
-        { 
-          IsPrimary = true, 
-          LastUpdated = DateTime.UtcNow 
+        contacts[contactIndex] = contacts[contactIndex] with
+        {
+          IsPrimary = true,
+          LastUpdated = DateTime.UtcNow
         };
       }
     }
@@ -382,53 +429,6 @@ public static class ContactsData
   }
 
   /// <summary>
-  /// Ensures a contact is materialized into stored contacts if it's a default contact
-  /// This is needed when someone tries to manage a default contact
-  /// </summary>
-  private static void MaterializeDefaultContactIfNeeded(string provider, Guid profileId, string contactId)
-  {
-    var key = $"{provider}-{profileId}";
-    
-    // Debug logging
-    System.Diagnostics.Debug.WriteLine($"MaterializeDefaultContactIfNeeded called with ContactId: {contactId}, Provider: {provider}");
-    
-    if (!_contactsByProviderProfile.ContainsKey(key))
-    {
-      _contactsByProviderProfile[key] = new List<ContactInfo>();
-    }
-
-    var contacts = _contactsByProviderProfile[key];
-    
-    // Check if this contact is already stored (case-insensitive comparison)
-    if (contacts.Any(c => string.Equals(c.Id, contactId, StringComparison.OrdinalIgnoreCase)))
-    {
-      System.Diagnostics.Debug.WriteLine($"Contact {contactId} already materialized");
-      return; // Already materialized
-    }
-
-    // Check if this is a default contact (case-insensitive comparison)
-    var defaultContacts = GetDefaultContacts(provider);
-    System.Diagnostics.Debug.WriteLine($"Found {defaultContacts.Length} default contacts for provider {provider}");
-    foreach (var dc in defaultContacts)
-    {
-      System.Diagnostics.Debug.WriteLine($"  Default Contact ID: {dc.Id}, Name: {dc.Name}");
-    }
-    
-    var defaultContact = defaultContacts.FirstOrDefault(c => string.Equals(c.Id, contactId, StringComparison.OrdinalIgnoreCase));
-    
-    if (defaultContact != null)
-    {
-      System.Diagnostics.Debug.WriteLine($"Materializing default contact: {defaultContact.Name} (ID: {defaultContact.Id})");
-      // Materialize the default contact into stored contacts
-      contacts.Add(defaultContact);
-    }
-    else
-    {
-      System.Diagnostics.Debug.WriteLine($"No default contact found with ID: {contactId}");
-    }
-  }
-
-  /// <summary>
   /// Gets stored contacts for a provider/profile combination
   /// </summary>
   private static List<ContactInfo> GetStoredContacts(string provider, Guid profileId)
@@ -456,20 +456,20 @@ public static class ContactsData
 
     // Default contacts (always present as baseline) - use shared method
     var defaultContacts = GetDefaultContacts("PROGRAM1");
-    
+
     // Get deleted default contact IDs for this provider/profile
     var key = $"PROGRAM1-{profileId}";
     var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
-    
+
     // Filter out any default contacts that have been materialized into stored contacts
     // or have been deleted (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultContacts.Where(dc => 
+    var nonMaterializedDefaults = defaultContacts.Where(dc =>
       !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase)) &&
       !deletedDefaultIds.Contains(dc.Id)).ToArray();
 
     // Combine non-materialized defaults and stored contacts
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
-    
+
     // Handle primary contact conflicts - only one can be primary
     var primaryContacts = allContacts.Where(c => c.IsPrimary).ToList();
     if (primaryContacts.Count > 1)
@@ -477,7 +477,7 @@ public static class ContactsData
       // If there are multiple primary contacts, prefer stored contacts over default contacts
       // and if there are multiple stored primary contacts, keep the most recent one
       var storedPrimary = primaryContacts.Where(c => storedContacts.Contains(c)).OrderByDescending(c => c.LastUpdated).FirstOrDefault();
-      
+
       if (storedPrimary != null)
       {
         // Set stored contact as primary and make all others non-primary
@@ -541,20 +541,20 @@ public static class ContactsData
 
     // Default contacts (always present as baseline) - use shared method
     var defaultContacts = GetDefaultContacts("PROGRAM2");
-    
+
     // Get deleted default contact IDs for this provider/profile
     var key = $"PROGRAM2-{profileId}";
     var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
-    
+
     // Filter out any default contacts that have been materialized into stored contacts
     // or have been deleted (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultContacts.Where(dc => 
+    var nonMaterializedDefaults = defaultContacts.Where(dc =>
       !storedContacts.Any(sc => string.Equals(sc.Id, dc.Id, StringComparison.OrdinalIgnoreCase)) &&
       !deletedDefaultIds.Contains(dc.Id)).ToArray();
 
     // Combine non-materialized defaults and stored contacts
     var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
-    
+
     // Handle primary contact conflicts - only one can be primary
     var primaryContacts = allContacts.Where(c => c.IsPrimary).ToList();
     if (primaryContacts.Count > 1)
@@ -562,7 +562,7 @@ public static class ContactsData
       // If there are multiple primary contacts, prefer stored contacts over default contacts
       // and if there are multiple stored primary contacts, keep the most recent one
       var storedPrimary = primaryContacts.Where(c => storedContacts.Contains(c)).OrderByDescending(c => c.LastUpdated).FirstOrDefault();
-      
+
       if (storedPrimary != null)
       {
         // Set stored contact as primary and make all others non-primary

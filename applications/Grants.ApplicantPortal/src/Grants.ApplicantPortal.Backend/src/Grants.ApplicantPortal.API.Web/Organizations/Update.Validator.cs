@@ -37,9 +37,6 @@ public class UpdateOrganizationValidator : Validator<UpdateOrganizationRequest>
     RuleFor(x => x.OrganizationId)
       .NotEmpty().WithMessage("Organization ID is required");
 
-    RuleFor(x => x.ProfileId)
-      .NotEmpty().WithMessage("Profile ID is required");
-
     RuleFor(x => x.PluginId)
       .NotEmpty().WithMessage("Plugin ID is required")
       .MaximumLength(50).WithMessage("Plugin ID must not exceed 50 characters");

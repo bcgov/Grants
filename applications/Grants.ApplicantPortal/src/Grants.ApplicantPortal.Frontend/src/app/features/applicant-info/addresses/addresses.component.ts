@@ -39,7 +39,6 @@ interface Address {
   styleUrls: ['./addresses.component.scss'],
 })
 export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
-  @Input() profileId!: string;
   @Input() pluginId!: string;
   @Input() provider!: string;
 
@@ -93,7 +92,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    if (this.profileId && this.pluginId && this.provider) {
+    if (this.pluginId && this.provider) {
       this.loadData();
     }
   }
@@ -131,7 +130,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
     this.applicantInfoService
       .getAddressesInfo(
-        this.profileId,
         this.pluginId,
         this.provider
       )
@@ -184,7 +182,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     
     this.applicantInfoService.setAddressAsPrimary(
       address.id,
-      this.profileId,
       this.pluginId,
       this.provider
     ).pipe(

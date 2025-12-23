@@ -1,6 +1,9 @@
 ﻿using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Plugins.Demo.Data;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
 
@@ -31,6 +34,9 @@ public partial class DemoPlugin
                     editRequest.AddressId, profileContext.ProfileId);
                 return Result.NotFound();
             }
+
+            // PERSIST TO REDIS: Update the cached addresses data
+            await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the address edit details
             _logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
@@ -69,6 +75,9 @@ public partial class DemoPlugin
                 return Result.NotFound();
             }
 
+            // PERSIST TO REDIS: Update the cached addresses data
+            await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
             // Log the address set as primary operation
             _logger.LogInformation("Demo plugin set address {AddressId} as primary for ProfileId: {ProfileId}",
                 addressId, profileContext.ProfileId);
@@ -80,6 +89,56 @@ public partial class DemoPlugin
             _logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
                 addressId, profileContext.ProfileId);
             return Result.Error("Failed to set address as primary in demo system");
+        }
+    }
+
+    /// <summary>
+    /// Persists the current addresses data to Redis cache
+    /// </summary>
+    private async Task PersistAddressesDataToRedis(string provider, Guid profileId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Generate the current addresses data using the existing AddressesData logic
+            var metadata = new ProfilePopulationMetadata(
+                profileId,
+                PluginId,
+                provider,
+                "ADDRESSES",
+                null);
+
+            var mockData = GenerateSeedingMockData(metadata);
+            var jsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            });
+
+            var profileData = new ProfileData(
+                profileId,
+                PluginId,
+                provider,
+                "ADDRESSES",
+                jsonData);
+
+            // Store updated data in Redis
+            var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:ADDRESSES";
+            var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+            };
+
+            await _distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
+            
+            _logger.LogDebug("Persisted addresses data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+                profileId, provider);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to persist addresses data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+                profileId, provider);
+            throw; // This is critical - if we can't persist, the operation should fail
         }
     }
 }

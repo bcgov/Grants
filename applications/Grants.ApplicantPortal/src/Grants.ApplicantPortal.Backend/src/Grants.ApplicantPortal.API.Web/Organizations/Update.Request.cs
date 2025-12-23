@@ -4,10 +4,9 @@ namespace Grants.ApplicantPortal.API.Web.Organizations;
 
 public class UpdateOrganizationRequest
 {
-  public const string Route = "/Organizations/{OrganizationId:Guid}/{ProfileId:Guid}/{PluginId}/{Provider}";
-  public static string BuildRoute(Guid organizationId, Guid profileId, string pluginId, string provider)
-    => Route.Replace("{OrganizationId:Guid}", organizationId.ToString())
-            .Replace("{ProfileId:Guid}", profileId.ToString())
+  public const string Route = "/Organizations/{OrganizationId:Guid}/{PluginId}/{Provider}";
+  public static string BuildRoute(Guid organizationId, string pluginId, string provider)
+    => Route.Replace("{OrganizationId:Guid}", organizationId.ToString())            
             .Replace("{PluginId}", pluginId)
             .Replace("{Provider}", provider);
 
@@ -37,7 +36,6 @@ public class UpdateOrganizationRequest
   
   // Route parameters
   public Guid OrganizationId { get; set; }
-  public Guid ProfileId { get; set; }
   public string PluginId { get; set; } = string.Empty;
   public string Provider { get; set; } = string.Empty;
 }

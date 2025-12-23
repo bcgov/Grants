@@ -1,7 +1,9 @@
 ﻿using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
-using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Plugins.Demo.Data;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
 
@@ -26,15 +28,14 @@ public partial class DemoPlugin
             // Add the contact to our in-memory store
             var newContactId = ContactsData.AddContact(profileContext.Provider, profileContext.ProfileId, contactRequest);
 
+            // PERSIST TO REDIS: Update the cached contacts data
+            await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
             // Log the contact creation details
             _logger.LogInformation("Demo plugin created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
-                newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);
+                newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);            
 
-            // Fire a message when contact is created
-            var contactId = Guid.Parse(newContactId);
-            await FireContactCreatedMessage(contactId, profileContext.ProfileId, contactRequest.Name, contactRequest.Type, cancellationToken);
-
-            return Result<Guid>.Success(contactId);
+            return Result<Guid>.Success(Guid.Parse(newContactId));
         }
         catch (Exception ex)
         {
@@ -66,6 +67,9 @@ public partial class DemoPlugin
                     editRequest.ContactId, profileContext.ProfileId);
                 return Result.NotFound();
             }
+
+            // PERSIST TO REDIS: Update the cached contacts data
+            await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the contact edit details
             _logger.LogInformation("Demo plugin edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
@@ -104,6 +108,9 @@ public partial class DemoPlugin
                 return Result.NotFound();
             }
 
+            // PERSIST TO REDIS: Update the cached contacts data
+            await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
             // Log the contact set as primary operation
             _logger.LogInformation("Demo plugin set contact {ContactId} as primary for ProfileId: {ProfileId}",
                 contactId, profileContext.ProfileId);
@@ -141,6 +148,12 @@ public partial class DemoPlugin
                 return Result.NotFound();
             }
 
+            // PERSIST TO REDIS: Update the cached contacts data
+            await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
+            // TRACK DELETION: Mark this contact as deleted to prevent re-seeding
+            await TrackContactDeletion(contactId, profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
             // Log the contact deletion
             _logger.LogInformation("Demo plugin deleted contact {ContactId} for ProfileId: {ProfileId}",
                 contactId, profileContext.ProfileId);
@@ -156,35 +169,90 @@ public partial class DemoPlugin
     }
 
     /// <summary>
-    /// Helper method to fire contact created message
+    /// Persists the current contacts data to Redis cache
     /// </summary>
-    private async Task FireContactCreatedMessage(Guid contactId, Guid profileId, string contactName, string contactType, CancellationToken cancellationToken)
+    private async Task PersistContactsDataToRedis(string provider, Guid profileId, CancellationToken cancellationToken)
     {
-        if (_messagePublisher == null)
-        {
-            _logger.LogDebug("Message publisher not available - skipping ContactCreatedMessage");
-            return;
-        }
-
         try
         {
-            var message = new ContactCreatedMessage(
-                contactId,
+            // Generate the current contacts data using the existing ContactsData logic
+            var metadata = new ProfilePopulationMetadata(
                 profileId,
                 PluginId,
-                contactName,
-                contactType,
-                correlationId: $"profile-{profileId}");
+                provider,
+                "CONTACTS",
+                null);
 
-            await _messagePublisher.PublishAsync(message, cancellationToken);
+            var mockData = GenerateSeedingMockData(metadata);
+            var jsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            });
+
+            var profileData = new ProfileData(
+                profileId,
+                PluginId,
+                provider,
+                "CONTACTS",
+                jsonData);
+
+            // Store updated data in Redis
+            var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:CONTACTS";
+            var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+            };
+
+            await _distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
             
-            _logger.LogDebug("Published ContactCreatedMessage for contact {ContactId} in profile {ProfileId}", 
-                contactId, profileId);
+            _logger.LogDebug("Persisted contacts data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+                profileId, provider);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish ContactCreatedMessage for contact {ContactId}", contactId);
-            // Don't throw - messaging failures shouldn't break the main operation
+            _logger.LogError(ex, "Failed to persist contacts data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+                profileId, provider);
+            throw; // This is critical - if we can't persist, the operation should fail
         }
     }
+
+    /// <summary>
+    /// Tracks a contact deletion in Redis to prevent re-seeding
+    /// </summary>
+    private async Task TrackContactDeletion(Guid contactId, string provider, Guid profileId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Store specific contact deletion marker in Redis
+            var contactDeletionKey = $"{_cacheOptions.Value.CacheKeyPrefix}DELETED_CONTACT:{profileId}:DEMO:{provider}:{contactId}";
+            var contactDeletionData = new
+            {
+                ContactId = contactId,
+                ProfileId = profileId,
+                Provider = provider,
+                DeletedAt = DateTime.UtcNow,
+                DeletedBy = PluginId
+            };
+
+            var deletionBytes = JsonSerializer.SerializeToUtf8Bytes(contactDeletionData);
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365) // Keep deletion records for a year
+            };
+
+            await _distributedCache.SetAsync(contactDeletionKey, deletionBytes, cacheOptions, cancellationToken);
+            
+            _logger.LogDebug("Tracked contact deletion in Redis - ContactId: {ContactId}, ProfileId: {ProfileId}, Provider: {Provider}", 
+                contactId, profileId, provider);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to track contact deletion for ContactId: {ContactId}, ProfileId: {ProfileId}", 
+                contactId, profileId);
+            // Don't throw - deletion tracking failure shouldn't break the main operation
+        }
+    }
+
 }

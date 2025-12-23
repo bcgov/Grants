@@ -37,19 +37,15 @@ export const authGuard: CanActivateFn = (route, state) => {
           // If no workspaces available yet, fetch them
           if (workspaceState.availableWorkspaces.length === 0) {
             workspaceService.getAvailableWorkspaces().subscribe(response => {
-              // After fetching, the service will automatically handle saved workspace restoration
-              // Only redirect to selector if selection is still required
-              setTimeout(() => {
-                if (workspaceService.isWorkspaceSelectionRequired()) {
-                  router.navigate(['/workspace-selector']);
-                }
-              }, 100); // Small delay to allow service to process
+              // Always redirect to workspace selector for consistent UX
+              // It will handle auto-selection with proper loading states
+              router.navigate(['/workspace-selector']);
             });
-            return true; // Allow current navigation, redirect will happen after fetch if needed
+            return false; // Block navigation until workspace is handled
           }
           
           // If workspace selection is required, redirect to selector
-          if (workspaceService.isWorkspaceSelectionRequired()) {
+          if (workspaceService.isWorkspaceSelectionRequired() || !workspaceState.isWorkspaceSelected) {
             console.log('Auth Guard - Workspace selection required');
             router.navigate(['/workspace-selector']);
             return false;

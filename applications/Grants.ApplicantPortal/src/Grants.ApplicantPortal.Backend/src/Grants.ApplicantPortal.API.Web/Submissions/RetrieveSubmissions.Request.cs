@@ -2,16 +2,10 @@
 
 public class RetrieveSubmissionsRequest
 {
-  public const string Route = "/Submissions/{ProfileId:Guid}/{PluginId}/{Provider}";
-  public static string BuildRoute(Guid profileId, string pluginId, string provider)
-    => Route.Replace("{ProfileId:Guid}", profileId.ToString())
-            .Replace("{PluginId}", pluginId)
+  public const string Route = "/Submissions/{PluginId}/{Provider}";
+  public static string BuildRoute(string pluginId, string provider)
+    => Route.Replace("{PluginId}", pluginId)
             .Replace("{Provider}", provider);
-
-  /// <summary>
-  /// The unique identifier for the profile to retrieve submissions for
-  /// </summary>
-  public Guid ProfileId { get; set; }
 
   /// <summary>
   /// Plugin identifier for plugin-specific submission retrieval

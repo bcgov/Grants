@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Organizations.Edit;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Organizations;
 
@@ -34,8 +35,7 @@ public class Update(IMediator _mediator)
         Status = "Active",
         NonRegOrgName = "Updated Organization Legal Name Inc.",        
         FiscalMonth = "December",
-        FiscalDay = 31,        
-        ProfileId = Guid.NewGuid(),
+        FiscalDay = 31,                
         PluginId = "DEMO",
         Provider = "PROGRAM1",
         OrganizationSize = 500
@@ -49,6 +49,9 @@ public class Update(IMediator _mediator)
     UpdateOrganizationRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
     var command = new EditOrganizationCommand(
       request.OrganizationId,
       request.Name!,
@@ -59,7 +62,7 @@ public class Update(IMediator _mediator)
       request.FiscalMonth,
       request.FiscalDay,
       request.OrganizationSize,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

@@ -21,12 +21,11 @@ export class ApplicantInfoService {
    * Gets organization information using the new endpoint structure
    */
   private getOrganizationData(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<BackendResponse> {
-    const url = `${this.baseUrl}/Organizations/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Organizations/${pluginId}/${provider}`;
     return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
@@ -34,12 +33,11 @@ export class ApplicantInfoService {
    * Gets submissions information using the new endpoint structure
    */
   private getSubmissionsData(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<BackendResponse> {
-    const url = `${this.baseUrl}/Submissions/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Submissions/${pluginId}/${provider}`;
     return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
@@ -47,12 +45,11 @@ export class ApplicantInfoService {
    * Gets contacts information using the new endpoint structure
    */
   private getContactsData(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<BackendResponse> {
-    const url = `${this.baseUrl}/Contacts/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Contacts/${pluginId}/${provider}`;
     return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
@@ -60,12 +57,11 @@ export class ApplicantInfoService {
    * Gets addresses information using the new endpoint structure
    */
   private getAddressesData(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<BackendResponse> {
-    const url = `${this.baseUrl}/Addresses/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Addresses/${pluginId}/${provider}`;
     return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
@@ -80,7 +76,6 @@ export class ApplicantInfoService {
 
       return {
         metadata: {
-          profileId: response.profileId,
           pluginId: response.pluginId,
           provider: response.provider,
           key: response.key,
@@ -102,7 +97,6 @@ export class ApplicantInfoService {
 
       return {
         metadata: {
-          profileId: response.profileId,
           pluginId: response.pluginId,
           provider: response.provider,
           key: response.key,
@@ -120,12 +114,11 @@ export class ApplicantInfoService {
    * Main method: Gets formatted organization information
    */
   getOrganizationInfo(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<OrganizationResponse> {
-    return this.getOrganizationData(profileId, pluginId, provider, parameters).pipe(
+    return this.getOrganizationData(pluginId, provider, parameters).pipe(
       map((response) => this.parseOrganizationResponse(response)),
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
@@ -139,9 +132,7 @@ export class ApplicantInfoService {
     console.log('ApplicantInfoService - Saving organization info:', orgInfo);
     
     // Get the required parameters for the API endpoint
-    // Using the pattern from your example: /Organizations/{addressId}/{profileId}/{pluginId}/{provider}
     const addressId = orgInfo.organizationId || orgInfo.orgNumber || 'CD12E345-6789-0ABC-DEF1-234567890ABC';
-    const profileId = '01985d4b-946c-7dee-90f1-8e2b947ffa83'; // You may need to get this from user context/auth service
     const pluginId = 'DEMO';   // You may need to get this from configuration
     const provider = 'PROGRAM1'; // You may need to get this from configuration
     
@@ -157,7 +148,7 @@ export class ApplicantInfoService {
       FiscalDay: orgInfo.fiscalDay
     };
     
-    const endpoint = `${this.baseUrl}/Organizations/${addressId}/${profileId}/${pluginId}/${provider}`;
+    const endpoint = `${this.baseUrl}/Organizations/${addressId}/${pluginId}/${provider}`;
     
     return this.http.put(endpoint, apiPayload, {
       headers: {
@@ -182,12 +173,11 @@ export class ApplicantInfoService {
 
   //Submissions information
   getSubmissionsInfo(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<SubmissionsResponse> {
-    return this.getSubmissionsData(profileId, pluginId, provider, parameters).pipe(      
+    return this.getSubmissionsData(pluginId, provider, parameters).pipe(      
       map((response) => this.parseSubmissionsResponse(response)),
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
@@ -201,12 +191,11 @@ export class ApplicantInfoService {
    * Gets contacts information
    */
   getContactsInfo(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<any> {
-    return this.getContactsData(profileId, pluginId, provider, parameters).pipe(      
+    return this.getContactsData(pluginId, provider, parameters).pipe(      
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to load contacts info after retries:', error);
@@ -219,12 +208,11 @@ export class ApplicantInfoService {
    * Gets addresses information
    */
   getAddressesInfo(
-    profileId: string,
     pluginId: string,
     provider: string,
     parameters?: any
   ): Observable<any> {
-    return this.getAddressesData(profileId, pluginId, provider, parameters).pipe(      
+    return this.getAddressesData(pluginId, provider, parameters).pipe(      
       retry({ count: 2, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to load addresses info after retries:', error);
@@ -237,7 +225,6 @@ export class ApplicantInfoService {
    * Creates a new contact
    */
   createContact(
-    profileId: string,
     pluginId: string,
     provider: string,
     contactData: {
@@ -249,7 +236,7 @@ export class ApplicantInfoService {
       isPrimary: boolean;
     }
   ): Observable<any> {
-    const url = `${this.baseUrl}/Contacts/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Contacts/${pluginId}/${provider}`;
     return this.http.post<any>(url, contactData).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
@@ -264,11 +251,10 @@ export class ApplicantInfoService {
    */
   setContactAsPrimary(
     contactId: string,
-    profileId: string,
     pluginId: string,
     provider: string
   ): Observable<any> {
-    const url = `${this.baseUrl}/Contacts/${contactId}/${profileId}/${pluginId}/${provider}/set-primary`;
+    const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}/set-primary`;
     return this.http.patch<any>(url, {}).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
@@ -283,11 +269,10 @@ export class ApplicantInfoService {
    */
   setAddressAsPrimary(
     addressId: string,
-    profileId: string,
     pluginId: string,
     provider: string
   ): Observable<any> {
-    const url = `${this.baseUrl}/Addresses/${addressId}/${profileId}/${pluginId}/${provider}/set-primary`;
+    const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}/set-primary`;
     return this.http.patch<any>(url, {}).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
@@ -302,7 +287,6 @@ export class ApplicantInfoService {
    */
   updateContact(
     contactId: string,
-    profileId: string,
     pluginId: string,
     provider: string,
     contactData: {
@@ -314,7 +298,7 @@ export class ApplicantInfoService {
       isPrimary: boolean;
     }
   ): Observable<any> {
-    const url = `${this.baseUrl}/Contacts/${contactId}/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}`;
     return this.http.put<any>(url, contactData).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
@@ -329,11 +313,10 @@ export class ApplicantInfoService {
    */
   deleteContact(
     contactId: string,
-    profileId: string,
     pluginId: string,
     provider: string
   ): Observable<any> {
-    const url = `${this.baseUrl}/Contacts/${contactId}/${profileId}/${pluginId}/${provider}`;
+    const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}`;
     return this.http.delete<any>(url).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {

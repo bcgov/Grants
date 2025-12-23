@@ -49,13 +49,13 @@ ILogger<ProfileDataRetrievalService> logger) : IProfileDataRetrievalService
 
     try
     {
-      // First, validate that the ProfileId exists in the database -- excluded for now
-      //var profile = await profileRepository.GetByIdAsync(profileId, cancellationToken);
-      //if (profile == null)
-      //{
-      //  logger.LogWarning("Profile not found in database for ProfileId: {ProfileId}", profileId);
-      //  return Result.NotFound($"Profile with ID {profileId} not found");
-      //}
+      var profile = await profileRepository.GetByIdAsync(profileId, cancellationToken);
+
+      if (profile == null)
+      {
+        logger.LogWarning("Profile not found in database for ProfileId: {ProfileId}", profileId);
+        return Result.NotFound($"Profile with ID {profileId} not found");
+      }
 
       var cacheKey = $"{profileCacheOptions.Value.CacheKeyPrefix}{profileId}:{pluginId}:{provider}:{key}";
 
@@ -65,7 +65,7 @@ ILogger<ProfileDataRetrievalService> logger) : IProfileDataRetrievalService
       var cacheExpiryMinutes = profileCacheOptions.Value.CacheExpiryMinutes;
       var slidingExpiryMinutes = profileCacheOptions.Value.SlidingExpiryMinutes;
 
-      logger.LogInformation("Cache options: Expiration={Expiration}min, SlidingExpiration={SlidingExpiration}min", 
+      logger.LogInformation("Cache options: Expiration={Expiration}min, SlidingExpiration={SlidingExpiration}min",
           cacheExpiryMinutes, slidingExpiryMinutes);
 
       // Use IDistributedCache directly for reliable Redis caching
@@ -97,7 +97,7 @@ ILogger<ProfileDataRetrievalService> logger) : IProfileDataRetrievalService
           AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheExpiryMinutes),
           SlidingExpiration = TimeSpan.FromMinutes(slidingExpiryMinutes)
         };
-        
+
         await distributedCache.SetAsync(cacheKey, dataBytes, cacheOptions, cancellationToken);
         logger.LogInformation("Cached {Provider} data for ProfileId: {ProfileId}", provider, profileId);
 

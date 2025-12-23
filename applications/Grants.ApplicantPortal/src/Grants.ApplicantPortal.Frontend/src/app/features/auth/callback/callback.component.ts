@@ -24,6 +24,7 @@ export class CallbackComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('CallbackComponent initialized');
+    console.log('Initial state - isProcessing:', this.isProcessing, 'errorMessage:', this.errorMessage);
     console.log('Current URL:', window.location.href);
 
     // Add a timeout to prevent indefinite waiting
@@ -44,6 +45,7 @@ export class CallbackComponent implements OnInit {
       .subscribe({
         next: (result) => {
           this.isProcessing = false;
+          console.log('Auth check completed - isProcessing set to false');
           
           console.log('Auth check result:', {
             isAuthenticated: result.isAuthenticated,
@@ -60,13 +62,12 @@ export class CallbackComponent implements OnInit {
             // Fetch available workspaces
             this.workspaceService.getAvailableWorkspaces().subscribe({
               next: (workspacesResponse) => {
-                if (this.workspaceService.isWorkspaceSelectionRequired()) {
-                  console.log('Multiple workspaces available, redirecting to selector');
+                const currentState = this.workspaceService.currentWorkspaceState$;
+                currentState.pipe(take(1)).subscribe(state => {
+                  // Always go to workspace selector - let it handle auto-selection with proper UX
+                  console.log('Redirecting to workspace selector for proper UX handling');
                   this.router.navigate(['/workspace-selector']);
-                } else {
-                  console.log('Workspace already selected or only one available, redirecting to app');
-                  this.router.navigate(['/app']);
-                }
+                });
               },
               error: (workspaceError) => {
                 console.error('Error fetching workspaces:', workspaceError);
@@ -82,6 +83,7 @@ export class CallbackComponent implements OnInit {
         },
         error: (error) => {
           this.isProcessing = false;
+          console.log('Auth check error - isProcessing set to false');
           console.error('Auth check error:', error);
           
           // Handle specific error types

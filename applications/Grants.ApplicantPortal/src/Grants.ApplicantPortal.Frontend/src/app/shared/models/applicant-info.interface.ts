@@ -1,5 +1,4 @@
 export interface BackendResponse {
-  profileId: string;
   pluginId: string;
   provider: string;
   key: string;
@@ -90,7 +89,6 @@ export interface SubmissionsData {
 // Single response interface for parsed data
 export interface OrganizationResponse {
   metadata: {
-    profileId: string;
     pluginId: string;
     provider: string;
     key: string;
@@ -101,7 +99,6 @@ export interface OrganizationResponse {
 
 export interface SubmissionsResponse {
   metadata: {
-    profileId: string;
     pluginId: string;
     provider: string;
     key: string;

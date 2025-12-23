@@ -1,5 +1,7 @@
 ﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging;
+using Grants.ApplicantPortal.API.Core.Services;
+using Grants.ApplicantPortal.API.Infrastructure.Services;
 
 namespace Grants.ApplicantPortal.API.Infrastructure;
 
@@ -33,6 +35,9 @@ public static class InfrastructureServiceExtensions
     // Add messaging services (Inbox/Outbox pattern with background jobs)
     services.AddMessagingServices(config, logger);
 
+    // Register core services
+    services.AddCoreServices();
+
     logger.LogInformation("{Project} services registered", "Infrastructure");
 
     return services;
@@ -58,6 +63,17 @@ public static class InfrastructureServiceExtensions
   {
     // Register custom query services here
     // Example: services.AddScoped<IYourQueryService, YourQueryService>();
+    return services;
+  }
+
+  /// <summary>
+  /// Adds core services
+  /// </summary>
+  internal static IServiceCollection AddCoreServices(this IServiceCollection services)
+  {    
+    services.AddScoped<IContactManagementService, ContactManagementService>();
+    services.AddScoped<IOrganizationManagementService, OrganizationManagementService>();
+    services.AddScoped<IAddressManagementService, AddressManagementService>();
     return services;
   }
 }

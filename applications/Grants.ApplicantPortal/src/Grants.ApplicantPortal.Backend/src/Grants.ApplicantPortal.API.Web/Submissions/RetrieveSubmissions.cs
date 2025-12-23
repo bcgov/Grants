@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Submissions.Retrieve;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Submissions;
 
@@ -29,7 +30,10 @@ public class RetrieveSubmissions(IMediator mediator)
 
   public override async Task HandleAsync(RetrieveSubmissionsRequest request, CancellationToken ct)
   {
-    var query = new RetrieveSubmissionsQuery(request.ProfileId, 
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
+    var query = new RetrieveSubmissionsQuery(profileId, 
       request.PluginId, 
       request.Provider, 
       request.Parameters);

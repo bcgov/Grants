@@ -212,7 +212,6 @@
     <ProjectReference Include="..\Grants.ApplicantPortal.API.Infrastructure\Grants.ApplicantPortal.API.Infrastructure.csproj" />
     <ProjectReference Include="..\Grants.ApplicantPortal.API.Plugins\Grants.ApplicantPortal.API.Plugins.csproj" />
     <ProjectReference Include="..\Grants.ApplicantPortal.API.UseCases\Grants.ApplicantPortal.API.UseCases.csproj" />
-    <ProjectReference Include="..\Grants.ApplicantPortal.API.Core\Grants.ApplicantPortal.API.Core.csproj" />
     <ProjectReference Include="..\Grants.ApplicantPortal.API.ServiceDefaults\Grants.ApplicantPortal.API.ServiceDefaults.csproj" />
   </ItemGroup>
 

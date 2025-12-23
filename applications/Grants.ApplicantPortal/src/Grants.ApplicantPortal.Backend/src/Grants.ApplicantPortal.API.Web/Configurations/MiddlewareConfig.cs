@@ -2,6 +2,7 @@
 using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Web.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -33,6 +34,9 @@ public static class MiddlewareConfig
     // Add authentication and authorization middleware
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // Add profile resolution middleware after authentication
+    app.UseProfileResolution();
 
     // Initialize plugin registry at startup
     InitializePluginRegistry(app);
