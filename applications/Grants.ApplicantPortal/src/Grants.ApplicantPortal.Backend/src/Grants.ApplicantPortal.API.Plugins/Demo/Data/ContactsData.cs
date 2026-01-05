@@ -497,30 +497,26 @@ public static class ContactsData
 
     return new
     {
-      baseData,
-      Data = new
-      {
-        Contacts = allContacts
-          .OrderByDescending(c => c.LastUpdated) // Most recently updated first
-          .Select(c => new
-          {
-            c.Id,
-            c.Type,
-            c.Name,
-            c.Email,
-            c.Phone,
-            c.Title,
-            c.IsPrimary,
-            c.IsActive,
-            c.LastUpdated,
-            c.AllowEdit
-          }).ToArray(),
-        Summary = new
+      Contacts = allContacts
+        .OrderByDescending(c => c.LastUpdated) // Most recently updated first
+        .Select(c => new
         {
-          TotalContacts = allContacts.Count,
-          PrimaryContactCount = allContacts.Count(c => c.IsPrimary),
-          ActiveContactCount = allContacts.Count(c => c.IsActive)
-        }
+          c.Id,
+          c.Type,
+          c.Name,
+          c.Email,
+          c.Phone,
+          c.Title,
+          c.IsPrimary,
+          c.IsActive,
+          c.LastUpdated,
+          c.AllowEdit
+        }).ToArray(),
+      Summary = new
+      {
+        TotalContacts = allContacts.Count,
+        PrimaryContactCount = allContacts.Count(c => c.IsPrimary),
+        ActiveContactCount = allContacts.Count(c => c.IsActive)
       }
     };
   }
@@ -582,30 +578,26 @@ public static class ContactsData
 
     return new
     {
-      baseData,
-      Data = new
-      {
-        Contacts = allContacts
-          .OrderByDescending(c => c.LastUpdated) // Most recently updated first
-          .Select(c => new
-          {
-            c.Id,
-            c.Type,
-            c.Name,
-            c.Email,
-            c.Phone,
-            c.Title,
-            c.IsPrimary,
-            c.IsActive,
-            c.LastUpdated,
-            AllowEdit = true // All stored contacts are editable; default contacts have their own AllowEdit setting
-          }).ToArray(),
-        Summary = new
+      Contacts = allContacts
+        .OrderByDescending(c => c.LastUpdated) // Most recently updated first
+        .Select(c => new
         {
-          TotalContacts = allContacts.Count,
-          PrimaryContactCount = allContacts.Count(c => c.IsPrimary),
-          ActiveContactCount = allContacts.Count(c => c.IsActive)
-        }
+          c.Id,
+          c.Type,
+          c.Name,
+          c.Email,
+          c.Phone,
+          c.Title,
+          c.IsPrimary,
+          c.IsActive,
+          c.LastUpdated,
+          AllowEdit = true // All stored contacts are editable; default contacts have their own AllowEdit setting
+        }).ToArray(),
+      Summary = new
+      {
+        TotalContacts = allContacts.Count,
+        PrimaryContactCount = allContacts.Count(c => c.IsPrimary),
+        ActiveContactCount = allContacts.Count(c => c.IsActive)
       }
     };
   }

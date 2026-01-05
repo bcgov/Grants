@@ -226,76 +226,68 @@ public static class OrganizationsData
     {
       return new
       {
-        baseData,
-        Data = new
-        {
-          OrganizationInfo = (object?)null
-        }
+        OrganizationInfo = (object?)null
       };
     }
 
     return new
     {
-      baseData,
-      Data = new
+      OrganizationInfo = new
       {
-        OrganizationInfo = new
+        organization.OrgName,
+        organization.OrgNumber,
+        organization.OrgStatus,
+        organization.OrganizationType,
+        organization.NonRegOrgName, // Use actual NonRegOrgName from stored data
+        OrgSize = organization.OrganizationSize.ToString(), // Use actual organization size
+        organization.FiscalMonth,
+        organization.FiscalDay,
+        OrganizationId = organization.Id,
+        organization.LegalName,
+        organization.DoingBusinessAs,
+        organization.EIN,
+        organization.Founded,
+        Address = new
         {
-          organization.OrgName,
-          organization.OrgNumber,
-          organization.OrgStatus,
-          organization.OrganizationType,
-          organization.NonRegOrgName, // Use actual NonRegOrgName from stored data
-          OrgSize = organization.OrganizationSize.ToString(), // Use actual organization size
-          organization.FiscalMonth,
-          organization.FiscalDay,
-          OrganizationId = organization.Id,
-          organization.LegalName,
-          organization.DoingBusinessAs,
-          organization.EIN,
-          organization.Founded,
-          Address = new
+          Street = "123 Health Avenue",
+          City = "Wellness City",
+          State = "BC",
+          ZipCode = "V8W 2Y7",
+          Country = "Canada"
+        },
+        ContactInfo = new
+        {
+          PrimaryContact = new
           {
-            Street = "123 Health Avenue",
-            City = "Wellness City",
-            State = "BC",
-            ZipCode = "V8W 2Y7",
-            Country = "Canada"
+            Name = "Dr. Sarah Johnson",
+            Title = "Executive Director",
+            Email = "sarah.johnson@dchf.org",
+            Phone = "+1-555-HEALTH"
           },
-          ContactInfo = new
+          GrantsContact = new
           {
-            PrimaryContact = new
-            {
-              Name = "Dr. Sarah Johnson",
-              Title = "Executive Director",
-              Email = "sarah.johnson@dchf.org",
-              Phone = "+1-555-HEALTH"
-            },
-            GrantsContact = new
-            {
-              Name = "Michael Chen",
-              Title = "Grants Manager",
-              Email = "michael.chen@dchf.org",
-              Phone = "+1-555-GRANTS"
-            }
-          },
-          organization.Mission,
-          organization.ServicesAreas,
-          Certifications = new[]
-                {
-                        new { Type = "CARF Accreditation", ValidUntil = DateTime.UtcNow.AddYears(2) },
-                        new { Type = "State Health Department License", ValidUntil = DateTime.UtcNow.AddYears(1) }
-                    },
-          Program1Specific = new
-          {
-            EligibilityStatus = "Verified",
-            LastAuditDate = DateTime.UtcNow.AddMonths(-6),
-            ComplianceScore = 95,
-            SpecialDesignations = new[] { "Rural Health Clinic", "FQHC Look-Alike" }
-          },
-          organization.LastUpdated,
-          organization.AllowEdit
-        }
+            Name = "Michael Chen",
+            Title = "Grants Manager",
+            Email = "michael.chen@dchf.org",
+            Phone = "+1-555-GRANTS"
+          }
+        },
+        organization.Mission,
+        organization.ServicesAreas,
+        Certifications = new[]
+              {
+                      new { Type = "CARF Accreditation", ValidUntil = DateTime.UtcNow.AddYears(2) },
+                      new { Type = "State Health Department License", ValidUntil = DateTime.UtcNow.AddYears(1) }
+                  },
+        Program1Specific = new
+        {
+          EligibilityStatus = "Verified",
+          LastAuditDate = DateTime.UtcNow.AddMonths(-6),
+          ComplianceScore = 95,
+          SpecialDesignations = new[] { "Rural Health Clinic", "FQHC Look-Alike" }
+        },
+        organization.LastUpdated,
+        organization.AllowEdit
       }
     };
   }
@@ -332,77 +324,69 @@ public static class OrganizationsData
     {
       return new
       {
-        baseData,
-        Data = new
-        {
-          OrganizationInfo = (object?)null
-        }
+        OrganizationInfo = (object?)null
       };
     }
 
     return new
     {
-      baseData,
-      Data = new
+      OrganizationInfo = new
       {
-        OrganizationInfo = new
+        organization.OrgName,
+        organization.OrgNumber,
+        organization.OrgStatus,
+        organization.OrganizationType,
+        organization.NonRegOrgName, // Use actual NonRegOrgName from stored data
+        OrgSize = organization.OrganizationSize.ToString(), // Use actual organization size
+        organization.FiscalMonth,
+        organization.FiscalDay,
+        OrganizationId = organization.Id,
+        organization.LegalName,
+        organization.DoingBusinessAs,
+        organization.EIN,
+        organization.Founded,
+        Address = new
         {
-          organization.OrgName,
-          organization.OrgNumber,
-          organization.OrgStatus,
-          organization.OrganizationType,
-          organization.NonRegOrgName, // Use actual NonRegOrgName from stored data
-          OrgSize = organization.OrganizationSize.ToString(), // Use actual organization size
-          organization.FiscalMonth,
-          organization.FiscalDay,
-          OrganizationId = organization.Id,
-          organization.LegalName,
-          organization.DoingBusinessAs,
-          organization.EIN,
-          organization.Founded,
-          Address = new
+          Street = "456 Innovation Drive",
+          City = "Tech Valley",
+          State = "AB",
+          ZipCode = "T2P 4K6",
+          Country = "Canada"
+        },
+        ContactInfo = new
+        {
+          PrimaryContact = new
           {
-            Street = "456 Innovation Drive",
-            City = "Tech Valley",
-            State = "AB",
-            ZipCode = "T2P 4K6",
-            Country = "Canada"
+            Name = "Dr. Maria Rodriguez",
+            Title = "Chief Executive Officer",
+            Email = "maria.rodriguez@detc.edu",
+            Phone = "+1-555-TECH-ED"
           },
-          ContactInfo = new
+          GrantsContact = new
           {
-            PrimaryContact = new
-            {
-              Name = "Dr. Maria Rodriguez",
-              Title = "Chief Executive Officer",
-              Email = "maria.rodriguez@detc.edu",
-              Phone = "+1-555-TECH-ED"
-            },
-            GrantsContact = new
-            {
-              Name = "James Liu",
-              Title = "Director of Development",
-              Email = "james.liu@detc.edu",
-              Phone = "+1-555-DEV-FUND"
-            }
-          },
-          organization.Mission,
-          organization.ServicesAreas,
-          Certifications = new[]
-                {
-                        new { Type = "Department of Education Partnership", ValidUntil = DateTime.UtcNow.AddYears(3) },
-                        new { Type = "Technology Integration Certification", ValidUntil = DateTime.UtcNow.AddYears(2) }
-                    },
-          Program2Specific = new
-          {
-            EligibilityStatus = "Verified",
-            LastTechAudit = DateTime.UtcNow.AddMonths(-3),
-            InnovationScore = 88,
-            SpecialDesignations = new[] { "STEM Education Hub", "Rural Technology Center" },
-            Partnerships = new[] { "State University System", "Tech Industry Coalition", "Rural Education Network" }
-          },
-          organization.LastUpdated,
-          organization.AllowEdit
-        }
+            Name = "James Liu",
+            Title = "Director of Development",
+            Email = "james.liu@detc.edu",
+            Phone = "+1-555-DEV-FUND"
+          }
+        },
+        organization.Mission,
+        organization.ServicesAreas,
+        Certifications = new[]
+              {
+                      new { Type = "Department of Education Partnership", ValidUntil = DateTime.UtcNow.AddYears(3) },
+                      new { Type = "Technology Integration Certification", ValidUntil = DateTime.UtcNow.AddYears(2) }
+                  },
+        Program2Specific = new
+        {
+          EligibilityStatus = "Verified",
+          LastTechAudit = DateTime.UtcNow.AddMonths(-3),
+          InnovationScore = 88,
+          SpecialDesignations = new[] { "STEM Education Hub", "Rural Technology Center" },
+          Partnerships = new[] { "State University System", "Tech Industry Coalition", "Rural Education Network" }
+        },
+        organization.LastUpdated,
+        organization.AllowEdit
       }
     };
   }
@@ -411,63 +395,59 @@ public static class OrganizationsData
   {
     return new
     {
-      baseData,
-      Data = new
+      Payments = new[]
+          {
+                  new
+                  {
+                      PaymentId = "PAY-PROG1-001",
+                      SubmissionId = "PROG1-SUB-002",
+                      ApplicationId = "APP-2024-0045",
+                      GrantTitle = "Youth Mental Health Support Program",
+                      AwardAmount = 85000,
+                      PaymentSchedule = new[]
+                      {
+                          new
+                          {
+                              PaymentNumber = 1,
+                              Amount = 25500,
+                              DueDate = DateTime.UtcNow.AddMonths(1),
+                              Status = "Scheduled",
+                              Description = "Initial funding - 30%"
+                          },
+                          new
+                          {
+                              PaymentNumber = 2,
+                              Amount = 29750,
+                              DueDate = DateTime.UtcNow.AddMonths(6),
+                              Status = "Pending",
+                              Description = "Mid-term payment - 35%"
+                          },
+                          new
+                          {
+                              PaymentNumber = 3,
+                              Amount = 29750,
+                              DueDate = DateTime.UtcNow.AddMonths(12),
+                              Status = "Pending",
+                              Description = "Final payment - 35%"
+                          }
+                      },
+                      PaymentMethod = "Electronic Transfer",
+                      BankAccount = "****-****-****-5678",
+                      TaxReporting = new
+                      {
+                          TaxYear = DateTime.UtcNow.Year,
+                          Form1099Required = true,
+                          ReportingStatus = "Pending"
+                      }
+                  }
+              },
+      PaymentSummary = new
       {
-        Payments = new[]
-            {
-                    new
-                    {
-                        PaymentId = "PAY-PROG1-001",
-                        SubmissionId = "PROG1-SUB-002",
-                        ApplicationId = "APP-2024-0045",
-                        GrantTitle = "Youth Mental Health Support Program",
-                        AwardAmount = 85000,
-                        PaymentSchedule = new[]
-                        {
-                            new
-                            {
-                                PaymentNumber = 1,
-                                Amount = 25500,
-                                DueDate = DateTime.UtcNow.AddMonths(1),
-                                Status = "Scheduled",
-                                Description = "Initial funding - 30%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 2,
-                                Amount = 29750,
-                                DueDate = DateTime.UtcNow.AddMonths(6),
-                                Status = "Pending",
-                                Description = "Mid-term payment - 35%"
-                            },
-                            new
-                            {
-                                PaymentNumber = 3,
-                                Amount = 29750,
-                                DueDate = DateTime.UtcNow.AddMonths(12),
-                                Status = "Pending",
-                                Description = "Final payment - 35%"
-                            }
-                        },
-                        PaymentMethod = "Electronic Transfer",
-                        BankAccount = "****-****-****-5678",
-                        TaxReporting = new
-                        {
-                            TaxYear = DateTime.UtcNow.Year,
-                            Form1099Required = true,
-                            ReportingStatus = "Pending"
-                        }
-                    }
-                },
-        PaymentSummary = new
-        {
-          TotalAwardAmount = 85000,
-          TotalPaid = 0,
-          TotalPending = 85000,
-          NextPaymentDue = DateTime.UtcNow.AddMonths(1),
-          NextPaymentAmount = 25500
-        }
+        TotalAwardAmount = 85000,
+        TotalPaid = 0,
+        TotalPending = 85000,
+        NextPaymentDue = DateTime.UtcNow.AddMonths(1),
+        NextPaymentAmount = 25500
       }
     };
   }

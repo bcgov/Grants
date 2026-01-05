@@ -310,6 +310,7 @@ public partial class DemoPlugin : IProfilePlugin,
 
     /// <summary>
     /// Generates consistent mock data for seeding (no DateTime.UtcNow calls)
+    /// Returns clean data directly, matching Unity plugin format
     /// </summary>
     private object GenerateSeedingMockData(ProfilePopulationMetadata metadata)
     {
@@ -325,7 +326,7 @@ public partial class DemoPlugin : IProfilePlugin,
 
         return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
         {
-            // Use dedicated data classes for each type
+            // Use dedicated data classes for each type - they now return clean data directly
             ("PROGRAM1", "SUBMISSIONS") => SubmissionsData.GenerateProgram1Submissions(baseData),
             ("PROGRAM1", "ORGINFO") => OrganizationsData.GenerateProgram1OrgInfo(baseData),
             ("PROGRAM1", "PAYMENTS") => OrganizationsData.GenerateProgram1Payments(baseData),

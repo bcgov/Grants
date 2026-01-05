@@ -135,42 +135,35 @@ public partial class UnityPlugin
   {
     if (_messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping contact create message");
-      return;
+      _logger.LogError("Message publisher not available - cannot publish critical ContactCreateCommand for contact {ContactId}", contactId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    try
-    {
-      var message = new PluginDataMessage(
-          PluginId,
-          "CONTACT_CREATE_COMMAND",
-          new
+    var message = new PluginDataMessage(
+        PluginId,
+        "CONTACT_CREATE_COMMAND",
+        new
+        {
+          Action = "CreateContact",
+          ContactId = contactId,
+          profileContext.ProfileId,
+          profileContext.Provider,
+          Data = new
           {
-            Action = "CreateContact",
-            ContactId = contactId,
-            ProfileId = profileContext.ProfileId,
-            Provider = profileContext.Provider,
-            Data = new
-            {
-              contactRequest.Name,
-              contactRequest.Email,
-              contactRequest.Title,
-              contactRequest.Type,
-              contactRequest.PhoneNumber,
-              contactRequest.IsPrimary
-            }
-          },
-          correlationId: $"profile-{profileContext.ProfileId}");
+            contactRequest.Name,
+            contactRequest.Email,
+            contactRequest.Title,
+            contactRequest.Type,
+            contactRequest.PhoneNumber,
+            contactRequest.IsPrimary
+          }
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+    await _messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published ContactCreateCommand for contact {ContactId} in profile {ProfileId}",
-          contactId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogWarning(ex, "Failed to publish ContactCreateCommand for contact {ContactId}", contactId);
-    }
+    _logger.LogDebug("Published ContactCreateCommand for contact {ContactId} in profile {ProfileId}",
+        contactId, profileContext.ProfileId);
   }
 
   /// <summary>
@@ -180,42 +173,35 @@ public partial class UnityPlugin
   {
     if (_messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping contact edit message");
-      return;
+      _logger.LogError("Message publisher not available - cannot publish critical ContactEditCommand for contact {ContactId}", editRequest.ContactId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    try
-    {
-      var message = new PluginDataMessage(
-          PluginId,
-          "CONTACT_EDIT_COMMAND",
-          new
+    var message = new PluginDataMessage(
+        PluginId,
+        "CONTACT_EDIT_COMMAND",
+        new
+        {
+          Action = "EditContact",
+          editRequest.ContactId,
+          profileContext.ProfileId,
+          profileContext.Provider,
+          Data = new
           {
-            Action = "EditContact",
-            ContactId = editRequest.ContactId,
-            ProfileId = profileContext.ProfileId,
-            Provider = profileContext.Provider,
-            Data = new
-            {
-              editRequest.Name,
-              editRequest.Email,
-              editRequest.Title,
-              editRequest.Type,
-              editRequest.PhoneNumber,
-              editRequest.IsPrimary
-            }
-          },
-          correlationId: $"profile-{profileContext.ProfileId}");
+            editRequest.Name,
+            editRequest.Email,
+            editRequest.Title,
+            editRequest.Type,
+            editRequest.PhoneNumber,
+            editRequest.IsPrimary
+          }
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+    await _messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published ContactEditCommand for contact {ContactId} in profile {ProfileId}",
-          editRequest.ContactId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogWarning(ex, "Failed to publish ContactEditCommand for contact {ContactId}", editRequest.ContactId);
-    }
+    _logger.LogDebug("Published ContactEditCommand for contact {ContactId} in profile {ProfileId}",
+        editRequest.ContactId, profileContext.ProfileId);
   }
 
   /// <summary>
@@ -225,33 +211,26 @@ public partial class UnityPlugin
   {
     if (_messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping contact set primary message");
-      return;
+      _logger.LogError("Message publisher not available - cannot publish critical ContactSetPrimaryCommand for contact {ContactId}", contactId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    try
-    {
-      var message = new PluginDataMessage(
-          PluginId,
-          "CONTACT_SET_PRIMARY_COMMAND",
-          new
-          {
-            Action = "SetContactAsPrimary",
-            ContactId = contactId,
-            ProfileId = profileContext.ProfileId,
-            Provider = profileContext.Provider
-          },
-          correlationId: $"profile-{profileContext.ProfileId}");
+    var message = new PluginDataMessage(
+        PluginId,
+        "CONTACT_SET_PRIMARY_COMMAND",
+        new
+        {
+          Action = "SetContactAsPrimary",
+          ContactId = contactId,
+          profileContext.ProfileId,
+          profileContext.Provider
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+    await _messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published ContactSetPrimaryCommand for contact {ContactId} in profile {ProfileId}",
-          contactId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogWarning(ex, "Failed to publish ContactSetPrimaryCommand for contact {ContactId}", contactId);
-    }
+    _logger.LogDebug("Published ContactSetPrimaryCommand for contact {ContactId} in profile {ProfileId}",
+        contactId, profileContext.ProfileId);
   }
 
   /// <summary>
@@ -261,33 +240,26 @@ public partial class UnityPlugin
   {
     if (_messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping contact delete message");
-      return;
+      _logger.LogError("Message publisher not available - cannot publish critical ContactDeleteCommand for contact {ContactId}", contactId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    try
-    {
-      var message = new PluginDataMessage(
-          PluginId,
-          "CONTACT_DELETE_COMMAND",
-          new
-          {
-            Action = "DeleteContact",
-            ContactId = contactId,
-            ProfileId = profileContext.ProfileId,
-            Provider = profileContext.Provider
-          },
-          correlationId: $"profile-{profileContext.ProfileId}");
+    var message = new PluginDataMessage(
+        PluginId,
+        "CONTACT_DELETE_COMMAND",
+        new
+        {
+          Action = "DeleteContact",
+          ContactId = contactId,
+          profileContext.ProfileId,
+          profileContext.Provider
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+    await _messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published ContactDeleteCommand for contact {ContactId} in profile {ProfileId}",
-          contactId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogWarning(ex, "Failed to publish ContactDeleteCommand for contact {ContactId}", contactId);
-    }
+    _logger.LogDebug("Published ContactDeleteCommand for contact {ContactId} in profile {ProfileId}",
+        contactId, profileContext.ProfileId);
   }
 
   /// <summary>
@@ -316,6 +288,7 @@ public partial class UnityPlugin
     catch (Exception ex)
     {
       _logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for new contact {ContactId}", contactId);
+      // Don't throw - optimistic cache updates are not critical to the main operation
     }
   }
 
@@ -342,6 +315,7 @@ public partial class UnityPlugin
     catch (Exception ex)
     {
       _logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for edited contact {ContactId}", editRequest.ContactId);
+      // Don't throw - optimistic cache updates are not critical to the main operation
     }
   }
 

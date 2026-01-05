@@ -21,30 +21,23 @@ public partial class UnityPlugin
 
             if (!response.IsSuccess)
             {
-                _logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}", 
-                    metadata.ProfileId, response.ErrorMessage);
+                _logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}. StatusCode: {StatusCode}", 
+                    metadata.ProfileId, response.ErrorMessage, response.StatusCode);
                 
-                // Fall back to mock data if external service fails
-                _logger.LogWarning("Falling back to mock data for ProfileId: {ProfileId}", metadata.ProfileId);
-                var mockData = GenerateMockData(metadata);
-                var mockJsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    WriteIndented = true
-                });
-
-                // 🔥 Fire a message when profile data is populated (even with mock data)
-                await FireProfileUpdatedMessage(metadata, cancellationToken);
-
-                return new ProfileData(
-                    metadata.ProfileId,
-                    metadata.PluginId,
-                    metadata.Provider,
-                    metadata.Key,
-                    mockJsonData);
+                throw new InvalidOperationException(
+                    $"Unity service call failed for ProfileId {metadata.ProfileId}: {response.ErrorMessage} (Status: {response.StatusCode})");
             }
 
             _logger.LogInformation("Unity plugin successfully populated profile for ProfileId: {ProfileId}", metadata.ProfileId);
+
+            // Parse the Unity Mock API response to extract the data portion
+            var mockApiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
+            var dataElement = mockApiResponse.GetProperty("data");
+            var dataJson = JsonSerializer.Serialize(dataElement, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            });
 
             // 🔥 Fire a message when profile data is populated
             await FireProfileUpdatedMessage(metadata, cancellationToken);
@@ -54,7 +47,7 @@ public partial class UnityPlugin
                 metadata.PluginId,
                 metadata.Provider,
                 metadata.Key,
-                response.Data!);
+                dataJson);
         }
         catch (Exception ex)
         {
@@ -95,14 +88,16 @@ public partial class UnityPlugin
 
     private static string BuildEndpoint(string provider, string key, Guid profileId)
     {
-        return (provider?.ToUpper(), key?.ToUpper()) switch
+        return (key?.ToUpper()) switch
         {
-            ("UNITY", "PROFILE") => $"/api/v1/profiles/{profileId}",
-            ("UNITY", "EMPLOYMENT") => $"/api/v1/profiles/{profileId}/employment",
-            ("UNITY", "SECURITY") => $"/api/v1/profiles/{profileId}/security",
-            ("UNITY", "CONTACTS") => $"/api/v1/profiles/{profileId}/contacts",
-            ("UNITY", "ADDRESSES") => $"/api/v1/profiles/{profileId}/addresses",
-            ("UNITY", "ORGINFO") => $"/api/v1/profiles/{profileId}/organization",
+            "PROFILE" => $"/api/v1/profiles/{profileId}",
+            "EMPLOYMENT" => $"/api/v1/profiles/{profileId}/employment",
+            "SECURITY" => $"/api/v1/profiles/{profileId}/security",
+            "CONTACTS" => $"/api/v1/profiles/{profileId}/contacts",
+            "ADDRESSES" => $"/api/v1/profiles/{profileId}/addresses",
+            "ORGINFO" => $"/api/v1/profiles/{profileId}/organization",
+            "SUBMISSIONS" => $"/api/v1/profiles/{profileId}/submissions",
+            "PAYMENTS" => $"/api/v1/profiles/{profileId}/payments",
             _ => $"/api/v1/profiles/{profileId}/data"
         };
     }

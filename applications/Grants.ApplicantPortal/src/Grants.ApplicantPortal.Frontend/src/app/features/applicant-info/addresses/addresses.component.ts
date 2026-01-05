@@ -7,6 +7,7 @@ import { take, takeUntil } from 'rxjs/operators';
 import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
+import { Address } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig,
@@ -15,16 +16,24 @@ import {
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
 
-interface Address {
+interface AddressDisplay {
   id: string;
+  addressId?: string;
   type: string;
-  addressLine1: string;
+  addressLine1?: string;
   addressLine2?: string;
+  street: string;
   city: string;
   province: string;
+  state: string;
   postalCode: string;
+  zipCode: string;
   country?: string;
   isPrimary?: boolean;
+  isActive?: boolean;
+  lastVerified?: string;
+  allowEdit?: boolean;
+  fullAddress?: string;
 }
 
 @Component({
@@ -41,10 +50,13 @@ interface Address {
 export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   @Input() pluginId!: string;
   @Input() provider!: string;
+  @Input() key!: string;
+
+  private readonly destroy$ = new Subject<void>();
 
   applicantInfo: ApplicantInfo | null = null;
-  addresses: Address[] = [];
-  primaryAddress: Address | null = null;
+  addresses: AddressDisplay[] = [];
+  primaryAddress: AddressDisplay | null = null;
 
   isLoading = true;
   isHydratingAddresses = false;
@@ -53,15 +65,17 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
     tableId: 'addresses-table',
-    defaultSortField: 'lastUpdated',
+    defaultSortField: 'lastVerified',
     enableSortPersistence: true,
     columns: [
       { key: 'type', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
+      { key: 'addressId', label: 'Address ID', sortable: true, cssClass: 'address-id-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
       { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
+      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' },
+      { key: 'isActive', label: 'Active', sortable: true, type: 'boolean', cssClass: 'active-column' }
     ],
     actionsType: 'dropdown',
     actionItems: [
@@ -83,25 +97,53 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     loadingMessage: 'Loading your addresses...'
   };
 
-  // Subjects for cleanup
-  private readonly destroy$ = new Subject<void>();
-
   constructor(
     private readonly applicantService: ApplicantService,
     private readonly applicantInfoService: ApplicantInfoService
   ) {}
 
   ngOnInit(): void {
+    console.log('AddressesComponent ngOnInit - inputs:', {
+      pluginId: this.pluginId,
+      provider: this.provider,
+      hasPluginId: !!this.pluginId,
+      hasProvider: !!this.provider
+    });
+    
     if (this.pluginId && this.provider) {
-      this.loadData();
+      console.log('AddressesComponent - Calling loadAddresses()');
+      this.loadAddresses();
+    } else {
+      console.log('AddressesComponent - Missing pluginId or provider, not loading addresses');
     }
+    this.loadApplicantInfo();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Reload data when pluginId changes (workspace switch)
-    if (changes['pluginId'] && !changes['pluginId'].firstChange) {
-      console.log('AddressesComponent - Plugin ID changed, reloading data');
-      this.loadData();
+    console.log('AddressesComponent ngOnChanges called:', {
+      changes,
+      currentInputs: {
+        pluginId: this.pluginId,
+        provider: this.provider
+      }
+    });
+    
+    // Reload data when pluginId or provider changes
+    const pluginIdChanged = changes['pluginId'];
+    const providerChanged = changes['provider'];
+    
+    if ((pluginIdChanged && !pluginIdChanged.firstChange) || (providerChanged && !providerChanged.firstChange)) {
+      if (this.pluginId && this.provider) {
+        console.log('AddressesComponent - Input changed, reloading data:', {
+          pluginIdChanged: !!pluginIdChanged,
+          providerChanged: !!providerChanged,
+          oldPluginId: pluginIdChanged?.previousValue,
+          newPluginId: pluginIdChanged?.currentValue,
+          oldProvider: providerChanged?.previousValue,
+          newProvider: providerChanged?.currentValue
+        });
+        this.loadAddresses();
+      }
     }
   }
 
@@ -110,9 +152,9 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.complete();
   }
 
-  private loadData(): void {
-    this.loadApplicantInfo();
-    this.loadAddresses();
+  // Helper method to get safe data for datatable
+  getAddressesForTable(): AddressDisplay[] {
+    return this.addresses && Array.isArray(this.addresses) ? this.addresses : [];
   }
 
   private loadApplicantInfo(): void {
@@ -125,9 +167,15 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private loadAddresses(): void {
-    this.isHydratingAddresses = true;
+    console.log('AddressesComponent loadAddresses() called with:', {
+      pluginId: this.pluginId,
+      provider: this.provider
+    });
+    
+    this.isLoading = true;
     this.error = null;
 
+    console.log('Making API call to getAddressesInfo...');
     this.applicantInfoService
       .getAddressesInfo(
         this.pluginId,
@@ -136,29 +184,37 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       .pipe(take(1), takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
-          this.isHydratingAddresses = false;
-          // Parse the result based on the actual API response structure
-          this.addresses = Array.isArray(result.jsonData) 
-            ? result.jsonData 
-            : JSON.parse(result.jsonData)?.data?.addresses || [];
-          
-          this.primaryAddress = this.addresses.find(a => a.isPrimary) || this.addresses[0] || null;
-          console.log('Addresses data loaded:', this.addresses);
           this.isLoading = false;
+          this.addresses = this.processAddressesData(result.addressesData || []);
+          this.primaryAddress = this.addresses.find(addr => addr.isPrimary) || null;
+          console.log('Addresses data loaded:', this.addresses);
         },
         error: (error) => {
-          this.isHydratingAddresses = false;
-          this.error = 'Failed to load addresses data';
           this.isLoading = false;
+          this.error = 'Failed to load addresses data';
           console.error('Error loading addresses:', error);
         },
       });
   }
 
-  // Event handlers
-  onAddressClick(address: Address): void {
-    console.log('Clicked address:', address);
-    // TODO: Navigate to address detail view
+  private processAddressesData(addresses: any[]): AddressDisplay[] {
+    return addresses.map(addr => ({
+      id: addr.id || `address-${Math.random()}`,
+      addressId: addr.addressId,
+      type: addr.type || 'Unknown',
+      street: addr.street || '',
+      city: addr.city || '',
+      province: addr.province || addr.state || '',
+      state: addr.state || addr.province || '',
+      postalCode: addr.postalCode || addr.zipCode || '',
+      zipCode: addr.zipCode || addr.postalCode || '',
+      country: addr.country || '',
+      isPrimary: addr.isPrimary || false,
+      isActive: addr.isActive !== false,
+      lastVerified: addr.lastVerified,
+      allowEdit: addr.allowEdit !== false,
+      fullAddress: `${addr.street || ''}, ${addr.city || ''}, ${addr.state || addr.province || ''} ${addr.postalCode || addr.zipCode || ''}`.trim()
+    }));
   }
 
   // Datatable event handlers
@@ -177,25 +233,44 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  onSetAsPrimary(address: Address): void {
+  onSetAsPrimary(address: AddressDisplay): void {
     console.log('Setting as primary address...', address);
     
-    this.applicantInfoService.setAddressAsPrimary(
+    // Make API call to set address as primary
+    const addressData = {
+      addressLine1: address.addressLine1,
+      addressLine2: address.addressLine2,
+      city: address.city,
+      province: address.province,
+      postalCode: address.postalCode,
+      country: address.country,
+      type: address.type,
+      isPrimary: true
+    };
+
+    this.applicantInfoService.updateAddress(
       address.id,
       this.pluginId,
-      this.provider
-    ).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
+      this.provider,
+      addressData
+    )
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
       next: (response) => {
         console.log('Address set as primary successfully:', response);
-        // Refresh the addresses list to update the display
-        this.loadAddresses();
+        
+        // Update local state after successful API call
+        this.addresses = this.addresses.map(addr => ({
+          ...addr,
+          isPrimary: addr.id === address.id
+        }));
+        
+        this.primaryAddress = { ...address, isPrimary: true };
+        console.log('Primary address updated locally:', this.primaryAddress);
       },
       error: (error) => {
         console.error('Failed to set address as primary:', error);
-        // Could add a toast notification here
-        this.error = 'Failed to set address as primary. Please try again.';
+        // Optionally show an error message to the user
       }
     });
   }
@@ -206,20 +281,12 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     // This event is emitted for any additional logic you might need
   }
 
-  // Helper method to format addresses for datatable
-  getAddressesForTable(): any[] {
-    return this.addresses.map(address => ({
-      ...address,
-      fullAddress: this.formatFullAddress(address)
-    }));
-  }
-
-  private formatFullAddress(address: Address): string {
-    const parts = [address.addressLine1];
-    if (address.addressLine2) {
-      parts.push(address.addressLine2);
-    }
-    return parts.join(', ');
+  private formatFullAddress(address: AddressDisplay): string {
+    const parts = [];
+    if (address.addressLine1) parts.push(address.addressLine1);
+    if (address.addressLine2) parts.push(address.addressLine2);
+    if (parts.length === 0 && address.street) parts.push(address.street);
+    return parts.join(', ') || address.fullAddress || '';
   }
 
   // Helper method to format primary address display

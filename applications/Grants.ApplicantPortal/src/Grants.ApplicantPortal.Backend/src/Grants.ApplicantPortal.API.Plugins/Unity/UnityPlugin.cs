@@ -31,12 +31,25 @@ public partial class UnityPlugin : IProfilePlugin, IContactManagementPlugin, IAd
 
     private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
     {
-        new("UNITY", "PROFILE", "Unity user profile data"),
-        new("UNITY", "EMPLOYMENT", "Unity employment information"),
-        new("UNITY", "SECURITY", "Unity security clearance data"),
-        new("UNITY", "CONTACTS", "Unity contact information"),
-        new("UNITY", "ADDRESSES", "Unity address information"),
-        new("UNITY", "ORGINFO", "Unity organization information")
+        // DGP Provider
+        new("DGP", "PROFILE", "Unity user profile data"),
+        new("DGP", "EMPLOYMENT", "Unity employment information"),
+        new("DGP", "SECURITY", "Unity security clearance data"),
+        new("DGP", "CONTACTS", "Unity contact information"),
+        new("DGP", "ADDRESSES", "Unity address information"),
+        new("DGP", "ORGINFO", "Unity organization information"),
+        new("DGP", "SUBMISSIONS", "Unity submissions data"),
+        new("DGP", "PAYMENTS", "Unity payment information"),
+        
+        // ABC Provider
+        new("ABC", "PROFILE", "Unity user profile data"),
+        new("ABC", "EMPLOYMENT", "Unity employment information"),
+        new("ABC", "SECURITY", "Unity security clearance data"),
+        new("ABC", "CONTACTS", "Unity contact information"),
+        new("ABC", "ADDRESSES", "Unity address information"),
+        new("ABC", "ORGINFO", "Unity organization information"),
+        new("ABC", "SUBMISSIONS", "Unity submissions data"),
+        new("ABC", "PAYMENTS", "Unity payment information")
     };
 
     public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()

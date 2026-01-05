@@ -365,34 +365,30 @@ public static class AddressesData
 
     return new
     {
-      baseData,
-      Data = new
-      {
-        Addresses = allAddresses
-          .OrderByDescending(a => a.LastVerified) // Most recently updated first
-          .Select(a => new
-          {
-            a.Id,
-            a.AddressId,
-            a.Type,
-            a.AddressLine1,
-            a.AddressLine2,
-            a.Street,
-            a.City,
-            a.Province,
-            a.PostalCode,
-            a.Country,
-            a.IsPrimary,
-            a.IsActive,
-            a.LastVerified,
-            a.AllowEdit
-          }).ToArray(),
-        Summary = new
+      Addresses = allAddresses
+        .OrderByDescending(a => a.LastVerified) // Most recently updated first
+        .Select(a => new
         {
-          TotalAddresses = allAddresses.Count,
-          PrimaryAddressCount = allAddresses.Count(a => a.IsPrimary),
-          ActiveAddressCount = allAddresses.Count(a => a.IsActive)
-        }
+          a.Id,
+          a.AddressId,
+          a.Type,
+          a.AddressLine1,
+          a.AddressLine2,
+          a.Street,
+          a.City,
+          a.Province,
+          a.PostalCode,
+          a.Country,
+          a.IsPrimary,
+          a.IsActive,
+          a.LastVerified,
+          a.AllowEdit
+        }).ToArray(),
+      Summary = new
+      {
+        TotalAddresses = allAddresses.Count,
+        PrimaryAddressCount = allAddresses.Count(a => a.IsPrimary),
+        ActiveAddressCount = allAddresses.Count(a => a.IsActive)
       }
     };
   }
@@ -449,34 +445,30 @@ public static class AddressesData
 
     return new
     {
-      baseData,
-      Data = new
-      {
-        Addresses = allAddresses
-          .OrderByDescending(a => a.LastVerified) // Most recently updated first
-          .Select(a => new
-          {
-            a.Id,
-            a.AddressId,
-            a.Type,
-            a.AddressLine1,
-            a.AddressLine2,
-            a.Street,
-            a.City,
-            a.Province,
-            a.PostalCode,
-            a.Country,
-            a.IsPrimary,
-            a.IsActive,
-            a.LastVerified,
-            AllowEdit = true // All stored addresses are editable; default addresses have their own AllowEdit setting
-          }).ToArray(),
-        Summary = new
+      Addresses = allAddresses
+        .OrderByDescending(a => a.LastVerified) // Most recently updated first
+        .Select(a => new
         {
-          TotalAddresses = allAddresses.Count,
-          PrimaryAddressCount = allAddresses.Count(a => a.IsPrimary),
-          ActiveAddressCount = allAddresses.Count(a => a.IsActive)
-        }
+          a.Id,
+          a.AddressId,
+          a.Type,
+          a.AddressLine1,
+          a.AddressLine2,
+          a.Street,
+          a.City,
+          a.Province,
+          a.PostalCode,
+          a.Country,
+          a.IsPrimary,
+          a.IsActive,
+          a.LastVerified,
+          AllowEdit = true // All stored addresses are editable; default addresses have their own AllowEdit setting
+        }).ToArray(),
+      Summary = new
+      {
+        TotalAddresses = allAddresses.Count,
+        PrimaryAddressCount = allAddresses.Count(a => a.IsPrimary),
+        ActiveAddressCount = allAddresses.Count(a => a.IsActive)
       }
     };
   }

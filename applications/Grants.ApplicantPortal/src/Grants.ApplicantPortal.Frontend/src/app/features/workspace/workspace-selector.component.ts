@@ -41,9 +41,9 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
               <div 
                 *ngFor="let workspace of availableWorkspaces" 
                 class="workspace-item"
-                (click)="selectWorkspace(workspace)"
-                (keydown.enter)="selectWorkspace(workspace)"
-                (keydown.space)="selectWorkspace(workspace)"
+                (click)="onWorkspaceClick(workspace)"
+                (keydown.enter)="onWorkspaceClick(workspace)"
+                (keydown.space)="onWorkspaceClick(workspace)"
                 tabindex="0"
                 role="button"
                 [attr.aria-label]="'Select ' + workspace.description + ' workspace'"
@@ -51,6 +51,12 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
                 <div class="workspace-info">
                   <h3 class="workspace-title">{{ workspace.description }}</h3>
                   <p class="workspace-id">ID: {{ workspace.pluginId }}</p>
+                  <div class="workspace-providers" *ngIf="workspace.providers && workspace.providers.length > 1">
+                    <span class="providers-label">Providers:</span>
+                    <span class="provider-tag" *ngFor="let provider of workspace.providers">
+                      {{ provider }}
+                    </span>
+                  </div>
                   <div class="workspace-features" *ngIf="workspace.features?.length">
                     <span class="features-label">Features:</span>
                     <span class="feature-tag" *ngFor="let feature of workspace.features">
@@ -61,6 +67,38 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
                 <i class="fas fa-chevron-right workspace-arrow" aria-hidden="true"></i>
               </div>
             </div>
+          </div>
+
+          <!-- Provider Selection -->
+          <div *ngIf="showProviderSelection && selectedWorkspaceForProvider">
+            <h2 class="modal-title">Select Provider</h2>
+            <p class="modal-description">Select a provider for {{ selectedWorkspaceForProvider.description }}:</p>
+            
+            <div class="provider-list">
+              <div 
+                *ngFor="let provider of selectedWorkspaceForProvider.providers" 
+                class="provider-item"
+                (click)="selectWorkspaceWithProvider(selectedWorkspaceForProvider, provider)"
+                (keydown.enter)="selectWorkspaceWithProvider(selectedWorkspaceForProvider, provider)"
+                (keydown.space)="selectWorkspaceWithProvider(selectedWorkspaceForProvider, provider)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Select ' + provider + ' provider'"
+              >
+                <div class="provider-info">
+                  <h3 class="provider-title">{{ provider }}</h3>
+                </div>
+                <i class="fas fa-chevron-right provider-arrow" aria-hidden="true"></i>
+              </div>
+            </div>
+            
+            <button 
+              class="btn btn-secondary mt-3"
+              (click)="goBackToWorkspaceSelection()"
+            >
+              <i class="fas fa-arrow-left me-2"></i>
+              Back to Workspaces
+            </button>
           </div>
         </div>
       </div>
@@ -125,7 +163,7 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
 
     .loading-description {
       font-size: var(--bc-font-size-14);
-      color: var(--bc-gray);
+      color: var(--bc-primary);
     }
 
     .modal-title {
@@ -138,7 +176,7 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
 
     .modal-description {
       font-size: var(--bc-font-size-14);
-      color: var(--bc-gray);
+      color: var(--bc-primary);
       text-align: center;
       margin-bottom: 24px;
     }
@@ -191,7 +229,7 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
 
     .workspace-id {
       font-size: var(--bc-font-size-13);
-      color: var(--bc-gray);
+      color: var(--bc-primary);
       margin-bottom: 12px;
     }
 
@@ -204,21 +242,96 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
 
     .features-label {
       font-size: var(--bc-font-size-12);
-      color: var(--bc-gray);
+      color: var(--bc-primary);
       font-weight: 500;
     }
 
     .feature-tag {
       background-color: var(--bc-gray-20);
       color: var(--bc-primary);
-      padding: 2px 8px;
+      padding: 4px 8px;
       border-radius: 4px;
-      font-size: var(--bc-font-size-11);
+      font-size: var(--bc-font-size-12);
       font-weight: 500;
     }
 
+    .workspace-providers {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .providers-label {
+      font-size: var(--bc-font-size-12);
+      color: var(--bc-primary);
+      font-weight: 500;
+    }
+
+    .provider-tag {
+      background-color: var(--bc-blue-light);
+      color: var(--bc-blue-dark);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: var(--bc-font-size-12);
+      font-weight: 500;
+    }
+
+    .provider-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .provider-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border: 1px solid var(--bc-gray-20);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background-color: var(--bc-white);
+    }
+
+    .provider-item:hover {
+      border-color: var(--bc-blue);
+      background-color: var(--bc-gray-05);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .provider-item:focus {
+      outline: none;
+      border-color: var(--bc-blue);
+      box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.2);
+    }
+
+    .provider-info {
+      flex: 1;
+    }
+
+    .provider-title {
+      font-size: var(--bc-font-size-18);
+      font-weight: 600;
+      color: var(--bc-primary);
+      margin: 0;
+    }
+
+    .provider-arrow {
+      color: var(--bc-primary);
+      font-size: var(--bc-font-size-16);
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .provider-item:hover .provider-arrow {
+      color: var(--bc-blue);
+      transform: translateX(4px);
+    }
+
     .workspace-arrow {
-      color: var(--bc-gray);
+      color: var(--bc-primary);
       font-size: var(--bc-font-size-16);
       transition: color 0.2s ease, transform 0.2s ease;
     }
@@ -248,10 +361,14 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
 })
 export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   availableWorkspaces: Plugin[] = [];
+  selectedWorkspace: Plugin | null = null;
+  selectedWorkspaceForProvider: Plugin | null = null;
   isLoading = true;
   isAutoSelecting = false;
   autoSelectingWorkspace: Plugin | null = null;
   showWorkspaceSelection = false;
+  showSelectedWorkspace = false;
+  showProviderSelection = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -265,6 +382,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((state: WorkspaceState) => {
         this.availableWorkspaces = state.availableWorkspaces;
+        this.selectedWorkspace = state.selectedWorkspace;
         this.handleWorkspaceState(state);
       });
   }
@@ -275,9 +393,9 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   }
 
   private handleWorkspaceState(state: WorkspaceState): void {
-    // If workspace already selected, navigate away
-    if (state.isWorkspaceSelected && state.selectedWorkspace) {
-      console.log('Workspace already selected, navigating to app');
+    // If workspace and provider already selected, navigate away
+    if (state.isWorkspaceSelected && state.isProviderSelected && state.selectedWorkspace) {
+      console.log('Workspace and provider already selected, navigating to app');
       this.router.navigate(['/applicant-info']);
       return;
     }
@@ -286,14 +404,33 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     if (state.availableWorkspaces.length > 0) {
       this.isLoading = false;
 
-      // Auto-select if only one workspace
+      // Auto-select if only one workspace with one provider
       if (state.availableWorkspaces.length === 1) {
-        this.autoSelectSingleWorkspace(state.availableWorkspaces[0]);
+        const workspace = state.availableWorkspaces[0];
+        if (workspace.providers && workspace.providers.length === 1) {
+          this.autoSelectSingleWorkspaceWithProvider(workspace, workspace.providers[0]);
+        } else {
+          this.autoSelectSingleWorkspace(workspace);
+        }
       } else {
         // Show selection UI for multiple workspaces
         this.showWorkspaceSelection = true;
       }
     }
+
+    this.updateSelectionVisibility();
+  }
+
+  private updateSelectionVisibility(): void {
+    const isWorkspaceSelected = this.workspaceService.isWorkspaceSelected();
+    const isProviderSelected = this.workspaceService.isProviderSelected();
+    
+    this.showSelectedWorkspace = isWorkspaceSelected && isProviderSelected;
+    this.showProviderSelection = isWorkspaceSelected && !isProviderSelected && !!this.selectedWorkspaceForProvider;
+    
+    console.log('Show workspace selection:', this.showWorkspaceSelection);
+    console.log('Show selected workspace:', this.showSelectedWorkspace);
+    console.log('Show provider selection:', this.showProviderSelection);
   }
 
   private autoSelectSingleWorkspace(workspace: Plugin): void {
@@ -308,11 +445,54 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     });
   }
 
+  private autoSelectSingleWorkspaceWithProvider(workspace: Plugin, provider: string): void {
+    this.isAutoSelecting = true;
+    this.autoSelectingWorkspace = workspace;
+    
+    console.log('Auto-selecting single workspace with provider:', workspace, provider);
+    
+    // Add a small delay for better UX - user sees the intentional selection
+    timer(1200).subscribe(() => {
+      this.selectWorkspaceWithProvider(workspace, provider);
+    });
+  }
+
+  onWorkspaceClick(workspace: Plugin): void {
+    console.log('Workspace clicked:', workspace);
+    
+    // If workspace has only one provider, auto-select it
+    if (workspace.providers && workspace.providers.length === 1) {
+      this.selectWorkspaceWithProvider(workspace, workspace.providers[0]);
+    } else if (workspace.providers && workspace.providers.length > 1) {
+      // Show provider selection
+      this.selectedWorkspaceForProvider = workspace;
+      this.showWorkspaceSelection = false;
+      this.showProviderSelection = true;
+    } else {
+      // No providers, select workspace directly (fallback)
+      this.selectWorkspace(workspace);
+    }
+  }
+
   selectWorkspace(workspace: Plugin): void {
     console.log('WorkspaceSelectorComponent - Workspace selected:', workspace);
     this.workspaceService.selectWorkspace(workspace);
     
     // Navigate to the main application
     this.router.navigate(['/applicant-info']);
+  }
+
+  selectWorkspaceWithProvider(workspace: Plugin, provider: string): void {
+    console.log('Selecting workspace with provider:', workspace, provider);
+    this.workspaceService.selectWorkspace(workspace, provider);
+    
+    // Navigate to the main application
+    this.router.navigate(['/applicant-info']);
+  }
+
+  goBackToWorkspaceSelection(): void {
+    this.selectedWorkspaceForProvider = null;
+    this.showProviderSelection = false;
+    this.showWorkspaceSelection = true;
   }
 }

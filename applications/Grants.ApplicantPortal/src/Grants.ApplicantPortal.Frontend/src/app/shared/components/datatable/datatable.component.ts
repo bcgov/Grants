@@ -234,14 +234,17 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   trackByFn(index: number, item: any): any {
-    return item.id || item.key || index;
+    if (!item) return index;
+    return item.id || item.key || item.contactId || item.addressId || item.submissionId || index;
   }
 
   /**
    * Gets the data to display (sorted data)
    */
   getDisplayData(): any[] {
-    return this.sortedData.length > 0 ? this.sortedData : this.data;
+    const data = this.sortedData.length > 0 ? this.sortedData : this.data;
+    // Filter out any undefined or null items to prevent trackByFn errors
+    return data ? data.filter(item => item != null) : [];
   }
 
   shouldShowActions(row: any): boolean {

@@ -155,6 +155,17 @@ public static class PluginRegistry
   }
 
   /// <summary>
+  /// Get configured providers for a specific plugin
+  /// </summary>
+  public static IReadOnlyList<string> GetConfiguredProviders(string pluginId)
+  {
+    if (_plugins.TryGetValue(pluginId, out var pluginInfo) && pluginInfo.Configuration?.Providers != null)
+      return pluginInfo.Configuration.Providers;
+
+    return new List<string>();
+  }
+
+  /// <summary>
   /// Get all supported providers across all plugins
   /// </summary>
   public static IReadOnlyList<string> GetAllSupportedProviders()

@@ -34,6 +34,7 @@ public partial class UnityPlugin
     {
       _logger.LogError(ex, "Unity plugin failed to queue address edit {AddressId} for ProfileId: {ProfileId}",
           editRequest.AddressId, profileContext.ProfileId);
+
       return Result.Error("Failed to queue address edit for Unity system");
     }
   }
@@ -74,43 +75,36 @@ public partial class UnityPlugin
   {
     if (_messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping address edit message");
-      return;
+      _logger.LogError("Message publisher not available - cannot publish critical AddressEditCommand for address {AddressId}", editRequest.AddressId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    try
-    {
-      var message = new PluginDataMessage(
-          PluginId,
-          "ADDRESS_EDIT_COMMAND",
-          new
+    var message = new PluginDataMessage(
+        PluginId,
+        "ADDRESS_EDIT_COMMAND",
+        new
+        {
+          Action = "EditAddress",
+          editRequest.AddressId,
+          profileContext.ProfileId,
+          profileContext.Provider,
+          Data = new
           {
-            Action = "EditAddress",
-            AddressId = editRequest.AddressId,
-            ProfileId = profileContext.ProfileId,
-            Provider = profileContext.Provider,
-            Data = new
-            {
-              editRequest.Type,
-              editRequest.Address,
-              editRequest.City,
-              editRequest.Province,
-              editRequest.PostalCode,
-              editRequest.Country,
-              editRequest.IsPrimary
-            }
-          },
-          correlationId: $"profile-{profileContext.ProfileId}");
+            editRequest.Type,
+            editRequest.Address,
+            editRequest.City,
+            editRequest.Province,
+            editRequest.PostalCode,
+            editRequest.Country,
+            editRequest.IsPrimary
+          }
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+    await _messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published AddressEditCommand for address {AddressId} in profile {ProfileId}",
-          editRequest.AddressId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogWarning(ex, "Failed to publish AddressEditCommand for address {AddressId}", editRequest.AddressId);
-    }
+    _logger.LogDebug("Published AddressEditCommand for address {AddressId} in profile {ProfileId}",
+        editRequest.AddressId, profileContext.ProfileId);
   }
 
   /// <summary>
@@ -120,33 +114,26 @@ public partial class UnityPlugin
   {
     if (_messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping address set primary message");
-      return;
+      _logger.LogError("Message publisher not available - cannot publish critical AddressSetPrimaryCommand for address {AddressId}", addressId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    try
-    {
-      var message = new PluginDataMessage(
-          PluginId,
-          "ADDRESS_SET_PRIMARY_COMMAND",
-          new
-          {
-            Action = "SetAddressAsPrimary",
-            AddressId = addressId,
-            ProfileId = profileContext.ProfileId,
-            Provider = profileContext.Provider
-          },
-          correlationId: $"profile-{profileContext.ProfileId}");
+    var message = new PluginDataMessage(
+        PluginId,
+        "ADDRESS_SET_PRIMARY_COMMAND",
+        new
+        {
+          Action = "SetAddressAsPrimary",
+          AddressId = addressId,
+          profileContext.ProfileId,
+          profileContext.Provider
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+    await _messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published AddressSetPrimaryCommand for address {AddressId} in profile {ProfileId}",
-          addressId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogWarning(ex, "Failed to publish AddressSetPrimaryCommand for address {AddressId}", addressId);
-    }
+    _logger.LogDebug("Published AddressSetPrimaryCommand for address {AddressId} in profile {ProfileId}",
+        addressId, profileContext.ProfileId);
   }
 
   /// <summary>
@@ -174,6 +161,7 @@ public partial class UnityPlugin
     catch (Exception ex)
     {
       _logger.LogWarning(ex, "Failed to invalidate ADDRESSES cache for ProfileId: {ProfileId}", profileId);
+      // Don't throw - cache invalidation failures shouldn't break the main operation
     }
   }
 }

@@ -41,7 +41,7 @@ import {
 export class ApplicantInfoComponent implements OnInit, OnDestroy {
   // Profile properties
   pluginId: string = PluginId.DEMO; // Default fallback
-  provider = Provider.PROGRAM1;
+  provider: string = Provider.PROGRAM1; // Default fallback
   keyOrgInfo = Key.ORGINFO;
   keySubmissions = Key.SUBMISSIONS;
   keyContacts = Key.CONTACTS;
@@ -66,17 +66,44 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Subscribe to workspace changes and update pluginId
+    // Subscribe to workspace changes and update pluginId and provider
     this.workspaceService.currentWorkspaceState$
       .pipe(
         takeUntil(this.destroy$),
-        filter((state: WorkspaceState) => state.selectedWorkspace !== null)
+        filter((state: WorkspaceState) => {
+          const hasWorkspace = state.selectedWorkspace !== null;
+          const hasProvider = state.selectedProvider !== null;
+          console.log('ApplicantInfo filter check:', {
+            hasWorkspace,
+            hasProvider,
+            isWorkspaceSelected: state.isWorkspaceSelected,
+            isProviderSelected: state.isProviderSelected,
+            workspace: state.selectedWorkspace?.pluginId,
+            provider: state.selectedProvider
+          });
+          return hasWorkspace && hasProvider;
+        })
       )
       .subscribe((state: WorkspaceState) => {
-        if (state.selectedWorkspace) {
-          console.log('ApplicantInfoComponent - Workspace changed:', state.selectedWorkspace);
+        if (state.selectedWorkspace && state.selectedProvider) {
+          const oldPluginId = this.pluginId;
+          const oldProvider = this.provider;
+          
+          console.log('ApplicantInfoComponent - Workspace and provider changed:', {
+            oldPluginId,
+            oldProvider,
+            newWorkspace: state.selectedWorkspace.pluginId,
+            newProvider: state.selectedProvider
+          });
+          
           this.pluginId = state.selectedWorkspace.pluginId;
-          this.loadData(); // Reload data with new workspace
+          this.provider = state.selectedProvider;
+          
+          // Only reload data if workspace or provider actually changed
+          if (oldPluginId !== this.pluginId || oldProvider !== this.provider) {
+            console.log('Data reload triggered due to workspace/provider change');
+            this.loadData(); // Reload data with new workspace and provider
+          }
         }
       });
 
@@ -104,17 +131,25 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   private loadOrganizationInfo(): void {
     this.isHydratingOrgInfo = true;
 
+    console.log('ApplicantInfoComponent - Loading organization info with:', {
+      pluginId: this.pluginId,
+      provider: this.provider
+    });
+
     this.applicantInfoService
       .getOrganizationInfo(
-        PluginId.DEMO,
-        Provider.PROGRAM1
+        this.pluginId,
+        this.provider
       )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
           this.isHydratingOrgInfo = false;
+          console.log('Service result received:', result);
           this.organizationInfo = result.organizationData;
-          console.log('Organization data loaded:', this.organizationInfo);
+          console.log('Organization data assigned to component:', this.organizationInfo);
+          console.log('Organization info type:', typeof this.organizationInfo);
+          console.log('Organization info keys:', this.organizationInfo ? Object.keys(this.organizationInfo) : 'null');
           this.isLoading = false;
         },
         error: (error) => {

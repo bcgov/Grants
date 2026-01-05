@@ -9,103 +9,97 @@ namespace Grants.ApplicantPortal.API.Plugins.Unity;
 /// </summary>
 public partial class UnityPlugin
 {
-    public async Task<Result> EditOrganizationAsync(
-        EditOrganizationRequest editRequest,
-        ProfileContext profileContext,
-        CancellationToken cancellationToken = default)
+  public async Task<Result> EditOrganizationAsync(
+      EditOrganizationRequest editRequest,
+      ProfileContext profileContext,
+      CancellationToken cancellationToken = default)
+  {
+    _logger.LogInformation("Unity plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
+        editRequest.OrganizationId, profileContext.ProfileId);
+
+    try
     {
-        _logger.LogInformation("Unity plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
-            editRequest.OrganizationId, profileContext.ProfileId);
+      // 🔥 EVENT-DRIVEN: Publish edit command to outbox for Unity to process
+      await FireOrganizationEditMessage(editRequest, profileContext, cancellationToken);
 
-        try
-        {
-            // 🔥 EVENT-DRIVEN: Publish edit command to outbox for Unity to process
-            await FireOrganizationEditMessage(editRequest, profileContext, cancellationToken);
+      // 🔥 Invalidate the ORGINFO cache when organization edit is queued
+      await InvalidateOrganizationCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
 
-            // 🔥 Invalidate the ORGINFO cache when organization edit is queued
-            await InvalidateOrganizationCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
+      _logger.LogInformation("Unity plugin queued organization edit - ID: {OrganizationId}, Name: {Name}, Type: {Type}",
+          editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType);
 
-            _logger.LogInformation("Unity plugin queued organization edit - ID: {OrganizationId}, Name: {Name}, Type: {Type}",
-                editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType);
+      return Result.Success();
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Unity plugin failed to queue organization edit {OrganizationId} for ProfileId: {ProfileId}",
+          editRequest.OrganizationId, profileContext.ProfileId);
+      return Result.Error("Failed to queue organization edit for Unity system");
+    }
+  }
 
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unity plugin failed to queue organization edit {OrganizationId} for ProfileId: {ProfileId}",
-                editRequest.OrganizationId, profileContext.ProfileId);
-            return Result.Error("Failed to queue organization edit for Unity system");
-        }
+  /// <summary>
+  /// Helper method to fire organization edit command message
+  /// </summary>
+  private async Task FireOrganizationEditMessage(EditOrganizationRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
+  {
+    if (_messagePublisher == null)
+    {
+      _logger.LogError("Message publisher not available - cannot publish critical OrganizationEditCommand for organization {OrganizationId}", editRequest.OrganizationId);
+      throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
-    /// <summary>
-    /// Helper method to fire organization edit command message
-    /// </summary>
-    private async Task FireOrganizationEditMessage(EditOrganizationRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
+    var message = new PluginDataMessage(
+        PluginId,
+        "ORGANIZATION_EDIT_COMMAND",
+        new
+        {
+          Action = "EditOrganization",
+          editRequest.OrganizationId,
+          profileContext.ProfileId,
+          profileContext.Provider,
+          Data = new
+          {
+            editRequest.Name,
+            editRequest.OrganizationType,
+            editRequest.OrganizationNumber,
+            editRequest.Status,
+            editRequest.NonRegOrgName,
+            editRequest.FiscalMonth,
+            editRequest.FiscalDay,
+            editRequest.OrganizationSize
+          }
+        },
+        correlationId: $"profile-{profileContext.ProfileId}");
+
+    await _messagePublisher.PublishAsync(message, cancellationToken);
+
+    _logger.LogDebug("Published OrganizationEditCommand for organization {OrganizationId} in profile {ProfileId}",
+        editRequest.OrganizationId, profileContext.ProfileId);
+  }
+
+  /// <summary>
+  /// Invalidate the ORGINFO cache for this profile/provider combination
+  /// </summary>
+  private async Task InvalidateOrganizationCache(Guid profileId, string provider, CancellationToken cancellationToken)
+  {
+    if (_cacheInvalidationService == null)
     {
-        if (_messagePublisher == null)
-        {
-            _logger.LogDebug("Message publisher not available - skipping organization edit message");
-            return;
-        }
-
-        try
-        {
-            var message = new PluginDataMessage(
-                PluginId,
-                "ORGANIZATION_EDIT_COMMAND",
-                new
-                {
-                    Action = "EditOrganization",
-                    OrganizationId = editRequest.OrganizationId,
-                    ProfileId = profileContext.ProfileId,
-                    Provider = profileContext.Provider,
-                    Data = new
-                    {
-                        editRequest.Name,
-                        editRequest.OrganizationType,
-                        editRequest.OrganizationNumber,
-                        editRequest.Status,
-                        editRequest.NonRegOrgName,
-                        editRequest.FiscalMonth,
-                        editRequest.FiscalDay,
-                        editRequest.OrganizationSize
-                    }
-                },
-                correlationId: $"profile-{profileContext.ProfileId}");
-
-            await _messagePublisher.PublishAsync(message, cancellationToken);
-            
-            _logger.LogDebug("Published OrganizationEditCommand for organization {OrganizationId} in profile {ProfileId}", 
-                editRequest.OrganizationId, profileContext.ProfileId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish OrganizationEditCommand for organization {OrganizationId}", editRequest.OrganizationId);
-        }
+      _logger.LogDebug("Cache invalidation service not available - skipping organization cache invalidation");
+      return;
     }
 
-    /// <summary>
-    /// Invalidate the ORGINFO cache for this profile/provider combination
-    /// </summary>
-    private async Task InvalidateOrganizationCache(Guid profileId, string provider, CancellationToken cancellationToken)
+    try
     {
-        if (_cacheInvalidationService == null)
-        {
-            _logger.LogDebug("Cache invalidation service not available - skipping organization cache invalidation");
-            return;
-        }
+      await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO", cancellationToken);
 
-        try
-        {
-            await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO", cancellationToken);
-            
-            _logger.LogDebug("Invalidated ORGINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}", 
-                profileId, PluginId, provider);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to invalidate ORGINFO cache for ProfileId: {ProfileId}", profileId);
-        }
+      _logger.LogDebug("Invalidated ORGINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+          profileId, PluginId, provider);
     }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Failed to invalidate ORGINFO cache for ProfileId: {ProfileId}", profileId);
+      // Don't throw - cache invalidation failures shouldn't break the main operation
+    }
+  }
 }

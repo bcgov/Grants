@@ -14,14 +14,44 @@
           id="workspaceDropdown"
           data-bs-toggle="dropdown"
           aria-expanded="false"
-          [attr.aria-label]="'Current workspace: ' + selectedWorkspace.description"
+          [attr.aria-label]="'Current workspace: ' + displayText"
           [disabled]="isChangingWorkspace"
         >
           <i class="fas fa-spinner fa-spin me-2" *ngIf="isChangingWorkspace" aria-hidden="true"></i>
           <i class="fas fa-briefcase me-2" *ngIf="!isChangingWorkspace" aria-hidden="true"></i>
-          {{ isChangingWorkspace ? 'Switching...' : selectedWorkspace.description }}
+          {{ isChangingWorkspace ? 'Switching...' : displayText }}
         </button>
         <ul class="dropdown-menu workspace-dropdown" aria-labelledby="workspaceDropdown">
+          <!-- Current Workspace Info -->
+          <li *ngIf="selectedWorkspace && hasMultipleProviders">
+            <h6 class="dropdown-header">
+              <i class="fas fa-briefcase me-2"></i>
+              {{ selectedWorkspace.description }}
+            </h6>
+          </li>
+          
+          <!-- Provider Selection (if multiple providers) -->
+          <div *ngIf="selectedWorkspace && hasMultipleProviders">
+            <li><h6 class="dropdown-header">Providers</h6></li>
+            <li *ngFor="let provider of selectedWorkspace.providers">
+              <button 
+                class="dropdown-item provider-item"
+                [class.active]="provider === selectedProvider"
+                (click)="selectProvider(provider)"
+                type="button"
+              >
+                <span>{{ provider }}</span>
+                <i 
+                  class="fas fa-check ms-auto" 
+                  *ngIf="provider === selectedProvider"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+          </div>
+          
+          <!-- Workspace Selection -->
           <li><h6 class="dropdown-header">Available Workspaces</h6></li>
           <li *ngFor="let workspace of availableWorkspaces">
             <button 
@@ -33,10 +63,13 @@
               <div class="workspace-item-content">
                 <span class="workspace-name">{{ workspace.description }}</span>
                 <small class="workspace-id">{{ workspace.pluginId }}</small>
+                <small class="workspace-providers" *ngIf="workspace.providers && workspace.providers.length > 1">
+                  {{ workspace.providers.length }} providers
+                </small>
               </div>
               <i 
                 class="fas fa-check workspace-check" 
-                *ngIf="workspace.pluginId === selectedWorkspace.pluginId"
+                *ngIf="workspace.pluginId === selectedWorkspace?.pluginId"
                 aria-hidden="true"
               ></i>
             </button>

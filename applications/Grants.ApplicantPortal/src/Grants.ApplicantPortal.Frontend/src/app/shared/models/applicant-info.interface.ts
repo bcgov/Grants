@@ -54,7 +54,7 @@ export interface OrganizationData {
   orgNumber: string;
   orgStatus: string;
   organizationType: string;
-  nonRegOrgName: string;
+  nonRegOrgName?: string;
   orgSize: string;
   fiscalMonth: string;
   fiscalDay: number;
@@ -67,13 +67,17 @@ export interface OrganizationData {
   founded: number;
   address: Address;
   contactInfo: ContactInfo;
+  submissions?: SubmissionsData[];
   mission: string;
   servicesAreas: string[];
   certifications: Certification[];
   program1Specific: Program1Specific;
+  lastUpdated?: string;
+  allowEdit?: boolean;
 }
 
 export interface SubmissionsData {
+  id: string;
   submissionId: string;
   applicationId: string;
   projectName: string;
@@ -84,6 +88,10 @@ export interface SubmissionsData {
   statusCode: string; // Used for badge styling
   submissionDate: Date;
   lastModified: Date;
+  projectPeriod?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
 // Single response interface for parsed data

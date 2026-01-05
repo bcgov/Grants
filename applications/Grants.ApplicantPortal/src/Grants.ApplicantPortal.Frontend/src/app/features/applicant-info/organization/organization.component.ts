@@ -52,9 +52,20 @@ export class OrganizationInfoComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['organizationInfo'] && changes['organizationInfo'].currentValue) {
-      console.log('OrganizationComponent - pluginId changed, refreshing data');
-      this.updateFiscalFieldsFromOrganizationInfo();
+    console.log('OrganizationComponent ngOnChanges called:', changes);
+    if (changes['organizationInfo']) {
+      console.log('organizationInfo changed:', {
+        previousValue: changes['organizationInfo'].previousValue,
+        currentValue: changes['organizationInfo'].currentValue,
+        firstChange: changes['organizationInfo'].firstChange
+      });
+      
+      if (changes['organizationInfo'].currentValue) {
+        console.log('OrganizationComponent - organizationInfo received, updating fields');
+        this.updateFiscalFieldsFromOrganizationInfo();
+      } else {
+        console.log('OrganizationComponent - organizationInfo is null/undefined');
+      }
     }
   }
 

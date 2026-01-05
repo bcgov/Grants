@@ -12,11 +12,14 @@ export class WorkspaceService {
   
   private workspaceState$ = new BehaviorSubject<WorkspaceState>({
     selectedWorkspace: null,
+    selectedProvider: null,
     availableWorkspaces: [],
-    isWorkspaceSelected: false
+    isWorkspaceSelected: false,
+    isProviderSelected: false
   });
 
   private changingWorkspace$ = new BehaviorSubject<boolean>(false);
+  private workspaceProviderMemory = new Map<string, string>(); // workspace.pluginId -> last selected provider
 
   constructor(private http: HttpClient) {}
 
@@ -32,6 +35,10 @@ export class WorkspaceService {
 
   get currentPluginId(): string | null {
     return this.workspaceState$.value.selectedWorkspace?.pluginId || null;
+  }
+
+  get currentProvider(): string | null {
+    return this.workspaceState$.value.selectedProvider || null;
   }
 
   get isChangingWorkspace$(): Observable<boolean> {
@@ -52,36 +59,8 @@ export class WorkspaceService {
           availableWorkspaces: response.plugins
         });
 
-        // If there's a saved workspace, try to find it in the available workspaces
-        const savedWorkspace = localStorage.getItem('selectedWorkspace');
-        if (savedWorkspace && !currentState.isWorkspaceSelected) {
-          try {
-            const parsedWorkspace = JSON.parse(savedWorkspace) as Plugin;
-            const matchingWorkspace = response.plugins.find(
-              (workspace: Plugin) => workspace.pluginId === parsedWorkspace.pluginId
-            );
-            
-            if (matchingWorkspace) {
-              console.log('WorkspaceService - Found matching saved workspace:', matchingWorkspace);
-              this.selectWorkspace(matchingWorkspace);
-              return;
-            } else {
-              // Saved workspace is no longer available, remove it
-              console.log('WorkspaceService - Saved workspace no longer available, removing from storage');
-              localStorage.removeItem('selectedWorkspace');
-            }
-          } catch (error) {
-            console.error('WorkspaceService - Error parsing saved workspace:', error);
-            localStorage.removeItem('selectedWorkspace');
-          }
-        }
-
-        // Auto-select workspace if only one available and no selection made
-        if (response.plugins.length === 1 && !currentState.isWorkspaceSelected) {
-          console.log('WorkspaceService - Auto-selecting single workspace:', response.plugins[0]);
-          // Don't auto-select here - let the component handle it for better UX
-          // This allows the component to show a proper loading state
-        }
+        // Check if we can auto-select workspace and provider
+        this.handleAutoSelection(response.plugins, currentState);
       }),
       catchError(error => {
         console.error('WorkspaceService - Error fetching workspaces:', error);
@@ -91,23 +70,50 @@ export class WorkspaceService {
   }
 
   /**
-   * Select a workspace
+   * Select a workspace and optionally a provider
    */
-  selectWorkspace(workspace: Plugin): void {
-    console.log('WorkspaceService - Selecting workspace:', workspace);
+  selectWorkspace(workspace: Plugin, provider?: string): void {
+    console.log('WorkspaceService - Selecting workspace:', workspace.pluginId, 'provider:', provider);
     
     // Set loading state
     this.changingWorkspace$.next(true);
     
+    // If no provider specified, try to use remembered provider or default to first
+    if (!provider && workspace.providers && workspace.providers.length > 0) {
+      // Try to get remembered provider for this workspace
+      const rememberedProvider = this.workspaceProviderMemory.get(workspace.pluginId);
+      
+      if (rememberedProvider && workspace.providers.includes(rememberedProvider)) {
+        provider = rememberedProvider;
+        console.log('WorkspaceService - Using remembered provider:', provider);
+      } else {
+        provider = workspace.providers[0]; // Default to first provider
+        console.log('WorkspaceService - Defaulting to first provider:', provider);
+      }
+    }
+    
+    // Store the provider selection in memory for this workspace
+    if (provider && workspace.pluginId) {
+      this.workspaceProviderMemory.set(workspace.pluginId, provider);
+      console.log('WorkspaceService - Remembering provider selection:', { workspace: workspace.pluginId, provider });
+    }
+    
     const currentState = this.workspaceState$.value;
-    this.workspaceState$.next({
+    const newState = {
       ...currentState,
       selectedWorkspace: workspace,
-      isWorkspaceSelected: true
-    });
+      selectedProvider: provider || null,
+      isWorkspaceSelected: true,
+      isProviderSelected: !!provider
+    };
+    
+    console.log('WorkspaceService - Updating state to:', newState);
+    this.workspaceState$.next(newState);
 
     // Store in localStorage for persistence
-    localStorage.setItem('selectedWorkspace', JSON.stringify(workspace));
+    const selectionData = { workspace, provider };
+    localStorage.setItem('selectedWorkspace', JSON.stringify(selectionData));
+    console.log('WorkspaceService - Saved to localStorage:', selectionData);
 
     // Clear loading state after a short delay to allow components to refresh
     setTimeout(() => {
@@ -124,8 +130,10 @@ export class WorkspaceService {
     this.changingWorkspace$.next(false);
     this.workspaceState$.next({
       selectedWorkspace: null,
+      selectedProvider: null,
       availableWorkspaces: [],
-      isWorkspaceSelected: false
+      isWorkspaceSelected: false,
+      isProviderSelected: false
     });
 
     localStorage.removeItem('selectedWorkspace');
@@ -135,17 +143,29 @@ export class WorkspaceService {
    * Restore workspace selection from localStorage
    */
   restoreWorkspaceFromStorage(): void {
-    const savedWorkspace = localStorage.getItem('selectedWorkspace');
-    if (savedWorkspace) {
+    const savedSelection = localStorage.getItem('selectedWorkspace');
+    if (savedSelection) {
       try {
-        const workspace = JSON.parse(savedWorkspace) as Plugin;
-        console.log('WorkspaceService - Restored workspace from storage:', workspace);
+        const parsed = JSON.parse(savedSelection);
+        // Handle both old format (just workspace) and new format (workspace + provider)
+        const workspace = parsed.workspace || parsed;
+        const provider = parsed.provider;
+        
+        console.log('WorkspaceService - Restored workspace from storage:', workspace?.pluginId, 'provider:', provider);
+        
+        // Restore provider memory if available
+        if (workspace?.pluginId && provider) {
+          this.workspaceProviderMemory.set(workspace.pluginId, provider);
+          console.log('WorkspaceService - Restored provider memory:', { workspace: workspace.pluginId, provider });
+        }
         
         const currentState = this.workspaceState$.value;
         this.workspaceState$.next({
           ...currentState,
           selectedWorkspace: workspace,
-          isWorkspaceSelected: true
+          selectedProvider: provider || null,
+          isWorkspaceSelected: true,
+          isProviderSelected: !!provider
         });
       } catch (error) {
         console.error('WorkspaceService - Error parsing saved workspace:', error);
@@ -155,11 +175,78 @@ export class WorkspaceService {
   }
 
   /**
-   * Check if workspace selection is required
+   * Check if workspace and provider selection is required
    */
   isWorkspaceSelectionRequired(): boolean {
     const state = this.workspaceState$.value;
-    return state.availableWorkspaces.length > 1 && !state.isWorkspaceSelected;
+    return !state.isWorkspaceSelected || !state.isProviderSelected;
+  }
+
+  /**
+   * Check if workspace is selected
+   */
+  isWorkspaceSelected(): boolean {
+    return this.workspaceState$.value.isWorkspaceSelected;
+  }
+
+  /**
+   * Check if provider is selected
+   */
+  isProviderSelected(): boolean {
+    return this.workspaceState$.value.isProviderSelected;
+  }
+
+  /**
+   * Handle auto-selection logic for workspace and provider
+   */
+  private handleAutoSelection(plugins: Plugin[], currentState: WorkspaceState): void {
+    // Try to restore from localStorage first
+    const savedSelection = localStorage.getItem('selectedWorkspace');
+    if (savedSelection && !currentState.isWorkspaceSelected) {
+      try {
+        const parsed = JSON.parse(savedSelection);
+        const workspace = parsed.workspace || parsed;
+        const provider = parsed.provider;
+        
+        const matchingWorkspace = plugins.find(
+          (p: Plugin) => p.pluginId === workspace.pluginId
+        );
+        
+        if (matchingWorkspace) {
+          // Check if saved provider is still valid
+          if (provider && matchingWorkspace.providers.includes(provider)) {
+            console.log('WorkspaceService - Restored saved workspace and provider');
+            this.selectWorkspace(matchingWorkspace, provider);
+            return;
+          } else if (matchingWorkspace.providers.length === 1) {
+            console.log('WorkspaceService - Restored workspace, auto-selecting single provider');
+            this.selectWorkspace(matchingWorkspace, matchingWorkspace.providers[0]);
+            return;
+          } else {
+            console.log('WorkspaceService - Restored workspace, multiple providers available');
+            this.selectWorkspace(matchingWorkspace);
+            return;
+          }
+        } else {
+          console.log('WorkspaceService - Saved workspace no longer available');
+          localStorage.removeItem('selectedWorkspace');
+        }
+      } catch (error) {
+        console.error('WorkspaceService - Error parsing saved selection:', error);
+        localStorage.removeItem('selectedWorkspace');
+      }
+    }
+
+    // Auto-selection logic for new sessions
+    if (plugins.length === 1) {
+      const workspace = plugins[0];
+      if (workspace.providers.length === 1) {
+        console.log('WorkspaceService - Auto-selecting single workspace with single provider');
+        // Let component handle this for better UX
+      } else {
+        console.log('WorkspaceService - Single workspace with multiple providers');
+      }
+    }
   }
 
   /**

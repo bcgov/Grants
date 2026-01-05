@@ -10,10 +10,6 @@ public class ProfileResolutionMiddleware(
     IServiceScopeFactory serviceScopeFactory,
     ILogger<ProfileResolutionMiddleware> logger)
 {
-  private readonly RequestDelegate _next = next;
-  private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
-  private readonly ILogger<ProfileResolutionMiddleware> _logger = logger;
-
   public async Task InvokeAsync(HttpContext context)
   {
     // Only resolve profile for authenticated users
@@ -21,7 +17,7 @@ public class ProfileResolutionMiddleware(
     {
       try
       {
-        using var scope = _serviceScopeFactory.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var profileService = scope.ServiceProvider.GetRequiredService<IProfileService>();
 
         var profile = await profileService.GetOrCreateProfileAsync(context.User);
@@ -30,16 +26,16 @@ public class ProfileResolutionMiddleware(
         context.Items["Profile"] = profile;
         context.Items["ProfileId"] = profile.Id;
 
-        _logger.LogDebug("Profile resolved for user: {ProfileId}", profile.Id);
+        logger.LogDebug("Profile resolved for user: {ProfileId}", profile.Id);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to resolve profile for authenticated user");
+        logger.LogError(ex, "Failed to resolve profile for authenticated user");
         // Don't fail the request, but continue without profile in context
       }
     }
 
-    await _next(context);
+    await next(context);
   }
 }
 

@@ -54,7 +54,7 @@ public class RetrieveContacts(IMediator mediator)
         result.Value.ProfileId,
         result.Value.PluginId,
         result.Value.Provider,
-        result.Value.JsonData,
+        result.Value.Data,
         result.Value.PopulatedAt);
       return;
     }

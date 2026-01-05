@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { take, takeUntil, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import {
   Submission,
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
-import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig, 
@@ -14,6 +14,7 @@ import {
   DatatableRowClickEvent,
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
+import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 @Component({
   selector: 'app-applicant-info-submissions',
   standalone: true,
@@ -21,19 +22,15 @@ import {
   templateUrl: './submissions.component.html',
   styleUrls: ['./submissions.component.scss'],
 })
-export class SubmissionsComponent implements OnInit, OnDestroy, OnChanges {
-  // @Input() submissions: Submission[] = [];
+export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() pluginId!: string;
   @Input() provider!: string;
   @Input() key!: string;
 
-  private readonly destroy$ = new Subject<void>();
+  private destroy$ = new Subject<void>();
 
-  @Input() data?: any;
-
-  submissionsInfo: SubmissionsData[] = [];
+  submissionsData: SubmissionsData[] = [];
   isLoading = true;
-  isHydratingSubmissionsInfo = false;
   error: string | null = null;
 
   // Datatable configuration
@@ -76,55 +73,84 @@ export class SubmissionsComponent implements OnInit, OnDestroy, OnChanges {
   };
 
   constructor(
-    private readonly applicantInfoService: ApplicantInfoService
+    private applicantInfoService: ApplicantInfoService
   ) {}
 
   ngOnInit(): void {
+    console.log('SubmissionsComponent ngOnInit called');
     if (this.pluginId && this.provider) {
       this.loadSubmissions();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Reload data when pluginId changes (workspace switch)
-    if (changes['pluginId'] && !changes['pluginId'].firstChange) {
-      console.log('SubmissionsComponent - Plugin ID changed, reloading data');
-      this.loadSubmissions();
+    console.log('SubmissionsComponent ngOnChanges called:', changes);
+    
+    const pluginIdChanged = changes['pluginId'] && !changes['pluginId'].firstChange;
+    const providerChanged = changes['provider'] && !changes['provider'].firstChange;
+    
+    if (pluginIdChanged || providerChanged) {
+      console.log('SubmissionsComponent - Input changed, reloading submissions data:', {
+        pluginIdChanged,
+        providerChanged,
+        pluginId: this.pluginId,
+        provider: this.provider
+      });
+      
+      if (this.pluginId && this.provider) {
+        this.loadSubmissions();
+      }
     }
+  }
+
+  private loadSubmissions(): void {
+    this.isLoading = true;
+    this.error = null;
+    this.submissionsData = [];
+
+    console.log('SubmissionsComponent - Loading submissions data for:', {
+      pluginId: this.pluginId,
+      provider: this.provider
+    });
+
+    this.applicantInfoService.getSubmissionsInfo(this.pluginId, this.provider)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('SubmissionsComponent - Received submissions response:', response);
+          // Extract submissionsData from the response and convert to array
+          const submissionsArray = Array.isArray(response.submissionsData) 
+            ? response.submissionsData 
+            : (response.submissionsData ? [response.submissionsData] : []);
+          this.submissionsData = this.processSubmissionsData(submissionsArray);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('SubmissionsComponent - Error loading submissions:', error);
+          this.error = 'Failed to load submissions data';
+          this.submissionsData = [];
+          this.isLoading = false;
+        }
+      });
+  }
+
+  private processSubmissionsData(data: SubmissionsData[]): SubmissionsData[] {
+    if (!Array.isArray(data)) {
+      console.warn('SubmissionsComponent - Invalid data format, expected array:', data);
+      return [];
+    }
+
+    return data.map(submission => ({
+      ...submission,
+      // Ensure dates are properly formatted
+      submissionDate: new Date(submission.submissionDate),
+      lastModified: new Date(submission.lastModified)
+    }));
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  private loadSubmissions(): void {
-    this.isHydratingSubmissionsInfo = true;
-    this.error = null;
-
-    this.applicantInfoService
-      .getSubmissionsInfo(
-        this.pluginId,
-        this.provider,
-        this.data
-      )
-      .pipe(take(1), takeUntil(this.destroy$))
-      .subscribe({
-        next: (result) => {
-          this.isHydratingSubmissionsInfo = false;
-          this.submissionsInfo = Array.isArray(result.submissionsData)
-            ? result.submissionsData
-            : [result.submissionsData];
-
-          console.log('Submissions data loaded:', this.submissionsInfo);
-          this.isLoading = false;
-        },
-        error: (error) => {
-          this.isHydratingSubmissionsInfo = false;
-          this.error = 'Failed to load submissions data';
-          console.error('Error loading submissions:', error);
-        },
-      });
   }
 
   onSubmissionClick(submission: Submission): void {
