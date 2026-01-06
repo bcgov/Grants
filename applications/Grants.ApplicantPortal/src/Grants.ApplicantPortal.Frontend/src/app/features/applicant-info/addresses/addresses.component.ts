@@ -248,11 +248,10 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       isPrimary: true
     };
 
-    this.applicantInfoService.updateAddress(
+    this.applicantInfoService.setAddressAsPrimary(
       address.id,
       this.pluginId,
-      this.provider,
-      addressData
+      this.provider
     )
     .pipe(takeUntil(this.destroy$))
     .subscribe({

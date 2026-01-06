@@ -416,11 +416,10 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       isPrimary: true
     };
 
-    this.applicantInfoService.updateContact(
+    this.applicantInfoService.setContactAsPrimary(
       contact.id,
       this.pluginId,
-      this.provider,
-      contactData
+      this.provider
     )
     .pipe(takeUntil(this.destroy$))
     .subscribe({

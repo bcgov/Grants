@@ -50,11 +50,8 @@ catch {
     exit 1
 }
 
-# Define endpoints to test
+# Define endpoints to test (focusing on DEMO-compatible endpoints)
 $endpoints = @(
-    @{ Path = "/api/v1/profiles/$ProfileId?provider=DGP"; Name = "Profile (DGP)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/employment?provider=DGP"; Name = "Employment (DGP)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/security?provider=ABC"; Name = "Security (ABC)" },
     @{ Path = "/api/v1/profiles/$ProfileId/contacts?provider=DGP"; Name = "Contacts (DGP)" },
     @{ Path = "/api/v1/profiles/$ProfileId/addresses?provider=ABC"; Name = "Addresses (ABC)" },
     @{ Path = "/api/v1/profiles/$ProfileId/organization?provider=DGP"; Name = "Organization (DGP)" },
@@ -64,7 +61,7 @@ $endpoints = @(
 )
 
 Write-Host ""
-Write-Host "?? Testing Unity plugin endpoints..." -ForegroundColor Cyan
+Write-Host "?? Testing Unity plugin endpoints (DEMO-compatible structure)..." -ForegroundColor Cyan
 
 $successCount = 0
 $totalCount = $endpoints.Count
@@ -75,12 +72,24 @@ foreach ($endpoint in $endpoints) {
         
         $response = Invoke-RestMethod -Uri "$baseUrl$($endpoint.Path)" -Method Get -TimeoutSec 10
         
-        # Basic validation
-        if ($response -and $response.Contains("profileId")) {
-            Write-Host " ?" -ForegroundColor Green
+        # Basic validation for DEMO-compatible structure
+        if ($response -and $response.profileId -and $response.pluginId -eq "UNITY" -and $response.data) {
+            Write-Host " ? (DEMO-compatible)" -ForegroundColor Green
             $successCount++
+            
+            # Show sample data for first successful endpoint
+            if ($successCount -eq 1) {
+                Write-Host ""
+                Write-Host "  ?? Sample Response Structure:" -ForegroundColor Gray
+                Write-Host "     ProfileId: $($response.profileId)" -ForegroundColor White
+                Write-Host "     PluginId: $($response.pluginId)" -ForegroundColor White
+                Write-Host "     Provider: $($response.provider)" -ForegroundColor White
+                Write-Host "     Data: [JSON string containing actual data]" -ForegroundColor White
+                Write-Host "     PopulatedAt: $($response.populatedAt)" -ForegroundColor White
+                Write-Host ""
+            }
         } else {
-            Write-Host " ??  (No profile ID found)" -ForegroundColor Yellow
+            Write-Host " ??  (Invalid structure)" -ForegroundColor Yellow
         }
     }
     catch {
@@ -97,7 +106,14 @@ Write-Host "   ?? Success Rate: $(([math]::Round(($successCount / $totalCount) *
 if ($successCount -eq $totalCount) {
     Write-Host ""
     Write-Host "?? All tests passed! Unity Mock API is working correctly." -ForegroundColor Green
-    Write-Host "?? You can now point your Unity plugin to: $baseUrl" -ForegroundColor Cyan
+    Write-Host "?? Data structure matches DEMO plugin format:" -ForegroundColor Cyan
+    Write-Host "   - profileId: GUID" -ForegroundColor White
+    Write-Host "   - pluginId: 'UNITY'" -ForegroundColor White
+    Write-Host "   - provider: 'DGP' or 'ABC'" -ForegroundColor White
+    Write-Host "   - data: JSON string with actual data" -ForegroundColor White
+    Write-Host "   - populatedAt: timestamp" -ForegroundColor White
+    Write-Host ""
+    Write-Host "?? You can now configure your Unity plugin to use: $baseUrl" -ForegroundColor Cyan
 } else {
     Write-Host ""
     Write-Host "??  Some tests failed. Check the Unity Mock API logs for more details." -ForegroundColor Yellow

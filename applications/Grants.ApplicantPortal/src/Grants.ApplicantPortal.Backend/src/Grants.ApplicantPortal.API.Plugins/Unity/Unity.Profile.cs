@@ -33,11 +33,9 @@ public partial class UnityPlugin
             // Parse the Unity Mock API response to extract the data portion
             var mockApiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
             var dataElement = mockApiResponse.GetProperty("data");
-            var dataJson = JsonSerializer.Serialize(dataElement, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
-            });
+            
+            // The data is already a JSON string from the mock API, so just extract it as a string
+            var dataJson = dataElement.GetString()!;
 
             // 🔥 Fire a message when profile data is populated
             await FireProfileUpdatedMessage(metadata, cancellationToken);

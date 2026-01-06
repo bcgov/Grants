@@ -167,7 +167,11 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
     this.saveError = null;
     this.saveSuccess = false;
     
-    this.applicantInfoService.saveOrganizationInfo(organizationData)
+    this.applicantInfoService.saveOrganizationInfo(
+      organizationData,
+      this.pluginId,
+      this.provider
+    )
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {

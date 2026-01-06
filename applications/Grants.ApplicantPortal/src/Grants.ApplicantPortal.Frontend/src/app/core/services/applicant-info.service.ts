@@ -196,13 +196,15 @@ export class ApplicantInfoService {
     );
   }
 
-  saveOrganizationInfo(orgInfo: OrganizationData): Observable<any> {
+  saveOrganizationInfo(
+    orgInfo: OrganizationData, 
+    pluginId: string, 
+    provider: string
+  ): Observable<any> {
     console.log('ApplicantInfoService - Saving organization info:', orgInfo);
     
     // Get the required parameters for the API endpoint
     const addressId = orgInfo.organizationId || orgInfo.orgNumber || 'CD12E345-6789-0ABC-DEF1-234567890ABC';
-    const pluginId = 'DEMO';   // You may need to get this from configuration
-    const provider = 'PROGRAM1'; // You may need to get this from configuration
     
     // Map to the API payload structure with required properties
     const apiPayload = {
