@@ -141,7 +141,7 @@ export class ErrorHandlerService {
    */
   private clearAuthState(): void {
     try {
-      // Clear OIDC-related storage keys
+      // Clear OIDC-related storage keys with more comprehensive patterns
       const oidcKeys = [
         'angular-auth-oidc-client',
         'oidc.user',
@@ -151,20 +151,110 @@ export class ErrorHandlerService {
         'oidc.session_state',
         'oidc.access_token',
         'oidc.id_token',
-        'oidc.refresh_token'
+        'oidc.refresh_token',
+        'oidc.authorizationState',
+        'oidc.authorizationResult',
+        'oidc.silentRenew',
+        'authzData',
+        'authnResult'
       ];
       
+      // Clear direct keys
       oidcKeys.forEach(key => {
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
-        // Also try with the config ID prefix
-        localStorage.removeItem(`0-grants-portal-5361_${key}`);
-        sessionStorage.removeItem(`0-grants-portal-5361_${key}`);
       });
       
-      console.log('Successfully cleared authentication state');
+      // Clear keys with config ID prefixes (be more thorough)
+      const configIds = [
+        '0-grants-portal-5361_',
+        'grants-portal-',
+        'oidc_',
+        'auth_'
+      ];
+      
+      configIds.forEach(prefix => {
+        oidcKeys.forEach(key => {
+          localStorage.removeItem(`${prefix}${key}`);
+          sessionStorage.removeItem(`${prefix}${key}`);
+        });
+      });
+      
+      // Clear any remaining oidc-related keys by pattern matching
+      this.clearStorageByPattern('oidc');
+      this.clearStorageByPattern('auth');
+      this.clearStorageByPattern('angular-auth');
+      
+      console.log('Successfully cleared comprehensive authentication state');
     } catch (clearError) {
       console.warn('Error clearing authentication state:', clearError);
+    }
+  }
+
+  /**
+   * Clear storage items by pattern matching
+   */
+  private clearStorageByPattern(pattern: string): void {
+    try {
+      // Clear localStorage
+      const localKeys = Object.keys(localStorage);
+      localKeys.forEach(key => {
+        if (key.toLowerCase().includes(pattern.toLowerCase())) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear sessionStorage  
+      const sessionKeys = Object.keys(sessionStorage);
+      sessionKeys.forEach(key => {
+        if (key.toLowerCase().includes(pattern.toLowerCase())) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.warn(`Error clearing storage by pattern ${pattern}:`, error);
+    }
+  }
+
+  /**
+   * Comprehensive cleanup for when HTTP 431 errors occur
+   */
+  cleanupForHeaderSizeError(): void {
+    console.log('Performing comprehensive cleanup for header size issues');
+    
+    try {
+      // Clear all auth state
+      this.clearAuthState();
+      
+      // Clear any accumulated header-related data
+      const headerKeys = [
+        'Authorization',
+        'Bearer',
+        'X-Auth-Token',
+        'access_token',
+        'id_token',
+        'refresh_token'
+      ];
+      
+      headerKeys.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+        localStorage.removeItem(key.toLowerCase());
+        sessionStorage.removeItem(key.toLowerCase());
+      });
+      
+      // Force browser to clear any cached authentication headers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.unregister();
+          });
+        });
+      }
+      
+      console.log('Comprehensive header cleanup completed');
+    } catch (error) {
+      console.error('Error during comprehensive cleanup:', error);
     }
   }
 
