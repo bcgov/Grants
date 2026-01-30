@@ -47,8 +47,8 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  loginWithBCeID(): void {
-    console.log('Initiating BCeID authentication...');
+  loginRequest(): void { 
+    console.log('Initiating login authentication...');
 
     // Clear any existing authentication state that might cause conflicts
     this.clearAuthStorage();
