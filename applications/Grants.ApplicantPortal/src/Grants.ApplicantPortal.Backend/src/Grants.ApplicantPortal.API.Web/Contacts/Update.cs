@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Edit;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Contacts;
 
@@ -33,8 +34,7 @@ public class Update(IMediator _mediator)
         IsPrimary = false,
         PhoneNumber = "987-654-3210",
         Title = "Senior Manager",
-        Type = "Business",
-        ProfileId = Guid.NewGuid(),
+        Type = "Business",        
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -47,6 +47,9 @@ public class Update(IMediator _mediator)
     UpdateContactRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
     var command = new EditContactCommand(
       request.ContactId,
       request.Name!,
@@ -55,7 +58,7 @@ public class Update(IMediator _mediator)
       request.Title,
       request.Email,
       request.PhoneNumber,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

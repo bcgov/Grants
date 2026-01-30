@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Contacts;
 
@@ -28,7 +29,6 @@ public class Delete(IMediator _mediator)
       s.ExampleRequest = new DeleteContactRequest 
       { 
         ContactId = Guid.NewGuid(),
-        ProfileId = Guid.NewGuid(),
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -41,9 +41,12 @@ public class Delete(IMediator _mediator)
     DeleteContactRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
     var command = new DeleteContactCommand(
       request.ContactId,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

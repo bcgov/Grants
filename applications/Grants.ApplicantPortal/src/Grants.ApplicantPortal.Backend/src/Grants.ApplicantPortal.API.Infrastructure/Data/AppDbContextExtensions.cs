@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace Grants.ApplicantPortal.API.Infrastructure.Data;
+﻿namespace Grants.ApplicantPortal.API.Infrastructure.Data;
 
 public static class AppDbContextExtensions
 {

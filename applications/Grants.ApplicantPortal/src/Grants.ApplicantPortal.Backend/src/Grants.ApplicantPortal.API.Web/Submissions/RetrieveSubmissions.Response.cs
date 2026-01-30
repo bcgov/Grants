@@ -4,6 +4,6 @@ public record RetrieveSubmissionsResponse(
     Guid ProfileId,
     string PluginId,
     string Provider,
-    string JsonData,
+    object Data,
     DateTime PopulatedAt
 );

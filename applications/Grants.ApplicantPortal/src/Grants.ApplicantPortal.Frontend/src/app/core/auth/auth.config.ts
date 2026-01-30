@@ -13,7 +13,8 @@ export const authConfig: PassedInitialConfig = {
     silentRenewUrl: window.location.origin + '/auth/callback',
     useRefreshToken: true,
     renewTimeBeforeTokenExpiresInSeconds: 60,
-    logLevel: LogLevel.Debug,
+    // Reduce log level to prevent localStorage bloat
+    logLevel: LogLevel.Warn,
     secureRoutes: [environment.apiUrl],
     autoUserInfo: false,
     triggerAuthorizationResultEvent: true,
@@ -21,7 +22,7 @@ export const authConfig: PassedInitialConfig = {
     // Improve stability and reduce nonce issues
     historyCleanupOff: false,
     silentRenewTimeoutInSeconds: 60,
-    // Disable automatic auth checks to prevent conflicts
+    // Enable automatic cleanup to prevent storage accumulation
     autoCleanStateAfterAuthentication: true,
     // Improve token handling
     ignoreNonceAfterRefresh: true,
@@ -29,6 +30,9 @@ export const authConfig: PassedInitialConfig = {
     disablePkce: false,
     // Better error handling
     forbiddenRoute: '/login',
-    unauthorizedRoute: '/login'
+    unauthorizedRoute: '/login',
+    // Additional cleanup options to prevent header accumulation
+    maxIdTokenIatOffsetAllowedInSeconds: 120,
+    renewUserInfoAfterTokenRenew: false
   },
 };

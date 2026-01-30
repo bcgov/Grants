@@ -1,17 +1,30 @@
 <div class="callback-container">
-  <div class="callback-content">
-    <div *ngIf="isProcessing" class="spinner-container">
-      <div class="spinner-border text-primary">
-        <span class="visually-hidden">Loading...</span>
+  <div class="callback-content">  
+    <!-- Processing state -->
+    <div *ngIf="isProcessing" class="processing-state">
+      <div class="spinner-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
       </div>
+      <h3>Authenticating...</h3>
+      <p>Please wait while we complete your authentication.</p>
     </div>
-    <div *ngIf="errorMessage" class="alert alert-danger">
-      <i class="fa fa-exclamation-triangle"></i>
-      {{ errorMessage }}
+    
+    <!-- Error state -->
+    <div *ngIf="errorMessage && !isProcessing" class="error-state">
+      <div class="alert alert-danger">
+        <i class="fa fa-exclamation-triangle"></i>
+        {{ errorMessage }}
+      </div>
+      <h3>Authentication Error</h3>
+      <p>Redirecting you back to login...</p>
     </div>
-    <h3 *ngIf="isProcessing">Authenticating...</h3>
-    <h3 *ngIf="errorMessage">Authentication Error</h3>
-    <p *ngIf="isProcessing">Please wait while we complete your authentication.</p>
-    <p *ngIf="errorMessage">Redirecting you back to login...</p>
-  </div>
+    
+    <!-- Fallback state - should not normally show -->
+    <div *ngIf="!isProcessing && !errorMessage" class="fallback-state">
+      <h3>Processing Authentication...</h3>
+      <p>Please wait...</p>
+    </div>
+  </div>  
 </div>

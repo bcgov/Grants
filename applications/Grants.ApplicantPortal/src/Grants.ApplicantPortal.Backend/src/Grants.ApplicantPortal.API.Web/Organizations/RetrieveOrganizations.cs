@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Organizations.Retrieve;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Organizations;
 
@@ -29,7 +30,10 @@ public class RetrieveOrganizations(IMediator mediator)
 
   public override async Task HandleAsync(RetrieveOrganizationsRequest request, CancellationToken ct)
   {
-    var query = new RetrieveOrganizationsQuery(request.ProfileId, 
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
+    var query = new RetrieveOrganizationsQuery(profileId, 
       request.PluginId, 
       request.Provider, 
       request.Parameters);
@@ -48,7 +52,7 @@ public class RetrieveOrganizations(IMediator mediator)
         result.Value.ProfileId,
         result.Value.PluginId,
         result.Value.Provider,
-        result.Value.JsonData,
+        result.Value.Data,
         result.Value.PopulatedAt);
       return;
     }

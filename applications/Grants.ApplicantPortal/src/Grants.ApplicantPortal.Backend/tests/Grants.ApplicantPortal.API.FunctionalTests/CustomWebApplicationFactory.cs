@@ -1,6 +1,4 @@
-﻿using Grants.ApplicantPortal.API.FunctionalTests.ApiEndpoints.Contributors.Mocks;
-using Grants.ApplicantPortal.API.Infrastructure.Data;
-using Grants.ApplicantPortal.API.UseCases.Contributors.List;
+﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Microsoft.Extensions.Configuration;
 
 namespace Grants.ApplicantPortal.API.FunctionalTests;
@@ -56,13 +54,6 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         services.Remove(descriptor);
       }
 
-      // Remove the existing query service registration that uses raw SQL
-      var queryServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IListContributorsQueryService));
-      if (queryServiceDescriptor != null)
-      {
-        services.Remove(queryServiceDescriptor);
-      }
-
       string inMemoryCollectionName = Guid.NewGuid().ToString();
 
       // Create a completely separate service provider for in-memory database like integration tests do
@@ -85,9 +76,6 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         var dispatcher = serviceProvider.GetService<IDomainEventDispatcher>();
         return new AppDbContext(options, dispatcher);
       });
-
-      // Register the test-specific query service that works with in-memory database
-      services.AddScoped<IListContributorsQueryService, InMemoryListContributorsQueryService>();
     });
 
     // Override configuration for testing to disable resilience

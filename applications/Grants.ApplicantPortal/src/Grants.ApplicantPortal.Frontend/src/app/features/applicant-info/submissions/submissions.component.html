@@ -1,6 +1,6 @@
 <app-datatable
   [config]="submissionsTableConfig"
-  [data]="submissionsInfo"
+  [data]="submissionsData || []"
   [loading]="isLoading"
   (rowClick)="onSubmissionRowClick($event)"
   (actionClick)="onSubmissionAction($event)"

@@ -10,10 +10,6 @@ public class RetrieveAddressesValidator : Validator<RetrieveAddressesRequest>
 {
   public RetrieveAddressesValidator()
   {
-    RuleFor(x => x.ProfileId)
-      .NotEqual(Guid.Empty)
-      .WithMessage("ProfileId must be a valid GUID");
-
     RuleFor(x => x.PluginId)
       .Must(BeValidPluginId)
       .When(x => !string.IsNullOrEmpty(x.PluginId))

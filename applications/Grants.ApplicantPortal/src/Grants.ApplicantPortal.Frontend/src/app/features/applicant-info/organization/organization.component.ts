@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, Observable, of } from 'rxjs';
@@ -16,7 +16,7 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
   templateUrl: './organization.component.html',
   styleUrls: ['./organization.component.scss'],
 })
-export class OrganizationInfoComponent {
+export class OrganizationInfoComponent implements OnChanges {
   @Input() organizationInfo: OrganizationData | null = null;
   @Input() isLoading = false;
   @Input() isSaving = false;
@@ -51,8 +51,22 @@ export class OrganizationInfoComponent {
     this.updateFiscalFieldsFromOrganizationInfo();
   }
 
-  ngOnChanges(): void {
-    this.updateFiscalFieldsFromOrganizationInfo();
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('OrganizationComponent ngOnChanges called:', changes);
+    if (changes['organizationInfo']) {
+      console.log('organizationInfo changed:', {
+        previousValue: changes['organizationInfo'].previousValue,
+        currentValue: changes['organizationInfo'].currentValue,
+        firstChange: changes['organizationInfo'].firstChange
+      });
+      
+      if (changes['organizationInfo'].currentValue) {
+        console.log('OrganizationComponent - organizationInfo received, updating fields');
+        this.updateFiscalFieldsFromOrganizationInfo();
+      } else {
+        console.log('OrganizationComponent - organizationInfo is null/undefined');
+      }
+    }
   }
 
   private updateFiscalFieldsFromOrganizationInfo(): void {

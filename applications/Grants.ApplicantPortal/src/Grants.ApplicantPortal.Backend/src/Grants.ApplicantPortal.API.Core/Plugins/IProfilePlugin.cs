@@ -26,7 +26,7 @@ public interface IProfilePlugin
   IReadOnlyList<string> GetSupportedKeys(string provider);
 
   /// <summary>
-  /// Populates profile data from external sources
+  /// Populates profile data from external sources or cache
   /// </summary>
   Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default);
 

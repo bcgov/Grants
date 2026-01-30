@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Addresses.Retrieve;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Addresses;
 
@@ -29,7 +30,10 @@ public class RetrieveAddresses(IMediator mediator)
 
   public override async Task HandleAsync(RetrieveAddressesRequest request, CancellationToken ct)
   {
-    var query = new RetrieveAddressesQuery(request.ProfileId, 
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+
+    var query = new RetrieveAddressesQuery(profileId, 
       request.PluginId, 
       request.Provider, 
       request.Parameters);
@@ -48,7 +52,7 @@ public class RetrieveAddresses(IMediator mediator)
         result.Value.ProfileId,
         result.Value.PluginId,
         result.Value.Provider,
-        result.Value.JsonData,
+        result.Value.Data,
         result.Value.PopulatedAt);
       return;
     }

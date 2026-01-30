@@ -46,7 +46,8 @@ public class EditAddressHandler(
           request.ProfileId,
           request.PluginId,
           request.Provider,
-          "ADDRESSES");
+          "ADDRESSES",
+          cancellationToken);
           
         logger.LogDebug("Invalidated addresses cache for ProfileId: {ProfileId} after address edit", 
           request.ProfileId);

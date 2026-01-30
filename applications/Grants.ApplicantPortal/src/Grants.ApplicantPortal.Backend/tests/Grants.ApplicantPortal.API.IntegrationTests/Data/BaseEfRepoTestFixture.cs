@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
 using Grants.ApplicantPortal.API.Infrastructure.Data;
 
 namespace Grants.ApplicantPortal.API.IntegrationTests.Data;
@@ -32,8 +32,8 @@ public abstract class BaseEfRepoTestFixture
     return builder.Options;
   }
 
-  protected EfRepository<Contributor> GetRepository()
+  protected EfRepository<T> GetRepository<T>() where T : class, IAggregateRoot
   {
-    return new EfRepository<Contributor>(_dbContext);
+    return new EfRepository<T>(_dbContext);
   }
 }

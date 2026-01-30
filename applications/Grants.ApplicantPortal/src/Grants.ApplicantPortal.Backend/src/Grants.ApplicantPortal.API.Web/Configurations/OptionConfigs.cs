@@ -1,6 +1,6 @@
 ﻿using Ardalis.ListStartupServices;
-using Grants.ApplicantPortal.API.Infrastructure.Email;
 using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.Core.Plugins;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
 
@@ -11,9 +11,10 @@ public static class OptionConfigs
                                                     Microsoft.Extensions.Logging.ILogger logger,
                                                     WebApplicationBuilder builder)
   {
-    services.Configure<MailserverConfiguration>(configuration.GetSection("Mailserver"))
-            .Configure<KeycloakConfiguration>(configuration.GetSection(KeycloakConfiguration.SectionName))
+    services.Configure<KeycloakConfiguration>(configuration.GetSection(KeycloakConfiguration.SectionName))
             .Configure<ProfileCacheOptions>(configuration.GetSection(ProfileCacheOptions.SectionName))
+            .Configure<PluginConfiguration>(configuration.GetSection(PluginConfiguration.SectionName))
+
     // Configure Web Behavior
     .Configure<CookiePolicyOptions>(options =>
     {

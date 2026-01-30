@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Create;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Contacts;
 
@@ -33,7 +34,6 @@ public class Create(IMediator _mediator)
         PhoneNumber = "123-456-7890",
         Title = "Manager",
         Type = "Business",
-        ProfileId = Guid.NewGuid(),
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -46,6 +46,9 @@ public class Create(IMediator _mediator)
     CreateContactRequest request,
     CancellationToken ct)
   {
+    // Get the current user's profile ID from the HTTP context
+    var profileId = HttpContext.GetRequiredProfileId();
+    
     var command = new CreateContactCommand(
       request.Name!,
       request.Type!,
@@ -53,7 +56,7 @@ public class Create(IMediator _mediator)
       request.Title,
       request.Email,
       request.PhoneNumber,
-      request.ProfileId,
+      profileId,
       request.PluginId,
       request.Provider);
 

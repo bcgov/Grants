@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import {
   provideHttpClient,
@@ -16,6 +16,7 @@ import {
 import { authConfig } from './core/auth/auth.config';
 import { provideAuth } from 'angular-auth-oidc-client';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { StorageCleanupService } from './core/services/storage-cleanup.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -29,6 +30,15 @@ export const appConfig: ApplicationConfig = {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true,
+    },
+    // Initialize storage cleanup service
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (storageCleanupService: StorageCleanupService) => () => {
+        storageCleanupService.initialize();
+      },
+      deps: [StorageCleanupService],
       multi: true,
     },
   ],

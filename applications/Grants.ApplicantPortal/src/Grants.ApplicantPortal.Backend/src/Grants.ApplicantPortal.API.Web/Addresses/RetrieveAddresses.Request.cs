@@ -2,16 +2,10 @@
 
 public class RetrieveAddressesRequest
 {
-  public const string Route = "/Addresses/{ProfileId:Guid}/{PluginId}/{Provider}";
+  public const string Route = "/Addresses/{PluginId}/{Provider}";
   public static string BuildRoute(Guid profileId, string pluginId, string provider)
-    => Route.Replace("{ProfileId:Guid}", profileId.ToString())
-            .Replace("{PluginId}", pluginId)
+    => Route.Replace("{PluginId}", pluginId)
             .Replace("{Provider}", provider);
-
-  /// <summary>
-  /// The unique identifier for the profile to retrieve addresses for
-  /// </summary>
-  public Guid ProfileId { get; set; }
 
   /// <summary>
   /// Plugin identifier for plugin-specific address retrieval

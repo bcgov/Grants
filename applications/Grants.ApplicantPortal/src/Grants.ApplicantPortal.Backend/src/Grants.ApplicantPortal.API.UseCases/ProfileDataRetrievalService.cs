@@ -1,6 +1,8 @@
 ﻿using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
 using Grants.ApplicantPortal.API.Core.Plugins;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Grants.ApplicantPortal.API.UseCases;
 
@@ -28,11 +30,11 @@ public interface IProfileDataRetrievalService
 /// This service provides the common logic used by all specific profile data handlers.
 /// </summary>
 public class ProfileDataRetrievalService(
-    HybridCache hybridCache,
-    IProfilePluginFactory pluginFactory,
-    IReadRepository<Profile> profileRepository,
-    IOptions<ProfileCacheOptions> profileCacheOptions,
-    ILogger<ProfileDataRetrievalService> logger) : IProfileDataRetrievalService
+IDistributedCache distributedCache,
+IProfilePluginFactory pluginFactory,
+IReadRepository<Profile> profileRepository,
+IOptions<ProfileCacheOptions> profileCacheOptions,
+ILogger<ProfileDataRetrievalService> logger) : IProfileDataRetrievalService
 {
   public async Task<Result<ProfileData>> RetrieveProfileDataAsync(
     Guid profileId,
@@ -47,35 +49,71 @@ public class ProfileDataRetrievalService(
 
     try
     {
-      // First, validate that the ProfileId exists in the database -- excluded for now
-      //var profile = await profileRepository.GetByIdAsync(profileId, cancellationToken);
-      //if (profile == null)
-      //{
-      //  logger.LogWarning("Profile not found in database for ProfileId: {ProfileId}", profileId);
-      //  return Result.NotFound($"Profile with ID {profileId} not found");
-      //}
+      var profile = await profileRepository.GetByIdAsync(profileId, cancellationToken);
+
+      if (profile == null)
+      {
+        logger.LogWarning("Profile not found in database for ProfileId: {ProfileId}", profileId);
+        return Result.NotFound($"Profile with ID {profileId} not found");
+      }
 
       var cacheKey = $"{profileCacheOptions.Value.CacheKeyPrefix}{profileId}:{pluginId}:{provider}:{key}";
 
-      // Configure cache options
-      var entryOptions = new HybridCacheEntryOptions
+      logger.LogInformation("Cache key: {CacheKey} for {DataType} data", cacheKey, key);
+
+      // Configure cache options for distributed cache
+      var cacheExpiryMinutes = profileCacheOptions.Value.CacheExpiryMinutes;
+      var slidingExpiryMinutes = profileCacheOptions.Value.SlidingExpiryMinutes;
+
+      logger.LogInformation("Cache options: Expiration={Expiration}min, SlidingExpiration={SlidingExpiration}min",
+          cacheExpiryMinutes, slidingExpiryMinutes);
+
+      // Use IDistributedCache directly for reliable Redis caching
+      try
       {
-        Expiration = TimeSpan.FromMinutes(profileCacheOptions.Value.CacheExpiryMinutes),
-        LocalCacheExpiration = TimeSpan.FromMinutes(profileCacheOptions.Value.SlidingExpiryMinutes)
-      };
+        // First try to get from cache (seeded DEMO data or previously cached data)
+        var cachedBytes = await distributedCache.GetAsync(cacheKey, cancellationToken);
+        if (cachedBytes != null)
+        {
+          logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
+          var cachedProfileData = JsonSerializer.Deserialize<ProfileData>(cachedBytes);
+          if (cachedProfileData != null)
+          {
+            logger.LogInformation("Successfully retrieved {DataType} data for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+                key, profileId, pluginId, provider);
+            return Result.Success(cachedProfileData);
+          }
+        }
 
-      // Use HybridCache with built-in stampede protection and L1/L2 caching
-      var profileData = await hybridCache.GetOrCreateAsync(
-        cacheKey,
-        async cancel => await HydrateProfileDataAsync(profileId, pluginId, provider, key, additionalData, cancel),
-        entryOptions,
-        null,
-        cancellationToken);
+        logger.LogInformation("Cache miss - hydrating {Provider} data for ProfileId: {ProfileId}, PluginId: {PluginId}", provider, profileId, pluginId);
 
-      logger.LogInformation("Successfully retrieved {DataType} data for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
-          key, profileId, pluginId, provider);
+        // Cache miss - get data from plugin
+        var profileData = await HydrateProfileDataAsync(profileId, pluginId, provider, key, additionalData, cancellationToken);
 
-      return Result.Success(profileData);
+        // Store in distributed cache for future requests
+        var dataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+        var cacheOptions = new DistributedCacheEntryOptions
+        {
+          AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheExpiryMinutes),
+          SlidingExpiration = TimeSpan.FromMinutes(slidingExpiryMinutes)
+        };
+
+        await distributedCache.SetAsync(cacheKey, dataBytes, cacheOptions, cancellationToken);
+        logger.LogInformation("Cached {Provider} data for ProfileId: {ProfileId}", provider, profileId);
+
+        logger.LogInformation("Cache operation completed for key: {CacheKey}", cacheKey);
+        logger.LogInformation("Successfully retrieved {DataType} data for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+            key, profileId, pluginId, provider);
+
+        return Result.Success(profileData);
+      }
+      catch (Exception ex)
+      {
+        logger.LogError(ex, "Error during cache operations for key: {CacheKey}", cacheKey);
+        // Fallback to direct plugin call without caching
+        var fallbackData = await HydrateProfileDataAsync(profileId, pluginId, provider, key, additionalData, cancellationToken);
+        return Result.Success(fallbackData);
+      }
     }
     catch (Exception ex)
     {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -7,6 +7,7 @@ import { take, takeUntil } from 'rxjs/operators';
 import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
+import { ContactInfo, Contact } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig,
@@ -15,23 +16,17 @@ import {
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
 
-interface Contact {
-  id: string; // GUID
-  contactId: string;
+interface ContactDisplay {
+  id: string;
   type: string;
-  firstName: string;
-  lastName: string;
   name: string;
   email: string;
   phone: string;
   title: string;
-  extension?: string;
-  department?: string;
   isPrimary: boolean;
   isActive: boolean;
-  preferredContact: boolean;
-  lastUpdated: string;
-  allowEdit: boolean;
+  lastUpdated?: string;
+  allowEdit?: boolean;
 }
 
 @Component({
@@ -45,14 +40,16 @@ interface Contact {
   templateUrl: './contacts.component.html',
   styleUrls: ['./contacts.component.scss'],
 })
-export class ContactsComponent implements OnInit, OnDestroy {
-  @Input() profileId!: string;
+export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   @Input() pluginId!: string;
   @Input() provider!: string;
+  @Input() key!: string;
+
+  private readonly destroy$ = new Subject<void>();
 
   applicantInfo: ApplicantInfo | null = null;
-  contacts: Contact[] = [];
-  primaryContact: Contact | null = null;
+  contacts: ContactDisplay[] = [];
+  primaryContact: ContactDisplay | null = null;
 
   // Modal properties
   showAddContactModal = false;
@@ -65,25 +62,20 @@ export class ContactsComponent implements OnInit, OnDestroy {
   showDeleteConfirmModal = false;
   isDeletingContact = false;
   deleteContactError: string | null = null;
-  contactToDelete: Contact | null = null;
+  contactToDelete: ContactDisplay | null = null;
   
   // Edit mode properties
   isEditMode = false;
   editingContactId: string | null = null;
   
-  newContact: Partial<Contact> = {
-    firstName: '',
-    lastName: '',
+  newContact: Partial<ContactDisplay> = {
     name: '',
     email: '',
     phone: '',
     title: '',
-    extension: '',
-    department: '',
     type: 'General',
     isPrimary: false,
     isActive: true,
-    preferredContact: false,
     allowEdit: true
   };
 
@@ -116,8 +108,6 @@ export class ContactsComponent implements OnInit, OnDestroy {
     loadingMessage: 'Loading your contacts...'
   };
 
-  // Subjects for cleanup
-  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly applicantService: ApplicantService,
@@ -125,8 +115,47 @@ export class ContactsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (this.profileId && this.pluginId && this.provider) {
-      this.loadData();
+    console.log('ContactsComponent ngOnInit - inputs:', {
+      pluginId: this.pluginId,
+      provider: this.provider,
+      hasPluginId: !!this.pluginId,
+      hasProvider: !!this.provider
+    });
+    
+    if (this.pluginId && this.provider) {
+      console.log('ContactsComponent - Calling loadContacts()');
+      this.loadContacts();
+    } else {
+      console.log('ContactsComponent - Missing pluginId or provider, not loading contacts');
+    }
+    this.loadApplicantInfo();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('ContactsComponent ngOnChanges called:', {
+      changes,
+      currentInputs: {
+        pluginId: this.pluginId,
+        provider: this.provider
+      }
+    });
+    
+    // Reload data when pluginId or provider changes
+    const pluginIdChanged = changes['pluginId'];
+    const providerChanged = changes['provider'];
+    
+    if ((pluginIdChanged && !pluginIdChanged.firstChange) || (providerChanged && !providerChanged.firstChange)) {
+      if (this.pluginId && this.provider) {
+        console.log('ContactsComponent - Input changed, reloading data:', {
+          pluginIdChanged: !!pluginIdChanged,
+          providerChanged: !!providerChanged,
+          oldPluginId: pluginIdChanged?.previousValue,
+          newPluginId: pluginIdChanged?.currentValue,
+          oldProvider: providerChanged?.previousValue,
+          newProvider: providerChanged?.currentValue
+        });
+        this.loadContacts();
+      }
     }
   }
 
@@ -135,9 +164,9 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadData(): void {
-    this.loadApplicantInfo();
-    this.loadContacts();
+  // Helper method to get safe data for datatable
+  getContactsForTable(): ContactDisplay[] {
+    return this.contacts && Array.isArray(this.contacts) ? this.contacts : [];
   }
 
   private loadApplicantInfo(): void {
@@ -150,35 +179,49 @@ export class ContactsComponent implements OnInit, OnDestroy {
   }
 
   private loadContacts(): void {
-    this.isHydratingContacts = true;
+    console.log('ContactsComponent loadContacts() called with:', {
+      pluginId: this.pluginId,
+      provider: this.provider
+    });
+    
+    this.isLoading = true;
     this.error = null;
 
+    console.log('Making API call to getContactsInfo...');
     this.applicantInfoService
       .getContactsInfo(
-        this.profileId,
         this.pluginId,
         this.provider
       )
       .pipe(take(1), takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
-          this.isHydratingContacts = false;
-          // Parse the result based on the actual API response structure
-          this.contacts = Array.isArray(result.jsonData) 
-            ? result.jsonData 
-            : JSON.parse(result.jsonData)?.data?.contacts || [];
-          
-          this.primaryContact = this.contacts.find(c => c.isPrimary) || this.contacts[0] || null;
-          console.log('Contacts data loaded:', this.contacts);
           this.isLoading = false;
+          this.contacts = this.processContactsData(result.contactsData || []);
+          this.primaryContact = this.contacts.find(contact => contact.isPrimary) || null;
+          console.log('Contacts data loaded:', this.contacts);
         },
         error: (error) => {
-          this.isHydratingContacts = false;
-          this.error = 'Failed to load contacts data';
           this.isLoading = false;
+          this.error = 'Failed to load contacts data';
           console.error('Error loading contacts:', error);
         },
       });
+  }
+
+  private processContactsData(contacts: any[]): ContactDisplay[] {
+    return contacts.map(contact => ({
+      id: contact.id || `contact-${Math.random()}`,
+      type: contact.type || 'Unknown',
+      name: contact.name || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      title: contact.title || '',
+      isPrimary: contact.isPrimary || false,
+      isActive: contact.isActive !== false,
+      lastUpdated: contact.lastUpdated,
+      allowEdit: contact.allowEdit !== false
+    }));
   }
 
   // Event handlers
@@ -210,13 +253,11 @@ export class ContactsComponent implements OnInit, OnDestroy {
     const apiCall = this.isEditMode
       ? this.applicantInfoService.updateContact(
           this.editingContactId!,
-          this.profileId,
           this.pluginId,
           this.provider,
           contactPayload
         )
       : this.applicantInfoService.createContact(
-          this.profileId,
           this.pluginId,
           this.provider,
           contactPayload
@@ -230,7 +271,7 @@ export class ContactsComponent implements OnInit, OnDestroy {
         this.isSavingContact = false;
         this.showAddContactModal = false;
         this.resetNewContactForm();
-        // Refresh the contacts list
+        // Refresh contacts data to show updated information
         this.loadContacts();
       },
       error: (error) => {
@@ -257,31 +298,19 @@ export class ContactsComponent implements OnInit, OnDestroy {
     
     if (!this.isEditMode) {
       this.newContact = {
-        firstName: '',
-        lastName: '',
         name: '',
         email: '',
         phone: '',
         title: '',
-        extension: '',
-        department: '',
         type: 'General',
         isPrimary: false,
         isActive: true,
-        preferredContact: false,
         allowEdit: true
       };
     }
   }
 
-  getContactsForTable(): any[] {
-    return this.contacts.map(contact => {
-      const tableRow = { ...contact };      
-      return tableRow;
-    });
-  }
-
-  isValidContact(contact: Partial<Contact>): boolean {
+  isValidContact(contact: Partial<ContactDisplay>): boolean {
     this.validateName();
     this.validateEmail();
     
@@ -322,7 +351,7 @@ export class ContactsComponent implements OnInit, OnDestroy {
     // TODO: Navigate to contact detail view
   }
 
-  onEditContact(contact: Contact): void {
+  onEditContact(contact: ContactDisplay): void {
     console.log('Editing contact...', contact);
     this.isEditMode = true;
     this.editingContactId = contact.id;
@@ -336,17 +365,14 @@ export class ContactsComponent implements OnInit, OnDestroy {
       type: contact.type,
       phone: contact.phone,
       isPrimary: contact.isPrimary,
-      extension: contact.extension,
-      department: contact.department,
-      isActive: contact.isActive,
-      preferredContact: contact.preferredContact,
-      allowEdit: contact.allowEdit
+      isActive: contact.isActive || true,
+      allowEdit: contact.allowEdit || true
     };
     
     this.showAddContactModal = true;
   }
 
-  onDeleteContact(contact: Contact): void {
+  onDeleteContact(contact: ContactDisplay): void {
     console.log('Preparing to delete contact...', contact);
     this.contactToDelete = contact;
     this.deleteContactError = null;
@@ -361,28 +387,13 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.isDeletingContact = true;
     this.deleteContactError = null;
 
-    this.applicantInfoService.deleteContact(
-      this.contactToDelete.id,
-      this.profileId,
-      this.pluginId,
-      this.provider
-    ).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response) => {
-        console.log('Contact deleted successfully:', response);
-        this.isDeletingContact = false;
-        this.showDeleteConfirmModal = false;
-        this.contactToDelete = null;
-        // Refresh the contacts list
-        this.loadContacts();
-      },
-      error: (error) => {
-        console.error('Failed to delete contact:', error);
-        this.isDeletingContact = false;
-        this.deleteContactError = error?.error?.message || 'Failed to delete contact. Please try again.';
-      }
-    });
+    // For embedded data, just remove from local display
+    this.contacts = this.contacts.filter(c => c.id !== this.contactToDelete!.id);
+    console.log('Contact deleted locally:', this.contactToDelete);
+    
+    this.isDeletingContact = false;
+    this.showDeleteConfirmModal = false;
+    this.contactToDelete = null;
   }
 
   onCancelDeleteContact(): void {
@@ -392,25 +403,41 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.contactToDelete = null;
   }
 
-  onSetAsPrimary(contact: Contact): void {
+  onSetAsPrimary(contact: ContactDisplay): void {
     console.log('Setting as primary contact...', contact);
     
+    // Make API call to set contact as primary
+    const contactData = {
+      name: contact.name,
+      email: contact.email,
+      title: contact.title,
+      type: contact.type,
+      phoneNumber: contact.phone,
+      isPrimary: true
+    };
+
     this.applicantInfoService.setContactAsPrimary(
       contact.id,
-      this.profileId,
       this.pluginId,
       this.provider
-    ).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response) => {
+    )
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (response: any) => {
         console.log('Contact set as primary successfully:', response);
-        // Refresh the contacts list to update the display
-        this.loadContacts();
+        
+        // Update local state after successful API call
+        this.contacts = this.contacts.map(c => ({
+          ...c,
+          isPrimary: c.id === contact.id
+        }));
+        
+        this.primaryContact = { ...contact, isPrimary: true };
+        console.log('Primary contact updated locally:', this.primaryContact);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to set contact as primary:', error);
-        // Could add a toast notification here
+        // Optionally show an error message to the user
       }
     });
   }
@@ -439,7 +466,7 @@ export class ContactsComponent implements OnInit, OnDestroy {
   }
 
   onContactAction(event: DatatableActionEvent): void {
-    const contact = event.row as Contact;
+    const contact = event.row as ContactDisplay;
     
     // Check if the contact can be edited for actions that require it
     if ((event.action === 'edit' || event.action === 'setAsPrimary' || event.action === 'delete') && !contact.allowEdit) {

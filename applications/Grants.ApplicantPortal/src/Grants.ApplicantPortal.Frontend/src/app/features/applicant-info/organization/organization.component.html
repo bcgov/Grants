@@ -143,7 +143,8 @@
           <input
             id="nonRegOrgName"
             type="text"
-            [(ngModel)]="organizationInfo!.nonRegOrgName"
+            [ngModel]="organizationInfo?.nonRegOrgName || ''"
+            (ngModelChange)="organizationInfo && (organizationInfo.nonRegOrgName = $event)"
             [disabled]="!isEditMode"
             class="form-control"
           />
@@ -155,7 +156,8 @@
           <input
             id="orgSize"
             type="text"
-            [(ngModel)]="organizationInfo!.orgSize"
+            [ngModel]="organizationInfo?.orgSize || ''"
+            (ngModelChange)="organizationInfo && (organizationInfo.orgSize = $event)"
             [disabled]="!isEditMode"
             class="form-control"
           />

@@ -48,7 +48,8 @@ public class EditOrganizationHandler(
           request.ProfileId,
           request.PluginId,
           request.Provider,
-          "ORGINFO");
+          "ORGINFO",
+          cancellationToken);
           
         logger.LogDebug("Invalidated organization cache for ProfileId: {ProfileId} after organization edit", 
           request.ProfileId);

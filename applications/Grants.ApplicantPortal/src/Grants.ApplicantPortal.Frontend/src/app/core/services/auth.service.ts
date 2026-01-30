@@ -28,6 +28,11 @@ export class AuthService {
         this.authState$.next({ 
           isAuthenticated: result.isAuthenticated
         });
+
+        // If user logs out, clear workspace
+        if (!result.isAuthenticated) {
+          this.clearWorkspaceOnLogout();
+        }
       },
       error: (error) => {
         console.error('AuthService - Authentication state error:', error);
@@ -45,6 +50,15 @@ export class AuthService {
           });
         }
       }
+    });
+  }
+
+  private clearWorkspaceOnLogout(): void {
+    // Dynamic import to avoid circular dependency
+    import('./workspace.service').then(({ WorkspaceService }) => {
+      // Get service instance from injector if needed
+      // For now, just clear localStorage directly
+      localStorage.removeItem('selectedWorkspace');
     });
   }
 
@@ -87,8 +101,24 @@ export class AuthService {
   logout(): void {
     console.log('AuthService - Initiating logout');
     
+    // Perform comprehensive cleanup before logout
+    this.errorHandler.cleanupForHeaderSizeError();
+    
     // Navigate to logout route which will handle the cleanup and redirection
     this.router.navigate(['/logout']);
+  }
+
+  /**
+   * Emergency cleanup for HTTP 431 errors
+   */
+  emergencyCleanup(): void {
+    console.log('AuthService - Performing emergency cleanup for header size issues');
+    this.errorHandler.cleanupForHeaderSizeError();
+    
+    // Force logout and redirect
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+    }, 100);
   }
 
   getAccessToken(): Observable<string> {
