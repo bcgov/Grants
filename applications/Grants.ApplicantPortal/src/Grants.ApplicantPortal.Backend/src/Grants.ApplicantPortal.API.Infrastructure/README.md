@@ -62,4 +62,76 @@ You can also run PostgreSQL using Docker:
 ```bash
 docker run --name postgres-dev -e POSTGRES_PASSWORD=admin -d -p 5432:5432 postgres:15
 docker exec -it postgres-dev createdb -U postgres applicant_portal
+```
+
+## Caching Configuration
+
+The application supports both **in-memory caching** and **Redis distributed caching**. The caching provider is automatically selected based on the presence of the Redis connection string.
+
+### Automatic Cache Provider Selection
+
+- **If Redis connection string is present**: The application uses Redis for distributed caching
+- **If Redis connection string is not present**: The application falls back to in-memory caching
+
+### Redis Configuration (Optional)
+
+To enable Redis caching, add a `Redis` connection string to your `appsettings.json` or `appsettings.Development.json`:
+
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Host=localhost;Database=ApplicantPortal;Username=postgres;Password=admin;Port=5432",
+  "Redis": "localhost:6379,password=password,defaultDatabase=1,abortConnect=false"
+}
+```
+
+#### Redis Connection String Examples
+
+**Basic Redis Connection (no password):**
+```json
+"Redis": "localhost:6379,defaultDatabase=1,abortConnect=false"
+```
+
+**Redis with Authentication:**
+```json
+"Redis": "localhost:6379,password=yourpassword,defaultDatabase=1,abortConnect=false"
+```
+
+**Redis Sentinel Configuration:**
+```json
+"Redis": "sentinel1:26379,sentinel2:26379,sentinel3:26379,serviceName=mymaster,defaultDatabase=1,abortConnect=false"
+```
+
+**Redis Sentinel with Authentication:**
+```json
+"Redis": "sentinel1:26379,sentinel2:26379,sentinel3:26379,serviceName=mymaster,defaultDatabase=1,password=yourpassword,abortConnect=false"
+```
+
+### Using Docker for Redis (Optional)
+
+You can run Redis using Docker:
+
+```bash
+# Redis without password
+docker run --name redis-dev -d -p 6379:6379 redis:7
+
+# Redis with password
+docker run --name redis-dev -d -p 6379:6379 redis:7 redis-server --requirepass yourpassword
+```
+
+### Profile Cache Settings
+
+The profile caching behavior is configured in the `ProfileCache` section:
+
+```json
+"ProfileCache": {
+  "CacheKeyPrefix": "profile:",
+  "CacheExpiryMinutes": 60,
+  "SlidingExpiryMinutes": 15
+}
+```
+
+- **CacheKeyPrefix**: Prefix for all profile cache keys
+- **CacheExpiryMinutes**: Absolute expiration time in minutes
+- **SlidingExpiryMinutes**: Sliding expiration time in minutes (cache is extended if accessed)
+
 
