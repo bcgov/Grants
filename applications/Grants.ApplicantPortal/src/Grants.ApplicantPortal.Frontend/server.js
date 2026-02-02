@@ -12,6 +12,10 @@ const port = process.env.PORT || 4200;
 const enableProxy = process.env.ENABLE_API_PROXY === 'true';
 const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
 
+// Configure Express to handle larger headers
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 // Environment variables for runtime substitution
 const envVars = {
   KEYCLOAK__AUTHSERVERURL: process.env.KEYCLOAK__AUTHSERVERURL || 'https://dev.loginproxy.gov.bc.ca/auth',
@@ -202,6 +206,7 @@ app.get('*', catchAllLimiter, (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
+  console.log(`Max HTTP header size: ${process.env.NODE_OPTIONS?.includes('--max-http-header-size') ? 'Custom' : 'Default (8KB)'}`);
   if (enableProxy) {
     console.log(`API proxy: ENABLED - /api/* → ${backendServiceUrl}`);
   } else {
