@@ -12,7 +12,7 @@ const port = process.env.PORT || 4200;
 const enableProxy = process.env.ENABLE_API_PROXY === 'true';
 const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
 
-// Configure Express to handle larger headers
+// Configure Express to allow larger JSON and URL-encoded request bodies
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
