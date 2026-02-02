@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng build --configuration=development && node --max-http-header-size=32768 server.js",
-    "start:dev": "ng serve --configuration=development --max-http-header-size=32768",
+    "start:dev": "ng serve --configuration=development",
     "build": "ng build --configuration=deploy",
     "build:dev": "ng build --configuration=development",
     "build:docker": "ng build --configuration=development",
