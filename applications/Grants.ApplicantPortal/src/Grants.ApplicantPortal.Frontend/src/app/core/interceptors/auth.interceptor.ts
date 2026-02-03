@@ -37,9 +37,12 @@ export class AuthInterceptor implements HttpInterceptor {
         return next.handle(authRequest).pipe(
           catchError((error: HttpErrorResponse) => {
             if (error.status === 431) {
-              console.error('HTTP 431 - Request headers too large. Performing emergency cleanup.');
-              this.handleHeaderSizeError();
-              return throwError(() => new Error('Request headers too large - cleared authentication state'));
+              console.error('HTTP 431 - Request headers too large. This should not happen with proper Node.js configuration.');
+              // Simple cleanup and redirect - the configuration should prevent this
+              localStorage.clear();
+              sessionStorage.clear();
+              this.router.navigate(['/login']);
+              return throwError(() => new Error('Request headers too large - please try logging in again'));
             }
             if (error.status === 401 && token) {
               return this.handle401Error(request, next);
@@ -49,27 +52,6 @@ export class AuthInterceptor implements HttpInterceptor {
         );
       })
     );
-  }
-
-  private handleHeaderSizeError(): void {
-    // Dynamic import to avoid circular dependency
-    import('../services/auth.service').then(({ AuthService }) => {
-      // We need to get the service instance - for now use direct cleanup
-      this.performEmergencyCleanup();
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 100);
-    });
-  }
-
-  private performEmergencyCleanup(): void {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-      console.log('Emergency cleanup completed - all storage cleared');
-    } catch (error) {
-      console.error('Error during emergency cleanup:', error);
-    }
   }
 
   private addTokenHeader(request: HttpRequest<any>, token: string): HttpRequest<any> {
