@@ -134,4 +134,59 @@ The profile caching behavior is configured in the `ProfileCache` section:
 - **CacheExpiryMinutes**: Absolute expiration time in minutes
 - **SlidingExpiryMinutes**: Sliding expiration time in minutes (cache is extended if accessed)
 
+## Logging Configuration
+
+The application uses **Serilog** for structured logging. By default, logs are written to the console only.
+
+### Adding File Logging (Optional)
+
+If you need to persist logs to files, you can add the file sink to your `appsettings.Development.json` or `appsettings.json`:
+
+```json
+"Serilog": {
+  "MinimumLevel": {
+    "Default": "Debug"
+  },
+  "WriteTo": [
+    {
+      "Name": "Console"
+    },
+    {
+      "Name": "File",
+      "Args": {
+        "path": "log.txt",
+        "rollingInterval": "Day"
+      }
+    }
+  ]
+}
+```
+
+### File Sink Configuration Options
+
+- **path**: The path to the log file (e.g., `"logs/app.log"` or `"log.txt"`)
+- **rollingInterval**: When to roll log files (e.g., `"Day"`, `"Hour"`, `"Month"`)
+- **retainedFileCountLimit**: Number of log files to retain (default: 31)
+- **fileSizeLimitBytes**: Maximum size of a log file before rolling (default: 1GB)
+- **rollOnFileSizeLimit**: Whether to roll files based on size (default: false)
+
+Example with additional options:
+```json
+{
+  "Name": "File",
+  "Args": {
+    "path": "logs/app-.log",
+    "rollingInterval": "Day",
+    "retainedFileCountLimit": 7,
+    "fileSizeLimitBytes": 10485760,
+    "rollOnFileSizeLimit": true,
+    "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+  }
+}
+```
+
+
+
+
+
 
