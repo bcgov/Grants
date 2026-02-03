@@ -12,7 +12,7 @@ public static class InfrastructureServiceExtensions
     ConfigurationManager config,
     ILogger logger)
   {
-    string? connectionString = config.GetConnectionString("DefaultConnection");
+    string? connectionString = config.GetConnectionString("Grants");
     Guard.Against.Null(connectionString);
 
     // Add DbContext with PostgreSQL provider
