@@ -7,6 +7,16 @@ public class ExternalServiceConfiguration
 {
     public required string BaseUrl { get; set; }
     public string? ApiKey { get; set; }
+    
+    /// <summary>
+    /// Specifies the authentication scheme to use for the API key.
+    /// Options: "Bearer" (default), "X-Api-Key", "ApiKey", or any custom header name.
+    /// When set, the API key will be added using the specified header.
+    /// For "Bearer", it will use "Authorization: Bearer {apikey}".
+    /// For custom headers like "X-Api-Key", it will use "{HeaderName}: {apikey}".
+    /// </summary>
+    public string AuthHeaderName { get; set; } = "Bearer";
+    
     public Dictionary<string, string>? Headers { get; set; }
     public int TimeoutSeconds { get; set; } = 30;
     public int MaxRetryAttempts { get; set; } = 3;
