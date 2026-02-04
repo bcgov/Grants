@@ -74,10 +74,10 @@ class Program
             .ConfigureServices((hostContext, services) =>
             {
                 // Get connection string from configuration
-                string? connectionString = configuration.GetConnectionString("DefaultConnection");
+                string? connectionString = configuration.GetConnectionString("Grants");
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    throw new InvalidOperationException("DefaultConnection string is not configured.");
+                    throw new InvalidOperationException("Grants connection string is not configured.");
                 }
 
                 // Add MediatR for domain event dispatching
