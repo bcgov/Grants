@@ -6,7 +6,7 @@ import {
   HttpInterceptor,
   HttpErrorResponse,
 } from '@angular/common/http';
-import { Observable, switchMap, take, catchError, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, switchMap, take, catchError, throwError, BehaviorSubject, filter } from 'rxjs';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Router } from '@angular/router';
 
@@ -14,6 +14,14 @@ import { Router } from '@angular/router';
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+
+  /**
+   * Tracks the last time we redirected to /login due to a 401.
+   * Prevents rapid-fire redirect loops when the API keeps returning 401
+   * but the OIDC session is still valid.
+   */
+  private lastAuthFailureRedirect = 0;
+  private static readonly AUTH_FAILURE_COOLDOWN_MS = 10_000; // 10 seconds
 
   constructor(
     private oidcSecurityService: OidcSecurityService,
@@ -65,6 +73,22 @@ export class AuthInterceptor implements HttpInterceptor {
     return request;
   }
 
+  /**
+   * Safely redirects to /login with a cooldown to prevent rapid-fire redirect loops.
+   * Sets a sessionStorage flag so the login page knows this was a 401 redirect
+   * and can avoid auto-redirecting back into the app.
+   */
+  private safeRedirectToLogin(): void {
+    const now = Date.now();
+    if (now - this.lastAuthFailureRedirect < AuthInterceptor.AUTH_FAILURE_COOLDOWN_MS) {
+      console.warn('Auth interceptor: skipping /login redirect — cooldown active (prevents redirect loop)');
+      return;
+    }
+    this.lastAuthFailureRedirect = now;
+    sessionStorage.setItem('auth_redirect_reason', '401');
+    this.router.navigate(['/login']);
+  }
+
   private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
@@ -81,33 +105,41 @@ export class AuthInterceptor implements HttpInterceptor {
             this.refreshTokenSubject.next(result.accessToken);
             // Retry the original request with new token
             const authRequest = this.addTokenHeader(request, result.accessToken);
-            return next.handle(authRequest);
+            return next.handle(authRequest).pipe(
+              catchError((retryError: HttpErrorResponse) => {
+                // If the retried request ALSO returns 401, do NOT attempt another
+                // refresh cycle — the problem is server-side, not token-related.
+                if (retryError.status === 401) {
+                  console.error('Retried request still returned 401 after token refresh — API authorization issue, not a token issue.');
+                  this.safeRedirectToLogin();
+                }
+                return throwError(() => retryError);
+              })
+            );
           } else {
             // Refresh failed, redirect to login
             console.log('Token refresh failed, redirecting to login');
-            this.router.navigate(['/login']);
+            this.safeRedirectToLogin();
             return throwError(() => new Error('Token refresh failed'));
           }
         }),
         catchError((error) => {
           this.isRefreshing = false;
           console.error('Force refresh session error:', error);
-          this.router.navigate(['/login']);
+          this.safeRedirectToLogin();
           return throwError(() => error);
         })
       );
     } else {
-      // If already refreshing, wait for the new token
+      // If already refreshing, wait for a non-null token from the refresh subject
       return this.refreshTokenSubject.pipe(
+        // Skip the initial null value — wait for the refresh to complete
+        filter((token) => token !== null),
+        take(1),
         switchMap((token) => {
-          if (token) {
-            const authRequest = this.addTokenHeader(request, token);
-            return next.handle(authRequest);
-          } else {
-            return throwError(() => new Error('Token refresh in progress failed'));
-          }
-        }),
-        take(1)
+          const authRequest = this.addTokenHeader(request, token);
+          return next.handle(authRequest);
+        })
       );
     }
   }
