@@ -23,6 +23,17 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('LoginComponent initialized');
+
+    // Check if we arrived here due to a 401 API error redirect.
+    // If so, the user's OIDC session is still valid but the API is rejecting
+    // requests, so auto-redirecting back to /app would recreate the loop.
+    const redirectReason = sessionStorage.getItem('auth_redirect_reason');
+    if (redirectReason === '401') {
+      sessionStorage.removeItem('auth_redirect_reason');
+      console.warn('LoginComponent: arrived via 401 redirect \u2014 NOT auto-redirecting to avoid loop');
+      this.isChecking = false;
+      return;
+    }
     
     // Check if the user is already authenticated
     this.oidcSecurityService.checkAuth().pipe(take(1)).subscribe({
