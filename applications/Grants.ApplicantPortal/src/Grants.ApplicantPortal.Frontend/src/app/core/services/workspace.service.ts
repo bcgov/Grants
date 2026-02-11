@@ -231,8 +231,8 @@ export class WorkspaceService {
         this.workspaceState$.next({
           ...currentState,
           selectedWorkspace: workspace,
-          selectedProvider: provider || null,
-          selectedProviderName: providerName || null,
+          selectedProvider: provider ?? null,
+          selectedProviderName: providerName ?? null,
           isWorkspaceSelected: true,
           isProviderSelected: !!provider
         });
