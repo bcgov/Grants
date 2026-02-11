@@ -189,6 +189,18 @@
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
 
+    <!-- Nest Plugins-related files under RetrievePluginConfigurations.cs -->
+    <Compile Update="Plugins\RetrieveProviders.Request.cs">
+      <DependentUpon>RetrieveProviders.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Plugins\RetrieveProviders.Response.cs">
+      <DependentUpon>RetrieveProviders.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Plugins\RetrieveProviders.Validator.cs">
+      <DependentUpon>RetrieveProviders.cs</DependentUpon>
+    </Compile>
+    
+    
   </ItemGroup>
 
   <ItemGroup>

@@ -16,13 +16,11 @@ public class PluginConfiguration : Dictionary<string, PluginOptions>
 
 /// <summary>
 /// Configuration options for an individual plugin
-/// Standard properties: Enabled, Features, and Providers are common to all plugins
+/// Enabled: controls whether the plugin is active
 /// Configuration: Generic JSON element that each plugin can define its own structure
 /// </summary>
 public class PluginOptions
 {
     public bool Enabled { get; set; } = true;
-    public List<string> Features { get; set; } = new();
-    public List<string> Providers { get; set; } = new();
     public JsonElement? Configuration { get; set; }
 }

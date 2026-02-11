@@ -32,7 +32,7 @@ Write-Host ""
 # Test contacts endpoint
 Write-Host "?? Testing Contacts endpoint..." -ForegroundColor Cyan
 try {
-    $contactsResponse = Invoke-RestMethod -Uri "$baseUrl/api/v1/profiles/$testProfileId/contacts?provider=DGP" -Method Get -TimeoutSec 10
+    $contactsResponse = Invoke-RestMethod -Uri "$baseUrl/api/profiles/$testProfileId/contacts?provider=DGP" -Method Get -TimeoutSec 10
     
     Write-Host "? Response structure validation:" -ForegroundColor Green
     Write-Host "   profileId: $($contactsResponse.profileId)" -ForegroundColor White
@@ -66,7 +66,7 @@ Write-Host ""
 # Test addresses endpoint  
 Write-Host "?? Testing Addresses endpoint..." -ForegroundColor Cyan
 try {
-    $addressesResponse = Invoke-RestMethod -Uri "$baseUrl/api/v1/profiles/$testProfileId/addresses?provider=ABC" -Method Get -TimeoutSec 10
+    $addressesResponse = Invoke-RestMethod -Uri "$baseUrl/api/profiles/$testProfileId/addresses?provider=ABC" -Method Get -TimeoutSec 10
     
     # Parse the JSON data
     $addressesData = $addressesResponse.data | ConvertFrom-Json
@@ -95,7 +95,7 @@ Write-Host ""
 # Test organization endpoint
 Write-Host "?? Testing Organization endpoint..." -ForegroundColor Cyan
 try {
-    $orgResponse = Invoke-RestMethod -Uri "$baseUrl/api/v1/profiles/$testProfileId/organization?provider=DGP" -Method Get -TimeoutSec 10
+    $orgResponse = Invoke-RestMethod -Uri "$baseUrl/api/profiles/$testProfileId/organization?provider=DGP" -Method Get -TimeoutSec 10
     
     # Parse the JSON data
     $orgData = $orgResponse.data | ConvertFrom-Json

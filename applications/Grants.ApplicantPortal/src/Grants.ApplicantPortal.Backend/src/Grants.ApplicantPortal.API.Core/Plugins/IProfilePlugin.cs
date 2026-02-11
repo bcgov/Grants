@@ -11,19 +11,18 @@ public interface IProfilePlugin
   string PluginId { get; }
 
   /// <summary>
-  /// Gets all supported features (provider/key combinations) for this plugin
+  /// Gets the high-level features supported by this plugin (e.g. ProfilePopulation, ContactManagement).
+  /// These are plugin-wide capabilities, not per-provider.
   /// </summary>
-  IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures();
+  IReadOnlyList<string> GetSupportedFeatures();
 
   /// <summary>
-  /// Gets all supported providers for this plugin
+  /// Asynchronously retrieves the available providers (tenants) for this plugin.
+  /// Plugins that fetch providers from an external source should call the upstream API.
+  /// Plugins with static providers should return them directly.
+  /// An empty list is a valid result when no providers are available for the user.
   /// </summary>
-  IReadOnlyList<string> GetSupportedProviders();
-
-  /// <summary>
-  /// Gets all supported keys for a specific provider
-  /// </summary>
-  IReadOnlyList<string> GetSupportedKeys(string provider);
+  Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Populates profile data from external sources or cache

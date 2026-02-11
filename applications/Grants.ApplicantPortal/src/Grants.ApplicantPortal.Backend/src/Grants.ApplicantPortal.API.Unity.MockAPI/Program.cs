@@ -26,8 +26,36 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
+// API Key validation middleware — validates X-Api-Key header on all /api/ routes
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        var expectedApiKey = context.RequestServices
+            .GetRequiredService<IConfiguration>()
+            .GetValue<string>("ApiKey");
+
+        if (!context.Request.Headers.TryGetValue("X-Api-Key", out var providedKey) ||
+            !string.Equals(providedKey, expectedApiKey, StringComparison.Ordinal))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "Invalid API Key",
+                Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+            });
+            return;
+        }
+    }
+
+    await next();
+});
+
 // Unity Mock API Endpoints
-app.MapGet("/api/v1/profiles/{profileId}", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -58,7 +86,7 @@ app.MapGet("/api/v1/profiles/{profileId}", (Guid profileId, string? provider = n
 .WithName("GetProfile")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/employment", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/employment", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -90,7 +118,7 @@ app.MapGet("/api/v1/profiles/{profileId}/employment", (Guid profileId, string? p
 .WithName("GetEmployment")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/security", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/security", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -121,7 +149,7 @@ app.MapGet("/api/v1/profiles/{profileId}/security", (Guid profileId, string? pro
 .WithName("GetSecurity")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/contacts", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/contacts", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -226,7 +254,7 @@ app.MapGet("/api/v1/profiles/{profileId}/contacts", (Guid profileId, string? pro
 .WithName("GetContacts")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/addresses", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/addresses", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -297,7 +325,7 @@ app.MapGet("/api/v1/profiles/{profileId}/addresses", (Guid profileId, string? pr
 .WithName("GetAddresses")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/organization", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/organization", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -450,7 +478,7 @@ app.MapGet("/api/v1/profiles/{profileId}/organization", (Guid profileId, string?
 .WithName("GetOrganization")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/submissions", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/submissions", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -547,7 +575,7 @@ app.MapGet("/api/v1/profiles/{profileId}/submissions", (Guid profileId, string? 
 .WithName("GetSubmissions")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/payments", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/payments", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -621,7 +649,7 @@ app.MapGet("/api/v1/profiles/{profileId}/payments", (Guid profileId, string? pro
 .WithName("GetPayments")
 .WithOpenApi();
 
-app.MapGet("/api/v1/profiles/{profileId}/data", (Guid profileId, string? provider = null) =>
+app.MapGet("/api/profiles/{profileId}/data", (Guid profileId, string? provider = null) =>
 {
     var actualProvider = provider ?? "DGP"; // Default to DGP if not specified
     
@@ -633,11 +661,11 @@ app.MapGet("/api/v1/profiles/{profileId}/data", (Guid profileId, string? provide
         Instructions = "Use specific endpoints to get Unity data that matches DEMO plugin structure",
         Endpoints = new[]
         {
-            $"GET /api/v1/profiles/{profileId}/contacts?provider={actualProvider} - Contact information",
-            $"GET /api/v1/profiles/{profileId}/addresses?provider={actualProvider} - Address information", 
-            $"GET /api/v1/profiles/{profileId}/organization?provider={actualProvider} - Organization information",
-            $"GET /api/v1/profiles/{profileId}/submissions?provider={actualProvider} - Submission history",
-            $"GET /api/v1/profiles/{profileId}/payments?provider={actualProvider} - Payment information"
+            $"GET /api/profiles/{profileId}/contacts?provider={actualProvider} - Contact information",
+            $"GET /api/profiles/{profileId}/addresses?provider={actualProvider} - Address information", 
+            $"GET /api/profiles/{profileId}/organization?provider={actualProvider} - Organization information",
+            $"GET /api/profiles/{profileId}/submissions?provider={actualProvider} - Submission history",
+            $"GET /api/profiles/{profileId}/payments?provider={actualProvider} - Payment information"
         },
         DataFormat = "Response format matches DEMO plugin structure with profileId, pluginId, provider, data (JSON string), and populatedAt"
     };
@@ -660,6 +688,20 @@ app.MapGet("/api/v1/profiles/{profileId}/data", (Guid profileId, string? provide
     return Results.Ok(response);
 })
 .WithName("GetDefaultData")
+.WithOpenApi();
+
+// Tenants (providers) endpoint — returns the available providers for this Unity instance
+app.MapGet("/api/app/applicant-profiles/tenants", () =>
+{
+    var tenants = new[]
+    {
+        new { Id = "DGP", Name = "DGP" },
+        new { Id = "ABC", Name = "ABC" }
+    };
+
+    return Results.Ok(tenants);
+})
+.WithName("GetTenants")
 .WithOpenApi();
 
 // Health check endpoint

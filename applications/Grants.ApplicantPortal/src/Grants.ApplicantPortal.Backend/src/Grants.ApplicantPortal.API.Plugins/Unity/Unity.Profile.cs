@@ -88,15 +88,15 @@ public partial class UnityPlugin
     {
         return (key?.ToUpper()) switch
         {
-            "PROFILE" => $"/api/v1/profiles/{profileId}",
-            "EMPLOYMENT" => $"/api/v1/profiles/{profileId}/employment",
-            "SECURITY" => $"/api/v1/profiles/{profileId}/security",
-            "CONTACTS" => $"/api/v1/profiles/{profileId}/contacts",
-            "ADDRESSES" => $"/api/v1/profiles/{profileId}/addresses",
-            "ORGINFO" => $"/api/v1/profiles/{profileId}/organization",
-            "SUBMISSIONS" => $"/api/v1/profiles/{profileId}/submissions",
-            "PAYMENTS" => $"/api/v1/profiles/{profileId}/payments",
-            _ => $"/api/v1/profiles/{profileId}/data"
+            "PROFILE" => $"/api/profiles/{profileId}",
+            "EMPLOYMENT" => $"/api/profiles/{profileId}/employment",
+            "SECURITY" => $"/api/profiles/{profileId}/security",
+            "CONTACTS" => $"/api/profiles/{profileId}/contacts",
+            "ADDRESSES" => $"/api/profiles/{profileId}/addresses",
+            "ORGINFO" => $"/api/profiles/{profileId}/organization",
+            "SUBMISSIONS" => $"/api/profiles/{profileId}/submissions",
+            "PAYMENTS" => $"/api/profiles/{profileId}/payments",
+            _ => $"/api/profiles/{profileId}/data"
         };
     }
 

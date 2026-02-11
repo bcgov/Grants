@@ -7,54 +7,66 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="logout-container">
-      <div class="logout-content">
-        <div class="spinner-container">
-          <div class="spinner-border text-primary">
-            <span class="visually-hidden">Logging out...</span>
+    <div class="logout-page">
+      <div class="logout-background">
+        <div class="bc-logo-header">
+          <img
+            src="images/logo/BCID_H_rgb_pos.png"
+            alt="British Columbia Government"
+            class="bc-header-logo"
+          />
+        </div>
+
+        <div class="logout-card-container">
+          <div class="logout-card">
+            <div class="logout-header">
+              <h1>Enterprise Grant</h1>
+              <h2>Management System Portal</h2>
+            </div>
+
+            <div class="mobile-preview-image">
+              <img
+                src="images/dashboard-preview.png"
+                alt="Dashboard Preview"
+                class="dashboard-preview"
+              />
+            </div>
+
+            <div class="logout-state">
+              <div class="spinner-container">
+                <div class="spinner"></div>
+              </div>
+              <p class="status-text">Please wait while we log you out securely.</p>
+            </div>
           </div>
         </div>
-        <h3>Logging out...</h3>
-        <p>Please wait while we log you out securely.</p>
+      </div>
+
+      <!-- Right side preview -->
+      <div class="preview-section">
+        <div class="bc-logo-corner">
+          <img
+            src="images/logo/BCID_H_rgb_pos.png"
+            alt="British Columbia"
+            class="bc-corner-logo"
+          />
+        </div>
+
+        <div class="preview-image">
+          <img
+            src="images/dashboard-preview.png"
+            alt="Dashboard Preview"
+            class="dashboard-preview"
+          />
+        </div>
+
+        <div class="footer-link">
+          <a href="https://grants.gov.bc.ca" target="_blank">grants.gov.bc.ca</a>
+        </div>
       </div>
     </div>
   `,
-  styles: [`
-    .logout-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: var(--bc-bg-info);
-    }
-
-    .logout-content {
-      text-align: center;
-      background: var(--bc-white);
-      padding: 3rem 2rem;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      max-width: 400px;
-      width: 100%;
-      margin: 0 1rem;
-    }
-
-    .spinner-container {
-      margin-bottom: 1.5rem;
-    }
-
-    h3 {
-      color: var(--bc-primary);
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
-    }
-
-    p {
-      color: var(--bc-primary);
-      font-size: var(--bc-font-size-14);
-      margin: 0;
-    }
-  `]
+  styleUrls: ['./logout.component.scss']
 })
 export class LogoutComponent implements OnInit {
   constructor(private router: Router) {}

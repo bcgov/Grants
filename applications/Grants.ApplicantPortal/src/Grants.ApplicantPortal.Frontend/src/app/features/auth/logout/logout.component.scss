@@ -1,11 +1,10 @@
-/* ===== Page Layout (mirrors login) ===== */
-.callback-page {
+.logout-page {
   display: flex;
   min-height: 100vh;
   width: 100%;
 }
 
-.callback-background {
+.logout-background {
   flex: 1;
   background: var(--bc-bg-info);
   display: flex;
@@ -20,8 +19,7 @@
   display: none;
 }
 
-/* ===== Card ===== */
-.callback-card-container {
+.logout-card-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -29,7 +27,7 @@
   max-width: 500px;
 }
 
-.callback-card {
+.logout-card {
   background: var(--bc-white);
   border-radius: 8px;
   padding: 3rem 2.5rem;
@@ -38,7 +36,7 @@
   width: 100%;
 }
 
-.callback-header {
+.logout-header {
   margin-bottom: 1.5rem;
 
   h1 {
@@ -58,15 +56,12 @@
   }
 }
 
-/* ===== States ===== */
-.processing-state,
-.error-state,
-.fallback-state {
-  min-height: 120px;
+.logout-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 120px;
 }
 
 .spinner-container {
@@ -94,21 +89,6 @@
   margin: 0;
 }
 
-.error-alert {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  width: 100%;
-
-  .fa {
-    margin-right: 0.5rem;
-  }
-}
-
-/* ===== Right Preview (mirrors login) ===== */
 .preview-section {
   flex: 1;
   background: #f8f9fa;
@@ -162,18 +142,17 @@
   }
 }
 
-/* ===== Responsive (mirrors login) ===== */
 @media (max-width: 768px) {
   .preview-section {
     display: none;
   }
 
-  .callback-page {
+  .logout-page {
     flex-direction: column;
     background: var(--bc-white);
   }
 
-  .callback-background {
+  .logout-background {
     background: var(--bc-white);
     padding: 2rem 1rem;
     min-height: 100vh;
@@ -192,19 +171,19 @@
     }
   }
 
-  .callback-card-container {
+  .logout-card-container {
     max-width: 100%;
     width: 100%;
   }
 
-  .callback-card {
+  .logout-card {
     background: var(--bc-white);
     box-shadow: none;
     border-radius: 0;
     padding: 0;
   }
 
-  .callback-header {
+  .logout-header {
     text-align: center;
     margin-bottom: 3rem;
 

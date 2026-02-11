@@ -37,54 +37,47 @@ public partial class DemoPlugin : IProfilePlugin,
 
     public string PluginId => "DEMO";
 
-    private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
-    {
-        // Legacy keys for backwards compatibility
-        new("PROGRAM1", "SUBMISSIONS", "Demo submissions data for Program1"),
-        new("PROGRAM1", "ORGINFO", "Demo organization information for Program1"),
-        new("PROGRAM1", "PAYMENTS", "Demo payment information for Program1"),
-        new("PROGRAM2", "SUBMISSIONS", "Demo submissions data for Program2"),
-        new("PROGRAM2", "ORGINFO", "Demo organization information for Program2"),
-        
-        // New specific endpoint keys
-        new("PROGRAM1", "CONTACTS", "Demo contacts data for Program1"),
-        new("PROGRAM1", "ADDRESSES", "Demo address data for Program1"),
-        new("PROGRAM2", "CONTACTS", "Demo contacts data for Program2"),
-        new("PROGRAM2", "ADDRESSES", "Demo address data for Program2")
-    };
+    private static readonly IReadOnlyList<string> _supportedFeatures =
+    [
+        "ProfilePopulation",
+        "ContactManagement",
+        "AddressManagement",
+        "OrganizationManagement"
+    ];
 
-    public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
-    {
-        return SupportedFeatures;
-    }
+    public IReadOnlyList<string> GetSupportedFeatures() => _supportedFeatures;
 
-    public IReadOnlyList<string> GetSupportedProviders()
+    public Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default)
     {
-        return [.. SupportedFeatures
-            .Select(f => f.Provider)
-            .Distinct(StringComparer.OrdinalIgnoreCase)];
-    }
-
-    public IReadOnlyList<string> GetSupportedKeys(string provider)
-    {
-        if (string.IsNullOrWhiteSpace(provider))
-            return [];
-
-        return [.. SupportedFeatures
-            .Where(f => f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase))
-            .Select(f => f.Key)];
+        IReadOnlyList<ProviderInfo> providers =
+        [
+            new("PROGRAM1", "PROGRAM1"),
+            new("PROGRAM2", "PROGRAM2")
+        ];
+        return Task.FromResult(providers);
     }
 
     public bool CanHandle(ProfilePopulationMetadata metadata)
     {
-        if (!metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        // Check if the provider/key combination is supported
-        return SupportedFeatures.Any(f => 
-            f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
-            f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
+        return metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// Internal seed scenarios — provider/key combinations used to populate demo cache data
+    /// </summary>
+    private record SeedScenario(string Provider, string Key);
+    private static readonly SeedScenario[] _seedScenarios =
+    [
+        new("PROGRAM1", "SUBMISSIONS"),
+        new("PROGRAM1", "ORGINFO"),
+        new("PROGRAM1", "PAYMENTS"),
+        new("PROGRAM1", "CONTACTS"),
+        new("PROGRAM1", "ADDRESSES"),
+        new("PROGRAM2", "SUBMISSIONS"),
+        new("PROGRAM2", "ORGINFO"),
+        new("PROGRAM2", "CONTACTS"),
+        new("PROGRAM2", "ADDRESSES")
+    ];
 
     /// <summary>
     /// Seeds demo data for a specific user profile on first request with distributed locking
@@ -137,31 +130,31 @@ public partial class DemoPlugin : IProfilePlugin,
 
             _logger.LogInformation("=== Seeding DEMO data for ProfileId: {ProfileId} ===", profileId);
 
-            var scenarios = SupportedFeatures.ToList();
+            var scenarios = _seedScenarios;
             var seededCount = 0;
             var errors = 0;
 
-            foreach (var feature in scenarios)
+            foreach (var scenario in scenarios)
             {
                 try
                 {
-                    var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{feature.Provider}:{feature.Key}";
+                    var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{scenario.Provider}:{scenario.Key}";
 
                     // Check if this combination was previously deleted
-                    var deletionKey = $"{_cacheOptions.Value.CacheKeyPrefix}DELETED:{profileId}:DEMO:{feature.Provider}:{feature.Key}";
+                    var deletionKey = $"{_cacheOptions.Value.CacheKeyPrefix}DELETED:{profileId}:DEMO:{scenario.Provider}:{scenario.Key}";
                     var wasDeleted = await _distributedCache.GetAsync(deletionKey, cancellationToken);
                     if (wasDeleted != null)
                     {
                         _logger.LogDebug("Skipping seeding for {ProfileId}:{Provider}:{Key} - was previously deleted",
-                            profileId, feature.Provider, feature.Key);
+                            profileId, scenario.Provider, scenario.Key);
                         continue; // Skip if this was deleted
                     }
 
                     var metadata = new ProfilePopulationMetadata(
                         profileId, 
                         PluginId, 
-                        feature.Provider, 
-                        feature.Key, 
+                        scenario.Provider, 
+                        scenario.Key, 
                         null);
 
                     var mockData = GenerateSeedingMockData(metadata);
@@ -174,8 +167,8 @@ public partial class DemoPlugin : IProfilePlugin,
                     var profileData = new ProfileData(
                         profileId,
                         PluginId,
-                        feature.Provider,
-                        feature.Key,
+                        scenario.Provider,
+                        scenario.Key,
                         jsonData);
 
                     // Store in distributed cache with 1-year expiration
@@ -191,7 +184,7 @@ public partial class DemoPlugin : IProfilePlugin,
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to seed data for {ProfileId}:{Provider}:{Key}",
-                        profileId, feature.Provider, feature.Key);
+                        profileId, scenario.Provider, scenario.Key);
                     errors++;
                 }
             }

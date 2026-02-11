@@ -1,3 +1,13 @@
+export interface Provider {
+  id: string;
+  name: string;
+}
+
+export interface ProvidersResponse {
+  pluginId: string;
+  providers: Provider[];
+}
+
 export interface Plugin {
   pluginId: string;
   description: string;
@@ -17,6 +27,7 @@ export interface PluginsResponse {
 export interface WorkspaceState {
   selectedWorkspace: Plugin | null;
   selectedProvider: string | null;
+  selectedProviderName: string | null;
   availableWorkspaces: Plugin[];
   isWorkspaceSelected: boolean;
   isProviderSelected: boolean;

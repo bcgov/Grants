@@ -52,12 +52,12 @@ catch {
 
 # Define endpoints to test (focusing on DEMO-compatible endpoints)
 $endpoints = @(
-    @{ Path = "/api/v1/profiles/$ProfileId/contacts?provider=DGP"; Name = "Contacts (DGP)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/addresses?provider=ABC"; Name = "Addresses (ABC)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/organization?provider=DGP"; Name = "Organization (DGP)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/submissions?provider=ABC"; Name = "Submissions (ABC)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/payments?provider=DGP"; Name = "Payments (DGP)" },
-    @{ Path = "/api/v1/profiles/$ProfileId/data?provider=ABC"; Name = "Default Data (ABC)" }
+    @{ Path = "/api/profiles/$ProfileId/contacts?provider=DGP"; Name = "Contacts (DGP)" },
+    @{ Path = "/api/profiles/$ProfileId/addresses?provider=ABC"; Name = "Addresses (ABC)" },
+    @{ Path = "/api/profiles/$ProfileId/organization?provider=DGP"; Name = "Organization (DGP)" },
+    @{ Path = "/api/profiles/$ProfileId/submissions?provider=ABC"; Name = "Submissions (ABC)" },
+    @{ Path = "/api/profiles/$ProfileId/payments?provider=DGP"; Name = "Payments (DGP)" },
+    @{ Path = "/api/profiles/$ProfileId/data?provider=ABC"; Name = "Default Data (ABC)" }
 )
 
 Write-Host ""
