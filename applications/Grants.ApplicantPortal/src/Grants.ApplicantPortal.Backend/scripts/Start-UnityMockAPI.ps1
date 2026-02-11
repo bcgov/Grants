@@ -90,13 +90,14 @@ try {
     Write-Host "   • Health Check: http://localhost:$Port/health" -ForegroundColor White
     Write-Host ""
     Write-Host "?? Available Endpoints:" -ForegroundColor Cyan
-    Write-Host "   • GET /api/v1/profiles/{profileId}" -ForegroundColor White
-    Write-Host "   • GET /api/v1/profiles/{profileId}/employment" -ForegroundColor White
-    Write-Host "   • GET /api/v1/profiles/{profileId}/security" -ForegroundColor White
-    Write-Host "   • GET /api/v1/profiles/{profileId}/contacts" -ForegroundColor White
-    Write-Host "   • GET /api/v1/profiles/{profileId}/addresses" -ForegroundColor White
-    Write-Host "   • GET /api/v1/profiles/{profileId}/organization" -ForegroundColor White
-    Write-Host "   • GET /api/v1/profiles/{profileId}/data" -ForegroundColor White
+    Write-Host "   • GET /api/app/applicant-profiles/tenants" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}/employment" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}/security" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}/contacts" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}/addresses" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}/organization" -ForegroundColor White
+    Write-Host "   • GET /api/profiles/{profileId}/data" -ForegroundColor White
     Write-Host ""
     Write-Host "??  Update your appsettings.Development.json to point Unity plugin to this endpoint!" -ForegroundColor Yellow
     Write-Host "   Set Plugins.UNITY.Configuration.BaseUrl to 'http://localhost:$Port'" -ForegroundColor Gray

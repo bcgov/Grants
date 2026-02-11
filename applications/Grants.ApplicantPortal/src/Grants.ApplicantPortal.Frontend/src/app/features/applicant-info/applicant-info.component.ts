@@ -20,8 +20,6 @@ import {
 } from '../../shared/models/applicant-info.interface';
 import {
   Key,
-  PluginId,
-  Provider,
 } from '../../shared/models/applicantion-info.enums';
 
 @Component({
@@ -40,11 +38,12 @@ import {
 })
 export class ApplicantInfoComponent implements OnInit, OnDestroy {
   // Profile properties
-  pluginId: string = PluginId.DEMO; // Default fallback
-  provider: string = Provider.PROGRAM1; // Default fallback
+  pluginId: string = '';
+  provider: string = '';
   keyOrgInfo = Key.ORGINFO;
   keySubmissions = Key.SUBMISSIONS;
   keyContacts = Key.CONTACTS;
+  keyAddresses = Key.ADDRESSES;
 
   // Data properties
   applicantInfo: ApplicantInfo | null = null;

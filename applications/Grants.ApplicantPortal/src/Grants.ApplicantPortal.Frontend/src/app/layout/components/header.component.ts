@@ -5,7 +5,7 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
-import { Plugin } from '../../shared/models/workspace.interface';
+import { Plugin, Provider } from '../../shared/models/workspace.interface';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
@@ -21,8 +21,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   pageTitle = 'Applicant Info';
   selectedWorkspace: Plugin | null = null;
   selectedProvider: string | null = null;
+  selectedProviderName: string | null = null;
   availableWorkspaces: Plugin[] = [];
+  currentProviders: Provider[] = [];
   isChangingWorkspace = false;
+  isLoadingProviders = false;
   private routerSubscription?: Subscription;
   private workspaceSubscription?: Subscription;
 
@@ -37,15 +40,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   get hasMultipleProviders(): boolean {
-    return this.selectedWorkspace?.providers ? this.selectedWorkspace.providers.length > 1 : false;
+    return this.currentProviders.length > 1;
   }
 
   get displayText(): string {
     if (!this.selectedWorkspace) return 'No Workspace';
-    if (!this.selectedProvider || !this.hasMultipleProviders) {
+    if (!this.selectedProviderName || !this.hasMultipleProviders) {
       return this.selectedWorkspace.description;
     }
-    return `${this.selectedWorkspace.description} > ${this.selectedProvider}`;
+    return `${this.selectedWorkspace.description} > ${this.selectedProviderName}`;
   }
 
   ngOnInit(): void {
@@ -62,9 +65,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Subscribe to workspace changes
     this.workspaceSubscription = this.workspaceService.currentWorkspaceState$.subscribe(
       state => {
+        const workspaceChanged = state.selectedWorkspace?.pluginId !== this.selectedWorkspace?.pluginId;
         this.selectedWorkspace = state.selectedWorkspace;
         this.selectedProvider = state.selectedProvider;
+        this.selectedProviderName = state.selectedProviderName;
         this.availableWorkspaces = state.availableWorkspaces;
+        
+        // Fetch providers from API when workspace changes
+        if (workspaceChanged && state.selectedWorkspace) {
+          this.fetchProviders(state.selectedWorkspace.pluginId);
+        }
       }
     );
 
@@ -105,30 +115,49 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
-  selectWorkspace(workspace: Plugin): void {
-    console.log('HeaderComponent - Workspace selected:', workspace);
-    if (workspace.pluginId !== this.selectedWorkspace?.pluginId) {
+  private fetchProviders(pluginId: string): void {
+    this.isLoadingProviders = true;
+    this.currentProviders = [];
+    
+    this.workspaceService.getProviders(pluginId).subscribe({
+      next: (response) => {
+        this.currentProviders = response.providers;
+        this.isLoadingProviders = false;
+      },
+      error: () => {
+        this.currentProviders = [];
+        this.isLoadingProviders = false;
+      }
+    });
+  }
+
+  selectProviderById(provider: Provider): void {
+    if (this.selectedWorkspace && provider.id !== this.selectedProvider) {
       this.isChangingWorkspace = true;
-      // If workspace has only one provider, auto-select it
-      const provider = workspace.providers && workspace.providers.length === 1 
-        ? workspace.providers[0] 
-        : undefined;
+      this.workspaceService.selectWorkspaceWithProviderDetails(this.selectedWorkspace, provider);
       
-      this.workspaceService.selectWorkspace(workspace, provider);
-      
-      // Reset changing state after a delay
       setTimeout(() => {
         this.isChangingWorkspace = false;
       }, 500);
     }
   }
 
-  selectProvider(provider: string): void {
-    if (this.selectedWorkspace && provider !== this.selectedProvider) {
+  changeWorkspace(): void {
+    // Clear selection but keep available workspaces, then redirect to selector
+    this.workspaceService.clearSelection();
+    this.router.navigate(['/workspace-selector']);
+  }
+
+  selectWorkspace(workspace: Plugin): void {
+    console.log('HeaderComponent - Workspace selected:', workspace);
+    if (workspace.pluginId !== this.selectedWorkspace?.pluginId) {
       this.isChangingWorkspace = true;
-      this.workspaceService.selectWorkspace(this.selectedWorkspace, provider);
+      const provider = workspace.providers && workspace.providers.length === 1 
+        ? workspace.providers[0] 
+        : undefined;
       
-      // Reset changing state after a delay
+      this.workspaceService.selectWorkspace(workspace, provider);
+      
       setTimeout(() => {
         this.isChangingWorkspace = false;
       }, 500);

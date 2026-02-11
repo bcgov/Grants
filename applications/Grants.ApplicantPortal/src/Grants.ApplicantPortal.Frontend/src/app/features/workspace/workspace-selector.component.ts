@@ -1,143 +1,230 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, timer } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
-import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface';
+import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
 
 @Component({
   selector: 'app-workspace-selector',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div class="workspace-selector-container">
-      <div class="workspace-selector-modal">
-        <div class="modal-content">
-          
-          <!-- Loading State -->
-          <div *ngIf="isLoading" class="loading-container">
-            <div class="loading-spinner">
-              <div class="spinner"></div>
-            </div>
-            <h2 class="loading-title">Setting up your workspace...</h2>
-            <p class="loading-description">Please wait while we prepare your environment.</p>
-          </div>
+    <div class="selector-page">
+      <div class="selector-background">
+        <div class="bc-logo-header">
+          <img
+            src="images/logo/BCID_H_rgb_pos.png"
+            alt="British Columbia Government"
+            class="bc-header-logo"
+          />
+        </div>
 
-          <!-- Auto-selecting Single Workspace -->
-          <div *ngIf="isAutoSelecting" class="loading-container">
-            <div class="loading-spinner">
-              <div class="spinner"></div>
+        <!-- Card -->
+        <div class="selector-card-container">
+          <div class="selector-card">
+            <div class="selector-header">
+              <h1>Enterprise Grant</h1>
+              <h2>Management System Portal</h2>
             </div>
-            <h2 class="loading-title">Accessing {{ autoSelectingWorkspace?.description }}</h2>
-            <p class="loading-description">Automatically selecting your workspace...</p>
-          </div>
 
-          <!-- Multiple Workspaces Selection -->
-          <div *ngIf="showWorkspaceSelection">
-            <h2 class="modal-title">Select Workspace</h2>
-            <p class="modal-description">Please select a workspace to continue:</p>
-            
-            <div class="workspace-list">
-              <div 
-                *ngFor="let workspace of availableWorkspaces" 
-                class="workspace-item"
-                (click)="onWorkspaceClick(workspace)"
-                (keydown.enter)="onWorkspaceClick(workspace)"
-                (keydown.space)="onWorkspaceClick(workspace)"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'Select ' + workspace.description + ' workspace'"
+            <div class="mobile-preview-image">
+              <img
+                src="images/dashboard-preview.png"
+                alt="Dashboard Preview"
+                class="dashboard-preview"
+              />
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="isLoading || isAutoSelecting" class="selector-loading">
+              <div class="spinner"></div>
+              <p class="loading-text" *ngIf="isLoading">Setting up your workspace...</p>
+              <p class="loading-text" *ngIf="isAutoSelecting">Accessing {{ autoSelectingWorkspace?.description }}...</p>
+            </div>
+
+            <!-- Workspace Selection -->
+            <div *ngIf="showWorkspaceSelection && !isLoading && !isAutoSelecting">
+              <div class="selector-description">
+                <p>Please select a workspace to continue.</p>
+              </div>
+
+              <div class="dropdown-group">
+                <label for="workspaceSelect" class="dropdown-label">Workspace</label>
+                <select
+                  id="workspaceSelect"
+                  class="dropdown-select"
+                  [(ngModel)]="selectedDropdownWorkspace"
+                  (ngModelChange)="onDropdownWorkspaceChange($event)"
+                >
+                  <option [ngValue]="null" disabled>-- Select a workspace --</option>
+                  <option *ngFor="let workspace of availableWorkspaces" [ngValue]="workspace">
+                    {{ workspace.description }}
+                  </option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-primary selector-btn"
+                [disabled]="!selectedDropdownWorkspace"
+                (click)="confirmWorkspaceSelection()"
               >
-                <div class="workspace-info">
-                  <h3 class="workspace-title">{{ workspace.description }}</h3>
-                  <p class="workspace-id">ID: {{ workspace.pluginId }}</p>
-                  <div class="workspace-providers" *ngIf="workspace.providers && workspace.providers.length > 1">
-                    <span class="providers-label">Providers:</span>
-                    <span class="provider-tag" *ngFor="let provider of workspace.providers">
-                      {{ provider }}
-                    </span>
-                  </div>
-                  <div class="workspace-features" *ngIf="workspace.features?.length">
-                    <span class="features-label">Features:</span>
-                    <span class="feature-tag" *ngFor="let feature of workspace.features">
-                      {{ feature }}
-                    </span>
-                  </div>
+                Continue
+              </button>
+            </div>
+
+            <!-- Program Selection -->
+            <div *ngIf="showProviderSelection && selectedWorkspaceForProvider && !isLoading && !isAutoSelecting">
+              <div *ngIf="isLoadingProviders" class="selector-loading">
+                <div class="spinner"></div>
+                <p class="loading-text">Loading providers...</p>
+              </div>
+
+              <div *ngIf="!isLoadingProviders">
+                <div class="selector-description">
+                  <p>Select a grant program for <strong>{{ selectedWorkspaceForProvider.description }}</strong>.</p>
                 </div>
-                <i class="fas fa-chevron-right workspace-arrow" aria-hidden="true"></i>
+
+                <div class="dropdown-group">
+                  <label for="providerSelect" class="dropdown-label">Provider</label>
+                  <select
+                    id="providerSelect"
+                    class="dropdown-select"
+                    [(ngModel)]="selectedDropdownProvider"
+                  >
+                    <option [ngValue]="null" disabled>-- Select a program --</option>
+                    <option *ngFor="let provider of availableProviders" [ngValue]="provider">
+                      {{ provider.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-primary selector-btn"
+                  [disabled]="!selectedDropdownProvider"
+                  (click)="confirmProviderSelection()"
+                >
+                  Continue
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-back"
+                  (click)="goBackToWorkspaceSelection()"
+                >
+                  &larr; Back to Workspaces
+                </button>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Provider Selection -->
-          <div *ngIf="showProviderSelection && selectedWorkspaceForProvider">
-            <h2 class="modal-title">Select Provider</h2>
-            <p class="modal-description">Select a provider for {{ selectedWorkspaceForProvider.description }}:</p>
-            
-            <div class="provider-list">
-              <div 
-                *ngFor="let provider of selectedWorkspaceForProvider.providers" 
-                class="provider-item"
-                (click)="selectWorkspaceWithProvider(selectedWorkspaceForProvider, provider)"
-                (keydown.enter)="selectWorkspaceWithProvider(selectedWorkspaceForProvider, provider)"
-                (keydown.space)="selectWorkspaceWithProvider(selectedWorkspaceForProvider, provider)"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'Select ' + provider + ' provider'"
-              >
-                <div class="provider-info">
-                  <h3 class="provider-title">{{ provider }}</h3>
-                </div>
-                <i class="fas fa-chevron-right provider-arrow" aria-hidden="true"></i>
-              </div>
-            </div>
-            
-            <button 
-              class="btn btn-secondary mt-3"
-              (click)="goBackToWorkspaceSelection()"
-            >
-              <i class="fas fa-arrow-left me-2"></i>
-              Back to Workspaces
-            </button>
-          </div>
+      <!-- Right side preview -->
+      <div class="preview-section">
+        <div class="bc-logo-corner">
+          <img
+            src="images/logo/BCID_H_rgb_pos.png"
+            alt="British Columbia"
+            class="bc-corner-logo"
+          />
+        </div>
+
+        <div class="preview-image">
+          <img
+            src="images/dashboard-preview.png"
+            alt="Dashboard Preview"
+            class="dashboard-preview"
+          />
+        </div>
+
+        <div class="footer-link">
+          <a href="https://grants.gov.bc.ca" target="_blank">grants.gov.bc.ca</a>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .workspace-selector-container {
-      position: fixed;
-      top: 0;
-      left: 0;
+    /* ===== Page Layout (mirrors login) ===== */
+    .selector-page {
+      display: flex;
+      min-height: 100vh;
       width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .selector-background {
+      flex: 1;
+      background: var(--bc-bg-info);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .bc-logo-header {
+      display: none;
+    }
+
+    /* ===== Card ===== */
+    .selector-card-container {
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      width: 100%;
+      max-width: 500px;
     }
 
-    .workspace-selector-modal {
+    .selector-card {
       background: var(--bc-white);
       border-radius: 8px;
-      padding: 32px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .loading-container {
+      padding: 3rem 2.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       text-align: center;
-      padding: 20px 0;
+      width: 100%;
     }
 
-    .loading-spinner {
+    .selector-header {
+      margin-bottom: 1.5rem;
+
+      h1 {
+        color: var(--bc-bg-info);
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.2;
+      }
+
+      h2 {
+        color: var(--bc-primary);
+        font-size: 1.1rem;
+        font-weight: 400;
+        margin: 0;
+        line-height: 1.3;
+      }
+    }
+
+    .selector-description {
+      margin-bottom: 1.5rem;
+
+      p {
+        color: var(--bc-primary);
+        font-size: var(--bc-font-size-14);
+        line-height: 1.5;
+        margin: 0;
+      }
+    }
+
+    /* ===== Loading ===== */
+    .selector-loading {
       display: flex;
-      justify-content: center;
-      margin-bottom: 24px;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 0;
     }
 
     .spinner {
@@ -147,6 +234,7 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
       border-top: 3px solid var(--bc-blue);
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
     }
 
     @keyframes spin {
@@ -154,216 +242,250 @@ import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface'
       100% { transform: rotate(360deg); }
     }
 
-    .loading-title {
-      font-size: var(--bc-font-size-24);
-      font-weight: 600;
+    .loading-text {
       color: var(--bc-primary);
-      margin-bottom: 8px;
-    }
-
-    .loading-description {
       font-size: var(--bc-font-size-14);
-      color: var(--bc-primary);
-    }
-
-    .modal-title {
-      font-size: var(--bc-font-size-24);
-      font-weight: 600;
-      color: var(--bc-primary);
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .modal-description {
-      font-size: var(--bc-font-size-14);
-      color: var(--bc-primary);
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .workspace-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .workspace-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
-      border: 2px solid var(--bc-gray-50);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: var(--bc-white);
-
-      &:hover {
-        border-color: var(--bc-blue);
-        background-color: var(--bc-blue-10);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 51, 102, 0.1);
-      }
-
-      &:focus {
-        outline: 2px solid var(--bc-blue);
-        outline-offset: 2px;
-        border-color: var(--bc-blue);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-
-    .workspace-info {
-      flex: 1;
-    }
-
-    .workspace-title {
-      font-size: var(--bc-font-size-18);
-      font-weight: 600;
-      color: var(--bc-primary);
-      margin-bottom: 4px;
-    }
-
-    .workspace-id {
-      font-size: var(--bc-font-size-13);
-      color: var(--bc-primary);
-      margin-bottom: 12px;
-    }
-
-    .workspace-features {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .features-label {
-      font-size: var(--bc-font-size-12);
-      color: var(--bc-primary);
-      font-weight: 500;
-    }
-
-    .feature-tag {
-      background-color: var(--bc-gray-20);
-      color: var(--bc-primary);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: var(--bc-font-size-12);
-      font-weight: 500;
-    }
-
-    .workspace-providers {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .providers-label {
-      font-size: var(--bc-font-size-12);
-      color: var(--bc-primary);
-      font-weight: 500;
-    }
-
-    .provider-tag {
-      background-color: var(--bc-blue-light);
-      color: var(--bc-blue-dark);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: var(--bc-font-size-12);
-      font-weight: 500;
-    }
-
-    .provider-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .provider-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      border: 1px solid var(--bc-gray-20);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background-color: var(--bc-white);
-    }
-
-    .provider-item:hover {
-      border-color: var(--bc-blue);
-      background-color: var(--bc-gray-05);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .provider-item:focus {
-      outline: none;
-      border-color: var(--bc-blue);
-      box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.2);
-    }
-
-    .provider-info {
-      flex: 1;
-    }
-
-    .provider-title {
-      font-size: var(--bc-font-size-18);
-      font-weight: 600;
-      color: var(--bc-primary);
       margin: 0;
     }
 
-    .provider-arrow {
+    /* ===== Dropdown ===== */
+    .dropdown-group {
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .dropdown-label {
+      display: block;
+      font-size: var(--bc-font-size-14);
+      font-weight: 600;
       color: var(--bc-primary);
-      font-size: var(--bc-font-size-16);
-      transition: color 0.2s ease, transform 0.2s ease;
+      margin-bottom: 0.5rem;
     }
 
-    .provider-item:hover .provider-arrow {
-      color: var(--bc-blue);
-      transform: translateX(4px);
-    }
-
-    .workspace-arrow {
+    .dropdown-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: var(--bc-font-size-14);
       color: var(--bc-primary);
-      font-size: var(--bc-font-size-16);
-      transition: color 0.2s ease, transform 0.2s ease;
+      background-color: var(--bc-white);
+      border: 2px solid var(--bc-gray-50, #606060);
+      border-radius: 4px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8.825L0.375 3.2l0.85-0.85L6 7.125l4.775-4.775 0.85 0.85z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: var(--bc-blue);
+        box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.15);
+      }
+
+      &:hover {
+        border-color: var(--bc-blue);
+      }
     }
 
-    .workspace-item:hover .workspace-arrow {
-      color: var(--bc-blue);
-      transform: translateX(4px);
+    /* ===== Buttons ===== */
+    .selector-btn {
+      padding: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
 
+    .btn-back {
+      display: block;
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.5rem;
+      background: none;
+      border: none;
+      color: var(--bc-primary);
+      font-size: var(--bc-font-size-14);
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: var(--bc-blue);
+        text-decoration: underline;
+      }
+    }
+
+    /* ===== Right Preview (mirrors login) ===== */
+    .preview-section {
+      flex: 1;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 2rem;
+    }
+
+    .bc-logo-corner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .bc-corner-logo {
+        height: 120px;
+        width: auto;
+      }
+    }
+
+    .preview-image {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .dashboard-preview {
+        max-width: 100%;
+        height: auto;
+      }
+    }
+
+    .mobile-preview-image {
+      display: none;
+    }
+
+    .footer-link {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      a {
+        color: var(--bc-bg-info);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    /* ===== Responsive (mirrors login) ===== */
     @media (max-width: 768px) {
-      .workspace-selector-modal {
-        padding: 24px;
-        margin: 16px;
-        max-width: none;
-        width: calc(100% - 32px);
+      .preview-section {
+        display: none;
       }
 
-      .workspace-item {
-        padding: 16px;
+      .selector-page {
+        flex-direction: column;
+        background: var(--bc-white);
       }
 
-      .workspace-title {
+      .selector-background {
+        background: var(--bc-white);
+        padding: 2rem 1rem;
+        min-height: 100vh;
+        justify-content: flex-start;
+      }
+
+      .bc-logo-header {
+        display: block !important;
+        position: static;
+        margin-bottom: 1rem;
+        justify-content: center;
+
+        .bc-header-logo {
+          height: 80px;
+          width: auto;
+        }
+      }
+
+      .selector-card-container {
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .selector-card {
+        background: var(--bc-white);
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+      }
+
+      .selector-header {
+        text-align: center;
+        margin-bottom: 3rem;
+
+        h1 {
+          color: var(--bc-bg-info);
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          line-height: 1.2;
+        }
+
+        h2 {
+          color: var(--bc-primary);
+          font-size: var(--bc-font-size-20);
+          font-weight: 400;
+          margin: 0;
+          line-height: 1.3;
+        }
+      }
+
+      .selector-description {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 0 1rem;
+
+        p {
+          color: var(--bc-primary);
+          font-size: var(--bc-font-size-16);
+          line-height: 1.6;
+          margin: 0;
+        }
+      }
+
+      .selector-btn {
+        padding: 1rem 2rem;
         font-size: var(--bc-font-size-16);
+        font-weight: 600;
+        border-radius: 8px;
+        margin: 0 1rem;
+        background-color: var(--bc-bg-info);
+        border: none;
+        color: var(--bc-white);
+        width: calc(100% - 2rem);
+      }
+
+      .mobile-preview-image {
+        display: block;
+        margin: 2rem 0;
+
+        .dashboard-preview {
+          max-width: 100%;
+          height: auto;
+        }
       }
     }
   `]
 })
 export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   availableWorkspaces: Plugin[] = [];
+  availableProviders: Provider[] = [];
   selectedWorkspace: Plugin | null = null;
   selectedWorkspaceForProvider: Plugin | null = null;
+  selectedDropdownWorkspace: Plugin | null = null;
+  selectedDropdownProvider: Provider | null = null;
   isLoading = true;
+  isLoadingProviders = false;
   isAutoSelecting = false;
   autoSelectingWorkspace: Plugin | null = null;
   showWorkspaceSelection = false;
@@ -376,6 +498,8 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
+  private hasFetchedWorkspaces = false;
+
   ngOnInit(): void {
     // Subscribe to workspace state changes
     this.workspaceService.currentWorkspaceState$
@@ -383,6 +507,16 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
       .subscribe((state: WorkspaceState) => {
         this.availableWorkspaces = state.availableWorkspaces;
         this.selectedWorkspace = state.selectedWorkspace;
+
+        // Fetch workspaces if none are loaded (e.g. navigated back via "Change Workspace")
+        if (state.availableWorkspaces.length === 0 && this.isLoading && !this.hasFetchedWorkspaces) {
+          this.hasFetchedWorkspaces = true;
+          this.workspaceService.getAvailableWorkspaces()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe();
+          return;
+        }
+
         this.handleWorkspaceState(state);
       });
   }
@@ -439,9 +573,29 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     
     console.log('Auto-selecting single workspace:', workspace);
     
-    // Add a small delay for better UX - user sees the intentional selection
-    timer(1200).subscribe(() => {
-      this.selectWorkspace(workspace);
+    // Fetch providers from API then decide
+    timer(800).subscribe(() => {
+      this.workspaceService.getProviders(workspace.pluginId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.providers.length === 1) {
+              this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
+            } else if (response.providers.length === 0) {
+              this.selectWorkspace(workspace);
+            } else {
+              // Multiple providers - show selection
+              this.isAutoSelecting = false;
+              this.selectedWorkspaceForProvider = workspace;
+              this.availableProviders = response.providers;
+              this.showProviderSelection = true;
+            }
+          },
+          error: () => {
+            this.isAutoSelecting = false;
+            this.selectWorkspace(workspace);
+          }
+        });
     });
   }
 
@@ -449,29 +603,67 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     this.isAutoSelecting = true;
     this.autoSelectingWorkspace = workspace;
     
-    console.log('Auto-selecting single workspace with provider:', workspace, provider);
+    console.log('Auto-selecting single workspace, fetching providers from API:', workspace);
     
-    // Add a small delay for better UX - user sees the intentional selection
-    timer(1200).subscribe(() => {
-      this.selectWorkspaceWithProvider(workspace, provider);
+    timer(800).subscribe(() => {
+      this.workspaceService.getProviders(workspace.pluginId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.providers.length === 1) {
+              this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
+            } else if (response.providers.length === 0) {
+              this.selectWorkspace(workspace);
+            } else {
+              // Multiple providers from API - show selection
+              this.isAutoSelecting = false;
+              this.selectedWorkspaceForProvider = workspace;
+              this.availableProviders = response.providers;
+              this.showProviderSelection = true;
+            }
+          },
+          error: () => {
+            this.isAutoSelecting = false;
+            // Fallback to the static provider string
+            this.selectWorkspaceWithProvider(workspace, provider);
+          }
+        });
     });
   }
 
   onWorkspaceClick(workspace: Plugin): void {
     console.log('Workspace clicked:', workspace);
     
-    // If workspace has only one provider, auto-select it
-    if (workspace.providers && workspace.providers.length === 1) {
-      this.selectWorkspaceWithProvider(workspace, workspace.providers[0]);
-    } else if (workspace.providers && workspace.providers.length > 1) {
-      // Show provider selection
-      this.selectedWorkspaceForProvider = workspace;
-      this.showWorkspaceSelection = false;
-      this.showProviderSelection = true;
-    } else {
-      // No providers, select workspace directly (fallback)
-      this.selectWorkspace(workspace);
-    }
+    // Fetch providers from the API
+    this.selectedWorkspaceForProvider = workspace;
+    this.showWorkspaceSelection = false;
+    this.showProviderSelection = true;
+    this.isLoadingProviders = true;
+    this.availableProviders = [];
+    
+    this.workspaceService.getProviders(workspace.pluginId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.isLoadingProviders = false;
+          this.availableProviders = response.providers;
+          
+          if (response.providers.length === 1) {
+            // Auto-select single provider
+            this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
+          } else if (response.providers.length === 0) {
+            // No providers, select workspace directly (fallback)
+            console.warn('No providers returned for workspace:', workspace.pluginId);
+            this.selectWorkspace(workspace);
+          }
+        },
+        error: (error) => {
+          this.isLoadingProviders = false;
+          console.error('Error fetching providers:', error);
+          // Fallback to workspace-only selection
+          this.selectWorkspace(workspace);
+        }
+      });
   }
 
   selectWorkspace(workspace: Plugin): void {
@@ -490,8 +682,30 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     this.router.navigate(['/applicant-info']);
   }
 
+  onDropdownWorkspaceChange(workspace: Plugin): void {
+    this.selectedDropdownWorkspace = workspace;
+  }
+
+  confirmWorkspaceSelection(): void {
+    if (!this.selectedDropdownWorkspace) return;
+    this.onWorkspaceClick(this.selectedDropdownWorkspace);
+  }
+
+  confirmProviderSelection(): void {
+    if (!this.selectedDropdownProvider || !this.selectedWorkspaceForProvider) return;
+    this.selectWorkspaceWithProviderDetails(this.selectedWorkspaceForProvider, this.selectedDropdownProvider);
+  }
+
+  selectWorkspaceWithProviderDetails(workspace: Plugin, provider: Provider): void {
+    console.log('Selecting workspace with provider details:', workspace, provider);
+    this.workspaceService.selectWorkspaceWithProviderDetails(workspace, provider);
+    this.router.navigate(['/applicant-info']);
+  }
+
   goBackToWorkspaceSelection(): void {
     this.selectedWorkspaceForProvider = null;
+    this.selectedDropdownProvider = null;
+    this.availableProviders = [];
     this.showProviderSelection = false;
     this.showWorkspaceSelection = true;
   }

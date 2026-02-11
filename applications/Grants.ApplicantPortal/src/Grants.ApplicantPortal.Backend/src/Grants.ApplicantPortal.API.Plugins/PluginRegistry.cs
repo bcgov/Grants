@@ -23,7 +23,7 @@ public static class PluginRegistry
       string PluginId,
       Type PluginType,
       string Description,
-      IReadOnlyList<PluginSupportedFeature> SupportedFeatures,
+      IReadOnlyList<string> SupportedFeatures,
       PluginOptions? Configuration = null);
 
   /// <summary>
@@ -69,22 +69,6 @@ public static class PluginRegistry
   {
     if (string.IsNullOrWhiteSpace(pluginId)) return false;
     return _plugins.ContainsKey(pluginId);
-  }
-
-  /// <summary>
-  /// Check if a plugin supports a specific provider/key combination
-  /// </summary>
-  public static bool IsValidProviderKey(string? pluginId, string? provider, string? key)
-  {
-    if (string.IsNullOrWhiteSpace(pluginId) || string.IsNullOrWhiteSpace(provider) || string.IsNullOrWhiteSpace(key))
-      return false;
-
-    if (!_plugins.TryGetValue(pluginId, out var pluginInfo))
-      return false;
-
-    return pluginInfo.SupportedFeatures.Any(f =>
-        f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase) &&
-        f.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
   }
 
   /// <summary>
@@ -141,41 +125,6 @@ public static class PluginRegistry
       return null;
       
     return plugin;
-  }
-
-  /// <summary>
-  /// Get supported features for a specific plugin
-  /// </summary>
-  public static IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures(string pluginId)
-  {
-    if (_plugins.TryGetValue(pluginId, out var pluginInfo))
-      return pluginInfo.SupportedFeatures;
-
-    return new List<PluginSupportedFeature>();
-  }
-
-  /// <summary>
-  /// Get configured providers for a specific plugin
-  /// </summary>
-  public static IReadOnlyList<string> GetConfiguredProviders(string pluginId)
-  {
-    if (_plugins.TryGetValue(pluginId, out var pluginInfo) && pluginInfo.Configuration?.Providers != null)
-      return pluginInfo.Configuration.Providers;
-
-    return new List<string>();
-  }
-
-  /// <summary>
-  /// Get all supported providers across all plugins
-  /// </summary>
-  public static IReadOnlyList<string> GetAllSupportedProviders()
-  {
-    return _plugins.Values
-        .SelectMany(p => p.SupportedFeatures)
-        .Select(f => f.Provider)
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .OrderBy(p => p)
-        .ToList();
   }
 
   /// <summary>

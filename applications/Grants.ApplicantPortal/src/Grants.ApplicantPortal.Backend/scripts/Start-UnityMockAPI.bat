@@ -78,13 +78,14 @@ echo   * Swagger UI: http://localhost:%PORT%/swagger
 echo   * Health Check: http://localhost:%PORT%/health
 echo.
 echo Available Endpoints:
-echo   * GET /api/v1/profiles/{profileId}
-echo   * GET /api/v1/profiles/{profileId}/employment
-echo   * GET /api/v1/profiles/{profileId}/security
-echo   * GET /api/v1/profiles/{profileId}/contacts
-echo   * GET /api/v1/profiles/{profileId}/addresses
-echo   * GET /api/v1/profiles/{profileId}/organization
-echo   * GET /api/v1/profiles/{profileId}/data
+echo   * GET /api/app/applicant-profiles/tenants
+echo   * GET /api/profiles/{profileId}
+echo   * GET /api/profiles/{profileId}/employment
+echo   * GET /api/profiles/{profileId}/security
+echo   * GET /api/profiles/{profileId}/contacts
+echo   * GET /api/profiles/{profileId}/addresses
+echo   * GET /api/profiles/{profileId}/organization
+echo   * GET /api/profiles/{profileId}/data
 echo.
 echo IMPORTANT: Update your appsettings.Development.json!
 echo Set Plugins.UNITY.Configuration.BaseUrl to 'http://localhost:%PORT%'

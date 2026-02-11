@@ -29,61 +29,47 @@ public partial class UnityPlugin : IProfilePlugin, IContactManagementPlugin, IAd
 
     public string PluginId => "UNITY";
 
-    private static readonly IReadOnlyList<PluginSupportedFeature> SupportedFeatures = new List<PluginSupportedFeature>
-    {
-        // DGP Provider
-        new("DGP", "PROFILE", "Unity user profile data"),
-        new("DGP", "EMPLOYMENT", "Unity employment information"),
-        new("DGP", "SECURITY", "Unity security clearance data"),
-        new("DGP", "CONTACTS", "Unity contact information"),
-        new("DGP", "ADDRESSES", "Unity address information"),
-        new("DGP", "ORGINFO", "Unity organization information"),
-        new("DGP", "SUBMISSIONS", "Unity submissions data"),
-        new("DGP", "PAYMENTS", "Unity payment information"),
-        
-        // ABC Provider
-        new("ABC", "PROFILE", "Unity user profile data"),
-        new("ABC", "EMPLOYMENT", "Unity employment information"),
-        new("ABC", "SECURITY", "Unity security clearance data"),
-        new("ABC", "CONTACTS", "Unity contact information"),
-        new("ABC", "ADDRESSES", "Unity address information"),
-        new("ABC", "ORGINFO", "Unity organization information"),
-        new("ABC", "SUBMISSIONS", "Unity submissions data"),
-        new("ABC", "PAYMENTS", "Unity payment information")
-    };
+    private static readonly IReadOnlyList<string> _supportedFeatures =
+    [
+        "ProfilePopulation",
+        "ContactManagement",
+        "AddressManagement",
+        "OrganizationManagement"
+    ];
 
-    public IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures()
-    {
-        return SupportedFeatures;
-    }
-
-    public IReadOnlyList<string> GetSupportedProviders()
-    {
-        return SupportedFeatures
-            .Select(f => f.Provider)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    public IReadOnlyList<string> GetSupportedKeys(string provider)
-    {
-        if (string.IsNullOrWhiteSpace(provider))
-            return new List<string>();
-
-        return SupportedFeatures
-            .Where(f => f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase))
-            .Select(f => f.Key)
-            .ToList();
-    }
+    public IReadOnlyList<string> GetSupportedFeatures() => _supportedFeatures;
 
     public bool CanHandle(ProfilePopulationMetadata metadata)
     {
-        if (!metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase))
-            return false;
+        return metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);
+    }
 
-        // Check if the provider/key combination is supported
-        return SupportedFeatures.Any(f => 
-            f.Provider.Equals(metadata.Provider, StringComparison.OrdinalIgnoreCase) &&
-            f.Key.Equals(metadata.Key, StringComparison.OrdinalIgnoreCase));
+    /// <summary>
+    /// Fetches available providers (tenants) from the Unity external API
+    /// </summary>
+    public async Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Fetching providers from Unity external API");
+
+        var request = new ExternalServiceRequest
+        {
+            Endpoint = "/api/app/applicant-profiles/tenants",
+            Method = HttpMethod.Get
+        };
+
+        var response = await _externalServiceClient.CallAsync<List<ProviderInfo>>(
+            PluginId, request, cancellationToken);
+
+        if (!response.IsSuccess)
+        {
+            _logger.LogError("Failed to fetch providers from Unity API: {Error} (StatusCode: {StatusCode})",
+                response.ErrorMessage, response.StatusCode);
+
+            throw new InvalidOperationException(
+                $"Unable to retrieve providers from Unity API: {response.ErrorMessage}");
+        }
+
+        _logger.LogInformation("Retrieved {Count} providers from Unity API", response.Data?.Count ?? 0);
+        return response.Data ?? [];
     }
 }

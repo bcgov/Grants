@@ -14,9 +14,9 @@ public class ListPlugins(ILogger<ListPlugins> logger) : EndpointWithoutRequest<L
     AllowAnonymous();
     Summary(s =>
     {
-      s.Summary = "List available enabled plugins with their features and providers";
-      s.Description = "Returns a list of enabled plugins with their IDs, descriptions, configured features, and associated providers.";
-      s.Responses[200] = "List of enabled plugins with their features and providers";
+      s.Summary = "List available enabled plugins with their features";
+      s.Description = "Returns a list of enabled plugins with their IDs, descriptions, and configured features. Use the /Plugins/{PluginId}/providers endpoint to retrieve providers for a specific plugin.";
+      s.Responses[200] = "List of enabled plugins with their features";
     });
 
     // Add tags for better Swagger organization
@@ -35,10 +35,7 @@ public class ListPlugins(ILogger<ListPlugins> logger) : EndpointWithoutRequest<L
         .Select(p => new PluginInfoDto(
             p.PluginId,
             p.Description,
-            // Use configured features (from app settings) as the authoritative source
-            p.Configuration?.Features ?? [],
-            // Use configured providers (from app settings) as the authoritative source
-            p.Configuration?.Providers ?? []))
+            p.SupportedFeatures))
         .ToList();
 
     logger.LogInformation("Returning {PluginCount} enabled plugins", plugins.Count);
@@ -54,10 +51,9 @@ public class ListPlugins(ILogger<ListPlugins> logger) : EndpointWithoutRequest<L
 public record ListPluginsResponse(IReadOnlyList<PluginInfoDto> Plugins);
 
 /// <summary>
-/// Plugin information for API responses including ID, name, features and providers
+/// Plugin information for API responses including ID, description, and features
 /// </summary>
 public record PluginInfoDto(
-    string PluginId,
-    string Description,
-    List<string> Features,
-    List<string> Providers);
+string PluginId,
+string Description,
+IReadOnlyList<string> Features);
