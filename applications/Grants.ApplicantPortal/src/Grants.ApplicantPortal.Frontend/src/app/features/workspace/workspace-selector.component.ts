@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, timer } from 'rxjs';
+import { Subject, switchMap, takeUntil, timer } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
 
@@ -574,28 +574,27 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     console.log('Auto-selecting single workspace:', workspace);
     
     // Fetch providers from API then decide
-    timer(800).subscribe(() => {
-      this.workspaceService.getProviders(workspace.pluginId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            if (response.providers.length === 1) {
-              this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
-            } else if (response.providers.length === 0) {
-              this.selectWorkspace(workspace);
-            } else {
-              // Multiple providers - show selection
-              this.isAutoSelecting = false;
-              this.selectedWorkspaceForProvider = workspace;
-              this.availableProviders = response.providers;
-              this.showProviderSelection = true;
-            }
-          },
-          error: () => {
-            this.isAutoSelecting = false;
-            this.selectWorkspace(workspace);
-          }
-        });
+    timer(800).pipe(
+      takeUntil(this.destroy$),
+      switchMap(() => this.workspaceService.getProviders(workspace.pluginId))
+    ).subscribe({
+      next: (response) => {
+        if (response.providers.length === 1) {
+          this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
+        } else if (response.providers.length === 0) {
+          this.selectWorkspace(workspace);
+        } else {
+          // Multiple providers - show selection
+          this.isAutoSelecting = false;
+          this.selectedWorkspaceForProvider = workspace;
+          this.availableProviders = response.providers;
+          this.showProviderSelection = true;
+        }
+      },
+      error: () => {
+        this.isAutoSelecting = false;
+        this.selectWorkspace(workspace);
+      }
     });
   }
 
@@ -605,29 +604,28 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     
     console.log('Auto-selecting single workspace, fetching providers from API:', workspace);
     
-    timer(800).subscribe(() => {
-      this.workspaceService.getProviders(workspace.pluginId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            if (response.providers.length === 1) {
-              this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
-            } else if (response.providers.length === 0) {
-              this.selectWorkspace(workspace);
-            } else {
-              // Multiple providers from API - show selection
-              this.isAutoSelecting = false;
-              this.selectedWorkspaceForProvider = workspace;
-              this.availableProviders = response.providers;
-              this.showProviderSelection = true;
-            }
-          },
-          error: () => {
-            this.isAutoSelecting = false;
-            // Fallback to the static provider string
-            this.selectWorkspaceWithProvider(workspace, provider);
-          }
-        });
+    timer(800).pipe(
+      takeUntil(this.destroy$),
+      switchMap(() => this.workspaceService.getProviders(workspace.pluginId))
+    ).subscribe({
+      next: (response) => {
+        if (response.providers.length === 1) {
+          this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
+        } else if (response.providers.length === 0) {
+          this.selectWorkspace(workspace);
+        } else {
+          // Multiple providers from API - show selection
+          this.isAutoSelecting = false;
+          this.selectedWorkspaceForProvider = workspace;
+          this.availableProviders = response.providers;
+          this.showProviderSelection = true;
+        }
+      },
+      error: () => {
+        this.isAutoSelecting = false;
+        // Fallback to the static provider string
+        this.selectWorkspaceWithProvider(workspace, provider);
+      }
     });
   }
 

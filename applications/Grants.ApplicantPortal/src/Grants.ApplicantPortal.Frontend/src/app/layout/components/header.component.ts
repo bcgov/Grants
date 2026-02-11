@@ -6,8 +6,8 @@ import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { Plugin, Provider } from '../../shared/models/workspace.interface';
-import { filter } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { filter, switchMap, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -26,8 +26,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   currentProviders: Provider[] = [];
   isChangingWorkspace = false;
   isLoadingProviders = false;
-  private routerSubscription?: Subscription;
-  private workspaceSubscription?: Subscription;
+  private readonly destroy$ = new Subject<void>();
+  private readonly fetchProviders$ = new Subject<string>();
 
   get currentWorkspace(): Plugin | null {
     return this.selectedWorkspace;
@@ -56,43 +56,63 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.updateTitle();
 
     // Listen to route changes
-    this.routerSubscription = this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => {
         this.updateTitle();
       });
 
+    // Cancel any in-flight provider request when a new pluginId is emitted
+    this.fetchProviders$
+      .pipe(
+        switchMap((pluginId) => {
+          this.isLoadingProviders = true;
+          this.currentProviders = [];
+          return this.workspaceService.getProviders(pluginId);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (response) => {
+          this.currentProviders = response.providers;
+          this.isLoadingProviders = false;
+        },
+        error: () => {
+          this.currentProviders = [];
+          this.isLoadingProviders = false;
+        },
+      });
+
     // Subscribe to workspace changes
-    this.workspaceSubscription = this.workspaceService.currentWorkspaceState$.subscribe(
-      state => {
+    this.workspaceService.currentWorkspaceState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
         const workspaceChanged = state.selectedWorkspace?.pluginId !== this.selectedWorkspace?.pluginId;
         this.selectedWorkspace = state.selectedWorkspace;
         this.selectedProvider = state.selectedProvider;
         this.selectedProviderName = state.selectedProviderName;
         this.availableWorkspaces = state.availableWorkspaces;
-        
+
         // Fetch providers from API when workspace changes
         if (workspaceChanged && state.selectedWorkspace) {
-          this.fetchProviders(state.selectedWorkspace.pluginId);
+          this.fetchProviders$.next(state.selectedWorkspace.pluginId);
         }
-      }
-    );
+      });
 
     // Subscribe to workspace changing state
-    this.workspaceService.isChangingWorkspace$.subscribe(
-      isChanging => {
+    this.workspaceService.isChangingWorkspace$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(isChanging => {
         this.isChangingWorkspace = isChanging;
-      }
-    );
+      });
   }
 
   ngOnDestroy(): void {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
-    if (this.workspaceSubscription) {
-      this.workspaceSubscription.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private updateTitle(): void {
@@ -113,22 +133,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     event.preventDefault();
     console.log('Desktop logout clicked');
     this.authService.logout();
-  }
-
-  private fetchProviders(pluginId: string): void {
-    this.isLoadingProviders = true;
-    this.currentProviders = [];
-    
-    this.workspaceService.getProviders(pluginId).subscribe({
-      next: (response) => {
-        this.currentProviders = response.providers;
-        this.isLoadingProviders = false;
-      },
-      error: () => {
-        this.currentProviders = [];
-        this.isLoadingProviders = false;
-      }
-    });
   }
 
   selectProviderById(provider: Provider): void {
@@ -152,11 +156,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     console.log('HeaderComponent - Workspace selected:', workspace);
     if (workspace.pluginId !== this.selectedWorkspace?.pluginId) {
       this.isChangingWorkspace = true;
-      const provider = workspace.providers && workspace.providers.length === 1 
-        ? workspace.providers[0] 
-        : undefined;
-      
-      this.workspaceService.selectWorkspace(workspace, provider);
+      // Provider selection is handled by fetchProviders$ after the workspace state updates
+      this.workspaceService.selectWorkspace(workspace);
       
       setTimeout(() => {
         this.isChangingWorkspace = false;

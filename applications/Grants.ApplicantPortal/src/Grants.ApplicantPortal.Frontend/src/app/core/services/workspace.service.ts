@@ -94,17 +94,13 @@ export class WorkspaceService {
     // Set loading state
     this.changingWorkspace$.next(true);
     
-    // If no provider specified, try to use remembered provider or default to first
-    if (!provider && workspace.providers && workspace.providers.length > 0) {
-      // Try to get remembered provider for this workspace
+    // If no provider specified, try to use a previously remembered provider for this workspace.
+    // Provider lists are now fetched from the API, so we never read workspace.providers here.
+    if (!provider) {
       const rememberedProvider = this.workspaceProviderMemory.get(workspace.pluginId);
-      
-      if (rememberedProvider && workspace.providers.includes(rememberedProvider)) {
+      if (rememberedProvider) {
         provider = rememberedProvider;
         console.log('WorkspaceService - Using remembered provider:', provider);
-      } else {
-        provider = workspace.providers[0]; // Default to first provider
-        console.log('WorkspaceService - Defaulting to first provider:', provider);
       }
     }
     
@@ -286,20 +282,17 @@ export class WorkspaceService {
         );
         
         if (matchingWorkspace) {
-          // Check if saved provider is still valid
-          if (provider && matchingWorkspace.providers.includes(provider)) {
+          // Restore the saved workspace (and provider if one was persisted).
+          // Provider validity is no longer checked against workspace.providers
+          // because provider lists are now fetched from the API.
+          if (provider) {
             console.log('WorkspaceService - Restored saved workspace and provider');
             this.selectWorkspace(matchingWorkspace, provider);
-            return;
-          } else if (matchingWorkspace.providers.length === 1) {
-            console.log('WorkspaceService - Restored workspace, auto-selecting single provider');
-            this.selectWorkspace(matchingWorkspace, matchingWorkspace.providers[0]);
-            return;
           } else {
-            console.log('WorkspaceService - Restored workspace, multiple providers available');
+            console.log('WorkspaceService - Restored workspace without provider');
             this.selectWorkspace(matchingWorkspace);
-            return;
           }
+          return;
         } else {
           console.log('WorkspaceService - Saved workspace no longer available');
           localStorage.removeItem('selectedWorkspace');
@@ -310,15 +303,11 @@ export class WorkspaceService {
       }
     }
 
-    // Auto-selection logic for new sessions
+    // Auto-selection logic for new sessions.
+    // Provider counts are no longer available on the Plugin object;
+    // components fetch providers from the API and handle selection.
     if (plugins.length === 1) {
-      const workspace = plugins[0];
-      if (workspace.providers.length === 1) {
-        console.log('WorkspaceService - Auto-selecting single workspace with single provider');
-        // Let component handle this for better UX
-      } else {
-        console.log('WorkspaceService - Single workspace with multiple providers');
-      }
+      console.log('WorkspaceService - Single workspace available; component will handle provider selection');
     }
   }
 
