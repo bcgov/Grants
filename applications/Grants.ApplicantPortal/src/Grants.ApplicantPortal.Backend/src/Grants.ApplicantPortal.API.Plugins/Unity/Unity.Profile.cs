@@ -12,7 +12,7 @@ public partial class UnityPlugin
 {
     public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Unity plugin populating profile for ProfileId: {ProfileId}", metadata.ProfileId);
+        logger.LogInformation("Unity plugin populating profile for ProfileId: {ProfileId}", metadata.ProfileId);
 
         try
         {
@@ -21,14 +21,14 @@ public partial class UnityPlugin
 
             if (!response.IsSuccess)
             {
-                _logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}. StatusCode: {StatusCode}", 
+                logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}. StatusCode: {StatusCode}", 
                     metadata.ProfileId, response.ErrorMessage, response.StatusCode);
                 
                 throw new InvalidOperationException(
                     $"Unity service call failed for ProfileId {metadata.ProfileId}: {response.ErrorMessage} (Status: {response.StatusCode})");
             }
 
-            _logger.LogInformation("Unity plugin successfully populated profile for ProfileId: {ProfileId}", metadata.ProfileId);
+            logger.LogInformation("Unity plugin successfully populated profile for ProfileId: {ProfileId}", metadata.ProfileId);
 
             // Parse the Unity Mock API response to extract the data portion
             var mockApiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
@@ -49,7 +49,7 @@ public partial class UnityPlugin
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unity plugin failed to populate profile for ProfileId: {ProfileId}", metadata.ProfileId);
+            logger.LogError(ex, "Unity plugin failed to populate profile for ProfileId: {ProfileId}", metadata.ProfileId);
             throw;
         }
     }
@@ -81,7 +81,7 @@ public partial class UnityPlugin
             }
         }
 
-        return await _externalServiceClient.CallAsync(PluginId, request, cancellationToken);
+        return await externalServiceClient.CallAsync(PluginId, request, cancellationToken);
     }
 
     private static string BuildEndpoint(string provider, string key, Guid profileId)
@@ -105,9 +105,9 @@ public partial class UnityPlugin
     /// </summary>
     private async Task FireProfileUpdatedMessage(ProfilePopulationMetadata metadata, CancellationToken cancellationToken)
     {
-        if (_messagePublisher == null)
+        if (messagePublisher == null)
         {
-            _logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
+            logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
             return;
         }
 
@@ -120,14 +120,14 @@ public partial class UnityPlugin
                 metadata.Key,
                 correlationId: $"profile-{metadata.ProfileId}");
 
-            await _messagePublisher.PublishAsync(message, cancellationToken);
+            await messagePublisher.PublishAsync(message, cancellationToken);
             
-            _logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}", 
+            logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}", 
                 metadata.ProfileId, metadata.Provider, metadata.Key);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
+            logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
             // Don't throw - messaging failures shouldn't break the main operation
         }
     }

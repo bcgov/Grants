@@ -14,7 +14,7 @@ public partial class UnityPlugin
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Unity plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
+    logger.LogInformation("Unity plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
         editRequest.OrganizationId, profileContext.ProfileId);
 
     try
@@ -25,14 +25,14 @@ public partial class UnityPlugin
       // 🔥 Invalidate the ORGINFO cache when organization edit is queued
       await InvalidateOrganizationCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
 
-      _logger.LogInformation("Unity plugin queued organization edit - ID: {OrganizationId}, Name: {Name}, Type: {Type}",
+      logger.LogInformation("Unity plugin queued organization edit - ID: {OrganizationId}, Name: {Name}, Type: {Type}",
           editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Unity plugin failed to queue organization edit {OrganizationId} for ProfileId: {ProfileId}",
+      logger.LogError(ex, "Unity plugin failed to queue organization edit {OrganizationId} for ProfileId: {ProfileId}",
           editRequest.OrganizationId, profileContext.ProfileId);
       return Result.Error("Failed to queue organization edit for Unity system");
     }
@@ -43,9 +43,9 @@ public partial class UnityPlugin
   /// </summary>
   private async Task FireOrganizationEditMessage(EditOrganizationRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
   {
-    if (_messagePublisher == null)
+    if (messagePublisher == null)
     {
-      _logger.LogError("Message publisher not available - cannot publish critical OrganizationEditCommand for organization {OrganizationId}", editRequest.OrganizationId);
+      logger.LogError("Message publisher not available - cannot publish critical OrganizationEditCommand for organization {OrganizationId}", editRequest.OrganizationId);
       throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
@@ -72,9 +72,9 @@ public partial class UnityPlugin
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
-    await _messagePublisher.PublishAsync(message, cancellationToken);
+    await messagePublisher.PublishAsync(message, cancellationToken);
 
-    _logger.LogDebug("Published OrganizationEditCommand for organization {OrganizationId} in profile {ProfileId}",
+    logger.LogDebug("Published OrganizationEditCommand for organization {OrganizationId} in profile {ProfileId}",
         editRequest.OrganizationId, profileContext.ProfileId);
   }
 
@@ -83,22 +83,22 @@ public partial class UnityPlugin
   /// </summary>
   private async Task InvalidateOrganizationCache(Guid profileId, string provider, CancellationToken cancellationToken)
   {
-    if (_cacheInvalidationService == null)
+    if (cacheInvalidationService == null)
     {
-      _logger.LogDebug("Cache invalidation service not available - skipping organization cache invalidation");
+      logger.LogDebug("Cache invalidation service not available - skipping organization cache invalidation");
       return;
     }
 
     try
     {
-      await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO", cancellationToken);
 
-      _logger.LogDebug("Invalidated ORGINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+      logger.LogDebug("Invalidated ORGINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
           profileId, PluginId, provider);
     }
     catch (Exception ex)
     {
-      _logger.LogWarning(ex, "Failed to invalidate ORGINFO cache for ProfileId: {ProfileId}", profileId);
+      logger.LogWarning(ex, "Failed to invalidate ORGINFO cache for ProfileId: {ProfileId}", profileId);
       // Don't throw - cache invalidation failures shouldn't break the main operation
     }
   }

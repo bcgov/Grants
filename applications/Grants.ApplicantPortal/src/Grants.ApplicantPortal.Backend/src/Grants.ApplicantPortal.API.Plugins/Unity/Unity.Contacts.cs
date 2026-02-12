@@ -14,7 +14,7 @@ public partial class UnityPlugin
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Unity plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
+    logger.LogInformation("Unity plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
         profileContext.ProfileId, contactRequest.Name, contactRequest.Type);
 
     try
@@ -28,14 +28,14 @@ public partial class UnityPlugin
       // 🔥 STEP 2: Send command to Unity via message queue
       await FireContactCreateMessage(newContactId, contactRequest, profileContext, cancellationToken);
 
-      _logger.LogInformation("Unity plugin optimistically created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
+      logger.LogInformation("Unity plugin optimistically created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
           newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);
 
       return Result<Guid>.Success(newContactId);
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Unity plugin failed to queue contact creation for ProfileId: {ProfileId}, Name: {Name}",
+      logger.LogError(ex, "Unity plugin failed to queue contact creation for ProfileId: {ProfileId}, Name: {Name}",
           profileContext.ProfileId, contactRequest.Name);
       return Result<Guid>.Error("Failed to queue contact creation for Unity system");
     }
@@ -46,7 +46,7 @@ public partial class UnityPlugin
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Unity plugin editing contact {ContactId} for ProfileId: {ProfileId}",
+    logger.LogInformation("Unity plugin editing contact {ContactId} for ProfileId: {ProfileId}",
         editRequest.ContactId, profileContext.ProfileId);
 
     try
@@ -57,14 +57,14 @@ public partial class UnityPlugin
       // 🔥 STEP 2: Send edit command to Unity via message queue
       await FireContactEditMessage(editRequest, profileContext, cancellationToken);
 
-      _logger.LogInformation("Unity plugin optimistically edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}",
+      logger.LogInformation("Unity plugin optimistically edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}",
           editRequest.ContactId, editRequest.Name, editRequest.Type);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Unity plugin failed to queue contact edit {ContactId} for ProfileId: {ProfileId}",
+      logger.LogError(ex, "Unity plugin failed to queue contact edit {ContactId} for ProfileId: {ProfileId}",
           editRequest.ContactId, profileContext.ProfileId);
       return Result.Error("Failed to queue contact edit for Unity system");
     }
@@ -75,7 +75,7 @@ public partial class UnityPlugin
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Unity plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
+    logger.LogInformation("Unity plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
         contactId, profileContext.ProfileId);
 
     try
@@ -86,14 +86,14 @@ public partial class UnityPlugin
       // 🔥 Invalidate the CONTACTS cache when primary contact change is queued
       await InvalidateContactsCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
 
-      _logger.LogInformation("Unity plugin queued set contact {ContactId} as primary for ProfileId: {ProfileId}",
+      logger.LogInformation("Unity plugin queued set contact {ContactId} as primary for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Unity plugin failed to queue set contact {ContactId} as primary for ProfileId: {ProfileId}",
+      logger.LogError(ex, "Unity plugin failed to queue set contact {ContactId} as primary for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
       return Result.Error("Failed to queue set contact as primary for Unity system");
     }
@@ -104,7 +104,7 @@ public partial class UnityPlugin
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Unity plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
+    logger.LogInformation("Unity plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
         contactId, profileContext.ProfileId);
 
     try
@@ -115,14 +115,14 @@ public partial class UnityPlugin
       // 🔥 Invalidate the CONTACTS cache when contact deletion is queued
       await InvalidateContactsCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
 
-      _logger.LogInformation("Unity plugin queued contact deletion {ContactId} for ProfileId: {ProfileId}",
+      logger.LogInformation("Unity plugin queued contact deletion {ContactId} for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
 
       return Result.Success();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Unity plugin failed to queue contact deletion {ContactId} for ProfileId: {ProfileId}",
+      logger.LogError(ex, "Unity plugin failed to queue contact deletion {ContactId} for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
       return Result.Error("Failed to queue contact deletion for Unity system");
     }
@@ -133,9 +133,9 @@ public partial class UnityPlugin
   /// </summary>
   private async Task FireContactCreateMessage(Guid contactId, CreateContactRequest contactRequest, ProfileContext profileContext, CancellationToken cancellationToken)
   {
-    if (_messagePublisher == null)
+    if (messagePublisher == null)
     {
-      _logger.LogError("Message publisher not available - cannot publish critical ContactCreateCommand for contact {ContactId}", contactId);
+      logger.LogError("Message publisher not available - cannot publish critical ContactCreateCommand for contact {ContactId}", contactId);
       throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
@@ -160,9 +160,9 @@ public partial class UnityPlugin
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
-    await _messagePublisher.PublishAsync(message, cancellationToken);
+    await messagePublisher.PublishAsync(message, cancellationToken);
 
-    _logger.LogDebug("Published ContactCreateCommand for contact {ContactId} in profile {ProfileId}",
+    logger.LogDebug("Published ContactCreateCommand for contact {ContactId} in profile {ProfileId}",
         contactId, profileContext.ProfileId);
   }
 
@@ -171,9 +171,9 @@ public partial class UnityPlugin
   /// </summary>
   private async Task FireContactEditMessage(EditContactRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
   {
-    if (_messagePublisher == null)
+    if (messagePublisher == null)
     {
-      _logger.LogError("Message publisher not available - cannot publish critical ContactEditCommand for contact {ContactId}", editRequest.ContactId);
+      logger.LogError("Message publisher not available - cannot publish critical ContactEditCommand for contact {ContactId}", editRequest.ContactId);
       throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
@@ -198,9 +198,9 @@ public partial class UnityPlugin
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
-    await _messagePublisher.PublishAsync(message, cancellationToken);
+    await messagePublisher.PublishAsync(message, cancellationToken);
 
-    _logger.LogDebug("Published ContactEditCommand for contact {ContactId} in profile {ProfileId}",
+    logger.LogDebug("Published ContactEditCommand for contact {ContactId} in profile {ProfileId}",
         editRequest.ContactId, profileContext.ProfileId);
   }
 
@@ -209,9 +209,9 @@ public partial class UnityPlugin
   /// </summary>
   private async Task FireContactSetPrimaryMessage(Guid contactId, ProfileContext profileContext, CancellationToken cancellationToken)
   {
-    if (_messagePublisher == null)
+    if (messagePublisher == null)
     {
-      _logger.LogError("Message publisher not available - cannot publish critical ContactSetPrimaryCommand for contact {ContactId}", contactId);
+      logger.LogError("Message publisher not available - cannot publish critical ContactSetPrimaryCommand for contact {ContactId}", contactId);
       throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
@@ -227,9 +227,9 @@ public partial class UnityPlugin
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
-    await _messagePublisher.PublishAsync(message, cancellationToken);
+    await messagePublisher.PublishAsync(message, cancellationToken);
 
-    _logger.LogDebug("Published ContactSetPrimaryCommand for contact {ContactId} in profile {ProfileId}",
+    logger.LogDebug("Published ContactSetPrimaryCommand for contact {ContactId} in profile {ProfileId}",
         contactId, profileContext.ProfileId);
   }
 
@@ -238,9 +238,9 @@ public partial class UnityPlugin
   /// </summary>
   private async Task FireContactDeleteMessage(Guid contactId, ProfileContext profileContext, CancellationToken cancellationToken)
   {
-    if (_messagePublisher == null)
+    if (messagePublisher == null)
     {
-      _logger.LogError("Message publisher not available - cannot publish critical ContactDeleteCommand for contact {ContactId}", contactId);
+      logger.LogError("Message publisher not available - cannot publish critical ContactDeleteCommand for contact {ContactId}", contactId);
       throw new InvalidOperationException("Message publisher is required for Unity plugin operations");
     }
 
@@ -256,9 +256,9 @@ public partial class UnityPlugin
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
-    await _messagePublisher.PublishAsync(message, cancellationToken);
+    await messagePublisher.PublishAsync(message, cancellationToken);
 
-    _logger.LogDebug("Published ContactDeleteCommand for contact {ContactId} in profile {ProfileId}",
+    logger.LogDebug("Published ContactDeleteCommand for contact {ContactId} in profile {ProfileId}",
         contactId, profileContext.ProfileId);
   }
 
@@ -270,9 +270,9 @@ public partial class UnityPlugin
     ProfileContext profileContext,
     CancellationToken cancellationToken)
   {
-    if (_cacheInvalidationService == null)
+    if (cacheInvalidationService == null)
     {
-      _logger.LogDebug("Cache invalidation service not available - skipping optimistic contact cache update");
+      logger.LogDebug("Cache invalidation service not available - skipping optimistic contact cache update");
       return;
     }
 
@@ -280,14 +280,14 @@ public partial class UnityPlugin
     {
       // For now, we'll just invalidate the cache so it gets refreshed with the new data
       // In a more sophisticated implementation, we could actually update the cached data directly
-      await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTS", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTS", cancellationToken);
 
-      _logger.LogDebug("Optimistically invalidated CONTACTS cache for new contact {ContactId} in ProfileId: {ProfileId}",
+      logger.LogDebug("Optimistically invalidated CONTACTS cache for new contact {ContactId} in ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
     }
     catch (Exception ex)
     {
-      _logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for new contact {ContactId}", contactId);
+      logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for new contact {ContactId}", contactId);
       // Don't throw - optimistic cache updates are not critical to the main operation
     }
   }
@@ -297,9 +297,9 @@ public partial class UnityPlugin
   /// </summary>
   private async Task UpdateContactsCacheOptimistically(EditContactRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
   {
-    if (_cacheInvalidationService == null)
+    if (cacheInvalidationService == null)
     {
-      _logger.LogDebug("Cache invalidation service not available - skipping optimistic contact cache update");
+      logger.LogDebug("Cache invalidation service not available - skipping optimistic contact cache update");
       return;
     }
 
@@ -307,14 +307,14 @@ public partial class UnityPlugin
     {
       // For now, we'll just invalidate the cache so it gets refreshed with the updated data
       // In a more sophisticated implementation, we could actually update the cached data directly
-      await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTS", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTS", cancellationToken);
 
-      _logger.LogDebug("Optimistically invalidated CONTACTS cache for edited contact {ContactId} in ProfileId: {ProfileId}",
+      logger.LogDebug("Optimistically invalidated CONTACTS cache for edited contact {ContactId} in ProfileId: {ProfileId}",
           editRequest.ContactId, profileContext.ProfileId);
     }
     catch (Exception ex)
     {
-      _logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for edited contact {ContactId}", editRequest.ContactId);
+      logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for edited contact {ContactId}", editRequest.ContactId);
       // Don't throw - optimistic cache updates are not critical to the main operation
     }
   }
@@ -324,22 +324,22 @@ public partial class UnityPlugin
   /// </summary>
   private async Task InvalidateContactsCache(Guid profileId, string provider, CancellationToken cancellationToken)
   {
-    if (_cacheInvalidationService == null)
+    if (cacheInvalidationService == null)
     {
-      _logger.LogDebug("Cache invalidation service not available - skipping contacts cache invalidation");
+      logger.LogDebug("Cache invalidation service not available - skipping contacts cache invalidation");
       return;
     }
 
     try
     {
-      await _cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "CONTACTS", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "CONTACTS", cancellationToken);
 
-      _logger.LogDebug("Invalidated CONTACTS cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+      logger.LogDebug("Invalidated CONTACTS cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
           profileId, PluginId, provider);
     }
     catch (Exception ex)
     {
-      _logger.LogWarning(ex, "Failed to invalidate CONTACTS cache for ProfileId: {ProfileId}", profileId);
+      logger.LogWarning(ex, "Failed to invalidate CONTACTS cache for ProfileId: {ProfileId}", profileId);
       // Don't throw - cache invalidation failures shouldn't break the main operation
     }
   }
