@@ -11,6 +11,7 @@ public static class UseCasesServiceExtensions
     // Register shared services
     services.AddScoped<IProfileDataRetrievalService, ProfileDataRetrievalService>();
     services.AddScoped<IProfileCacheInvalidationService, ProfileCacheInvalidationService>();
+    services.AddScoped<IPluginCacheService, PluginCacheService>();
 
     logger.LogInformation("{Project} services registered", "UseCases");
 
