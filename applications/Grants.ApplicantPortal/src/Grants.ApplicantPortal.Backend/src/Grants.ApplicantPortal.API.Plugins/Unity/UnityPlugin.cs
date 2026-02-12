@@ -47,14 +47,19 @@ public partial class UnityPlugin : IProfilePlugin, IContactManagementPlugin, IAd
     /// <summary>
     /// Fetches available providers (tenants) from the Unity external API
     /// </summary>
-    public async Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(Guid profileId, string subject, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Fetching providers from Unity external API");
+        _logger.LogInformation("Fetching providers from Unity external API for ProfileId: {ProfileId}", profileId);
 
         var request = new ExternalServiceRequest
         {
             Endpoint = "/api/app/applicant-profiles/tenants",
-            Method = HttpMethod.Get
+            Method = HttpMethod.Get,
+            QueryParameters = new Dictionary<string, string>
+            {
+                ["ProfileId"] = profileId.ToString(),
+                ["Subject"] = subject
+            }
         };
 
         var response = await _externalServiceClient.CallAsync<List<ProviderInfo>>(

@@ -50,8 +50,12 @@ catch {
     exit 1
 }
 
+# Define headers for API key authentication
+$headers = @{ "X-Api-Key" = "dev-unity-api-key" }
+
 # Define endpoints to test (focusing on DEMO-compatible endpoints)
 $endpoints = @(
+    @{ Path = "/api/app/applicant-profiles/tenants?ProfileId=$ProfileId&Subject=test-subject%40azureidir"; Name = "Tenants" },
     @{ Path = "/api/profiles/$ProfileId/contacts?provider=DGP"; Name = "Contacts (DGP)" },
     @{ Path = "/api/profiles/$ProfileId/addresses?provider=ABC"; Name = "Addresses (ABC)" },
     @{ Path = "/api/profiles/$ProfileId/organization?provider=DGP"; Name = "Organization (DGP)" },
@@ -70,10 +74,25 @@ foreach ($endpoint in $endpoints) {
     try {
         Write-Host "  ? Testing $($endpoint.Name)..." -NoNewline
         
-        $response = Invoke-RestMethod -Uri "$baseUrl$($endpoint.Path)" -Method Get -TimeoutSec 10
+        $response = Invoke-RestMethod -Uri "$baseUrl$($endpoint.Path)" -Method Get -Headers $headers -TimeoutSec 10
         
-        # Basic validation for DEMO-compatible structure
-        if ($response -and $response.profileId -and $response.pluginId -eq "UNITY" -and $response.data) {
+        # Basic validation - Tenants endpoint returns an array, profile endpoints return DEMO-compatible structure
+        if ($endpoint.Name -eq "Tenants") {
+            if ($response -is [System.Array] -or $response.Count -gt 0) {
+                Write-Host " ? (Tenants list)" -ForegroundColor Green
+                $successCount++
+
+                Write-Host ""
+                Write-Host "  ?? Tenants Response:" -ForegroundColor Gray
+                foreach ($tenant in $response) {
+                    Write-Host "     - Id: $($tenant.id), Name: $($tenant.name)" -ForegroundColor White
+                }
+                Write-Host ""
+            } else {
+                Write-Host " ??  (Invalid structure)" -ForegroundColor Yellow
+            }
+        }
+        elseif ($response -and $response.profileId -and $response.pluginId -eq "UNITY" -and $response.data) {
             Write-Host " ? (DEMO-compatible)" -ForegroundColor Green
             $successCount++
             
