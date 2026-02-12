@@ -62,7 +62,11 @@
                       {{ getBadgeDisplayValue(row, column) }}
                     </span>
                   } @else if (column.type === 'date') {
-                    {{ getCellValue(row, column) | date:'mediumDate' }}
+                    @if (getCellValue(row, column)) {
+                      {{ getCellValue(row, column) | date:'mediumDate' }}
+                    } @else {
+                      —
+                    }
                   } @else if (column.type === 'currency') {
                     {{ getCellValue(row, column) | currency }}
                   } @else if (column.type === 'email') {

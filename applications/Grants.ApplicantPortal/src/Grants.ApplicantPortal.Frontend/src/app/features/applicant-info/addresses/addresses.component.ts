@@ -198,23 +198,35 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private processAddressesData(addresses: any[]): AddressDisplay[] {
-    return addresses.map(addr => ({
-      id: addr.id || `address-${Math.random()}`,
-      addressId: addr.addressId,
-      type: addr.type || 'Unknown',
-      street: addr.street || '',
-      city: addr.city || '',
-      province: addr.province || addr.state || '',
-      state: addr.state || addr.province || '',
-      postalCode: addr.postalCode || addr.zipCode || '',
-      zipCode: addr.zipCode || addr.postalCode || '',
-      country: addr.country || '',
-      isPrimary: addr.isPrimary || false,
-      isActive: addr.isActive !== false,
-      lastVerified: addr.lastVerified,
-      allowEdit: addr.allowEdit !== false,
-      fullAddress: `${addr.street || ''}, ${addr.city || ''}, ${addr.state || addr.province || ''} ${addr.postalCode || addr.zipCode || ''}`.trim()
-    }));
+    return addresses.map(addr => {
+      const line1 = addr.addressLine1 || addr.street || '';
+      const line2 = addr.addressLine2 || '';
+      const city = addr.city || '';
+      const province = addr.province || addr.state || '';
+      const postalCode = addr.postalCode || addr.zipCode || '';
+
+      const addressParts = [line1, line2].filter(Boolean).join(', ');
+
+      return {
+        id: addr.id || `address-${Math.random()}`,
+        addressId: addr.addressId,
+        type: addr.type || 'Unknown',
+        addressLine1: line1,
+        addressLine2: line2,
+        street: line1,
+        city,
+        province,
+        state: province,
+        postalCode,
+        zipCode: postalCode,
+        country: addr.country || '',
+        isPrimary: addr.isPrimary || false,
+        isActive: addr.isActive !== false,
+        lastVerified: addr.lastVerified,
+        allowEdit: addr.allowEdit !== false,
+        fullAddress: addressParts
+      };
+    });
   }
 
   // Datatable event handlers

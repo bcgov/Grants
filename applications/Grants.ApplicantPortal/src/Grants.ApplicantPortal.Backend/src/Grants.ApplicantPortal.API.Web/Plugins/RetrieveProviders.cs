@@ -2,7 +2,6 @@
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.Web.Auth;
 using Grants.ApplicantPortal.API.Web.Profiles;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Grants.ApplicantPortal.API.Web.Plugins;
 

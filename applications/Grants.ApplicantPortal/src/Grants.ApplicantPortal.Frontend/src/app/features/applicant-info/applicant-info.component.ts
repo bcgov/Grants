@@ -105,9 +105,6 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
           }
         }
       });
-
-    // Initial load
-    this.loadData();
   }
 
   ngOnDestroy(): void {

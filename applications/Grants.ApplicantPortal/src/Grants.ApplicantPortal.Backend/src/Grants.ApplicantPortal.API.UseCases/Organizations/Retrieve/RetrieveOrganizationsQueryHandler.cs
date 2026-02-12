@@ -25,6 +25,7 @@ public class RetrieveOrganizationsQueryHandler(
       request.PluginId,
       request.Provider,
       OrganizationKey,
+      request.Subject,
       request.AdditionalData,
       cancellationToken);
   }

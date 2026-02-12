@@ -25,6 +25,7 @@ public class RetrieveSubmissionsQueryHandler(
       request.PluginId,
       request.Provider,
       SubmissionsKey,
+      request.Subject,
       request.AdditionalData,
       cancellationToken);
   }

@@ -25,6 +25,7 @@ public class RetrieveAddressesQueryHandler(
       request.PluginId,
       request.Provider,
       AddressesKey,
+      request.Subject,
       request.AdditionalData,
       cancellationToken);
   }

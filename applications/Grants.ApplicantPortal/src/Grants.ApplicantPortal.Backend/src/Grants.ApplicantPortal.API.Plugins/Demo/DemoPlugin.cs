@@ -20,7 +20,12 @@ public partial class DemoPlugin : IProfilePlugin,
     private readonly ILogger<DemoPlugin> _logger;
     private readonly IMessagePublisher? _messagePublisher; // Optional for messaging
     private readonly IDistributedCache _distributedCache; // Direct Redis access only
-    private readonly IOptions<ProfileCacheOptions> _cacheOptions;    
+    private readonly IOptions<ProfileCacheOptions> _cacheOptions;
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public DemoPlugin(
         ILogger<DemoPlugin> logger,
@@ -158,21 +163,16 @@ public partial class DemoPlugin : IProfilePlugin,
                         null);
 
                     var mockData = GenerateSeedingMockData(metadata);
-                    var jsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        WriteIndented = false // Reduced size for caching
-                    });
 
                     var profileData = new ProfileData(
                         profileId,
                         PluginId,
                         scenario.Provider,
                         scenario.Key,
-                        jsonData);
+                        mockData);
 
                     // Store in distributed cache with 1-year expiration
-                    var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+                    var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);
                     var cacheOptions = new DistributedCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)

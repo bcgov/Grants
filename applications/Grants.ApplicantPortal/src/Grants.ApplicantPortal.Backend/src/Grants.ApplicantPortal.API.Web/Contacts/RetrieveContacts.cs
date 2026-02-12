@@ -34,10 +34,12 @@ public class RetrieveContacts(IMediator mediator)
   {
     // Get the current user's profile ID from the HTTP context
     var profileId = HttpContext.GetRequiredProfileId();
+    var subject = HttpContext.User.GetSubject() ?? string.Empty;
 
     var query = new RetrieveContactsQuery(profileId,
       request.PluginId,
       request.Provider,
+      subject,
       request.Parameters);
 
     var result = await mediator.Send(query, ct);
