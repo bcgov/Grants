@@ -47,7 +47,7 @@ public partial class DemoPlugin : IProfilePlugin,
 
     public IReadOnlyList<string> GetSupportedFeatures() => _supportedFeatures;
 
-    public Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(Guid profileId, string subject, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<ProviderInfo> providers =
         [

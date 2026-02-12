@@ -1,6 +1,7 @@
 ﻿using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Profiles;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Grants.ApplicantPortal.API.Web.Plugins;
@@ -9,7 +10,7 @@ namespace Grants.ApplicantPortal.API.Web.Plugins;
 /// Retrieves the available providers for a given plugin.
 /// Requires authentication.
 /// </summary>
-public class RetrieveProviders(ILogger<RetrieveProviders> logger, IProfilePluginFactory pluginFactory)
+public class RetrieveProviders(ILogger<RetrieveProviders> logger, IProfilePluginFactory pluginFactory, IProfileService profileService)
   : Endpoint<RetrieveProvidersRequest, RetrieveProvidersResponse>
 {
   public override void Configure()
@@ -52,7 +53,10 @@ public class RetrieveProviders(ILogger<RetrieveProviders> logger, IProfilePlugin
 
     try
     {
-      var providers = await plugin.GetProvidersAsync(ct);
+      var profile = await profileService.GetOrCreateProfileAsync(HttpContext.User, ct);
+      var subject = HttpContext.User.GetSubject() ?? string.Empty;
+
+      var providers = await plugin.GetProvidersAsync(profile.Id, subject, ct);
 
       logger.LogInformation("Returning {ProviderCount} providers for plugin '{PluginId}'",
         providers.Count, request.PluginId);

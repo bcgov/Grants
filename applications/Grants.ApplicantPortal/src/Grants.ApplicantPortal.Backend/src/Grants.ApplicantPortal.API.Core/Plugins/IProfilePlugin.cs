@@ -22,7 +22,10 @@ public interface IProfilePlugin
   /// Plugins with static providers should return them directly.
   /// An empty list is a valid result when no providers are available for the user.
   /// </summary>
-  Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default);
+  /// <param name="profileId">The authenticated user's profile identifier</param>
+  /// <param name="subject">The authenticated user's subject claim</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(Guid profileId, string subject, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Populates profile data from external sources or cache

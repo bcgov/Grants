@@ -691,8 +691,22 @@ app.MapGet("/api/profiles/{profileId}/data", (Guid profileId, string? provider =
 .WithOpenApi();
 
 // Tenants (providers) endpoint — returns the available providers for this Unity instance
-app.MapGet("/api/app/applicant-profiles/tenants", () =>
+// Accepts ProfileId and Subject query parameters to match the real Unity API contract
+app.MapGet("/api/app/applicant-profiles/tenants", (Guid? ProfileId, string? Subject) =>
 {
+    app.Logger.LogInformation("GetTenants called with ProfileId: {ProfileId}, Subject: {Subject}",
+        ProfileId, Subject);
+
+    if (ProfileId is null || string.IsNullOrEmpty(Subject))
+    {
+        return Results.BadRequest(new ProblemDetails
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = "Bad Request",
+            Detail = "ProfileId and Subject query parameters are required."
+        });
+    }
+
     var tenants = new[]
     {
         new { Id = "DGP", Name = "DGP" },
