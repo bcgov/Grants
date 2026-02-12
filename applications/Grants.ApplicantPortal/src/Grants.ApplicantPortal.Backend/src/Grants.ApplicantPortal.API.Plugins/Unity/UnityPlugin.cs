@@ -41,6 +41,7 @@ public partial class UnityPlugin(
     {
         return await pluginCacheService.GetOrFetchAsync<List<ProviderInfo>>(
             profileId,
+            PluginId,
             "providers",
             async ct =>
             {
