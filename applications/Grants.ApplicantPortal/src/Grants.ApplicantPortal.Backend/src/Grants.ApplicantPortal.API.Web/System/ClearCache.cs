@@ -129,7 +129,7 @@ public class ClearCache(
             IReadOnlyList<ProviderInfo> providers;
             try
             {
-                providers = plugin.GetProvidersAsync(profileId, subject).GetAwaiter().GetResult();
+                providers = plugin.GetProvidersAsync(profileId, subject).ConfigureAwait(false).GetAwaiter().GetResult();
             }
             catch
             {

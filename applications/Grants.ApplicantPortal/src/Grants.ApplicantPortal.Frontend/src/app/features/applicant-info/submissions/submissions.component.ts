@@ -143,8 +143,8 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     return data.map(submission => ({
       ...submission,
       // Only convert to Date if the field exists and is valid
-      submissionDate: submission.submissionDate ? new Date(submission.submissionDate) : (undefined as any),
-      lastModified: submission.lastModified ? new Date(submission.lastModified) : (undefined as any)
+      submissionDate: submission.submissionDate ? new Date(submission.submissionDate) : undefined,
+      lastModified: submission.lastModified ? new Date(submission.lastModified) : undefined
     }));
   }
 
