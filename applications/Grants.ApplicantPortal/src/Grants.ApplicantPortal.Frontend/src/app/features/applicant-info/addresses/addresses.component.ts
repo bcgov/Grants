@@ -199,18 +199,18 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
   private processAddressesData(addresses: any[]): AddressDisplay[] {
     return addresses.map(addr => {
-      const line1 = addr.addressLine1 || addr.street || '';
-      const line2 = addr.addressLine2 || '';
-      const city = addr.city || '';
-      const province = addr.province || addr.state || '';
-      const postalCode = addr.postalCode || addr.zipCode || '';
+      const line1 = addr.addressLine1 ?? addr.street ?? '';
+      const line2 = addr.addressLine2 ?? '';
+      const city = addr.city ?? '';
+      const province = addr.province ?? addr.state ?? '';
+      const postalCode = addr.postalCode ?? addr.zipCode ?? '';
 
       const addressParts = [line1, line2].filter(Boolean).join(', ');
 
       return {
-        id: addr.id || `address-${Math.random()}`,
+        id: addr.id ?? `address-${Math.random()}`,
         addressId: addr.addressId,
-        type: addr.type || 'Unknown',
+        type: addr.type ?? 'Unknown',
         addressLine1: line1,
         addressLine2: line2,
         street: line1,
@@ -219,8 +219,8 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         state: province,
         postalCode,
         zipCode: postalCode,
-        country: addr.country || '',
-        isPrimary: addr.isPrimary || false,
+        country: addr.country ?? '',
+        isPrimary: addr.isPrimary ?? false,
         isActive: addr.isActive !== false,
         lastVerified: addr.lastVerified,
         allowEdit: addr.allowEdit !== false,
