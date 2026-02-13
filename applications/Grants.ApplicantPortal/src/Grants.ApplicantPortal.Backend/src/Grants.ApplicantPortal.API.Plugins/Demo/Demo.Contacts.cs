@@ -180,8 +180,7 @@ public partial class DemoPlugin
                 profileId,
                 PluginId,
                 provider,
-                "CONTACTS",
-                null);
+                "CONTACTINFO");
 
             var mockData = GenerateSeedingMockData(metadata);
             var jsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
@@ -194,7 +193,7 @@ public partial class DemoPlugin
                 profileId,
                 PluginId,
                 provider,
-                "CONTACTS",
+                "CONTACTINFO",
                 jsonData);
 
             // Store updated data in Redis

@@ -34,6 +34,9 @@ public partial class DemoPlugin
         var cachedProfileData = JsonSerializer.Deserialize<ProfileData>(cachedBytes, _jsonOptions);
         if (cachedProfileData != null)
         {
+          cachedProfileData.CacheStatus = "HIT";
+          cachedProfileData.CacheStore = _cacheStoreType;
+
           _logger.LogInformation("Demo plugin successfully retrieved cached profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
               metadata.ProfileId, metadata.Provider, metadata.Key);
           
@@ -54,7 +57,11 @@ public partial class DemoPlugin
           metadata.PluginId,
           metadata.Provider,
           metadata.Key,
-          mockProfileData);
+          mockProfileData)
+      {
+          CacheStatus = "MISS",
+          CacheStore = _cacheStoreType
+      };
 
       // Store in Redis with long-term expiration
       var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);

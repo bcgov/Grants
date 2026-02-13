@@ -41,9 +41,9 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   pluginId: string = '';
   provider: string = '';
   keyOrgInfo = Key.ORGINFO;
-  keySubmissions = Key.SUBMISSIONS;
-  keyContacts = Key.CONTACTS;
-  keyAddresses = Key.ADDRESSES;
+  keySubmissions = Key.SUBMISSIONINFO;
+  keyContacts = Key.CONTACTINFO;
+  keyAddresses = Key.ADDRESSINFO;
 
   // Data properties
   applicantInfo: ApplicantInfo | null = null;

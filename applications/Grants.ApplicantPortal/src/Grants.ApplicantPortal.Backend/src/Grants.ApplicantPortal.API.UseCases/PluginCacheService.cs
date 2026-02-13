@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 
@@ -63,6 +64,10 @@ public class PluginCacheService(
     IOptions<ProfileCacheOptions> cacheOptions,
     ILogger<PluginCacheService> logger) : IPluginCacheService
 {
+    private readonly string _storeType = distributedCache.GetType().Name.Contains("Redis", StringComparison.OrdinalIgnoreCase)
+        ? "REDIS"
+        : "MEMORY";
+
     public async Task<T> GetOrFetchAsync<T>(
         Guid profileId,
         string pluginId,
@@ -84,6 +89,7 @@ public class PluginCacheService(
                 {
                     logger.LogDebug("Cache hit for {PluginId}:{Segment}, ProfileId: {ProfileId}",
                         pluginId, cacheSegment, profileId);
+                    StampDiagnostics(deserialized, cacheHit: true);
                     return deserialized;
                 }
 
@@ -124,6 +130,7 @@ public class PluginCacheService(
                 pluginId, cacheSegment, profileId);
         }
 
+        StampDiagnostics(result, cacheHit: false);
         return result;
     }
 
@@ -145,6 +152,19 @@ public class PluginCacheService(
         {
             logger.LogError(ex, "Failed to invalidate cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
                 pluginId, cacheSegment, profileId);
+        }
+    }
+
+    /// <summary>
+    /// Sets cache diagnostic properties on <see cref="ProfileData"/> results.
+    /// No-op for other types.
+    /// </summary>
+    private void StampDiagnostics<T>(T result, bool cacheHit)
+    {
+        if (result is ProfileData pd)
+        {
+            pd.CacheStatus = cacheHit ? "HIT" : "MISS";
+            pd.CacheStore = _storeType;
         }
     }
 }

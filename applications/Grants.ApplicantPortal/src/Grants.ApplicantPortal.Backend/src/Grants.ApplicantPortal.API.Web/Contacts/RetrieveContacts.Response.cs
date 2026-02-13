@@ -5,5 +5,7 @@ public record RetrieveContactsResponse(
     string PluginId,
     string Provider,
     object Data,
-    DateTime PopulatedAt
+    DateTime PopulatedAt,
+    string? CacheStatus = null,
+    string? CacheStore = null
 );

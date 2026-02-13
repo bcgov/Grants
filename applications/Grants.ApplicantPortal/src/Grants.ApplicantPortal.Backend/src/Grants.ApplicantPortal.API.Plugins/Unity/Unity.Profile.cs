@@ -84,11 +84,11 @@ public partial class UnityPlugin
     /// </summary>
     private static string MapToUnityKey(string key) => key?.ToUpperInvariant() switch
     {
-        "CONTACTS" => "CONTACTINFO",
-        "ADDRESSES" => "ADDRESSINFO",
-        "ORGINFO" => "ORGINFO",
-        "SUBMISSIONS" => "SUBMISSIONINFO",
-        "PAYMENTS" => "PAYMENTINFO",
+          "CONTACTINFO" => "CONTACTINFO",
+          "ADDRESSINFO" => "ADDRESSINFO",
+          "ORGINFO" => "ORGINFO",
+          "SUBMISSIONINFO" => "SUBMISSIONINFO",
+          "PAYMENTINFO" => "PAYMENTINFO",
         _ => key?.ToUpperInvariant() ?? string.Empty
     };
 

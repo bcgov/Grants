@@ -13,7 +13,7 @@ public class RetrieveSubmissionsQueryHandler(
     ILogger<RetrieveSubmissionsQueryHandler> logger)
     : IQueryHandler<RetrieveSubmissionsQuery, Result<ProfileData>>
 {  
-  private const string SubmissionsKey = "SUBMISSIONS";
+  private const string SubmissionsKey = "SUBMISSIONINFO";
   
   public async Task<Result<ProfileData>> Handle(RetrieveSubmissionsQuery request, CancellationToken cancellationToken)
   {

@@ -8,16 +8,19 @@ public record ProfileData(
     string PluginId,
     string Provider,
     string Key,
-    object Data, // ✅ Strongly typed object instead of JSON string
+    object Data,
     DateTime PopulatedAt = default
 )
 {
   public DateTime PopulatedAt { get; init; } = PopulatedAt == default ? DateTime.UtcNow : PopulatedAt;
-  
-  // ⚠️ DEPRECATED: Keep for backward compatibility during transition
-  [Obsolete("Use Data property instead. JsonData will be removed in future version.")]
-  public string JsonData => System.Text.Json.JsonSerializer.Serialize(Data, new System.Text.Json.JsonSerializerOptions 
-  { 
-    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
-  });
+
+  /// <summary>
+  /// Diagnostic: whether this response came from cache ("HIT") or was freshly fetched ("MISS").
+  /// </summary>
+  public string? CacheStatus { get; set; }
+
+  /// <summary>
+  /// Diagnostic: the backing cache store type ("REDIS" or "MEMORY").
+  /// </summary>
+  public string? CacheStore { get; set; }
 }
