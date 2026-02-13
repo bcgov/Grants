@@ -20,7 +20,7 @@ import {
 } from '../../shared/models/applicant-info.interface';
 import {
   Key,
-} from '../../shared/models/applicantion-info.enums';
+} from '../../shared/models/application-info.enums';
 
 @Component({
   selector: 'app-applicant-info',
