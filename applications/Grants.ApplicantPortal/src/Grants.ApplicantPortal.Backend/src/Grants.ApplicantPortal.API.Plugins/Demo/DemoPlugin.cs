@@ -39,9 +39,7 @@ public partial class DemoPlugin : IProfilePlugin,
         _distributedCache = distributedCache;
         _cacheOptions = cacheOptions;
         _messagePublisher = messagePublisher;
-        _cacheStoreType = distributedCache.GetType().Name.Contains("Redis", StringComparison.OrdinalIgnoreCase)
-            ? "REDIS"
-            : "MEMORY";
+        _cacheStoreType = distributedCache.GetType().Name;
     }
 
     public string PluginId => "DEMO";

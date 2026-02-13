@@ -14,43 +14,43 @@ namespace Grants.ApplicantPortal.API.UseCases;
 /// </summary>
 public interface IPluginCacheService
 {
-    /// <summary>
-    /// Gets data from cache or calls the factory on a miss.
-    /// An optional <paramref name="shouldCache"/> predicate controls whether the
-    /// fetched result is stored. When omitted the result is always cached.
-    /// </summary>
-    /// <typeparam name="T">The result type (list, single object, record, etc.).</typeparam>
-    /// <param name="profileId">The profile that owns the cached data.</param>
-    /// <param name="pluginId">The plugin producing the data (e.g. "UNITY", "DEMO").</param>
-    /// <param name="cacheSegment">
-    /// The trailing portion of the cache key (e.g. "providers", "contacts").
-    /// The full key is built as <c>{CacheKeyPrefix}{profileId}:{pluginId}:{cacheSegment}</c>.
-    /// </param>
-    /// <param name="factory">Async factory invoked on a cache miss to produce the data.</param>
-    /// <param name="shouldCache">
-    /// Optional predicate evaluated against the factory result.
-    /// Return <c>true</c> to cache, <c>false</c> to skip (e.g. empty list, null-ish state).
-    /// When <c>null</c> the result is always cached.
-    /// </param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task<T> GetOrFetchAsync<T>(
-        Guid profileId,
-        string pluginId,
-        string cacheSegment,
-        Func<CancellationToken, Task<T>> factory,
-        Func<T, bool>? shouldCache = null,
-        CancellationToken cancellationToken = default);
+  /// <summary>
+  /// Gets data from cache or calls the factory on a miss.
+  /// An optional <paramref name="shouldCache"/> predicate controls whether the
+  /// fetched result is stored. When omitted the result is always cached.
+  /// </summary>
+  /// <typeparam name="T">The result type (list, single object, record, etc.).</typeparam>
+  /// <param name="profileId">The profile that owns the cached data.</param>
+  /// <param name="pluginId">The plugin producing the data (e.g. "UNITY", "DEMO").</param>
+  /// <param name="cacheSegment">
+  /// The trailing portion of the cache key (e.g. "providers", "contacts").
+  /// The full key is built as <c>{CacheKeyPrefix}{profileId}:{pluginId}:{cacheSegment}</c>.
+  /// </param>
+  /// <param name="factory">Async factory invoked on a cache miss to produce the data.</param>
+  /// <param name="shouldCache">
+  /// Optional predicate evaluated against the factory result.
+  /// Return <c>true</c> to cache, <c>false</c> to skip (e.g. empty list, null-ish state).
+  /// When <c>null</c> the result is always cached.
+  /// </param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  Task<T> GetOrFetchAsync<T>(
+      Guid profileId,
+      string pluginId,
+      string cacheSegment,
+      Func<CancellationToken, Task<T>> factory,
+      Func<T, bool>? shouldCache = null,
+      CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Builds a consistent cache key for a given profile, plugin, and data segment.
-    /// Useful when callers need the key for manual operations.
-    /// </summary>
-    string BuildCacheKey(Guid profileId, string pluginId, string segment);
+  /// <summary>
+  /// Builds a consistent cache key for a given profile, plugin, and data segment.
+  /// Useful when callers need the key for manual operations.
+  /// </summary>
+  string BuildCacheKey(Guid profileId, string pluginId, string segment);
 
-    /// <summary>
-    /// Removes a cached entry for a given profile, plugin, and data segment.
-    /// </summary>
-    Task InvalidateAsync(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default);
+  /// <summary>
+  /// Removes a cached entry for a given profile, plugin, and data segment.
+  /// </summary>
+  Task InvalidateAsync(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -64,107 +64,105 @@ public class PluginCacheService(
     IOptions<ProfileCacheOptions> cacheOptions,
     ILogger<PluginCacheService> logger) : IPluginCacheService
 {
-    private readonly string _storeType = distributedCache.GetType().Name.Contains("Redis", StringComparison.OrdinalIgnoreCase)
-        ? "REDIS"
-        : "MEMORY";
+  private readonly string _storeType = distributedCache.GetType().Name;
 
-    public async Task<T> GetOrFetchAsync<T>(
-        Guid profileId,
-        string pluginId,
-        string cacheSegment,
-        Func<CancellationToken, Task<T>> factory,
-        Func<T, bool>? shouldCache = null,
-        CancellationToken cancellationToken = default)
+  public async Task<T> GetOrFetchAsync<T>(
+      Guid profileId,
+      string pluginId,
+      string cacheSegment,
+      Func<CancellationToken, Task<T>> factory,
+      Func<T, bool>? shouldCache = null,
+      CancellationToken cancellationToken = default)
+  {
+    var cacheKey = BuildCacheKey(profileId, pluginId, cacheSegment);
+
+    // 1. Try cache
+    var cached = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+    if (cached is not null)
     {
-        var cacheKey = BuildCacheKey(profileId, pluginId, cacheSegment);
-
-        // 1. Try cache
-        var cached = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
-        if (cached is not null)
+      try
+      {
+        var deserialized = JsonSerializer.Deserialize<T>(cached);
+        if (deserialized is not null)
         {
-            try
-            {
-                var deserialized = JsonSerializer.Deserialize<T>(cached);
-                if (deserialized is not null)
-                {
-                    logger.LogDebug("Cache hit for {PluginId}:{Segment}, ProfileId: {ProfileId}",
-                        pluginId, cacheSegment, profileId);
-                    StampDiagnostics(deserialized, cacheHit: true);
-                    return deserialized;
-                }
-
-                logger.LogWarning("Cache entry deserialized to null for {PluginId}:{Segment}, ProfileId: {ProfileId} — removing and falling through to factory",
-                    pluginId, cacheSegment, profileId);
-            }
-            catch (JsonException ex)
-            {
-                logger.LogWarning(ex, "Corrupt cache entry for {PluginId}:{Segment}, ProfileId: {ProfileId} — removing and falling through to factory",
-                    pluginId, cacheSegment, profileId);
-            }
-
-            await distributedCache.RemoveAsync(cacheKey, cancellationToken);
+          logger.LogDebug("Cache hit for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+              pluginId, cacheSegment, profileId);
+          StampDiagnostics(deserialized, cacheHit: true);
+          return deserialized;
         }
 
-        // 2. Cache miss — invoke factory
-        logger.LogInformation("Cache miss for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+        logger.LogWarning("Cache entry deserialized to null for {PluginId}:{Segment}, ProfileId: {ProfileId} — removing and falling through to factory",
             pluginId, cacheSegment, profileId);
-
-        var result = await factory(cancellationToken);
-
-        // 3. Evaluate caching predicate (default: always cache)
-        if (shouldCache is null || shouldCache(result))
-        {
-            var json = JsonSerializer.Serialize(result);
-            var options = new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheOptions.Value.CacheExpiryMinutes),
-                SlidingExpiration = TimeSpan.FromMinutes(cacheOptions.Value.SlidingExpiryMinutes)
-            };
-            await distributedCache.SetStringAsync(cacheKey, json, options, cancellationToken);
-            logger.LogDebug("Cached result for {PluginId}:{Segment}, ProfileId: {ProfileId}",
-                pluginId, cacheSegment, profileId);
-        }
-        else
-        {
-            logger.LogInformation("Skipping cache for {PluginId}:{Segment}, ProfileId: {ProfileId} — shouldCache returned false",
-                pluginId, cacheSegment, profileId);
-        }
-
-        StampDiagnostics(result, cacheHit: false);
-        return result;
-    }
-
-    public string BuildCacheKey(Guid profileId, string pluginId, string segment)
-        => $"{cacheOptions.Value.CacheKeyPrefix}{profileId}:{pluginId}:{segment}";
-
-    public async Task InvalidateAsync(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default)
-    {
-        var cacheKey = BuildCacheKey(profileId, pluginId, cacheSegment);
-
-        logger.LogInformation("Invalidating cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+      }
+      catch (JsonException ex)
+      {
+        logger.LogWarning(ex, "Corrupt cache entry for {PluginId}:{Segment}, ProfileId: {ProfileId} — removing and falling through to factory",
             pluginId, cacheSegment, profileId);
+      }
 
-        try
-        {
-            await distributedCache.RemoveAsync(cacheKey, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to invalidate cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
-                pluginId, cacheSegment, profileId);
-        }
+      await distributedCache.RemoveAsync(cacheKey, cancellationToken);
     }
 
-    /// <summary>
-    /// Sets cache diagnostic properties on <see cref="ProfileData"/> results.
-    /// No-op for other types.
-    /// </summary>
-    private void StampDiagnostics<T>(T result, bool cacheHit)
+    // 2. Cache miss — invoke factory
+    logger.LogInformation("Cache miss for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+        pluginId, cacheSegment, profileId);
+
+    var result = await factory(cancellationToken);
+
+    // 3. Evaluate caching predicate (default: always cache)
+    if (shouldCache is null || shouldCache(result))
     {
-        if (result is ProfileData pd)
-        {
-            pd.CacheStatus = cacheHit ? "HIT" : "MISS";
-            pd.CacheStore = _storeType;
-        }
+      var json = JsonSerializer.Serialize(result);
+      var options = new DistributedCacheEntryOptions
+      {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheOptions.Value.CacheExpiryMinutes),
+        SlidingExpiration = TimeSpan.FromMinutes(cacheOptions.Value.SlidingExpiryMinutes)
+      };
+      await distributedCache.SetStringAsync(cacheKey, json, options, cancellationToken);
+      logger.LogDebug("Cached result for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+          pluginId, cacheSegment, profileId);
     }
+    else
+    {
+      logger.LogInformation("Skipping cache for {PluginId}:{Segment}, ProfileId: {ProfileId} — shouldCache returned false",
+          pluginId, cacheSegment, profileId);
+    }
+
+    StampDiagnostics(result, cacheHit: false);
+    return result;
+  }
+
+  public string BuildCacheKey(Guid profileId, string pluginId, string segment)
+      => $"{cacheOptions.Value.CacheKeyPrefix}{profileId}:{pluginId}:{segment}";
+
+  public async Task InvalidateAsync(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default)
+  {
+    var cacheKey = BuildCacheKey(profileId, pluginId, cacheSegment);
+
+    logger.LogInformation("Invalidating cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+        pluginId, cacheSegment, profileId);
+
+    try
+    {
+      await distributedCache.RemoveAsync(cacheKey, cancellationToken);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to invalidate cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+          pluginId, cacheSegment, profileId);
+    }
+  }
+
+  /// <summary>
+  /// Sets cache diagnostic properties on <see cref="ProfileData"/> results.
+  /// No-op for other types.
+  /// </summary>
+  private void StampDiagnostics<T>(T result, bool cacheHit)
+  {
+    if (result is ProfileData pd)
+    {
+      pd.CacheStatus = cacheHit ? "HIT" : "MISS";
+      pd.CacheStore = _storeType;
+    }
+  }
 }
