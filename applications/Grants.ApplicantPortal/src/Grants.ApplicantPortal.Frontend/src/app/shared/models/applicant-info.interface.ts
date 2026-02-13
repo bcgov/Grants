@@ -86,8 +86,8 @@ export interface SubmissionsData {
   paidAmount: number;
   status: string;
   statusCode: string; // Used for badge styling
-  submissionDate: Date;
-  lastModified: Date;
+  submissionDate?: Date;
+  lastModified?: Date;
   projectPeriod?: {
     startDate: Date;
     endDate: Date;
