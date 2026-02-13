@@ -13,7 +13,7 @@ public class RetrieveAddressesQueryHandler(
     ILogger<RetrieveAddressesQueryHandler> logger)
     : IQueryHandler<RetrieveAddressesQuery, Result<ProfileData>>
 {  
-  private const string AddressesKey = "ADDRESSES";
+  private const string AddressesKey = "ADDRESSINFO";
   
   public async Task<Result<ProfileData>> Handle(RetrieveAddressesQuery request, CancellationToken cancellationToken)
   {

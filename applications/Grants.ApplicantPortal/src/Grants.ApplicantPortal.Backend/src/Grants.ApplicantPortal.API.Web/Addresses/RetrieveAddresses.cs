@@ -55,7 +55,9 @@ public class RetrieveAddresses(IMediator mediator)
         result.Value.PluginId,
         result.Value.Provider,
         result.Value.Data,
-        result.Value.PopulatedAt);
+        result.Value.PopulatedAt,
+        result.Value.CacheStatus,
+        result.Value.CacheStore);
       return;
     }
 

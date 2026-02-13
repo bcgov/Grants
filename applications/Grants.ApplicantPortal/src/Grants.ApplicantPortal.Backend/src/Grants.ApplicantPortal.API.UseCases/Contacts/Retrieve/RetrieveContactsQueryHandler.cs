@@ -13,7 +13,7 @@ public class RetrieveContactsQueryHandler(
     ILogger<RetrieveContactsQueryHandler> logger)
     : IQueryHandler<RetrieveContactsQuery, Result<ProfileData>>
 {  
-  private const string ContactsKey = "CONTACTS";
+  private const string ContactsKey = "CONTACTINFO";
   
   public async Task<Result<ProfileData>> Handle(RetrieveContactsQuery request, CancellationToken cancellationToken)
   {

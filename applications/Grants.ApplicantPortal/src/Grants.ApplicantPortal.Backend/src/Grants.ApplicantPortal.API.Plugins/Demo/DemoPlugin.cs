@@ -21,6 +21,7 @@ public partial class DemoPlugin : IProfilePlugin,
     private readonly IMessagePublisher? _messagePublisher; // Optional for messaging
     private readonly IDistributedCache _distributedCache; // Direct Redis access only
     private readonly IOptions<ProfileCacheOptions> _cacheOptions;
+    private readonly string _cacheStoreType;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -37,7 +38,8 @@ public partial class DemoPlugin : IProfilePlugin,
         _logger = logger;
         _distributedCache = distributedCache;
         _cacheOptions = cacheOptions;
-        _messagePublisher = messagePublisher;        
+        _messagePublisher = messagePublisher;
+        _cacheStoreType = distributedCache.GetType().Name;
     }
 
     public string PluginId => "DEMO";
@@ -73,15 +75,15 @@ public partial class DemoPlugin : IProfilePlugin,
     private record SeedScenario(string Provider, string Key);
     private static readonly SeedScenario[] _seedScenarios =
     [
-        new("PROGRAM1", "SUBMISSIONS"),
+        new("PROGRAM1", "SUBMISSIONINFO"),
         new("PROGRAM1", "ORGINFO"),
-        new("PROGRAM1", "PAYMENTS"),
-        new("PROGRAM1", "CONTACTS"),
-        new("PROGRAM1", "ADDRESSES"),
-        new("PROGRAM2", "SUBMISSIONS"),
+        new("PROGRAM1", "PAYMENTINFO"),
+        new("PROGRAM1", "CONTACTINFO"),
+        new("PROGRAM1", "ADDRESSINFO"),
+        new("PROGRAM2", "SUBMISSIONINFO"),
         new("PROGRAM2", "ORGINFO"),
-        new("PROGRAM2", "CONTACTS"),
-        new("PROGRAM2", "ADDRESSES")
+        new("PROGRAM2", "CONTACTINFO"),
+        new("PROGRAM2", "ADDRESSINFO")
     ];
 
     /// <summary>
@@ -320,15 +322,15 @@ public partial class DemoPlugin : IProfilePlugin,
         return (metadata.Provider?.ToUpper(), metadata.Key?.ToUpper()) switch
         {
             // Use dedicated data classes for each type - they now return clean data directly
-            ("PROGRAM1", "SUBMISSIONS") => SubmissionsData.GenerateProgram1Submissions(baseData),
+            ("PROGRAM1", "SUBMISSIONINFO") => SubmissionsData.GenerateProgram1Submissions(baseData),
             ("PROGRAM1", "ORGINFO") => OrganizationsData.GenerateProgram1OrgInfo(baseData),
-            ("PROGRAM1", "PAYMENTS") => OrganizationsData.GenerateProgram1Payments(baseData),
-            ("PROGRAM1", "CONTACTS") => ContactsData.GenerateProgram1Contacts(baseData),
-            ("PROGRAM1", "ADDRESSES") => AddressesData.GenerateProgram1Addresses(baseData),
-            ("PROGRAM2", "SUBMISSIONS") => SubmissionsData.GenerateProgram2Submissions(baseData),
+            ("PROGRAM1", "PAYMENTINFO") => OrganizationsData.GenerateProgram1Payments(baseData),
+            ("PROGRAM1", "CONTACTINFO") => ContactsData.GenerateProgram1Contacts(baseData),
+            ("PROGRAM1", "ADDRESSINFO") => AddressesData.GenerateProgram1Addresses(baseData),
+            ("PROGRAM2", "SUBMISSIONINFO") => SubmissionsData.GenerateProgram2Submissions(baseData),
             ("PROGRAM2", "ORGINFO") => OrganizationsData.GenerateProgram2OrgInfo(baseData),
-            ("PROGRAM2", "CONTACTS") => ContactsData.GenerateProgram2Contacts(baseData),
-            ("PROGRAM2", "ADDRESSES") => AddressesData.GenerateProgram2Addresses(baseData),
+            ("PROGRAM2", "CONTACTINFO") => ContactsData.GenerateProgram2Contacts(baseData),
+            ("PROGRAM2", "ADDRESSINFO") => AddressesData.GenerateProgram2Addresses(baseData),
             _ => throw new NotImplementedException($"No mock data generator for {metadata.Provider}:{metadata.Key}")
         };
     }

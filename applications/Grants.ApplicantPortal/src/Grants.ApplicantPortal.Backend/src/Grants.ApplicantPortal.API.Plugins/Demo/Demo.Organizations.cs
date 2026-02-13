@@ -64,8 +64,7 @@ public partial class DemoPlugin
                 profileId,
                 PluginId,
                 provider,
-                "ORGINFO",
-                null);
+                "ORGINFO");
 
             var mockData = GenerateSeedingMockData(metadata);
             var jsonData = JsonSerializer.Serialize(mockData, new JsonSerializerOptions
