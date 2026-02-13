@@ -160,7 +160,7 @@ public partial class DemoPlugin : IProfilePlugin,
                         PluginId, 
                         scenario.Provider, 
                         scenario.Key, 
-                        null);
+                        string.Empty);
 
                     var mockData = GenerateSeedingMockData(metadata);
 

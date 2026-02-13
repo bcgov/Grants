@@ -160,8 +160,8 @@ static object GetAddressInfoData() => new
 {
     Addresses = new[]
     {
-        new { Id = "AAD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-001", Type = "Physical", AddressLine1 = "1234 Government Street", AddressLine2 = "Suite 500", City = "Victoria", Province = "BC", PostalCode = "V8W 1A4", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true },
-        new { Id = "BBD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-002", Type = "Mailing", AddressLine1 = "5678 Unity Drive", AddressLine2 = "", City = "Vancouver", Province = "BC", PostalCode = "V6B 2C3", Country = "Canada", IsPrimary = false, IsActive = true, AllowEdit = true }
+        new { Id = "AAD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-001", Type = "Physical", AddressLine1 = "1234 Government Street", AddressLine2 = "Suite 500", City = "Victoria", Province = "BC", PostalCode = "V8W 1A4", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-30) },
+        new { Id = "BBD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-002", Type = "Mailing", AddressLine1 = "5678 Unity Drive", AddressLine2 = "", City = "Vancouver", Province = "BC", PostalCode = "V6B 2C3", Country = "Canada", IsPrimary = false, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-15) }
     },
     Summary = new { TotalAddresses = 2, PrimaryAddressCount = 1, ActiveAddressCount = 2 }
 };
@@ -198,9 +198,48 @@ static object GetSubmissionInfoData() => new
 {
     Submissions = new[]
     {
-        new { Id = "A1234E56-789A-BC01-23DE-F4567890AB12", SubmissionId = "UNI-SUB-001", ApplicationId = "APP-UNI-2024-001", ProjectName = "Digital Government Transformation", ProgramName = "Unity - Digital Innovation", RequestedAmount = 350000, PaidAmount = 175000, Status = "Approved", StatusCode = "GRANT_APPROVED" },
-        new { Id = "A2345E67-890A-BC12-34DE-F5678901AB23", SubmissionId = "UNI-SUB-002", ApplicationId = "APP-UNI-2024-002", ProjectName = "Cybersecurity Enhancement Program", ProgramName = "Unity - Security Solutions", RequestedAmount = 200000, PaidAmount = 50000, Status = "Under Review", StatusCode = "UNDER_INITIAL_REVIEW" },
-        new { Id = "A3456E78-901A-BC23-45DE-F6789012AB34", SubmissionId = "UNI-SUB-003", ApplicationId = "APP-UNI-2024-003", ProjectName = "Citizen Services Portal", ProgramName = "Unity - Public Services", RequestedAmount = 175000, PaidAmount = 0, Status = "Submitted", StatusCode = "SUBMITTED" }
+        new
+        {
+            Id = "A1234E56-789A-BC01-23DE-F4567890AB12",
+            SubmissionId = "UNI-SUB-001",
+            ApplicationId = "APP-UNI-2024-001",
+            ProjectName = "Digital Government Transformation",
+            ProgramName = "Unity - Digital Innovation",
+            RequestedAmount = 350000,
+            PaidAmount = 175000,
+            Status = "Approved",
+            StatusCode = "GRANT_APPROVED",
+            SubmissionDate = DateTime.UtcNow.AddDays(-30),
+            LastModified = DateTime.UtcNow.AddDays(-7)
+        },
+        new
+        {
+            Id = "A2345E67-890A-BC12-34DE-F5678901AB23",
+            SubmissionId = "UNI-SUB-002",
+            ApplicationId = "APP-UNI-2024-002",
+            ProjectName = "Cybersecurity Enhancement Program",
+            ProgramName = "Unity - Security Solutions",
+            RequestedAmount = 200000,
+            PaidAmount = 50000,
+            Status = "Under Review",
+            StatusCode = "UNDER_INITIAL_REVIEW",
+            SubmissionDate = DateTime.UtcNow.AddDays(-14),
+            LastModified = DateTime.UtcNow.AddDays(-2)
+        },
+        new
+        {
+            Id = "A3456E78-901A-BC23-45DE-F6789012AB34",
+            SubmissionId = "UNI-SUB-003",
+            ApplicationId = "APP-UNI-2024-003",
+            ProjectName = "Citizen Services Portal",
+            ProgramName = "Unity - Public Services",
+            RequestedAmount = 175000,
+            PaidAmount = 0,
+            Status = "Submitted",
+            StatusCode = "SUBMITTED",
+            SubmissionDate = DateTime.UtcNow.AddDays(-3),
+            LastModified = DateTime.UtcNow.AddDays(-1)
+        }
     },
     Summary = new { TotalSubmissions = 3, TotalRequestedAmount = 725000, TotalPaidAmount = 225000, ApprovedCount = 1, UnderReviewCount = 1, SubmittedCount = 1 }
 };
