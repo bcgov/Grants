@@ -25,6 +25,7 @@ public class RetrieveContactsQueryHandler(
       request.PluginId,
       request.Provider,
       ContactsKey,
+      request.Subject,
       request.AdditionalData,
       cancellationToken);
   }

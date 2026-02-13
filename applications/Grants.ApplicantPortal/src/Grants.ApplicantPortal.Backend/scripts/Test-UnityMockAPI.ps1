@@ -52,20 +52,21 @@ catch {
 
 # Define headers for API key authentication
 $headers = @{ "X-Api-Key" = "dev-unity-api-key" }
+$testSubject = "test-subject%40azureidir"
+$testTenantId = "DGP"
 
-# Define endpoints to test (focusing on DEMO-compatible endpoints)
+# Define endpoints to test — matches the real Unity API contract
 $endpoints = @(
-    @{ Path = "/api/app/applicant-profiles/tenants?ProfileId=$ProfileId&Subject=test-subject%40azureidir"; Name = "Tenants" },
-    @{ Path = "/api/profiles/$ProfileId/contacts?provider=DGP"; Name = "Contacts (DGP)" },
-    @{ Path = "/api/profiles/$ProfileId/addresses?provider=ABC"; Name = "Addresses (ABC)" },
-    @{ Path = "/api/profiles/$ProfileId/organization?provider=DGP"; Name = "Organization (DGP)" },
-    @{ Path = "/api/profiles/$ProfileId/submissions?provider=ABC"; Name = "Submissions (ABC)" },
-    @{ Path = "/api/profiles/$ProfileId/payments?provider=DGP"; Name = "Payments (DGP)" },
-    @{ Path = "/api/profiles/$ProfileId/data?provider=ABC"; Name = "Default Data (ABC)" }
+    @{ Path = "/api/app/applicant-profiles/tenants?ProfileId=$ProfileId&Subject=$testSubject"; Name = "Tenants" },
+    @{ Path = "/api/app/applicant-profiles/profile?ProfileId=$ProfileId&Subject=$testSubject&TenantId=$testTenantId&Key=CONTACTINFO"; Name = "CONTACTINFO" },
+    @{ Path = "/api/app/applicant-profiles/profile?ProfileId=$ProfileId&Subject=$testSubject&TenantId=$testTenantId&Key=ADDRESSINFO"; Name = "ADDRESSINFO" },
+    @{ Path = "/api/app/applicant-profiles/profile?ProfileId=$ProfileId&Subject=$testSubject&TenantId=$testTenantId&Key=ORGINFO"; Name = "ORGINFO" },
+    @{ Path = "/api/app/applicant-profiles/profile?ProfileId=$ProfileId&Subject=$testSubject&TenantId=$testTenantId&Key=SUBMISSIONINFO"; Name = "SUBMISSIONINFO" },
+    @{ Path = "/api/app/applicant-profiles/profile?ProfileId=$ProfileId&Subject=$testSubject&TenantId=$testTenantId&Key=PAYMENTINFO"; Name = "PAYMENTINFO" }
 )
 
 Write-Host ""
-Write-Host "?? Testing Unity plugin endpoints (DEMO-compatible structure)..." -ForegroundColor Cyan
+Write-Host "?? Testing Unity API endpoints..." -ForegroundColor Cyan
 
 $successCount = 0
 $totalCount = $endpoints.Count
@@ -76,7 +77,7 @@ foreach ($endpoint in $endpoints) {
         
         $response = Invoke-RestMethod -Uri "$baseUrl$($endpoint.Path)" -Method Get -Headers $headers -TimeoutSec 10
         
-        # Basic validation - Tenants endpoint returns an array, profile endpoints return DEMO-compatible structure
+        # Tenants returns an array; profile endpoint returns { profileId, subject, key, tenantId, data }
         if ($endpoint.Name -eq "Tenants") {
             if ($response -is [System.Array] -or $response.Count -gt 0) {
                 Write-Host " ? (Tenants list)" -ForegroundColor Green
@@ -92,21 +93,9 @@ foreach ($endpoint in $endpoints) {
                 Write-Host " ??  (Invalid structure)" -ForegroundColor Yellow
             }
         }
-        elseif ($response -and $response.profileId -and $response.pluginId -eq "UNITY" -and $response.data) {
-            Write-Host " ? (DEMO-compatible)" -ForegroundColor Green
+        elseif ($response -and $response.profileId -and $response.key -and $null -ne $response.data) {
+            Write-Host " ? (key=$($response.key), tenantId=$($response.tenantId))" -ForegroundColor Green
             $successCount++
-            
-            # Show sample data for first successful endpoint
-            if ($successCount -eq 1) {
-                Write-Host ""
-                Write-Host "  ?? Sample Response Structure:" -ForegroundColor Gray
-                Write-Host "     ProfileId: $($response.profileId)" -ForegroundColor White
-                Write-Host "     PluginId: $($response.pluginId)" -ForegroundColor White
-                Write-Host "     Provider: $($response.provider)" -ForegroundColor White
-                Write-Host "     Data: [JSON string containing actual data]" -ForegroundColor White
-                Write-Host "     PopulatedAt: $($response.populatedAt)" -ForegroundColor White
-                Write-Host ""
-            }
         } else {
             Write-Host " ??  (Invalid structure)" -ForegroundColor Yellow
         }
@@ -125,12 +114,11 @@ Write-Host "   ?? Success Rate: $(([math]::Round(($successCount / $totalCount) *
 if ($successCount -eq $totalCount) {
     Write-Host ""
     Write-Host "?? All tests passed! Unity Mock API is working correctly." -ForegroundColor Green
-    Write-Host "?? Data structure matches DEMO plugin format:" -ForegroundColor Cyan
-    Write-Host "   - profileId: GUID" -ForegroundColor White
-    Write-Host "   - pluginId: 'UNITY'" -ForegroundColor White
-    Write-Host "   - provider: 'DGP' or 'ABC'" -ForegroundColor White
-    Write-Host "   - data: JSON string with actual data" -ForegroundColor White
-    Write-Host "   - populatedAt: timestamp" -ForegroundColor White
+    Write-Host "?? Unity API contract:" -ForegroundColor Cyan
+    Write-Host "   Tenants:  GET /api/app/applicant-profiles/tenants?ProfileId=&Subject=" -ForegroundColor White
+    Write-Host "   Profile:  GET /api/app/applicant-profiles/profile?TenantId=&Key=&ProfileId=&Subject=" -ForegroundColor White
+    Write-Host "   Keys:     CONTACTINFO, ADDRESSINFO, ORGINFO, SUBMISSIONINFO, PAYMENTINFO" -ForegroundColor White
+    Write-Host "   Response: { profileId, subject, key, tenantId, data: {} }" -ForegroundColor White
     Write-Host ""
     Write-Host "?? You can now configure your Unity plugin to use: $baseUrl" -ForegroundColor Cyan
 } else {

@@ -6,99 +6,91 @@ using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 namespace Grants.ApplicantPortal.API.Plugins.Unity;
 
 /// <summary>
-/// Profile population implementation for Unity plugin
+/// Profile population implementation for Unity plugin.
+/// All profile data calls go through the single Unity endpoint
+/// <c>/api/app/applicant-profiles/profile</c> with query parameters
+/// <c>TenantId</c>, <c>Key</c>, <c>ProfileId</c>, and <c>Subject</c>.
 /// </summary>
 public partial class UnityPlugin
 {
     public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Unity plugin populating profile for ProfileId: {ProfileId}", metadata.ProfileId);
+        var cacheSegment = $"{metadata.Provider}:{metadata.Key}";
 
-        try
-        {
-            // Use the external service client to get data from Unity APIs
-            var response = await CallUnityServiceAsync(metadata, cancellationToken);
-
-            if (!response.IsSuccess)
+        return await pluginCacheService.GetOrFetchAsync<ProfileData>(
+            metadata.ProfileId,
+            PluginId,
+            cacheSegment,
+            async ct =>
             {
-                logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}. StatusCode: {StatusCode}", 
-                    metadata.ProfileId, response.ErrorMessage, response.StatusCode);
-                
-                throw new InvalidOperationException(
-                    $"Unity service call failed for ProfileId {metadata.ProfileId}: {response.ErrorMessage} (Status: {response.StatusCode})");
-            }
+                logger.LogInformation("Fetching {Key} from Unity API for ProfileId: {ProfileId}, Provider: {Provider}",
+                    metadata.Key, metadata.ProfileId, metadata.Provider);
 
-            logger.LogInformation("Unity plugin successfully populated profile for ProfileId: {ProfileId}", metadata.ProfileId);
+                var response = await CallUnityProfileAsync(metadata, ct);
 
-            // Parse the Unity Mock API response to extract the data portion
-            var mockApiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
-            var dataElement = mockApiResponse.GetProperty("data");
-            
-            // The data is already a JSON string from the mock API, so just extract it as a string
-            var dataJson = dataElement.GetString()!;
+                if (!response.IsSuccess)
+                {
+                    logger.LogError("Unity service call failed for ProfileId: {ProfileId}. Error: {Error}. StatusCode: {StatusCode}",
+                        metadata.ProfileId, response.ErrorMessage, response.StatusCode);
 
-            // 🔥 Fire a message when profile data is populated
-            await FireProfileUpdatedMessage(metadata, cancellationToken);
+                    throw new InvalidOperationException(
+                        $"Unity service call failed for ProfileId {metadata.ProfileId}: {response.ErrorMessage} (Status: {response.StatusCode})");
+                }
 
-            return new ProfileData(
-                metadata.ProfileId,
-                metadata.PluginId,
-                metadata.Provider,
-                metadata.Key,
-                dataJson);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unity plugin failed to populate profile for ProfileId: {ProfileId}", metadata.ProfileId);
-            throw;
-        }
+                // Parse the Unity API response and extract the data element
+                var apiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
+                var dataElement = apiResponse.GetProperty("data");
+
+                await FireProfileUpdatedMessage(metadata, ct);
+
+                return new ProfileData(
+                    metadata.ProfileId,
+                    metadata.PluginId,
+                    metadata.Provider,
+                    metadata.Key,
+                    dataElement.Clone());
+            },
+            cancellationToken: cancellationToken);
     }
 
-    private async Task<ExternalServiceResponse<string>> CallUnityServiceAsync(
-        ProfilePopulationMetadata metadata, 
+    /// <summary>
+    /// Calls the Unity profile endpoint with the correct query parameters.
+    /// Maps internal keys (CONTACTS, ADDRESSES, etc.) to Unity keys (CONTACTINFO, ADDRESSINFO, etc.).
+    /// </summary>
+    private async Task<ExternalServiceResponse<string>> CallUnityProfileAsync(
+        ProfilePopulationMetadata metadata,
         CancellationToken cancellationToken)
     {
-        var endpoint = BuildEndpoint(metadata.Provider, metadata.Key, metadata.ProfileId);
-        
+        var unityKey = MapToUnityKey(metadata.Key);
+
         var request = new ExternalServiceRequest
         {
-            Endpoint = endpoint,
+            Endpoint = "/api/app/applicant-profiles/profile",
             Method = HttpMethod.Get,
             QueryParameters = new Dictionary<string, string>
             {
-                ["profileId"] = metadata.ProfileId.ToString(),
-                ["provider"] = metadata.Provider,
-                ["key"] = metadata.Key
+                ["TenantId"] = metadata.Provider,
+                ["Key"] = unityKey,
+                ["ProfileId"] = metadata.ProfileId.ToString(),
+                ["Subject"] = metadata.Subject
             }
         };
-
-        // Add any additional data as query parameters
-        if (metadata.AdditionalData?.Any() == true)
-        {
-            foreach (var kvp in metadata.AdditionalData)
-            {
-                request.QueryParameters[kvp.Key] = kvp.Value?.ToString() ?? string.Empty;
-            }
-        }
 
         return await externalServiceClient.CallAsync(PluginId, request, cancellationToken);
     }
 
-    private static string BuildEndpoint(string provider, string key, Guid profileId)
+    /// <summary>
+    /// Maps internal data keys to Unity API key names.
+    /// </summary>
+    private static string MapToUnityKey(string key) => key?.ToUpperInvariant() switch
     {
-        return (key?.ToUpper()) switch
-        {
-            "PROFILE" => $"/api/profiles/{profileId}",
-            "EMPLOYMENT" => $"/api/profiles/{profileId}/employment",
-            "SECURITY" => $"/api/profiles/{profileId}/security",
-            "CONTACTS" => $"/api/profiles/{profileId}/contacts",
-            "ADDRESSES" => $"/api/profiles/{profileId}/addresses",
-            "ORGINFO" => $"/api/profiles/{profileId}/organization",
-            "SUBMISSIONS" => $"/api/profiles/{profileId}/submissions",
-            "PAYMENTS" => $"/api/profiles/{profileId}/payments",
-            _ => $"/api/profiles/{profileId}/data"
-        };
-    }
+        "CONTACTS" => "CONTACTINFO",
+        "ADDRESSES" => "ADDRESSINFO",
+        "ORGINFO" => "ORGINFO",
+        "SUBMISSIONS" => "SUBMISSIONINFO",
+        "PAYMENTS" => "PAYMENTINFO",
+        _ => key?.ToUpperInvariant() ?? string.Empty
+    };
 
     /// <summary>
     /// Helper method to fire profile updated message

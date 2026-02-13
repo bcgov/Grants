@@ -73,11 +73,10 @@ export class ApplicantInfoService {
   ): { addressesData: any[] } {
     try {
       console.log('Parsing addresses response:', response);
-      // The response has a 'data' property containing JSON string
       const jsonData = response.data || response.jsonData;
       console.log('Raw addresses JSON data:', jsonData);
-      
-      const parsedData = JSON.parse(jsonData);
+
+      const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
       console.log('Parsed addresses data:', parsedData);
 
       return {
@@ -97,11 +96,10 @@ export class ApplicantInfoService {
   ): { contactsData: any[] } {
     try {
       console.log('Parsing contacts response:', response);
-      // The response has a 'data' property containing JSON string
       const jsonData = response.data || response.jsonData;
       console.log('Raw contacts JSON data:', jsonData);
-      
-      const parsedData = JSON.parse(jsonData);
+
+      const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
       console.log('Parsed contacts data:', parsedData);
 
       return {
@@ -123,9 +121,9 @@ export class ApplicantInfoService {
       // Handle both new format (data) and old format (jsonData)
       const jsonData = response.data || response.jsonData;
       console.log('Parsing organization response:', jsonData);
-      
-      let parsedData = JSON.parse(jsonData);
-      
+
+      let parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+
       // Check if the parsed data is still a string (double-encoded)
       if (typeof parsedData === 'string') {
         console.log('Data was double-encoded, parsing again...');
@@ -160,7 +158,7 @@ export class ApplicantInfoService {
       // Handle both old 'jsonData' format and new 'data' format
       const dataString = (response as any).data || response.jsonData;
       console.log('Parsing submissions response:', dataString);
-      const parsedData = JSON.parse(dataString);
+      const parsedData = typeof dataString === 'string' ? JSON.parse(dataString) : dataString;
       console.log('Parsed submissions data:', parsedData);
 
       return {
@@ -187,8 +185,8 @@ export class ApplicantInfoService {
     parameters?: any
   ): Observable<OrganizationResponse> {
     return this.getOrganizationData(pluginId, provider, parameters).pipe(
-      map((response) => this.parseOrganizationResponse(response)),
       retry({ count: 2, delay: 1000 }),
+      map((response) => this.parseOrganizationResponse(response)),
       catchError((error) => {
         console.error('Failed to load organization info after retries:', error);
         throw error;
@@ -247,9 +245,9 @@ export class ApplicantInfoService {
     provider: string,
     parameters?: any
   ): Observable<SubmissionsResponse> {
-    return this.getSubmissionsData(pluginId, provider, parameters).pipe(      
-      map((response) => this.parseSubmissionsResponse(response)),
+    return this.getSubmissionsData(pluginId, provider, parameters).pipe(
       retry({ count: 2, delay: 1000 }),
+      map((response) => this.parseSubmissionsResponse(response)),
       catchError((error) => {
         console.error('Failed to load submissions info after retries:', error);
         throw error;
@@ -266,8 +264,8 @@ export class ApplicantInfoService {
     parameters?: any
   ): Observable<any> {
     return this.getContactsData(pluginId, provider, parameters).pipe(
-      map(response => this.parseContactsResponse(response)),      
       retry({ count: 2, delay: 1000 }),
+      map(response => this.parseContactsResponse(response)),
       catchError((error) => {
         console.error('Failed to load contacts info after retries:', error);
         throw error;
@@ -284,8 +282,8 @@ export class ApplicantInfoService {
     parameters?: any
   ): Observable<any> {
     return this.getAddressesData(pluginId, provider, parameters).pipe(
-      map(response => this.parseAddressesResponse(response)),      
       retry({ count: 2, delay: 1000 }),
+      map(response => this.parseAddressesResponse(response)),
       catchError((error) => {
         console.error('Failed to load addresses info after retries:', error);
         throw error;

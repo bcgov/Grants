@@ -6,8 +6,9 @@ namespace Grants.ApplicantPortal.API.UseCases.Submissions.Retrieve;
 /// Query to retrieve submission data from cache for a specific plugin
 /// </summary>
 public record RetrieveSubmissionsQuery(
-  Guid ProfileId,
-  string PluginId,
-  string Provider,
-  Dictionary<string, object>? AdditionalData = null
- ) : IQuery<Result<ProfileData>>;
+ Guid ProfileId,
+ string PluginId,
+ string Provider,
+ string Subject,
+ Dictionary<string, object>? AdditionalData = null
+) : IQuery<Result<ProfileData>>;

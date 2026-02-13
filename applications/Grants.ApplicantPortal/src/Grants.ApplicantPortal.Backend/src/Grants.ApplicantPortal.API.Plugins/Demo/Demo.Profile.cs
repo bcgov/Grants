@@ -31,7 +31,7 @@ public partial class DemoPlugin
       var cachedBytes = await _distributedCache.GetAsync(cacheKey, cancellationToken);
       if (cachedBytes != null)
       {
-        var cachedProfileData = JsonSerializer.Deserialize<ProfileData>(cachedBytes);
+        var cachedProfileData = JsonSerializer.Deserialize<ProfileData>(cachedBytes, _jsonOptions);
         if (cachedProfileData != null)
         {
           _logger.LogInformation("Demo plugin successfully retrieved cached profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
@@ -49,21 +49,15 @@ public partial class DemoPlugin
       // Generate fresh data for this profile
       var mockProfileData = GenerateSeedingMockData(metadata);
 
-      var jsonData = JsonSerializer.Serialize(mockProfileData, new JsonSerializerOptions
-      {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-      });
-
       var profileData = new ProfileData(
           metadata.ProfileId,
           metadata.PluginId,
           metadata.Provider,
           metadata.Key,
-          jsonData);
+          mockProfileData);
 
       // Store in Redis with long-term expiration
-      var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+      var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);
       var longTermCacheOptions = new DistributedCacheEntryOptions
       {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
