@@ -106,8 +106,8 @@ app.MapGet("/api/app/applicant-profiles/tenants", (Guid? ProfileId, string? Subj
 
     var tenants = new[]
     {
-        new { Id = "DGP", Name = "DGP" },
-        new { Id = "ABC", Name = "ABC" }
+        new { TenantId = "DGP", TenantName = "DGP" },
+        new { TenantId = "ABC", TenantName = "ABC" }
     };
 
     return Results.Ok(tenants);

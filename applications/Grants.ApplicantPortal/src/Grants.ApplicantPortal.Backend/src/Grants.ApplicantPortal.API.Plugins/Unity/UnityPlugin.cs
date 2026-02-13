@@ -33,6 +33,11 @@ public partial class UnityPlugin(
     }
 
     /// <summary>
+    /// Represents a tenant returned by the Unity tenants API.
+    /// </summary>
+    private record UnityTenantDto(string TenantId, string TenantName);
+
+    /// <summary>
     /// Fetches available providers (tenants) from the Unity external API.
     /// Results are cached per profile to avoid repeated upstream calls.
     /// Empty results are not cached so the next request retries the upstream API.
@@ -56,7 +61,7 @@ public partial class UnityPlugin(
                     }
                 };
 
-                var response = await externalServiceClient.CallAsync<List<ProviderInfo>>(
+                var response = await externalServiceClient.CallAsync<List<UnityTenantDto>>(
                     PluginId, request, ct);
 
                 if (!response.IsSuccess)
@@ -68,7 +73,9 @@ public partial class UnityPlugin(
                         $"Unable to retrieve providers from Unity API: {response.ErrorMessage}");
                 }
 
-                return response.Data ?? [];
+                return response.Data?
+                    .Select(t => new ProviderInfo(t.TenantId, t.TenantName))
+                    .ToList() ?? [];
             },
             shouldCache: providers => providers.Count > 0,
             cancellationToken);
