@@ -231,7 +231,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   private processContactsData(contacts: any[]): ContactDisplay[] {
     return contacts.map(contact => ({
-      id: contact.contactId ?? `contact-${Math.random()}`,
+      id: contact.contactId ?? '00000000-0000-0000-0000-000000000000',
       contactType: contact.contactType ?? 'Unknown',
       name: contact.name ?? '',
       email: contact.email ?? '',
