@@ -339,7 +339,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   isValidContact(contact: Partial<ContactDisplay>): boolean {
     const nameValid = !!contact.name && contact.name.trim().length > 0;
     const emailValid = !contact.email || contact.email.trim().length === 0 ||
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email);
+      (contact.email.includes('@') && contact.email.includes('.') && contact.email.length <= 254);
     return nameValid && emailValid;
   }
 
@@ -353,8 +353,13 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   validateEmail(): void {
     if (this.newContact.email && this.newContact.email.trim().length > 0) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(this.newContact.email)) {
+      const email = this.newContact.email.trim();
+      const atIndex = email.indexOf('@');
+      const isValid = atIndex > 0 &&
+        email.indexOf('.', atIndex) > atIndex + 1 &&
+        email.length <= 254 &&
+        !email.includes(' ');
+      if (!isValid) {
         this.emailValidationError = 'Please enter a valid email address';
       } else {
         this.emailValidationError = null;
@@ -432,7 +437,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       error: (error) => {
         console.error('Failed to delete contact:', error);
         this.isDeletingContact = false;
-        this.deleteContactError = error?.error?.message || 'Failed to delete contact. Please try again.';
+        this.deleteContactError = error?.error?.message ?? 'Failed to delete contact. Please try again.';
       }
     });
   }
@@ -448,15 +453,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     console.log('Setting as primary contact...', contact);
     
     // Make API call to set contact as primary
-    const contactData = {
-      name: contact.name,
-      email: contact.email,
-      title: contact.title,
-      type: contact.contactType,
-      phoneNumber: contact.workPhoneNumber,
-      isPrimary: true
-    };
-
     this.applicantInfoService.setContactAsPrimary(
       contact.id,
       this.pluginId,
