@@ -200,7 +200,16 @@
       <DependentUpon>RetrieveProviders.cs</DependentUpon>
     </Compile>
     
-    
+    <!-- Nest Contact Roles files under RetrieveContactRoles.cs -->
+    <Compile Update="Contacts\RetrieveContactRoles.Request.cs">
+      <DependentUpon>RetrieveContactRoles.cs</DependentUpon>      
+    </Compile>
+    <Compile Update="Contacts\RetrieveContactRoles.Response.cs">
+      <DependentUpon>RetrieveContactRoles.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\RetrieveContactRoles.Validator.cs">
+      <DependentUpon>RetrieveContactRoles.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

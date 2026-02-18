@@ -6,11 +6,15 @@
 public record EditContactCommand(
   Guid ContactId,
   string Name,
-  string Type,
+  string ContactType,
   bool IsPrimary,
   string? Title,
   string? Email,
-  string? PhoneNumber,
+  string? HomePhoneNumber,
+  string? MobilePhoneNumber,
+  string? WorkPhoneNumber,
+  string? WorkPhoneExtension,
+  string? Role,
   Guid ProfileId,
   string PluginId,
   string Provider) : ICommand<Result>;

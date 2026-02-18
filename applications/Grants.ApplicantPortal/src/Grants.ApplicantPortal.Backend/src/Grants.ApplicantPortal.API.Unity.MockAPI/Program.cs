@@ -138,21 +138,21 @@ static object GetContactInfoData(string tenantId) => tenantId.ToUpperInvariant()
 {
     "DGP" => new
     {
-        Contacts = new[]
+        dataType = "CONTACTINFO",
+        contacts = new object[]
         {
-            new { Id = "A437675A-D642-455C-B3E0-388D75E6203F", Type = "Primary", Name = "Alex Johnson", Email = "alex.johnson@unity.gov", Phone = "+1-555-UNITY-1", Title = "Unity Program Director", IsPrimary = true, IsActive = true, AllowEdit = true },
-            new { Id = "B5A01793-E247-48C7-8257-25B0ED239883", Type = "Secondary", Name = "Sarah Mitchell", Email = "sarah.mitchell@unity.gov", Phone = "+1-555-UNITY-2", Title = "Unity Grants Manager", IsPrimary = false, IsActive = true, AllowEdit = true }
-        },
-        Summary = new { TotalContacts = 2, PrimaryContactCount = 1, ActiveContactCount = 2 }
+            new { contactId = "a437675a-d642-455c-b3e0-388d75e6203f", name = "Alex Johnson", title = "Unity Program Director", email = "alex.johnson@unity.gov", homePhoneNumber = "555 123-4567", mobilePhoneNumber = "555 987-6543", workPhoneNumber = "555 864-2100", workPhoneExtension = "101", contactType = "ApplicantProfile", role = "director", isPrimary = true, isEditable = true, applicationId = (string?)null },
+            new { contactId = "b5a01793-e247-48c7-8257-25b0ed239883", name = "Sarah Mitchell", title = "Unity Grants Manager", email = "sarah.mitchell@unity.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = (string?)null, workPhoneNumber = (string?)null, workPhoneExtension = (string?)null, contactType = "Application", role = "Additional Signing Authority", isPrimary = false, isEditable = false, applicationId = "3a1eac9f-da13-a888-883f-d2c0575e7620" }
+        }
     },
     _ => new
     {
-        Contacts = new[]
+        dataType = "CONTACTINFO",
+        contacts = new object[]
         {
-            new { Id = "C1234567-89AB-CDEF-0123-456789ABCDEF", Type = "Primary", Name = "Dr. Emma Wilson", Email = "emma.wilson@unity-abc.gov", Phone = "+1-555-ABC-001", Title = "Research Director", IsPrimary = true, IsActive = true, AllowEdit = true },
-            new { Id = "D2345678-9ABC-DEF0-1234-56789ABCDEF0", Type = "Secondary", Name = "Michael Chen", Email = "michael.chen@unity-abc.gov", Phone = "+1-555-ABC-002", Title = "Business Development Manager", IsPrimary = false, IsActive = true, AllowEdit = true }
-        },
-        Summary = new { TotalContacts = 2, PrimaryContactCount = 1, ActiveContactCount = 2 }
+            new { contactId = "c1234567-89ab-cdef-0123-456789abcdef", name = "Dr. Emma Wilson", title = "Research Director", email = "emma.wilson@unity-abc.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = "555 222-3344", workPhoneNumber = "555 864-5500", workPhoneExtension = (string?)null, contactType = "ApplicantProfile", role = "research-lead", isPrimary = true, isEditable = true, applicationId = (string?)null },
+            new { contactId = "d2345678-9abc-def0-1234-56789abcdef0", name = "Michael Chen", title = "Business Development Manager", email = "michael.chen@unity-abc.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = (string?)null, workPhoneNumber = (string?)null, workPhoneExtension = (string?)null, contactType = "Application", role = "Additional Signing Authority", isPrimary = false, isEditable = false, applicationId = "3a1eac9f-da13-a888-883f-d2c0575e7620" }
+        }
     }
 };
 

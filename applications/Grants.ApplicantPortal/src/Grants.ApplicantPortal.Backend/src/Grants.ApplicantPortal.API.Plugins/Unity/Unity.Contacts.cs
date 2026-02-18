@@ -15,7 +15,7 @@ public partial class UnityPlugin
       CancellationToken cancellationToken = default)
   {
     logger.LogInformation("Unity plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
-        profileContext.ProfileId, contactRequest.Name, contactRequest.Type);
+        profileContext.ProfileId, contactRequest.Name, contactRequest.ContactType);
 
     try
     {
@@ -28,8 +28,8 @@ public partial class UnityPlugin
       // 🔥 STEP 2: Send command to Unity via message queue
       await FireContactCreateMessage(newContactId, contactRequest, profileContext, cancellationToken);
 
-      logger.LogInformation("Unity plugin optimistically created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
-          newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);
+      logger.LogInformation("Unity plugin optimistically created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}",
+          newContactId, contactRequest.Name, contactRequest.ContactType, contactRequest.Email);
 
       return Result<Guid>.Success(newContactId);
     }
@@ -58,7 +58,7 @@ public partial class UnityPlugin
       await FireContactEditMessage(editRequest, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin optimistically edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}",
-          editRequest.ContactId, editRequest.Name, editRequest.Type);
+          editRequest.ContactId, editRequest.Name, editRequest.ContactType);
 
       return Result.Success();
     }
@@ -153,8 +153,12 @@ public partial class UnityPlugin
             contactRequest.Name,
             contactRequest.Email,
             contactRequest.Title,
-            contactRequest.Type,
-            contactRequest.PhoneNumber,
+            contactRequest.ContactType,
+            contactRequest.HomePhoneNumber,
+            contactRequest.MobilePhoneNumber,
+            contactRequest.WorkPhoneNumber,
+            contactRequest.WorkPhoneExtension,
+            contactRequest.Role,
             contactRequest.IsPrimary
           }
         },
@@ -191,8 +195,12 @@ public partial class UnityPlugin
             editRequest.Name,
             editRequest.Email,
             editRequest.Title,
-            editRequest.Type,
-            editRequest.PhoneNumber,
+            editRequest.ContactType,
+            editRequest.HomePhoneNumber,
+            editRequest.MobilePhoneNumber,
+            editRequest.WorkPhoneNumber,
+            editRequest.WorkPhoneExtension,
+            editRequest.Role,
             editRequest.IsPrimary
           }
         },
@@ -280,14 +288,14 @@ public partial class UnityPlugin
     {
       // For now, we'll just invalidate the cache so it gets refreshed with the new data
       // In a more sophisticated implementation, we could actually update the cached data directly
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTS", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTINFO", cancellationToken);
 
-      logger.LogDebug("Optimistically invalidated CONTACTS cache for new contact {ContactId} in ProfileId: {ProfileId}",
+      logger.LogDebug("Optimistically invalidated CONTACTINFO cache for new contact {ContactId} in ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
     }
     catch (Exception ex)
     {
-      logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for new contact {ContactId}", contactId);
+      logger.LogWarning(ex, "Failed to optimistically update CONTACTINFO cache for new contact {ContactId}", contactId);
       // Don't throw - optimistic cache updates are not critical to the main operation
     }
   }
@@ -307,14 +315,14 @@ public partial class UnityPlugin
     {
       // For now, we'll just invalidate the cache so it gets refreshed with the updated data
       // In a more sophisticated implementation, we could actually update the cached data directly
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTS", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTINFO", cancellationToken);
 
-      logger.LogDebug("Optimistically invalidated CONTACTS cache for edited contact {ContactId} in ProfileId: {ProfileId}",
+      logger.LogDebug("Optimistically invalidated CONTACTINFO cache for edited contact {ContactId} in ProfileId: {ProfileId}",
           editRequest.ContactId, profileContext.ProfileId);
     }
     catch (Exception ex)
     {
-      logger.LogWarning(ex, "Failed to optimistically update CONTACTS cache for edited contact {ContactId}", editRequest.ContactId);
+      logger.LogWarning(ex, "Failed to optimistically update CONTACTINFO cache for edited contact {ContactId}", editRequest.ContactId);
       // Don't throw - optimistic cache updates are not critical to the main operation
     }
   }
@@ -332,9 +340,9 @@ public partial class UnityPlugin
 
     try
     {
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "CONTACTS", cancellationToken);
+      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "CONTACTINFO", cancellationToken);
 
-      logger.LogDebug("Invalidated CONTACTS cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+      logger.LogDebug("Invalidated CONTACTINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
           profileId, PluginId, provider);
     }
     catch (Exception ex)

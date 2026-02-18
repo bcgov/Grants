@@ -16,7 +16,7 @@ public class CreateContactValidator : Validator<CreateContactRequest>
       .MinimumLength(2)
       .MaximumLength(DataSchemaConstants.DEFAULT_NAME_LENGTH);
 
-    RuleFor(x => x.Type)
+    RuleFor(x => x.ContactType)
       .NotEmpty()
       .WithMessage("Contact type is required.")
       .MaximumLength(100);
@@ -26,10 +26,20 @@ public class CreateContactValidator : Validator<CreateContactRequest>
       .When(x => !string.IsNullOrEmpty(x.Email))
       .WithMessage("Email must be a valid email address.");
 
-    RuleFor(x => x.PhoneNumber)
+    RuleFor(x => x.HomePhoneNumber)
       .Matches(@"^[\+]?[0-9\-\.\(\)\s]*$")
-      .When(x => !string.IsNullOrEmpty(x.PhoneNumber))
-      .WithMessage("Phone number format is invalid.");
+      .When(x => !string.IsNullOrEmpty(x.HomePhoneNumber))
+      .WithMessage("Home phone number format is invalid.");
+
+    RuleFor(x => x.MobilePhoneNumber)
+      .Matches(@"^[\+]?[0-9\-\.\(\)\s]*$")
+      .When(x => !string.IsNullOrEmpty(x.MobilePhoneNumber))
+      .WithMessage("Mobile phone number format is invalid.");
+
+    RuleFor(x => x.WorkPhoneNumber)
+      .Matches(@"^[\+]?[0-9\-\.\(\)\s]*$")
+      .When(x => !string.IsNullOrEmpty(x.WorkPhoneNumber))
+      .WithMessage("Work phone number format is invalid.");
 
     RuleFor(x => x.Title)
       .MaximumLength(200)

@@ -292,6 +292,20 @@ export class ApplicantInfoService {
   }
 
   /**
+   * Fetches available contact roles for a workspace
+   */
+  getContactRoles(pluginId: string): Observable<any> {
+    const url = `${this.baseUrl}/Contacts/${pluginId}/roles`;
+    return this.http.get<any>(url).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to fetch contact roles:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
    * Creates a new contact
    */
   createContact(
@@ -301,8 +315,8 @@ export class ApplicantInfoService {
       name: string;
       email: string;
       title?: string;
-      type: string;
-      phoneNumber?: string;
+      contactType: string;
+      workPhoneNumber?: string;
       isPrimary: boolean;
     }
   ): Observable<any> {
@@ -391,8 +405,8 @@ export class ApplicantInfoService {
       name: string;
       email: string;
       title?: string;
-      type: string;
-      phoneNumber?: string;
+      contactType: string;
+      workPhoneNumber?: string;
       isPrimary: boolean;
     }
   ): Observable<any> {

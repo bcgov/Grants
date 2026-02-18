@@ -19,11 +19,15 @@ public class EditContactHandler(
       var editRequest = new EditContactRequest(
         request.ContactId,
         request.Name,
-        request.Type,
+        request.ContactType,
         request.IsPrimary,
         request.Title,
         request.Email,
-        request.PhoneNumber);
+        request.HomePhoneNumber,
+        request.MobilePhoneNumber,
+        request.WorkPhoneNumber,
+        request.WorkPhoneExtension,
+        request.Role);
 
       var profileContext = new ProfileContext(
         request.ProfileId,
@@ -45,7 +49,7 @@ public class EditContactHandler(
           request.ProfileId,
           request.PluginId,
           request.Provider,
-          "CONTACTS",
+          "CONTACTINFO",
           cancellationToken);
           
         logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after contact edit", 

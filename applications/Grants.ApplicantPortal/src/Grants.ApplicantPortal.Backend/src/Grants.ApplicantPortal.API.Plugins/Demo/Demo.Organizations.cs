@@ -17,7 +17,7 @@ public partial class DemoPlugin
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
+        logger.LogInformation("Demo plugin editing organization {OrganizationId} for ProfileId: {ProfileId}",
             editRequest.OrganizationId, profileContext.ProfileId);
 
         try
@@ -30,7 +30,7 @@ public partial class DemoPlugin
             
             if (!success)
             {
-                _logger.LogWarning("Organization {OrganizationId} not found for ProfileId: {ProfileId}",
+                logger.LogWarning("Organization {OrganizationId} not found for ProfileId: {ProfileId}",
                     editRequest.OrganizationId, profileContext.ProfileId);
                 return Result.NotFound();
             }
@@ -39,14 +39,14 @@ public partial class DemoPlugin
             await PersistOrganizationDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the organization edit details
-            _logger.LogInformation("Demo plugin edited organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
+            logger.LogInformation("Demo plugin edited organization - ID: {OrganizationId}, Name: {Name}, Type: {Type}, Status: {Status}",
                 editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType, editRequest.Status);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to edit organization {OrganizationId} for ProfileId: {ProfileId}",
+            logger.LogError(ex, "Demo plugin failed to edit organization {OrganizationId} for ProfileId: {ProfileId}",
                 editRequest.OrganizationId, profileContext.ProfileId);
             return Result.Error("Failed to edit organization in demo system");
         }
@@ -88,14 +88,14 @@ public partial class DemoPlugin
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
             };
 
-            await _distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
+            await distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
             
-            _logger.LogDebug("Persisted organization data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogDebug("Persisted organization data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
                 profileId, provider);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to persist organization data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogError(ex, "Failed to persist organization data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
                 profileId, provider);
             throw; // This is critical - if we can't persist, the operation should fail
         }

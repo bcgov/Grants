@@ -16,9 +16,7 @@
         <div class="row">
           <div class="col-md-3 col-sm-6">
             <label class="form-label">Name</label>
-            <p class="contact-value">
-              {{ primaryContact.name }}
-            </p>
+            <p class="contact-value">{{ primaryContact.name }}</p>
           </div>
           <div class="col-md-3 col-sm-6">
             <label class="form-label">Email</label>
@@ -26,7 +24,7 @@
           </div>
           <div class="col-md-3 col-sm-6">
             <label class="form-label">Phone</label>
-            <p class="contact-value">{{ primaryContact.phone }}</p>
+            <p class="contact-value">{{ primaryContact.workPhoneNumber }}</p>
           </div>
           <div class="col-md-3 col-sm-6">
             <label class="form-label">Title</label>
@@ -78,13 +76,12 @@
                 <select 
                   class="form-select" 
                   id="type" 
-                  [(ngModel)]="newContact.type" 
+                  [(ngModel)]="newContact.contactType" 
                   name="type"
-                  [disabled]="isSavingContact">
-                  <option value="General">General</option>
-                  <option value="Primary">Primary</option>
-                  <option value="Billing">Billing</option>
-                  <option value="Technical">Technical</option>
+                  [disabled]="isSavingContact">                                    
+                  @for (role of contactRoles; track role.key) {
+                    <option [value]="role.key">{{ role.label }}</option>
+                  }
                 </select>
               </div>
             </div>
@@ -167,7 +164,7 @@
                   type="tel" 
                   class="form-control" 
                   id="phone" 
-                  [(ngModel)]="newContact.phone" 
+                  [(ngModel)]="newContact.workPhoneNumber" 
                   name="phone"
                   [disabled]="isSavingContact">
               </div>
@@ -237,7 +234,7 @@
             </div>
             <div class="details-row">
               <span class="details-label">Type:</span>
-              <span class="details-value">{{ contactToDelete.type }}</span>
+              <span class="details-value">{{ contactToDelete.role }}</span>
             </div>
           </div>
         }

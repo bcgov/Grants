@@ -36,7 +36,7 @@ public class SetAsPrimaryContactHandler(
           request.ProfileId,
           request.PluginId,
           request.Provider,
-          "CONTACTS",
+          "CONTACTINFO",
           cancellationToken);
           
         logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after setting primary contact", 

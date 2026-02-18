@@ -16,9 +16,13 @@ public class CreateContactRequest
   public string? Title { get; set; }
   
   [Required]
-  public string? Type { get; set; }
+  public string? ContactType { get; set; }
   
-  public string? PhoneNumber { get; set; }
+  public string? HomePhoneNumber { get; set; }
+  public string? MobilePhoneNumber { get; set; }
+  public string? WorkPhoneNumber { get; set; }
+  public string? WorkPhoneExtension { get; set; }
+  public string? Role { get; set; }
   public bool IsPrimary { get; set; }
   
   // Route parameters  

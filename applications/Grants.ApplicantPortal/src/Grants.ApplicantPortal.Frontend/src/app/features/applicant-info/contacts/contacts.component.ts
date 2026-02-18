@@ -18,15 +18,18 @@ import {
 
 interface ContactDisplay {
   id: string;
-  type: string;
+  contactType: string;
   name: string;
   email: string;
-  phone: string;
+  workPhoneNumber: string;
+  workPhoneExtension: string;
+  mobilePhoneNumber: string;
+  homePhoneNumber: string;
   title: string;
+  role: string;
   isPrimary: boolean;
-  isActive: boolean;
-  lastUpdated?: string;
-  allowEdit?: boolean;
+  isEditable: boolean;
+  applicationId: string | null;
 }
 
 @Component({
@@ -71,17 +74,20 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   newContact: Partial<ContactDisplay> = {
     name: '',
     email: '',
-    phone: '',
+    workPhoneNumber: '',
+    workPhoneExtension: '',
+    mobilePhoneNumber: '',
+    homePhoneNumber: '',
     title: '',
-    type: 'General',
+    contactType: 'ApplicantProfile',
     isPrimary: false,
-    isActive: true,
-    allowEdit: true
+    isEditable: true
   };
 
   isLoading = true;
   isHydratingContacts = false;
   error: string | null = null;
+  contactRoles: { key: string; label: string }[] = [];
 
   // Datatable configuration
   contactsTableConfig: DatatableConfig = {
@@ -91,9 +97,8 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     columns: [
       { key: 'name', label: 'Name', sortable: true, cssClass: 'name-column' },
       { key: 'email', label: 'Email', sortable: true, type: 'email', cssClass: 'email-column' },
-      { key: 'phone', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' },
       { key: 'title', label: 'Title', sortable: true, cssClass: 'title-column' },
-      { key: 'type', label: 'Type', sortable: true, cssClass: 'type-column' },
+      { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' },
       { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
     ],
     actionsType: 'dropdown',
@@ -102,7 +107,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
       { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
     ],
-    actionsVisibilityField: 'allowEdit',
+    actionsVisibilityField: 'isEditable',
 
     noDataMessage: 'No contacts found. Click "Add" to create your first contact.',
     loadingMessage: 'Loading your contacts...'
@@ -125,6 +130,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     if (this.pluginId && this.provider) {
       console.log('ContactsComponent - Calling loadContacts()');
       this.loadContacts();
+      this.loadContactRoles();
     } else {
       console.log('ContactsComponent - Missing pluginId or provider, not loading contacts');
     }
@@ -178,6 +184,20 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
+  private loadContactRoles(): void {
+    this.applicantInfoService.getContactRoles(this.pluginId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response: any) => {
+        this.contactRoles = response?.roles ?? [];
+      },
+      error: (error) => {
+        console.error('Failed to load contact roles:', error);
+        this.contactRoles = [];
+      }
+    });
+  }
+
   private loadContacts(): void {
     console.log('ContactsComponent loadContacts() called with:', {
       pluginId: this.pluginId,
@@ -211,16 +231,19 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   private processContactsData(contacts: any[]): ContactDisplay[] {
     return contacts.map(contact => ({
-      id: contact.id || `contact-${Math.random()}`,
-      type: contact.type || 'Unknown',
-      name: contact.name || '',
-      email: contact.email || '',
-      phone: contact.phone || '',
-      title: contact.title || '',
-      isPrimary: contact.isPrimary || false,
-      isActive: contact.isActive !== false,
-      lastUpdated: contact.lastUpdated,
-      allowEdit: contact.allowEdit !== false
+      id: contact.contactId ?? `contact-${Math.random()}`,
+      contactType: contact.contactType ?? 'Unknown',
+      name: contact.name ?? '',
+      email: contact.email ?? '',
+      workPhoneNumber: contact.workPhoneNumber ?? '',
+      workPhoneExtension: contact.workPhoneExtension ?? '',
+      mobilePhoneNumber: contact.mobilePhoneNumber ?? '',
+      homePhoneNumber: contact.homePhoneNumber ?? '',
+      title: contact.title ?? '',
+      role: contact.role ?? '',
+      isPrimary: contact.isPrimary ?? false,
+      isEditable: contact.isEditable ?? false,
+      applicationId: contact.applicationId ?? null
     }));
   }
 
@@ -242,11 +265,12 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
     // Prepare the API payload
     const contactPayload = {
+      ...(this.isEditMode && this.editingContactId ? { contactId: this.editingContactId } : {}),
       name: this.newContact.name!,
-      email: this.newContact.email || '',
-      title: this.newContact.title || '',
-      type: this.newContact.type!,
-      phoneNumber: this.newContact.phone || '',
+      email: this.newContact.email ?? '',
+      title: this.newContact.title ?? '',
+      contactType: this.newContact.contactType!,
+      workPhoneNumber: this.newContact.workPhoneNumber ?? '',
       isPrimary: this.newContact.isPrimary!
     };
 
@@ -300,21 +324,23 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       this.newContact = {
         name: '',
         email: '',
-        phone: '',
+        workPhoneNumber: '',
+        workPhoneExtension: '',
+        mobilePhoneNumber: '',
+        homePhoneNumber: '',
         title: '',
-        type: 'General',
+        contactType: 'ApplicantProfile',
         isPrimary: false,
-        isActive: true,
-        allowEdit: true
+        isEditable: true
       };
     }
   }
 
   isValidContact(contact: Partial<ContactDisplay>): boolean {
-    this.validateName();
-    this.validateEmail();
-    
-    return this.nameValidationError === null && this.emailValidationError === null;
+    const nameValid = !!contact.name && contact.name.trim().length > 0;
+    const emailValid = !contact.email || contact.email.trim().length === 0 ||
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email);
+    return nameValid && emailValid;
   }
 
   validateName(): void {
@@ -362,11 +388,13 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       name: contact.name,
       email: contact.email,
       title: contact.title,
-      type: contact.type,
-      phone: contact.phone,
+      contactType: contact.contactType,
+      workPhoneNumber: contact.workPhoneNumber,
+      workPhoneExtension: contact.workPhoneExtension,
+      mobilePhoneNumber: contact.mobilePhoneNumber,
+      homePhoneNumber: contact.homePhoneNumber,
       isPrimary: contact.isPrimary,
-      isActive: contact.isActive || true,
-      allowEdit: contact.allowEdit || true
+      isEditable: contact.isEditable
     };
     
     this.showAddContactModal = true;
@@ -387,13 +415,26 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     this.isDeletingContact = true;
     this.deleteContactError = null;
 
-    // For embedded data, just remove from local display
-    this.contacts = this.contacts.filter(c => c.id !== this.contactToDelete!.id);
-    console.log('Contact deleted locally:', this.contactToDelete);
-    
-    this.isDeletingContact = false;
-    this.showDeleteConfirmModal = false;
-    this.contactToDelete = null;
+    this.applicantInfoService.deleteContact(
+      this.contactToDelete.id,
+      this.pluginId,
+      this.provider
+    ).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        console.log('Contact deleted successfully:', this.contactToDelete);
+        this.isDeletingContact = false;
+        this.showDeleteConfirmModal = false;
+        this.contactToDelete = null;
+        this.loadContacts();
+      },
+      error: (error) => {
+        console.error('Failed to delete contact:', error);
+        this.isDeletingContact = false;
+        this.deleteContactError = error?.error?.message || 'Failed to delete contact. Please try again.';
+      }
+    });
   }
 
   onCancelDeleteContact(): void {
@@ -411,8 +452,8 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       name: contact.name,
       email: contact.email,
       title: contact.title,
-      type: contact.type,
-      phoneNumber: contact.phone,
+      type: contact.contactType,
+      phoneNumber: contact.workPhoneNumber,
       isPrimary: true
     };
 
@@ -469,7 +510,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     const contact = event.row as ContactDisplay;
     
     // Check if the contact can be edited for actions that require it
-    if ((event.action === 'edit' || event.action === 'setAsPrimary' || event.action === 'delete') && !contact.allowEdit) {
+    if ((event.action === 'edit' || event.action === 'setAsPrimary' || event.action === 'delete') && !contact.isEditable) {
       console.log('Action not allowed: Contact cannot be edited');
       return;
     }
