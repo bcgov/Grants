@@ -60,20 +60,16 @@ if (enableProxy) {
     target: backendServiceUrl,
     pathRewrite: {'^/api': ''},
     changeOrigin: true,
+    timeout: 30000,
+    proxyTimeout: 60000,
     onError: (err, req, res) => {
-      console.error('Proxy error:', err.message);
+      console.error(`Proxy error [${req.method} ${req.url}]:`, err.message);
+      if (!res.headersSent) {
+        res.status(502).json({ error: 'Backend service unavailable' });
+      }
     },
     onProxyReq: (proxyReq, req, res) => {
       console.log(`Proxying ${req.method} ${req.url} to ${backendServiceUrl}`);
-      
-      // If body was parsed by any upstream middleware, re-write it immediately
-      // to prevent delays between headers and body that cause Kestrel 408 timeouts
-      if (req.body && Object.keys(req.body).length > 0) {
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
     }
   }));
   console.log(`API proxy enabled - routing /api/* to ${backendServiceUrl}`);

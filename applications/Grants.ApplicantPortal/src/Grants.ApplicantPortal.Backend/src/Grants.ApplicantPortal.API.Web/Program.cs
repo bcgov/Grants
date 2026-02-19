@@ -2,14 +2,21 @@
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Behind a reverse proxy (HAProxy → Node Express → Kestrel), the proxy buffers
-// the full request before forwarding. Kestrel sees a delay between headers and
-// body arrival and kills the connection with 408. Disable the minimum data rate
-// check so proxy-forwarded POST requests aren't rejected.
-builder.WebHost.ConfigureKestrel(options =>
+// When running behind a reverse proxy (e.g. HAProxy → Node Express → Kestrel),
+// the proxy buffers the full request before forwarding to Kestrel. This introduces
+// a delay between Kestrel receiving the headers and the body arriving, which trips
+// the default MinRequestBodyDataRate check and results in 408 Request Timeout.
+// Disabling the rate check is a recommended practice behind reverse proxies — the
+// proxy itself manages slow-client protection.
+// The primary fix should be on the proxy side (e.g. streaming the body to Kestrel
+// without buffering). This setting is belt-and-suspenders insurance.
+if (builder.Configuration.GetValue("Kestrel:DisableMinRequestBodyDataRate", defaultValue: true))
 {
-  options.Limits.MinRequestBodyDataRate = null;
-});
+  builder.WebHost.ConfigureKestrel(options =>
+  {
+    options.Limits.MinRequestBodyDataRate = null;
+  });
+}
 
 var logger = Log.Logger = new LoggerConfiguration()
   .Enrich.FromLogContext()
