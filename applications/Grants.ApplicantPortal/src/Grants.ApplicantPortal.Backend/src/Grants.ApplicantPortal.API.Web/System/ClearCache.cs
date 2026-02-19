@@ -9,7 +9,8 @@ using Grants.ApplicantPortal.API.Web.Extensions;
 namespace Grants.ApplicantPortal.API.Web.System;
 
 /// <summary>
-/// Clears all cached profile data for the authenticated user.
+/// Clears cached profile data for the authenticated user.
+/// Optionally scoped to a specific plugin via query parameter.
 /// Works with both Redis and in-memory distributed cache.
 /// </summary>
 public class ClearCache(
@@ -17,12 +18,12 @@ public class ClearCache(
     IProfilePluginFactory pluginFactory,
     IOptions<ProfileCacheOptions> cacheOptions,
     ILogger<ClearCache> logger,
-    IConnectionMultiplexer? connectionMultiplexer = null) : EndpointWithoutRequest<ClearCacheResponse>
+    IConnectionMultiplexer? connectionMultiplexer = null) : Endpoint<ClearCacheRequest, ClearCacheResponse>
 {
     /// <summary>
     /// Known data keys used across the system.
     /// </summary>
-    private static readonly string[] DataKeys = ["CONTACTS", "ADDRESSES", "ORGINFO", "SUBMISSIONS", "PAYMENTS"];
+    private static readonly string[] DataKeys = ["CONTACTINFO", "ADDRESSINFO", "ORGINFO", "SUBMISSIONINFO", "PAYMENTINFO"];
 
     public override void Configure()
     {
@@ -31,27 +32,46 @@ public class ClearCache(
         Summary(s =>
         {
             s.Summary = "Clear cached profile data for the current user";
-            s.Description = "Removes all cached profile data (contacts, addresses, org info, etc.) for the authenticated user. " +
+            s.Description = "Removes cached profile data for the authenticated user. " +
+                            "Optionally pass a PluginId query parameter to clear only that plugin's cache. " +
                             "This forces the next request for each data type to re-fetch from the upstream source.";
             s.Responses[200] = "Cache cleared successfully";
             s.Responses[401] = "Unauthorized — valid JWT token required";
+            s.Responses[404] = "Plugin not found";
         });
         Tags("System");
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(ClearCacheRequest request, CancellationToken ct)
     {
         var profileId = HttpContext.GetRequiredProfileId();
         var subject = HttpContext.User.GetSubject() ?? string.Empty;
         var prefix = cacheOptions.Value.CacheKeyPrefix;
 
-        logger.LogInformation("Clearing cache for ProfileId: {ProfileId}", profileId);
+        // Resolve which plugins to clear
+        var plugins = pluginFactory.GetAllPlugins().ToList();
+
+        if (!string.IsNullOrWhiteSpace(request.PluginId))
+        {
+            var matched = plugins.FirstOrDefault(p => p.PluginId.Equals(request.PluginId, StringComparison.OrdinalIgnoreCase));
+            if (matched is null)
+            {
+                logger.LogWarning("ClearCache requested for unknown plugin '{PluginId}'", request.PluginId);
+                await SendNotFoundAsync(ct);
+                return;
+            }
+
+            plugins = [matched];
+        }
+
+        logger.LogInformation("Clearing cache for ProfileId: {ProfileId}, Plugins: {Plugins}",
+            profileId, string.Join(", ", plugins.Select(p => p.PluginId)));
 
         var result = new ClearCacheResponse { ProfileId = profileId };
         var keysRemoved = new List<string>();
 
-        // 1. Build all known cache keys for this profile and remove via IDistributedCache
-        var knownKeys = BuildKnownCacheKeys(profileId, subject, prefix);
+        // 1. Build all known cache keys for this profile/plugin(s) and remove via IDistributedCache
+        var knownKeys = BuildKnownCacheKeys(profileId, subject, prefix, plugins);
 
         foreach (var key in knownKeys)
         {
@@ -74,13 +94,21 @@ public class ClearCache(
                 var database = connectionMultiplexer.GetDatabase();
                 var server = connectionMultiplexer.GetServer(connectionMultiplexer.GetEndPoints().First());
 
-                var patterns = new[]
+                var patterns = new List<string>();
+
+                foreach (var plugin in plugins)
                 {
-                    $"ApplicantPortal{prefix}{profileId}:*",
-                    $"ApplicantPortal{prefix}SEEDED:*:{profileId}",
-                    $"ApplicantPortal{prefix}DELETED*:{profileId}:*",
-                    $"ApplicantPortal{prefix}LOCK:*:{profileId}"
-                };
+                    var pluginId = plugin.PluginId;
+
+                    patterns.Add($"ApplicantPortal{prefix}{profileId}:{pluginId}:*");
+
+                    if (pluginId.Equals("DEMO", StringComparison.OrdinalIgnoreCase))
+                    {
+                        patterns.Add($"ApplicantPortal{prefix}SEEDED:{pluginId}:{profileId}");
+                        patterns.Add($"ApplicantPortal{prefix}DELETED*:{profileId}:{pluginId}:*");
+                        patterns.Add($"ApplicantPortal{prefix}LOCK:*:{pluginId}:{profileId}");
+                    }
+                }
 
                 foreach (var pattern in patterns)
                 {
@@ -104,6 +132,7 @@ public class ClearCache(
         result.Success = true;
         result.KeysCleared = keysRemoved;
         result.KeyCount = keysRemoved.Count;
+        result.PluginId = request.PluginId;
 
         logger.LogInformation("Cleared {KeyCount} cache keys for ProfileId: {ProfileId}", keysRemoved.Count, profileId);
 
@@ -111,12 +140,11 @@ public class ClearCache(
     }
 
     /// <summary>
-    /// Builds all predictable cache keys for a profile across all registered plugins.
+    /// Builds all predictable cache keys for a profile across the given plugins.
     /// </summary>
-    private List<string> BuildKnownCacheKeys(Guid profileId, string subject, string prefix)
+    private List<string> BuildKnownCacheKeys(Guid profileId, string subject, string prefix, List<IProfilePlugin> plugins)
     {
         var keys = new List<string>();
-        var plugins = pluginFactory.GetAllPlugins();
 
         foreach (var plugin in plugins)
         {
@@ -165,10 +193,21 @@ public class ClearCache(
     }
 }
 
+public class ClearCacheRequest
+{
+    /// <summary>
+    /// Optional plugin identifier. When provided, only cache for this plugin is cleared.
+    /// When omitted, cache for all plugins is cleared.
+    /// </summary>
+    [QueryParam]
+    public string? PluginId { get; set; }
+}
+
 public class ClearCacheResponse
 {
     public bool Success { get; set; }
     public Guid ProfileId { get; set; }
+    public string? PluginId { get; set; }
     public List<string> KeysCleared { get; set; } = [];
     public int KeyCount { get; set; }
     public string? ErrorMessage { get; set; }
