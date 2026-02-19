@@ -12,10 +12,6 @@ const port = process.env.PORT || 4200;
 const enableProxy = process.env.ENABLE_API_PROXY === 'true';
 const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
 
-// Configure Express to allow larger JSON and URL-encoded request bodies
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
 // Environment variables for runtime substitution
 const envVars = {
   KEYCLOAK__AUTHSERVERURL: process.env.KEYCLOAK__AUTHSERVERURL || 'https://dev.loginproxy.gov.bc.ca/auth',
@@ -64,8 +60,13 @@ if (enableProxy) {
     target: backendServiceUrl,
     pathRewrite: {'^/api': ''},
     changeOrigin: true,
+    timeout: 30000,
+    proxyTimeout: 60000,
     onError: (err, req, res) => {
-      console.error('Proxy error:', err.message);
+      console.error(`Proxy error [${req.method} ${req.url}]:`, err.message);
+      if (!res.headersSent) {
+        res.status(502).json({ error: 'Backend service unavailable' });
+      }
     },
     onProxyReq: (proxyReq, req, res) => {
       console.log(`Proxying ${req.method} ${req.url} to ${backendServiceUrl}`);
