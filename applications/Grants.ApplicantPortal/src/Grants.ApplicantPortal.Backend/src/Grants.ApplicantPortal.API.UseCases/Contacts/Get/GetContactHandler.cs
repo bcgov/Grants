@@ -6,6 +6,6 @@ public class GetContactHandler()
   public async Task<Result<ContactDto>> Handle(GetContactQuery request, CancellationToken cancellationToken)
   {
     await Task.CompletedTask;
-    return new ContactDto(Guid.NewGuid(), "Mock Name", "Standard", false, "Mr", "email@email.com", "123-555-1234");
+    return new ContactDto(Guid.NewGuid(), "Mock Name", "ApplicantProfile", false, true, "Mr", "email@email.com", "123-555-1234", null, null, null, null, null);
   }
 }

@@ -12,7 +12,7 @@ public partial class DemoPlugin
 {
   public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Demo plugin retrieving profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+    logger.LogInformation("Demo plugin retrieving profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
         metadata.ProfileId, metadata.Provider, metadata.Key);
 
     try
@@ -25,10 +25,10 @@ public partial class DemoPlugin
 
       var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{metadata.ProfileId}:DEMO:{metadata.Provider}:{metadata.Key}";
 
-      _logger.LogDebug("Looking for cached DEMO data with key: {CacheKey}", cacheKey);
+      logger.LogDebug("Looking for cached DEMO data with key: {CacheKey}", cacheKey);
 
       // ALWAYS fetch from Redis first - this is our persistent "database"
-      var cachedBytes = await _distributedCache.GetAsync(cacheKey, cancellationToken);
+      var cachedBytes = await distributedCache.GetAsync(cacheKey, cancellationToken);
       if (cachedBytes != null)
       {
         var cachedProfileData = JsonSerializer.Deserialize<ProfileData>(cachedBytes, _jsonOptions);
@@ -37,7 +37,7 @@ public partial class DemoPlugin
           cachedProfileData.CacheStatus = "HIT";
           cachedProfileData.CacheStore = _cacheStoreType;
 
-          _logger.LogInformation("Demo plugin successfully retrieved cached profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+          logger.LogInformation("Demo plugin successfully retrieved cached profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
               metadata.ProfileId, metadata.Provider, metadata.Key);
           
           return cachedProfileData;
@@ -46,7 +46,7 @@ public partial class DemoPlugin
 
       // Cache miss after seeding attempt - this shouldn't happen often
       // Generate fresh data but persist it with long expiration
-      _logger.LogWarning("DEMO data not found in Redis after seeding attempt for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}. Generating and persisting fresh data.",
+      logger.LogWarning("DEMO data not found in Redis after seeding attempt for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}. Generating and persisting fresh data.",
           metadata.ProfileId, metadata.Provider, metadata.Key);
 
       // Generate fresh data for this profile
@@ -69,9 +69,9 @@ public partial class DemoPlugin
       {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
       };
-      await _distributedCache.SetAsync(cacheKey, profileDataBytes, longTermCacheOptions, cancellationToken);
+      await distributedCache.SetAsync(cacheKey, profileDataBytes, longTermCacheOptions, cancellationToken);
 
-      _logger.LogInformation("Demo plugin successfully generated and persisted fresh profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+      logger.LogInformation("Demo plugin successfully generated and persisted fresh profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
 
       // Fire a message when profile data is populated
@@ -81,7 +81,7 @@ public partial class DemoPlugin
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Demo plugin failed to retrieve profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
+      logger.LogError(ex, "Demo plugin failed to retrieve profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
       throw;
     }
@@ -92,9 +92,9 @@ public partial class DemoPlugin
   /// </summary>
   private async Task FireProfileUpdatedMessage(ProfilePopulationMetadata metadata, CancellationToken cancellationToken)
   {
-    if (_messagePublisher == null)
+    if (messagePublisher == null)
     {
-      _logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
+      logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
       return;
     }
 
@@ -107,14 +107,14 @@ public partial class DemoPlugin
           metadata.Key,
           correlationId: $"profile-{metadata.ProfileId}");
 
-      await _messagePublisher.PublishAsync(message, cancellationToken);
+      await messagePublisher.PublishAsync(message, cancellationToken);
 
-      _logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}",
+      logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
     }
     catch (Exception ex)
     {
-      _logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
+      logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
       // Don't throw - messaging failures shouldn't break the main operation
     }
   }

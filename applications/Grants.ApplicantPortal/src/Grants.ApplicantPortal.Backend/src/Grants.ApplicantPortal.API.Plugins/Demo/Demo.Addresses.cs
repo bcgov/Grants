@@ -17,7 +17,7 @@ public partial class DemoPlugin
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin editing address {AddressId} for ProfileId: {ProfileId}",
+        logger.LogInformation("Demo plugin editing address {AddressId} for ProfileId: {ProfileId}",
             editRequest.AddressId, profileContext.ProfileId);
 
         try
@@ -30,7 +30,7 @@ public partial class DemoPlugin
             
             if (!success)
             {
-                _logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+                logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
                     editRequest.AddressId, profileContext.ProfileId);
                 return Result.NotFound();
             }
@@ -39,14 +39,14 @@ public partial class DemoPlugin
             await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the address edit details
-            _logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
+            logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
                 editRequest.AddressId, editRequest.Type, editRequest.Address, editRequest.City);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to edit address {AddressId} for ProfileId: {ProfileId}",
+            logger.LogError(ex, "Demo plugin failed to edit address {AddressId} for ProfileId: {ProfileId}",
                 editRequest.AddressId, profileContext.ProfileId);
             return Result.Error("Failed to edit address in demo system");
         }
@@ -57,7 +57,7 @@ public partial class DemoPlugin
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin setting address {AddressId} as primary for ProfileId: {ProfileId}",
+        logger.LogInformation("Demo plugin setting address {AddressId} as primary for ProfileId: {ProfileId}",
             addressId, profileContext.ProfileId);
 
         try
@@ -70,7 +70,7 @@ public partial class DemoPlugin
             
             if (!success)
             {
-                _logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+                logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
                     addressId, profileContext.ProfileId);
                 return Result.NotFound();
             }
@@ -79,14 +79,14 @@ public partial class DemoPlugin
             await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the address set as primary operation
-            _logger.LogInformation("Demo plugin set address {AddressId} as primary for ProfileId: {ProfileId}",
+            logger.LogInformation("Demo plugin set address {AddressId} as primary for ProfileId: {ProfileId}",
                 addressId, profileContext.ProfileId);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
+            logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
                 addressId, profileContext.ProfileId);
             return Result.Error("Failed to set address as primary in demo system");
         }
@@ -128,14 +128,14 @@ public partial class DemoPlugin
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
             };
 
-            await _distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
+            await distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
             
-            _logger.LogDebug("Persisted addresses data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogDebug("Persisted addresses data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
                 profileId, provider);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to persist addresses data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogError(ex, "Failed to persist addresses data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
                 profileId, provider);
             throw; // This is critical - if we can't persist, the operation should fail
         }

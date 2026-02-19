@@ -1,10 +1,16 @@
 ﻿namespace Grants.ApplicantPortal.API.Web.Contacts;
 
-public record ContactRecord(Guid Id,
+public record ContactRecord(Guid ContactId,
   string Name,
-  string Type,
+  string ContactType,
   bool IsPrimary,
+  bool IsEditable,
   string? Title,
   string? Email,
-  string? Phone);
+  string? HomePhoneNumber,
+  string? MobilePhoneNumber,
+  string? WorkPhoneNumber,
+  string? WorkPhoneExtension,
+  string? Role,
+  Guid? ApplicationId);
 

@@ -32,9 +32,9 @@ public class Update(IMediator _mediator)
         Name = "John Doe Updated",
         Email = "john.doe.updated@example.com",
         IsPrimary = false,
-        PhoneNumber = "987-654-3210",
+        WorkPhoneNumber = "987-654-3210",
         Title = "Senior Manager",
-        Type = "Business",        
+        Role = "General",        
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -53,11 +53,15 @@ public class Update(IMediator _mediator)
     var command = new EditContactCommand(
       request.ContactId,
       request.Name!,
-      request.Type!,
+      "ApplicantProfile",
       request.IsPrimary,
       request.Title,
       request.Email,
-      request.PhoneNumber,
+      request.HomePhoneNumber,
+      request.MobilePhoneNumber,
+      request.WorkPhoneNumber,
+      request.WorkPhoneExtension,
+      request.Role,
       profileId,
       request.PluginId,
       request.Provider);

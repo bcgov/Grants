@@ -12,37 +12,24 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 /// <summary>
 /// Demo profile plugin for testing and demonstration purposes
 /// </summary>
-public partial class DemoPlugin : IProfilePlugin, 
+public partial class DemoPlugin(
+    ILogger<DemoPlugin> logger,
+    IDistributedCache distributedCache,
+    IOptions<ProfileCacheOptions> cacheOptions,
+    IMessagePublisher? messagePublisher = null) : IProfilePlugin, 
   IContactManagementPlugin, 
   IAddressManagementPlugin, 
   IOrganizationManagementPlugin
 {
-    private readonly ILogger<DemoPlugin> _logger;
-    private readonly IMessagePublisher? _messagePublisher; // Optional for messaging
-    private readonly IDistributedCache _distributedCache; // Direct Redis access only
-    private readonly IOptions<ProfileCacheOptions> _cacheOptions;
-    private readonly string _cacheStoreType;
+  private readonly IOptions<ProfileCacheOptions> _cacheOptions = cacheOptions;
+    private readonly string _cacheStoreType = distributedCache.GetType().Name;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public DemoPlugin(
-        ILogger<DemoPlugin> logger,
-        IDistributedCache distributedCache,
-        IOptions<ProfileCacheOptions> cacheOptions,
-        IMessagePublisher? messagePublisher = null,
-        IConnectionMultiplexer? connectionMultiplexer = null)
-    {
-        _logger = logger;
-        _distributedCache = distributedCache;
-        _cacheOptions = cacheOptions;
-        _messagePublisher = messagePublisher;
-        _cacheStoreType = distributedCache.GetType().Name;
-    }
-
-    public string PluginId => "DEMO";
+  public string PluginId => "DEMO";
 
     private static readonly IReadOnlyList<string> _supportedFeatures =
     [
@@ -53,6 +40,16 @@ public partial class DemoPlugin : IProfilePlugin,
     ];
 
     public IReadOnlyList<string> GetSupportedFeatures() => _supportedFeatures;
+
+    private static readonly IReadOnlyList<ContactRoleOption> _contactRoles =
+    [
+        new("General", "General"),
+        new("Primary", "Primary Contact"),
+        new("Billing", "Billing"),
+        new("Technical", "Technical")        
+    ];
+
+    public IReadOnlyList<ContactRoleOption> GetContactRoles() => _contactRoles;
 
     public Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(Guid profileId, string subject, CancellationToken cancellationToken = default)
     {
@@ -93,11 +90,11 @@ public partial class DemoPlugin : IProfilePlugin,
     {
         // Check if this profile has already been seeded
         var seedingFlagKey = $"{_cacheOptions.Value.CacheKeyPrefix}SEEDED:DEMO:{profileId}";
-        var alreadySeeded = await _distributedCache.GetAsync(seedingFlagKey, cancellationToken);
+        var alreadySeeded = await distributedCache.GetAsync(seedingFlagKey, cancellationToken);
         
         if (alreadySeeded != null)
         {
-            _logger.LogDebug("Demo data already seeded for ProfileId: {ProfileId}", profileId);
+            logger.LogDebug("Demo data already seeded for ProfileId: {ProfileId}", profileId);
             return;
         }
 
@@ -115,27 +112,27 @@ public partial class DemoPlugin : IProfilePlugin,
             {
                 // Another process is seeding, wait briefly and check if seeding completed
                 await Task.Delay(100, cancellationToken);
-                var seedCheckAfterWait = await _distributedCache.GetAsync(seedingFlagKey, cancellationToken);
+                var seedCheckAfterWait = await distributedCache.GetAsync(seedingFlagKey, cancellationToken);
                 
                 if (seedCheckAfterWait != null)
                 {
-                    _logger.LogDebug("Demo data seeded by another process for ProfileId: {ProfileId}", profileId);
+                    logger.LogDebug("Demo data seeded by another process for ProfileId: {ProfileId}", profileId);
                     return;
                 }
                 
-                _logger.LogWarning("Could not acquire seeding lock for ProfileId: {ProfileId}, skipping seeding", profileId);
+                logger.LogWarning("Could not acquire seeding lock for ProfileId: {ProfileId}, skipping seeding", profileId);
                 return;
             }
 
             // Double-check if seeding is still needed (another process might have completed it)
-            var doubleCheckSeeded = await _distributedCache.GetAsync(seedingFlagKey, cancellationToken);
+            var doubleCheckSeeded = await distributedCache.GetAsync(seedingFlagKey, cancellationToken);
             if (doubleCheckSeeded != null)
             {
-                _logger.LogDebug("Demo data was seeded by another process during lock acquisition for ProfileId: {ProfileId}", profileId);
+                logger.LogDebug("Demo data was seeded by another process during lock acquisition for ProfileId: {ProfileId}", profileId);
                 return;
             }
 
-            _logger.LogInformation("=== Seeding DEMO data for ProfileId: {ProfileId} ===", profileId);
+            logger.LogInformation("=== Seeding DEMO data for ProfileId: {ProfileId} ===", profileId);
 
             var scenarios = _seedScenarios;
             var seededCount = 0;
@@ -149,10 +146,10 @@ public partial class DemoPlugin : IProfilePlugin,
 
                     // Check if this combination was previously deleted
                     var deletionKey = $"{_cacheOptions.Value.CacheKeyPrefix}DELETED:{profileId}:DEMO:{scenario.Provider}:{scenario.Key}";
-                    var wasDeleted = await _distributedCache.GetAsync(deletionKey, cancellationToken);
+                    var wasDeleted = await distributedCache.GetAsync(deletionKey, cancellationToken);
                     if (wasDeleted != null)
                     {
-                        _logger.LogDebug("Skipping seeding for {ProfileId}:{Provider}:{Key} - was previously deleted",
+                        logger.LogDebug("Skipping seeding for {ProfileId}:{Provider}:{Key} - was previously deleted",
                             profileId, scenario.Provider, scenario.Key);
                         continue; // Skip if this was deleted
                     }
@@ -180,12 +177,12 @@ public partial class DemoPlugin : IProfilePlugin,
                         AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
                     };
                     
-                    await _distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
+                    await distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
                     seededCount++;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to seed data for {ProfileId}:{Provider}:{Key}",
+                    logger.LogWarning(ex, "Failed to seed data for {ProfileId}:{Provider}:{Key}",
                         profileId, scenario.Provider, scenario.Key);
                     errors++;
                 }
@@ -205,9 +202,9 @@ public partial class DemoPlugin : IProfilePlugin,
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
             };
             
-            await _distributedCache.SetAsync(seedingFlagKey, seedingFlag, flagCacheOptions, cancellationToken);
+            await distributedCache.SetAsync(seedingFlagKey, seedingFlag, flagCacheOptions, cancellationToken);
 
-            _logger.LogInformation("DEMO plugin seeding completed for ProfileId: {ProfileId} - {SeededCount} items seeded, {ErrorCount} errors", 
+            logger.LogInformation("DEMO plugin seeding completed for ProfileId: {ProfileId} - {SeededCount} items seeded, {ErrorCount} errors", 
                 profileId, seededCount, errors);
         }
         finally
@@ -237,14 +234,14 @@ public partial class DemoPlugin : IProfilePlugin,
             };
 
             // Try to set the lock only if it doesn't exist (atomic operation)
-            var existingLock = await _distributedCache.GetAsync(lockKey, cancellationToken);
+            var existingLock = await distributedCache.GetAsync(lockKey, cancellationToken);
             if (existingLock == null)
             {
-                await _distributedCache.SetAsync(lockKey, lockData, cacheOptions, cancellationToken);
+                await distributedCache.SetAsync(lockKey, lockData, cacheOptions, cancellationToken);
                 
                 // Verify we actually got the lock (race condition check)
                 await Task.Delay(10, cancellationToken); // Small delay to ensure consistency
-                var verifyLock = await _distributedCache.GetAsync(lockKey, cancellationToken);
+                var verifyLock = await distributedCache.GetAsync(lockKey, cancellationToken);
                 if (verifyLock != null)
                 {
                     try
@@ -264,7 +261,7 @@ public partial class DemoPlugin : IProfilePlugin,
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to acquire distributed lock for key: {LockKey}", lockKey);
+            logger.LogError(ex, "Failed to acquire distributed lock for key: {LockKey}", lockKey);
             return false;
         }
     }
@@ -276,7 +273,7 @@ public partial class DemoPlugin : IProfilePlugin,
     {
         try
         {
-            var existingLock = await _distributedCache.GetAsync(lockKey, cancellationToken);
+            var existingLock = await distributedCache.GetAsync(lockKey, cancellationToken);
             if (existingLock != null)
             {
                 try
@@ -286,20 +283,20 @@ public partial class DemoPlugin : IProfilePlugin,
                     
                     if (storedValue == lockValue)
                     {
-                        await _distributedCache.RemoveAsync(lockKey, cancellationToken);
-                        _logger.LogDebug("Released distributed lock for key: {LockKey}", lockKey);
+                        await distributedCache.RemoveAsync(lockKey, cancellationToken);
+                        logger.LogDebug("Released distributed lock for key: {LockKey}", lockKey);
                     }
                 }
                 catch
                 {
                     // If we can't parse the lock, just remove it to be safe
-                    await _distributedCache.RemoveAsync(lockKey, cancellationToken);
+                    await distributedCache.RemoveAsync(lockKey, cancellationToken);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to release distributed lock for key: {LockKey}", lockKey);
+            logger.LogWarning(ex, "Failed to release distributed lock for key: {LockKey}", lockKey);
         }
     }
 

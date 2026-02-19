@@ -36,4 +36,10 @@ public interface IProfilePlugin
   /// Validates if the plugin can handle the given metadata
   /// </summary>
   bool CanHandle(ProfilePopulationMetadata metadata);
+
+  /// <summary>
+  /// Gets the available contact role options for this plugin.
+  /// These are displayed as selectable options when creating or editing contacts.
+  /// </summary>
+  IReadOnlyList<ContactRoleOption> GetContactRoles() => [];
 }

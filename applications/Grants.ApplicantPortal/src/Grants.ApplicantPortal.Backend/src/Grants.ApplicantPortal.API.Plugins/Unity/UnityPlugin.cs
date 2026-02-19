@@ -27,6 +27,17 @@ public partial class UnityPlugin(
 
     public IReadOnlyList<string> GetSupportedFeatures() => _supportedFeatures;
 
+    private static readonly IReadOnlyList<ContactRoleOption> _contactRoles =
+    [
+        new("General", "General"),
+        new("Primary", "Primary Contact"),
+        new("Financial", "Financial Officer"),
+        new("SigningAuthority", "Additional Signing Authority"),
+        new("Executive", "Executive")
+    ];
+
+    public IReadOnlyList<ContactRoleOption> GetContactRoles() => _contactRoles;
+
     public bool CanHandle(ProfilePopulationMetadata metadata)
     {
         return metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);

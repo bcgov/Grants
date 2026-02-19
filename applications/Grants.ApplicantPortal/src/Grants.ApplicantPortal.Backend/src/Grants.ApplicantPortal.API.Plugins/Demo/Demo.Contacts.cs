@@ -17,8 +17,8 @@ public partial class DemoPlugin
         ProfileContext profileContext, 
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
-            profileContext.ProfileId, contactRequest.Name, contactRequest.Type);
+        logger.LogInformation("Demo plugin creating contact for ProfileId: {ProfileId}, Name: {Name}, Type: {Type}",
+            profileContext.ProfileId, contactRequest.Name, contactRequest.ContactType);
 
         try
         {
@@ -32,14 +32,14 @@ public partial class DemoPlugin
             await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the contact creation details
-            _logger.LogInformation("Demo plugin created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
-                newContactId, contactRequest.Name, contactRequest.Type, contactRequest.Email, contactRequest.PhoneNumber);            
+            logger.LogInformation("Demo plugin created contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}",
+                newContactId, contactRequest.Name, contactRequest.ContactType, contactRequest.Email);            
 
             return Result<Guid>.Success(Guid.Parse(newContactId));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to create contact for ProfileId: {ProfileId}, Name: {Name}",
+            logger.LogError(ex, "Demo plugin failed to create contact for ProfileId: {ProfileId}, Name: {Name}",
                 profileContext.ProfileId, contactRequest.Name);
             return Result<Guid>.Error("Failed to create contact in demo system");
         }
@@ -50,7 +50,7 @@ public partial class DemoPlugin
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin editing contact {ContactId} for ProfileId: {ProfileId}",
+        logger.LogInformation("Demo plugin editing contact {ContactId} for ProfileId: {ProfileId}",
             editRequest.ContactId, profileContext.ProfileId);
 
         try
@@ -63,7 +63,7 @@ public partial class DemoPlugin
             
             if (!success)
             {
-                _logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+                logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
                     editRequest.ContactId, profileContext.ProfileId);
                 return Result.NotFound();
             }
@@ -72,14 +72,14 @@ public partial class DemoPlugin
             await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the contact edit details
-            _logger.LogInformation("Demo plugin edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}, Phone: {Phone}",
-                editRequest.ContactId, editRequest.Name, editRequest.Type, editRequest.Email, editRequest.PhoneNumber);
+            logger.LogInformation("Demo plugin edited contact - ID: {ContactId}, Name: {Name}, Type: {Type}, Email: {Email}",
+                editRequest.ContactId, editRequest.Name, editRequest.ContactType, editRequest.Email);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to edit contact {ContactId} for ProfileId: {ProfileId}",
+            logger.LogError(ex, "Demo plugin failed to edit contact {ContactId} for ProfileId: {ProfileId}",
                 editRequest.ContactId, profileContext.ProfileId);
             return Result.Error("Failed to edit contact in demo system");
         }
@@ -90,7 +90,7 @@ public partial class DemoPlugin
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
+        logger.LogInformation("Demo plugin setting contact {ContactId} as primary for ProfileId: {ProfileId}",
             contactId, profileContext.ProfileId);
 
         try
@@ -103,7 +103,7 @@ public partial class DemoPlugin
             
             if (!success)
             {
-                _logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+                logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
                     contactId, profileContext.ProfileId);
                 return Result.NotFound();
             }
@@ -112,14 +112,14 @@ public partial class DemoPlugin
             await PersistContactsDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the contact set as primary operation
-            _logger.LogInformation("Demo plugin set contact {ContactId} as primary for ProfileId: {ProfileId}",
+            logger.LogInformation("Demo plugin set contact {ContactId} as primary for ProfileId: {ProfileId}",
                 contactId, profileContext.ProfileId);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to set contact {ContactId} as primary for ProfileId: {ProfileId}",
+            logger.LogError(ex, "Demo plugin failed to set contact {ContactId} as primary for ProfileId: {ProfileId}",
                 contactId, profileContext.ProfileId);
             return Result.Error("Failed to set contact as primary in demo system");
         }
@@ -130,7 +130,7 @@ public partial class DemoPlugin
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Demo plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
+        logger.LogInformation("Demo plugin deleting contact {ContactId} for ProfileId: {ProfileId}",
             contactId, profileContext.ProfileId);
 
         try
@@ -143,7 +143,7 @@ public partial class DemoPlugin
             
             if (!success)
             {
-                _logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
+                logger.LogWarning("Contact {ContactId} not found for ProfileId: {ProfileId}",
                     contactId, profileContext.ProfileId);
                 return Result.NotFound();
             }
@@ -155,14 +155,14 @@ public partial class DemoPlugin
             await TrackContactDeletion(contactId, profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the contact deletion
-            _logger.LogInformation("Demo plugin deleted contact {ContactId} for ProfileId: {ProfileId}",
+            logger.LogInformation("Demo plugin deleted contact {ContactId} for ProfileId: {ProfileId}",
                 contactId, profileContext.ProfileId);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Demo plugin failed to delete contact {ContactId} for ProfileId: {ProfileId}",
+            logger.LogError(ex, "Demo plugin failed to delete contact {ContactId} for ProfileId: {ProfileId}",
                 contactId, profileContext.ProfileId);
             return Result.Error("Failed to delete contact in demo system");
         }
@@ -197,21 +197,21 @@ public partial class DemoPlugin
                 jsonData);
 
             // Store updated data in Redis
-            var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:CONTACTS";
+            var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:CONTACTINFO";
             var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
             var cacheOptions = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
             };
 
-            await _distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
+            await distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
             
-            _logger.LogDebug("Persisted contacts data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogDebug("Persisted contacts data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
                 profileId, provider);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to persist contacts data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogError(ex, "Failed to persist contacts data to Redis for ProfileId: {ProfileId}, Provider: {Provider}", 
                 profileId, provider);
             throw; // This is critical - if we can't persist, the operation should fail
         }
@@ -241,14 +241,14 @@ public partial class DemoPlugin
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365) // Keep deletion records for a year
             };
 
-            await _distributedCache.SetAsync(contactDeletionKey, deletionBytes, cacheOptions, cancellationToken);
+            await distributedCache.SetAsync(contactDeletionKey, deletionBytes, cacheOptions, cancellationToken);
             
-            _logger.LogDebug("Tracked contact deletion in Redis - ContactId: {ContactId}, ProfileId: {ProfileId}, Provider: {Provider}", 
+            logger.LogDebug("Tracked contact deletion in Redis - ContactId: {ContactId}, ProfileId: {ProfileId}, Provider: {Provider}", 
                 contactId, profileId, provider);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to track contact deletion for ContactId: {ContactId}, ProfileId: {ProfileId}", 
+            logger.LogWarning(ex, "Failed to track contact deletion for ContactId: {ContactId}, ProfileId: {ProfileId}", 
                 contactId, profileId);
             // Don't throw - deletion tracking failure shouldn't break the main operation
         }

@@ -6,8 +6,12 @@
 public record EditContactRequest(
   Guid ContactId,
   string Name,
-  string Type,
+  string ContactType,
   bool IsPrimary,
   string? Title = null,
   string? Email = null,
-  string? PhoneNumber = null);
+  string? HomePhoneNumber = null,
+  string? MobilePhoneNumber = null,
+  string? WorkPhoneNumber = null,
+  string? WorkPhoneExtension = null,
+  string? Role = null);
