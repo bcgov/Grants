@@ -13,12 +13,6 @@
     [ngClass]="menuClass"
     [attr.aria-labelledby]="dropdownId"
   >
-    <li *ngIf="showClearCache">
-      <a class="dropdown-item" href="#" (click)="onClearCache($event)">
-        <i class="fas fa-sync-alt me-2"></i>Clear Cache
-      </a>
-    </li>
-    <li *ngIf="showClearCache && showLogout"><hr class="dropdown-divider"></li>
     <li *ngIf="showLogout">
       <a class="dropdown-item" href="#" (click)="onLogout($event)">Log out</a>
     </li>
