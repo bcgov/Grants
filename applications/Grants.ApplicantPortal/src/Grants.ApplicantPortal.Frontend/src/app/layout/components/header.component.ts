@@ -37,8 +37,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private workspaceService: WorkspaceService,
-    private apiService: ApiService
+    private readonly workspaceService: WorkspaceService,
+    private readonly apiService: ApiService
   ) {}
 
   get hasMultipleProviders(): boolean {
