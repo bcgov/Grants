@@ -15,19 +15,12 @@ export class UserDropdownComponent {
   @Input() menuClass: string = 'dropdown-menu-end';
   @Input() iconClass: string = 'fa-regular fa-circle-user fa-2xl';
   @Input() showLogout: boolean = true;
-  @Input() showClearCache: boolean = false;
 
   @Output() logoutEvent = new EventEmitter<Event>();
-  @Output() clearCacheEvent = new EventEmitter<Event>();
 
   onLogout(event: Event): void {
     event.preventDefault();
     console.log('User dropdown logout clicked');
     this.logoutEvent.emit(event);
-  }
-
-  onClearCache(event: Event): void {
-    event.preventDefault();
-    this.clearCacheEvent.emit(event);
   }
 }

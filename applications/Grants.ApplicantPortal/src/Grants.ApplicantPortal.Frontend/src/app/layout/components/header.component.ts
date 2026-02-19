@@ -5,7 +5,6 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
-import { ApiService } from '../../api.service';
 import { Plugin, Provider } from '../../shared/models/workspace.interface';
 import { filter, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -37,8 +36,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private readonly workspaceService: WorkspaceService,
-    private readonly apiService: ApiService
+    private readonly workspaceService: WorkspaceService
   ) {}
 
   get hasMultipleProviders(): boolean {
@@ -177,26 +175,5 @@ export class HeaderComponent implements OnInit, OnDestroy {
       console.error('Error clearing session:', error);
       this.router.navigate(['/login']);
     }
-  }
-
-  onClearCache(): void {
-    const pluginId = this.selectedWorkspace?.pluginId;
-    if (!pluginId || pluginId !== 'DEMO') {
-      return;
-    }
-
-    this.apiService.clearMyCache(pluginId).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: () => {
-        console.log('Cache cleared successfully for:', pluginId);
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
-      },
-      error: (error) => {
-        console.error('Failed to clear cache:', error);
-      }
-    });
   }
 }
