@@ -12,10 +12,6 @@ const port = process.env.PORT || 4200;
 const enableProxy = process.env.ENABLE_API_PROXY === 'true';
 const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';
 
-// Configure Express to allow larger JSON and URL-encoded request bodies
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
 // Environment variables for runtime substitution
 const envVars = {
   KEYCLOAK__AUTHSERVERURL: process.env.KEYCLOAK__AUTHSERVERURL || 'https://dev.loginproxy.gov.bc.ca/auth',
@@ -69,6 +65,15 @@ if (enableProxy) {
     },
     onProxyReq: (proxyReq, req, res) => {
       console.log(`Proxying ${req.method} ${req.url} to ${backendServiceUrl}`);
+      
+      // If body was parsed by any upstream middleware, re-write it immediately
+      // to prevent delays between headers and body that cause Kestrel 408 timeouts
+      if (req.body && Object.keys(req.body).length > 0) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+      }
     }
   }));
   console.log(`API proxy enabled - routing /api/* to ${backendServiceUrl}`);
