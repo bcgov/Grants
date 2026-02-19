@@ -152,15 +152,15 @@ public partial class UnityPlugin
       await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId,
         PluginId,
         provider,
-        "ADDRESSES",
+        "ADDRESSINFO",
         cancellationToken);
 
-      logger.LogDebug("Invalidated ADDRESSES cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
+      logger.LogDebug("Invalidated ADDRESSINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
           profileId, PluginId, provider);
     }
     catch (Exception ex)
     {
-      logger.LogWarning(ex, "Failed to invalidate ADDRESSES cache for ProfileId: {ProfileId}", profileId);
+      logger.LogWarning(ex, "Failed to invalidate ADDRESSINFO cache for ProfileId: {ProfileId}", profileId);
       // Don't throw - cache invalidation failures shouldn't break the main operation
     }
   }

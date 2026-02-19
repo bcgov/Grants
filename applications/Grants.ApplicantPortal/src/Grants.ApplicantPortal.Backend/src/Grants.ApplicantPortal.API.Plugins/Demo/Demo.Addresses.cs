@@ -121,7 +121,7 @@ public partial class DemoPlugin
                 jsonData);
 
             // Store updated data in Redis
-            var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:ADDRESSES";
+            var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:ADDRESSINFO";
             var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
             var cacheOptions = new DistributedCacheEntryOptions
             {

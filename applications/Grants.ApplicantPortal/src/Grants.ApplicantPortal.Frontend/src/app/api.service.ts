@@ -22,4 +22,8 @@ export class ApiService {
   getExampleComStatus(): Observable<any> {
     return this.http.get('https://www.example.com', { observe: 'response' });
   }
+
+  clearMyCache(pluginId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/System/clear-my-cache?pluginId=${pluginId}`, {});
+  }
 }
