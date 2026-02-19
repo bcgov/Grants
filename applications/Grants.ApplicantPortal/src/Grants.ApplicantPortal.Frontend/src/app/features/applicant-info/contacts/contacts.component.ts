@@ -7,7 +7,7 @@ import { take, takeUntil } from 'rxjs/operators';
 import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
-import { ContactInfo, Contact } from '../../../shared/models/applicant-info.interface';
+import { Contact } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig,
@@ -79,7 +79,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     mobilePhoneNumber: '',
     homePhoneNumber: '',
     title: '',
-    contactType: 'ApplicantProfile',
+    role: 'General',
     isPrimary: false,
     isEditable: true
   };
@@ -269,7 +269,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       name: this.newContact.name!,
       email: this.newContact.email ?? '',
       title: this.newContact.title ?? '',
-      contactType: this.newContact.contactType!,
+      role: this.newContact.role!,
       workPhoneNumber: this.newContact.workPhoneNumber ?? '',
       isPrimary: this.newContact.isPrimary!
     };
@@ -338,8 +338,15 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   isValidContact(contact: Partial<ContactDisplay>): boolean {
     const nameValid = !!contact.name && contact.name.trim().length > 0;
-    const emailValid = !contact.email || contact.email.trim().length === 0 ||
-      (contact.email.includes('@') && contact.email.includes('.') && contact.email.length <= 254);
+    if (!contact.email || contact.email.trim().length === 0) {
+      return nameValid;
+    }
+    const email = contact.email.trim();
+    const atIndex = email.indexOf('@');
+    const emailValid = atIndex > 0 &&
+      email.indexOf('.', atIndex) > atIndex + 1 &&
+      email.length <= 254 &&
+      !email.includes(' ');
     return nameValid && emailValid;
   }
 
@@ -393,7 +400,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       name: contact.name,
       email: contact.email,
       title: contact.title,
-      contactType: contact.contactType,
+      role: contact.role,
       workPhoneNumber: contact.workPhoneNumber,
       workPhoneExtension: contact.workPhoneExtension,
       mobilePhoneNumber: contact.mobilePhoneNumber,

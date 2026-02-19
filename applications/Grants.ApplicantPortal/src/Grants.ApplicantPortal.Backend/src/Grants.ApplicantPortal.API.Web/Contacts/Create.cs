@@ -33,7 +33,7 @@ public class Create(IMediator _mediator)
         IsPrimary = true,
         WorkPhoneNumber = "123-456-7890",
         Title = "Manager",
-        ContactType = "ApplicantProfile",
+        Role = "General",
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -51,7 +51,7 @@ public class Create(IMediator _mediator)
     
     var command = new CreateContactCommand(
       request.Name!,
-      request.ContactType!,
+      "ApplicantProfile",
       request.IsPrimary,
       request.Title,
       request.Email,

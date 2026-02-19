@@ -315,7 +315,7 @@ export class ApplicantInfoService {
       name: string;
       email: string;
       title?: string;
-      contactType: string;
+      role: string;
       workPhoneNumber?: string;
       isPrimary: boolean;
     }
@@ -405,7 +405,7 @@ export class ApplicantInfoService {
       name: string;
       email: string;
       title?: string;
-      contactType: string;
+      role: string;
       workPhoneNumber?: string;
       isPrimary: boolean;
     }

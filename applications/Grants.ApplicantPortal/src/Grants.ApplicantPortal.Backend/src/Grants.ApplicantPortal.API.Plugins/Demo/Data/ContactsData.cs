@@ -65,7 +65,7 @@ public static class ContactsData
       var newContact = new ContactInfo
       {
         ContactId = newContactId.ToString(),
-        ContactType = contactRequest.ContactType ?? "ApplicantProfile",
+        ContactType = "ApplicantProfile",
         Name = contactRequest.Name ?? "",
         Email = contactRequest.Email ?? "",
         HomePhoneNumber = contactRequest.HomePhoneNumber,
@@ -126,10 +126,10 @@ public static class ContactsData
       }
 
       // Update the contact - preserve existing values when incoming fields are null
+      // ContactType is not updatable through the portal — it stays as-is
       var existingContact = contacts[contactIndex];
       contacts[contactIndex] = existingContact with
       {
-        ContactType = editRequest.ContactType,
         Name = editRequest.Name ?? existingContact.Name,
         Email = editRequest.Email ?? existingContact.Email,
         HomePhoneNumber = editRequest.HomePhoneNumber ?? existingContact.HomePhoneNumber,
@@ -391,7 +391,7 @@ public static class ContactsData
           WorkPhoneNumber = "(555) 123-9999",
           WorkPhoneExtension = "101",
           Title = "Project Manager",
-          Role = "primary",
+          Role = "Primary",
           IsPrimary = true,
           IsEditable = true,
           ApplicationId = null,
@@ -428,7 +428,7 @@ public static class ContactsData
           WorkPhoneNumber = "+1-555-832-4300",
           WorkPhoneExtension = null,
           Title = "Chief Executive Officer",
-          Role = "ceo",
+          Role = "Primary",
           IsPrimary = true,
           IsEditable = false,
           ApplicationId = null,

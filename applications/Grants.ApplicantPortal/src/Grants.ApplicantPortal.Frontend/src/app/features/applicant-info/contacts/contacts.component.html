@@ -72,12 +72,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="type" class="form-label">Contact Type</label>
+                <label for="role" class="form-label">Role</label>
                 <select 
                   class="form-select" 
-                  id="type" 
-                  [(ngModel)]="newContact.contactType" 
-                  name="type"
+                  id="role" 
+                  [(ngModel)]="newContact.role" 
+                  name="role"
                   [disabled]="isSavingContact">                                    
                   @for (role of contactRoles; track role.key) {
                     <option [value]="role.key">{{ role.label }}</option>

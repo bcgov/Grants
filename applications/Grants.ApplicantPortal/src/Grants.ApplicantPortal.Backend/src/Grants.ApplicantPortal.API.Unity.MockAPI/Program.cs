@@ -141,7 +141,7 @@ static object GetContactInfoData(string tenantId) => tenantId.ToUpperInvariant()
         dataType = "CONTACTINFO",
         contacts = new object[]
         {
-            new { contactId = "a437675a-d642-455c-b3e0-388d75e6203f", name = "Alex Johnson", title = "Unity Program Director", email = "alex.johnson@unity.gov", homePhoneNumber = "555 123-4567", mobilePhoneNumber = "555 987-6543", workPhoneNumber = "555 864-2100", workPhoneExtension = "101", contactType = "ApplicantProfile", role = "director", isPrimary = true, isEditable = true, applicationId = (string?)null },
+            new { contactId = "a437675a-d642-455c-b3e0-388d75e6203f", name = "Alex Johnson", title = "Unity Program Director", email = "alex.johnson@unity.gov", homePhoneNumber = "555 123-4567", mobilePhoneNumber = "555 987-6543", workPhoneNumber = "555 864-2100", workPhoneExtension = "101", contactType = "ApplicantProfile", role = "Executive", isPrimary = true, isEditable = true, applicationId = (string?)null },
             new { contactId = "b5a01793-e247-48c7-8257-25b0ed239883", name = "Sarah Mitchell", title = "Unity Grants Manager", email = "sarah.mitchell@unity.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = (string?)null, workPhoneNumber = (string?)null, workPhoneExtension = (string?)null, contactType = "Application", role = "Additional Signing Authority", isPrimary = false, isEditable = false, applicationId = "3a1eac9f-da13-a888-883f-d2c0575e7620" }
         }
     },
@@ -150,7 +150,7 @@ static object GetContactInfoData(string tenantId) => tenantId.ToUpperInvariant()
         dataType = "CONTACTINFO",
         contacts = new object[]
         {
-            new { contactId = "c1234567-89ab-cdef-0123-456789abcdef", name = "Dr. Emma Wilson", title = "Research Director", email = "emma.wilson@unity-abc.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = "555 222-3344", workPhoneNumber = "555 864-5500", workPhoneExtension = (string?)null, contactType = "ApplicantProfile", role = "research-lead", isPrimary = true, isEditable = true, applicationId = (string?)null },
+            new { contactId = "c1234567-89ab-cdef-0123-456789abcdef", name = "Dr. Emma Wilson", title = "Research Director", email = "emma.wilson@unity-abc.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = "555 222-3344", workPhoneNumber = "555 864-5500", workPhoneExtension = (string?)null, contactType = "ApplicantProfile", role = "Primary", isPrimary = true, isEditable = true, applicationId = (string?)null },
             new { contactId = "d2345678-9abc-def0-1234-56789abcdef0", name = "Michael Chen", title = "Business Development Manager", email = "michael.chen@unity-abc.gov", homePhoneNumber = (string?)null, mobilePhoneNumber = (string?)null, workPhoneNumber = (string?)null, workPhoneExtension = (string?)null, contactType = "Application", role = "Additional Signing Authority", isPrimary = false, isEditable = false, applicationId = "3a1eac9f-da13-a888-883f-d2c0575e7620" }
         }
     }

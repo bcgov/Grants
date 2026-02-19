@@ -34,7 +34,7 @@ public class Update(IMediator _mediator)
         IsPrimary = false,
         WorkPhoneNumber = "987-654-3210",
         Title = "Senior Manager",
-        ContactType = "ApplicantProfile",        
+        Role = "General",        
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };
@@ -53,7 +53,7 @@ public class Update(IMediator _mediator)
     var command = new EditContactCommand(
       request.ContactId,
       request.Name!,
-      request.ContactType!,
+      "ApplicantProfile",
       request.IsPrimary,
       request.Title,
       request.Email,

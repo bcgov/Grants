@@ -16,9 +16,9 @@ public class CreateContactValidator : Validator<CreateContactRequest>
       .MinimumLength(2)
       .MaximumLength(DataSchemaConstants.DEFAULT_NAME_LENGTH);
 
-    RuleFor(x => x.ContactType)
+    RuleFor(x => x.Role)
       .NotEmpty()
-      .WithMessage("Contact type is required.")
+      .WithMessage("Contact role is required.")
       .MaximumLength(100);
 
     RuleFor(x => x.Email)
