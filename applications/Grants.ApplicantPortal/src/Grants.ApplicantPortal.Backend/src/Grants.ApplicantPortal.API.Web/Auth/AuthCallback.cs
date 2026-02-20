@@ -2,12 +2,25 @@
 using Grants.ApplicantPortal.API.Web.Configurations;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
+using Grants.ApplicantPortal.API.Web.Profiles;
+using Grants.ApplicantPortal.API.Core.Features.Security;
+using System.Security.Claims;
 
 namespace Grants.ApplicantPortal.API.Web.Auth;
 
 /// <summary>
 /// OAuth callback endpoint for automated token retrieval
 /// This endpoint captures the authorization code and exchanges it for JWT tokens
+/// 
+/// USAGE SCENARIOS:
+/// - Server-side OAuth flows (Authorization Code flow)
+/// - Applications that cannot securely store client credentials
+/// - Legacy integrations that don't support PKCE
+/// - Administrative tools and testing environments
+/// 
+/// NOTE: The main UI uses PKCE flow and does NOT use this endpoint.
+/// Login events logged here represent actual OAuth callback authentications,
+/// not token validations from existing sessions.
 /// </summary>
 public class AuthCallback : EndpointWithoutRequest
 {
@@ -24,14 +37,16 @@ public class AuthCallback : EndpointWithoutRequest
         AllowAnonymous();
         Summary(s =>
         {
-            s.Summary = "OAuth callback endpoint";
-            s.Description = "Handles OAuth authorization code callback and exchanges it for JWT tokens automatically";
+            s.Summary = "OAuth Authorization Code callback endpoint";
+            s.Description = "Handles OAuth authorization code callback and exchanges it for JWT tokens. " +
+                           "Used for server-side OAuth flows. The main UI uses PKCE and does not use this endpoint. " +
+                           "Login events from this endpoint represent actual OAuth authentications.";
             s.Responses[200] = "Authorization code processed successfully - returns HTML page or JSON";
             s.Responses[400] = "Bad request - missing or invalid authorization code";
             s.Responses[500] = "Internal server error during token exchange";
         });
         
-        Tags("Authentication", "OAuth");
+        Tags("Authentication", "OAuth", "Server-Side Flow");
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -133,6 +148,10 @@ public class AuthCallback : EndpointWithoutRequest
             
             // Create response with tokens and user info
             var userInfo = await GetUserInfoFromToken(tokenResponse.AccessToken, keycloakConfig, ct);
+            
+            // Log successful login event for OAuth callback flow
+            // This represents an actual login via server-side OAuth, not a token validation
+            await LogSuccessfulLoginEvent(tokenResponse.AccessToken, userInfo, ct);
             
             var callbackResponse = new AuthCallbackResponse(
                 Success: true,
@@ -418,6 +437,83 @@ public class AuthCallback : EndpointWithoutRequest
         {
             Logger.LogWarning(ex, "Failed to get user info from token: {Error}", ex.Message);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Log successful login event when user actually logs in via OAuth callback
+    /// 
+    /// This method is called ONLY when:
+    /// - A user completes the OAuth Authorization Code flow via this callback endpoint
+    /// - An application uses server-side OAuth (not PKCE)
+    /// - The authorization code is successfully exchanged for tokens
+    /// 
+    /// This is NOT called for:
+    /// - PKCE flows (used by the main UI)
+    /// - JWT token validations on subsequent requests
+    /// - Refresh token operations
+    /// </summary>
+    private async Task LogSuccessfulLoginEvent(string accessToken, CallbackUserInfoResponse? userInfo, CancellationToken ct)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(accessToken) || userInfo == null)
+            {
+                Logger.LogDebug("Skipping login event logging - missing token or user info");
+                return;
+            }
+
+            // Get profile service from DI
+            var profileService = HttpContext.RequestServices.GetService<IProfileService>();
+            if (profileService == null)
+            {
+                Logger.LogWarning("IProfileService not available for security logging");
+                return;
+            }
+
+            // Create a minimal ClaimsPrincipal from user info for profile lookup
+            var claims = new List<Claim>
+            {
+                new Claim("sub", userInfo.Sub ?? string.Empty),
+                new Claim("preferred_username", userInfo.PreferredUsername ?? string.Empty),
+                new Claim("email", userInfo.Email ?? string.Empty),
+                new Claim("name", userInfo.Name ?? string.Empty)
+            };
+
+            // Add issuer claim based on Keycloak configuration
+            var keycloakConfig = _keycloakOptions.Value;
+            var issuer = $"{keycloakConfig.AuthServerUrl}/realms/{keycloakConfig.Realm}";
+            claims.Add(new Claim("iss", issuer));
+
+            var identity = new ClaimsIdentity(claims, "oauth");
+            var principal = new ClaimsPrincipal(identity);
+
+            // Get or create profile for the user
+            var profile = await profileService.GetOrCreateProfileAsync(principal, ct);
+
+            // Extract request information
+            var request = HttpContext.Request;
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = request.Headers.UserAgent.FirstOrDefault();
+
+            // Log successful login event
+            await profileService.LogSecurityEventAsync(
+                profileId: profile.Id,
+                eventType: SecurityEventTypes.Login,
+                eventDescription: "User successfully logged in via OAuth Authorization Code callback flow",
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                sessionId: null, // OAuth callback doesn't have session ID yet
+                isSuccessful: true,
+                cancellationToken: ct);
+
+            Logger.LogInformation("OAuth callback login event logged for user: {Username}, ProfileId: {ProfileId}", 
+                userInfo.PreferredUsername, profile.Id);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to log OAuth callback login security event");
+            // Don't rethrow - security logging should not break the authentication flow
         }
     }
 }

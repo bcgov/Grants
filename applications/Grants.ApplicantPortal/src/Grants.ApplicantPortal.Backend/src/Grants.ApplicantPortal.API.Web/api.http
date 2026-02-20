@@ -41,3 +41,18 @@ Content-Type: application/json
 @id_to_delete=1
 DELETE {{host}}:{{port}}/Contributors/{{id_to_delete}}
 
+###
+
+// Get system information
+GET {{host}}:{{port}}/System/info
+
+###
+
+// List all plugins with configuration and features
+GET {{host}}:{{port}}/System/plugins
+
+###
+
+// Debug plugin configuration binding
+GET {{host}}:{{port}}/System/debug/plugin-config
+

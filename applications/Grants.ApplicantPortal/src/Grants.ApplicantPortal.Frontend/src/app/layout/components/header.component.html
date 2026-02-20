@@ -5,6 +5,74 @@
     </div>
   </div>
   <div class="header-right">
+    <!-- Workspace Selector -->
+    <div class="workspace-selector" *ngIf="selectedWorkspace">
+      <div class="dropdown">
+        <button
+          class="btn btn-outline-primary dropdown-toggle workspace-btn"
+          type="button"
+          id="workspaceDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          [attr.aria-label]="'Current workspace: ' + displayText"
+          [disabled]="isChangingWorkspace"
+        >
+          <i class="fas fa-spinner fa-spin me-2" *ngIf="isChangingWorkspace" aria-hidden="true"></i>
+          <i class="fas fa-briefcase me-2" *ngIf="!isChangingWorkspace" aria-hidden="true"></i>
+          {{ isChangingWorkspace ? 'Switching...' : displayText }}
+        </button>
+        <ul class="dropdown-menu workspace-dropdown" aria-labelledby="workspaceDropdown">
+          <!-- Current Workspace Info -->
+          <li>
+            <h6 class="dropdown-header">
+              <i class="fas fa-briefcase me-2"></i>
+              {{ selectedWorkspace.description }}
+            </h6>
+          </li>
+          
+          <!-- Provider Selection (fetched from API) -->
+          <div *ngIf="currentProviders.length > 1">
+            <li><h6 class="dropdown-header">Providers</h6></li>
+            <li *ngIf="isLoadingProviders">
+              <span class="dropdown-item text-muted">
+                <i class="fas fa-spinner fa-spin me-2"></i>Loading...
+              </span>
+            </li>
+            <li *ngFor="let provider of currentProviders">
+              <button 
+                class="dropdown-item provider-item"
+                [class.active]="provider.id === selectedProvider"
+                (click)="selectProviderById(provider)"
+                type="button"
+              >
+                <span>{{ provider.name }}</span>
+                <i 
+                  class="fas fa-check ms-auto" 
+                  *ngIf="provider.id === selectedProvider"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+          </div>
+          
+          <!-- Change Workspace (only if multiple available) -->
+          <div *ngIf="availableWorkspaces.length > 1">
+            <li>
+              <button 
+                class="dropdown-item change-workspace-item"
+                (click)="changeWorkspace()"
+                type="button"
+              >
+                <i class="fas fa-exchange-alt me-2"></i>
+                Change Workspace
+              </button>
+            </li>
+          </div>
+        </ul>
+      </div>
+    </div>
+
     <app-user-dropdown
       [userInfo]="applicantInfo"
       dropdownId="headerUserDropdown"

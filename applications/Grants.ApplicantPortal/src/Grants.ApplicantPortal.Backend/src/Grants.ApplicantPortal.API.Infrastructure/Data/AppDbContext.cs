@@ -1,6 +1,7 @@
-﻿using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
-using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
-using Grants.ApplicantPortal.API.Core.Features.PluginConfigurations.PluginConfigurationAggregate;
+﻿using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
+using Grants.ApplicantPortal.API.Core.Features.Security.SecurityLogAggregate;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Data;
 
@@ -9,13 +10,14 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data;
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options,
   IDomainEventDispatcher? dispatcher) : DbContext(options)
-{
-  private readonly IDomainEventDispatcher? _dispatcher = dispatcher;
-
+{ 
   // Add your DbSets here
-  public DbSet<Contributor> Contributors => Set<Contributor>();
   public DbSet<Profile> Profiles => Set<Profile>();
-  public DbSet<PluginConfiguration> PluginConfigurations => Set<PluginConfiguration>();
+  public DbSet<SecurityLog> SecurityLogs => Set<SecurityLog>();
+
+  // Messaging entities
+  public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+  public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -28,7 +30,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,
     int result = await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     // ignore events if no dispatcher provided
-    if (_dispatcher == null) return result;
+    if (dispatcher == null) return result;
 
     // dispatch events only if save was successful
     var entitiesWithEvents = ChangeTracker.Entries<HasDomainEventsBase>()
@@ -36,7 +38,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,
         .Where(e => e.DomainEvents.Any())
         .ToArray();
 
-    await _dispatcher.DispatchAndClearEvents(entitiesWithEvents);
+    await dispatcher.DispatchAndClearEvents(entitiesWithEvents);
 
     return result;
   }

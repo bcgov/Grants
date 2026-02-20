@@ -3,14 +3,13 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --configuration=development",
+    "start": "ng serve",
     "build": "ng build --configuration=deploy",
     "build:dev": "ng build --configuration=development",
     "build:docker": "ng build --configuration=development",
     "build:deploy": "ng build --configuration=deploy",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve": "node server.js"
+    "test": "ng test"    
   },
   "private": true,
   "dependencies": {

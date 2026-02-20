@@ -2,5 +2,6 @@
 
 public static class DataSchemaConstants
 {
+  public const string DEFAULT_SCHEMA = "public";
   public const int DEFAULT_NAME_LENGTH = 250;
 }

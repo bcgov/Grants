@@ -1,9 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
-using Ardalis.SharedKernel;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Configuration;
 using Grants.ApplicantPortal.API.Core;
-using Grants.ApplicantPortal.API.Core.Features.PluginConfigurations.PluginConfigurationAggregate;
-using Grants.ApplicantPortal.API.Core.Features.PluginConfigurations.PluginConfigurationAggregate.Specifications;
 
 namespace Grants.ApplicantPortal.API.Plugins;
 
@@ -13,17 +12,17 @@ namespace Grants.ApplicantPortal.API.Plugins;
 public class ExternalServiceClient : IExternalServiceClient
 {
   private readonly HttpClient _httpClient;
-  private readonly IReadRepository<PluginConfiguration> _repository;
+  private readonly IConfiguration _configuration;
   private readonly ILogger<ExternalServiceClient> _logger;
   private readonly JsonSerializerOptions _jsonOptions;
 
   public ExternalServiceClient(
       HttpClient httpClient,
-      IReadRepository<PluginConfiguration> repository,
+      IConfiguration configuration,
       ILogger<ExternalServiceClient> logger)
   {
     _httpClient = httpClient;
-    _repository = repository;
+    _configuration = configuration;
     _logger = logger;
     _jsonOptions = new JsonSerializerOptions
     {
@@ -85,7 +84,7 @@ public class ExternalServiceClient : IExternalServiceClient
           pluginId, request.Endpoint);
 
       // Get plugin configuration
-      var config = await GetPluginConfigurationAsync(pluginId, cancellationToken);
+      var config = GetPluginConfiguration(pluginId);
       if (config == null)
       {
         return new ExternalServiceResponse<string>
@@ -109,7 +108,7 @@ public class ExternalServiceClient : IExternalServiceClient
       if (request.Body != null && (request.Method == HttpMethod.Post || request.Method == HttpMethod.Put))
       {
         var jsonBody = JsonSerializer.Serialize(request.Body, _jsonOptions);
-        httpRequest.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        httpRequest.Content = new StringContent(jsonBody, Encoding.UTF8, MediaTypeHeaderValue.Parse("application/json"));
       }
 
       // Set timeout
@@ -183,22 +182,56 @@ public class ExternalServiceClient : IExternalServiceClient
     }
   }
 
-  private async Task<ExternalServiceConfiguration?> GetPluginConfigurationAsync(string pluginId, CancellationToken cancellationToken)
+  private ExternalServiceConfiguration? GetPluginConfiguration(string pluginId)
   {
-    var spec = new PluginConfigurationByPluginIdSpec(pluginId);
-    var configEntity = await _repository.FirstOrDefaultAsync(spec, cancellationToken);
-    if (configEntity == null)
-    {
-      return null;
-    }
-
     try
     {
-      return JsonSerializer.Deserialize<ExternalServiceConfiguration>(configEntity.ConfigurationJson, _jsonOptions);
+      // Get plugin configuration from app settings under "Plugins:{pluginId}:Configuration"
+      var configSection = _configuration.GetSection($"Plugins:{pluginId}:Configuration");
+      
+      if (!configSection.Exists())
+      {
+        _logger.LogWarning("Plugin configuration not found for {PluginId} in app settings", pluginId);
+        return null;
+      }
+
+      // Map configuration section to ExternalServiceConfiguration
+      var config = new ExternalServiceConfiguration
+      {
+        BaseUrl = configSection["BaseUrl"] ?? configSection["Endpoint"] ?? string.Empty,
+        ApiKey = configSection["ApiKey"],
+        AuthHeaderName = configSection["AuthHeaderName"] ?? "Bearer",
+        TimeoutSeconds = configSection.GetValue<int>("TimeoutSeconds", 30),
+        MaxRetryAttempts = configSection.GetValue<int>("MaxRetryAttempts", 3),
+        EnableCircuitBreaker = configSection.GetValue<bool>("EnableCircuitBreaker", true)
+      };
+
+      // Get headers if configured
+      var headersSection = configSection.GetSection("Headers");
+      if (headersSection.Exists())
+      {
+        config.Headers = [];
+        foreach (var header in headersSection.GetChildren())
+        {
+          config.Headers[header.Key] = header.Value ?? string.Empty;
+        }
+      }
+
+      // Validate required fields
+      if (string.IsNullOrEmpty(config.BaseUrl))
+      {
+        _logger.LogError("BaseUrl is required for plugin {PluginId} configuration", pluginId);
+        return null;
+      }
+
+      _logger.LogDebug("Successfully loaded configuration for plugin {PluginId}: BaseUrl={BaseUrl}, TimeoutSeconds={TimeoutSeconds}", 
+        pluginId, config.BaseUrl, config.TimeoutSeconds);
+
+      return config;
     }
-    catch (JsonException ex)
+    catch (Exception ex)
     {
-      _logger.LogError(ex, "Failed to deserialize configuration for plugin {PluginId}: {Error}", pluginId, ex.Message);
+      _logger.LogError(ex, "Failed to load configuration for plugin {PluginId}: {Error}", pluginId, ex.Message);
       return null;
     }
   }
@@ -208,7 +241,7 @@ public class ExternalServiceClient : IExternalServiceClient
     var baseUri = new Uri(baseUrl.TrimEnd('/'));
     var endpointUri = new Uri(baseUri, endpoint.TrimStart('/'));
 
-    if (queryParameters?.Any() == true)
+    if (queryParameters != null && queryParameters.Count > 0)
     {
       var query = string.Join("&", queryParameters.Select(kvp =>
           $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
@@ -226,14 +259,23 @@ public class ExternalServiceClient : IExternalServiceClient
 
   private static void AddHeaders(HttpRequestMessage request, ExternalServiceConfiguration config, ExternalServiceRequest serviceRequest)
   {
-    // Add API key if present
+    // Add API key if present using the configured authentication scheme
     if (!string.IsNullOrEmpty(config.ApiKey))
     {
-      request.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
+      if (config.AuthHeaderName.Equals("Bearer", StringComparison.OrdinalIgnoreCase))
+      {
+        // Use standard Authorization header with Bearer scheme
+        request.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
+      }
+      else
+      {
+        // Use custom header (e.g., X-Api-Key, ApiKey, etc.)
+        request.Headers.TryAddWithoutValidation(config.AuthHeaderName, config.ApiKey);
+      }
     }
 
     // Add headers from configuration
-    if (config.Headers?.Any() == true)
+    if (config.Headers != null && config.Headers.Count > 0)
     {
       foreach (var header in config.Headers)
       {
@@ -241,8 +283,8 @@ public class ExternalServiceClient : IExternalServiceClient
       }
     }
 
-    // Add headers from request
-    if (serviceRequest.Headers?.Any() == true)
+    // Add headers from request (allows per-request header overrides)
+    if (serviceRequest.Headers != null && serviceRequest.Headers.Count > 0)
     {
       foreach (var header in serviceRequest.Headers)
       {

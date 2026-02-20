@@ -8,6 +8,7 @@ public record ProfilePopulationMetadata(
     string PluginId,
     string Provider,
     string Key,
+    string Subject = "",
     Dictionary<string, object>? AdditionalData = null,
     DateTime RequestedAt = default
 )

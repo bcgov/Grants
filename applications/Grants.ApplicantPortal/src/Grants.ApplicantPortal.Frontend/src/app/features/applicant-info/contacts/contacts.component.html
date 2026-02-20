@@ -1,0 +1,268 @@
+<div class="contacts-container">
+      @if (isLoading) {      
+      <div
+        class="loading-spinner-container d-flex justify-content-center align-items-center"
+        style="min-height: 150px"
+      >
+        <div class="text-center">
+          <div class="spinner-border">
+            <span class="sr-only">Loading contacts...</span>
+          </div>
+          <p class="loading-text mt-3">Loading your contacts...</p>
+        </div>
+      </div>
+      } @else if (primaryContact) {
+      <div class="primary-contact-info">
+        <div class="row">
+          <div class="col-md-3 col-sm-6">
+            <label class="form-label">Name</label>
+            <p class="contact-value">{{ primaryContact.name }}</p>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <label class="form-label">Email</label>
+            <p class="contact-value">{{ primaryContact.email }}</p>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <label class="form-label">Phone</label>
+            <p class="contact-value">{{ primaryContact.workPhoneNumber }}</p>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <label class="form-label">Title</label>
+            <p class="contact-value">{{ primaryContact.title }}</p>
+          </div>
+        </div>
+      </div>
+      } @else {
+      <div class="no-primary-contact text-center text-muted">
+        <p>No primary contact found. Click "Add" to create a contact.</p>
+      </div>
+      }
+
+      <!-- Contacts Table -->
+      <app-datatable
+        [config]="contactsTableConfig"
+        [data]="getContactsForTable()"
+        [loading]="isLoading"
+        (rowClick)="onContactRowClick($event)"
+        (actionClick)="onContactAction($event)"
+        (sort)="onContactSort($event)"
+      ></app-datatable>
+</div>
+
+<!-- Add Contact Modal -->
+<div class="modal fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" [attr.aria-hidden]="!showAddContactModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addContactModalLabel">
+          {{ isEditMode ? 'Edit Contact' : 'Add New Contact' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="onCancelAddContact()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Error Display -->
+        @if (saveContactError) {
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ saveContactError }}
+          </div>
+        }
+        
+        <form>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="role" class="form-label">Role</label>
+                <select 
+                  class="form-select" 
+                  id="role" 
+                  [(ngModel)]="newContact.role" 
+                  name="role"
+                  [disabled]="isSavingContact">                                    
+                  @for (role of contactRoles; track role.key) {
+                    <option [value]="role.key">{{ role.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check mt-4 pt-2">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  id="isPrimary" 
+                  [(ngModel)]="newContact.isPrimary" 
+                  name="isPrimary"
+                  [disabled]="isSavingContact">
+                <label class="form-check-label" for="isPrimary">
+                  Set as Primary Contact
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="fullName" class="form-label">Name <span class="text-danger">*</span></label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [class.is-invalid]="nameValidationError"
+                  id="fullName" 
+                  [(ngModel)]="newContact.name" 
+                  (input)="onNameChange()"
+                  name="fullName"
+                  placeholder="First and Last Name"
+                  [disabled]="isSavingContact"
+                  required>
+                @if (nameValidationError) {
+                  <div class="invalid-feedback">
+                    {{ nameValidationError }}
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="title" 
+                  [(ngModel)]="newContact.title" 
+                  name="title"
+                  [disabled]="isSavingContact">
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input 
+                  type="email" 
+                  class="form-control" 
+                  [class.is-invalid]="emailValidationError"
+                  id="email" 
+                  [(ngModel)]="newContact.email" 
+                  (input)="onEmailChange()"
+                  name="email"
+                  [disabled]="isSavingContact">
+                @if (emailValidationError) {
+                  <div class="invalid-feedback">
+                    {{ emailValidationError }}
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input 
+                  type="tel" 
+                  class="form-control" 
+                  id="phone" 
+                  [(ngModel)]="newContact.workPhoneNumber" 
+                  name="phone"
+                  [disabled]="isSavingContact">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="onCancelAddContact()"
+          [disabled]="isSavingContact">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="onSaveNewContact()"
+          [disabled]="!isValidContact(newContact) || isSavingContact">
+          @if (isSavingContact) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            {{ isEditMode ? 'Updating...' : 'Saving...' }}
+          } @else {
+            {{ isEditMode ? 'Update Contact' : 'Save Contact' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" *ngIf="showAddContactModal"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteContactModalLabel" [attr.aria-hidden]="!showDeleteConfirmModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content delete-modal">
+      <div class="modal-header delete-modal-header">
+        <h5 class="modal-title delete-modal-title" id="deleteContactModalLabel">
+          Remove Contact
+        </h5>
+        <button type="button" class="btn-close delete-modal-close" (click)="onCancelDeleteContact()" aria-label="Close" [disabled]="isDeletingContact"></button>
+      </div>
+      <div class="modal-body delete-modal-body">
+        <!-- Error Display -->
+        @if (deleteContactError) {
+          <div class="alert delete-modal-error" role="alert">
+            {{ deleteContactError }}
+          </div>
+        }
+        
+        @if (contactToDelete) {
+          <p class="delete-modal-question">Are you sure you want to remove <strong>{{ contactToDelete.name }}</strong> from your contacts?</p>
+          <p class="delete-modal-warning">This action cannot be undone.</p>
+          
+          <div class="delete-modal-details">
+            <div class="details-header">Contact Information</div>
+            <div class="details-row">
+              <span class="details-label">Name:</span>
+              <span class="details-value">{{ contactToDelete.name }}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Email:</span>
+              <span class="details-value">{{ contactToDelete.email }}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Type:</span>
+              <span class="details-value">{{ contactToDelete.role }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer delete-modal-footer">
+        <button 
+          type="button" 
+          class="btn delete-modal-cancel" 
+          (click)="onCancelDeleteContact()"
+          [disabled]="isDeletingContact">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn delete-modal-confirm" 
+          (click)="onConfirmDeleteContact()"
+          [disabled]="isDeletingContact">
+          @if (isDeletingContact) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Removing...
+          } @else {
+            Remove Contact
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" *ngIf="showDeleteConfirmModal"></div>

@@ -1,11 +1,76 @@
-<div class="callback-container">
-  <div class="callback-content">
-    <div class="spinner-container">
-      <div class="spinner-border text-primary">
-        <span class="visually-hidden">Loading...</span>
+<div class="callback-page">
+  <div class="callback-background">
+    <div class="bc-logo-header">
+      <img
+        src="images/logo/BCID_H_rgb_pos.png"
+        alt="British Columbia Government"
+        class="bc-header-logo"
+      />
+    </div>
+
+    <div class="callback-card-container">
+      <div class="callback-card">
+        <div class="callback-header">
+          <h1>Enterprise Grant</h1>
+          <h2>Management System Portal</h2>
+        </div>
+
+        <div class="mobile-preview-image">
+          <img
+            src="images/dashboard-preview.png"
+            alt="Dashboard Preview"
+            class="dashboard-preview"
+          />
+        </div>
+
+        <!-- Processing state -->
+        <div *ngIf="isProcessing" class="processing-state">
+          <div class="spinner-container">
+            <div class="spinner"></div>
+          </div>
+          <p class="status-text">Please wait while we complete your authentication.</p>
+        </div>
+
+        <!-- Error state -->
+        <div *ngIf="errorMessage && !isProcessing" class="error-state">
+          <div class="error-alert">
+            <i class="fa fa-exclamation-triangle"></i>
+            {{ errorMessage }}
+          </div>
+          <p class="status-text">Redirecting you back to login...</p>
+        </div>
+
+        <!-- Fallback state -->
+        <div *ngIf="!isProcessing && !errorMessage" class="fallback-state">
+          <div class="spinner-container">
+            <div class="spinner"></div>
+          </div>
+          <p class="status-text">Processing authentication...</p>
+        </div>
       </div>
     </div>
-    <h3>Authenticating...</h3>
-    <p>Please wait while we complete your authentication.</p>
+  </div>
+
+  <!-- Right side preview -->
+  <div class="preview-section">
+    <div class="bc-logo-corner">
+      <img
+        src="images/logo/BCID_H_rgb_pos.png"
+        alt="British Columbia"
+        class="bc-corner-logo"
+      />
+    </div>
+
+    <div class="preview-image">
+      <img
+        src="images/dashboard-preview.png"
+        alt="Dashboard Preview"
+        class="dashboard-preview"
+      />
+    </div>
+
+    <div class="footer-link">
+      <a href="https://grants.gov.bc.ca" target="_blank">grants.gov.bc.ca</a>
+    </div>
   </div>
 </div>

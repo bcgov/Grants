@@ -1,5 +1,4 @@
 export interface BackendResponse {
-  profileId: string;
   pluginId: string;
   provider: string;
   key: string;
@@ -55,10 +54,12 @@ export interface OrganizationData {
   orgNumber: string;
   orgStatus: string;
   organizationType: string;
-  nonRegOrgName: string;
+  nonRegOrgName?: string;
   orgSize: string;
   fiscalMonth: string;
   fiscalDay: number;
+  fiscalYearEndMonth?: number;
+  fiscalYearEndDay?: number;
   organizationId: string;
   legalName: string;
   doingBusinessAs: string;
@@ -66,13 +67,17 @@ export interface OrganizationData {
   founded: number;
   address: Address;
   contactInfo: ContactInfo;
+  submissions?: SubmissionsData[];
   mission: string;
   servicesAreas: string[];
   certifications: Certification[];
   program1Specific: Program1Specific;
+  lastUpdated?: string;
+  allowEdit?: boolean;
 }
 
 export interface SubmissionsData {
+  id: string;
   submissionId: string;
   applicationId: string;
   projectName: string;
@@ -80,14 +85,18 @@ export interface SubmissionsData {
   requestedAmount: number;
   paidAmount: number;
   status: string;
-  submissionDate: Date;
-  lastModified: Date;
+  statusCode: string; // Used for badge styling
+  submissionDate?: Date;
+  lastModified?: Date;
+  projectPeriod?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
 // Single response interface for parsed data
 export interface OrganizationResponse {
   metadata: {
-    profileId: string;
     pluginId: string;
     provider: string;
     key: string;
@@ -98,7 +107,6 @@ export interface OrganizationResponse {
 
 export interface SubmissionsResponse {
   metadata: {
-    profileId: string;
     pluginId: string;
     provider: string;
     key: string;

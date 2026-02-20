@@ -1,6 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core;
-using Grants.ApplicantPortal.API.Core.Features.PluginConfigurations.Services;
 using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Core.Services;
 using Grants.ApplicantPortal.API.Plugins.Demo;
 using Grants.ApplicantPortal.API.Plugins.Unity;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,12 +30,21 @@ public static class PluginServiceExtensions
   /// </summary>
   internal static IServiceCollection AddPluginSupport(this IServiceCollection services)
   {
-    services.AddScoped<PluginConfigurationService, PluginConfigurationService>();
-
     // Register profile plugins
-    services.AddScoped<IProfilePlugin, UnityProfilePlugin>();
-    services.AddScoped<IProfilePlugin, DemoProfilePlugin>();
+    services.AddScoped<IProfilePlugin, UnityPlugin>();
+    services.AddScoped<IProfilePlugin, DemoPlugin>();
     services.AddScoped<IProfilePluginFactory, ProfilePluginFactory>();
+
+    // NOTE: Plugin data seeding service has been removed - plugins now use on-demand seeding per user profile
+
+    // Register contact management service
+    services.AddScoped<IContactManagementService, Infrastructure.Services.ContactManagementService>();
+
+    // Register address management service
+    services.AddScoped<IAddressManagementService, Infrastructure.Services.AddressManagementService>();
+
+    // Register organization management service
+    services.AddScoped<IOrganizationManagementService, Infrastructure.Services.OrganizationManagementService>();
 
     return services;
   }

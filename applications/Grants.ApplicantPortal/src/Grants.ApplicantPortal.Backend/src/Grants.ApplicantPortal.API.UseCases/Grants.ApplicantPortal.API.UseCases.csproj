@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Grants.ApplicantPortal.API.Core.Features\Grants.ApplicantPortal.API.Core.Features.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Shared\" />
+  </ItemGroup>
+
 </Project>

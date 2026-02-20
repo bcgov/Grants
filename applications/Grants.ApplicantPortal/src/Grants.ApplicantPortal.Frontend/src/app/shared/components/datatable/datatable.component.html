@@ -1,0 +1,147 @@
+<div [class]="config.containerClass || 'datatable-container'">
+  <!-- Loading State -->
+  @if (loading || config.loading) {
+    <div class="loading-spinner-container d-flex justify-content-center align-items-center" style="min-height: 300px">
+      <div class="text-center">
+        <div class="spinner-border">
+          <span class="sr-only">{{ config.loadingMessage }}</span>
+        </div>
+        <p class="loading-text mt-3">{{ config.loadingMessage }}</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Table Wrapper -->
+    <div class="datatable-wrapper">
+      <table 
+        [class]="'table ' + (config.responsive ? 'table-responsive ' : '') + 
+                 (config.striped ? 'table-striped ' : '') + 
+                 (config.hover ? 'table-hover ' : '') + 
+                 (config.tableClass || 'datatable')"
+      >
+        <!-- Table Header -->
+        <thead>
+          <tr>
+            @for (column of config.columns; track column.key) {
+              <th 
+                [class]="(column.sortable ? 'sortable ' : '') + (column.cssClass || '') + (isColumnSorted(column.key) ? ' sorted' : '')"
+                [style.width]="column.width"
+                [tabindex]="column.sortable ? 0 : -1"
+                [attr.aria-label]="column.sortable ? getSortAriaLabel(column.key) : column.label"
+                (click)="column.sortable ? onSort(column.key) : null"
+                (keydown.enter)="column.sortable ? onSort(column.key) : null"
+                (keydown.space)="column.sortable ? onSort(column.key) : null"
+              >
+                <span class="column-label">{{ column.label }}</span>
+                @if (column.sortable) {
+                  <i class="fas {{ getSortIcon(column.key) }} ms-1 sort-icon"
+                     [class.active]="isColumnSorted(column.key)"
+                     aria-hidden="true"></i>
+                }
+              </th>
+            }
+            @if (config.actionsType && config.actionsType !== 'none') {
+              <th class="actions-column"></th>
+            }
+          </tr>
+        </thead>
+
+        <!-- Table Body -->
+        <tbody>
+          @for (row of getDisplayData(); track trackByFn($index, row); let i = $index) {
+            <tr 
+              [class]="config.tableClass ? config.tableClass + '-row' : 'datatable-row'"
+              [tabindex]="config.rowClickable ? 0 : -1"
+              (click)="onRowClick(row, i, $event)"
+              (keydown.enter)="config.rowClickable ? onRowClick(row, i, $event) : null"
+              (keydown.space)="config.rowClickable ? onRowClick(row, i, $event) : null"
+            >
+              @for (column of config.columns; track column.key) {
+                <td [class]="column.cssClass || column.key + '-column'">
+                  @if (column.type === 'badge' && config.badgeConfig) {
+                    <span [class]="getBadgeClass(row)">
+                      {{ getBadgeDisplayValue(row, column) }}
+                    </span>
+                  } @else if (column.type === 'date') {
+                    @if (getCellValue(row, column)) {
+                      {{ getCellValue(row, column) | date:'mediumDate' }}
+                    } @else {
+                      —
+                    }
+                  } @else if (column.type === 'currency') {
+                    {{ getCellValue(row, column) | currency }}
+                  } @else if (column.type === 'email') {
+                    <span class="email-link">{{ getCellValue(row, column) }}</span>
+                  } @else if (column.type === 'phone') {
+                    <span class="phone-number">{{ getCellValue(row, column) }}</span>
+                  } @else if (column.type === 'boolean') {
+                    <div class="text-center">
+                      @if (getCellValue(row, column)) {
+                        <i class="fas fa-check text-success" aria-label="Yes"></i>
+                      }
+                    </div>
+                  } @else {
+                    {{ getCellValue(row, column) }}
+                  }
+                </td>
+              }
+
+              <!-- Actions Column -->
+              @if (config.actionsType && config.actionsType !== 'none') {
+                <td class="actions-column">
+                  @if (config.actionsType === 'chevron') {
+                    <button
+                      type="button"
+                      class="btn btn-link p-0 border-0"
+                      (click)="onActionClick('view', row, i, $event)"
+                      aria-label="View details"
+                    >
+                      <i class="fas fa-chevron-right"></i>
+                    </button>
+                  } @else if (config.actionsType === 'dropdown' && config.actionItems) {
+                    <div class="dropdown" [style.visibility]="shouldShowActions(row) ? 'visible' : 'hidden'">
+                      <button
+                        #dropdownToggle
+                        type="button"
+                        class="btn btn-link p-0 border-0"
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside"
+                        aria-expanded="false"
+                        (click)="onDropdownToggle(i, $event)"
+                        aria-label="Row actions"
+                        [disabled]="!shouldShowActions(row)"
+                      >
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        @for (action of config.actionItems; track action.action) {
+                          <li>
+                            <button
+                              class="dropdown-item"
+                              type="button"
+                              [class]="action.cssClass"
+                              (click)="onActionClick(action.action, row, i, $event); closeDropdown(dropdownToggle)"
+                            >
+                              <i class="fas {{ action.icon }} me-2"></i>
+                              {{ action.label }}
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No Data State -->
+    @if (getDisplayData().length === 0) {
+      <div class="no-data">
+        <p>{{ config.noDataMessage }}</p>
+      </div>
+    }
+  }
+</div>
