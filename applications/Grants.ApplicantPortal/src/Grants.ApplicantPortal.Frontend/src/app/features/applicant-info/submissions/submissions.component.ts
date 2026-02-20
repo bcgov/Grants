@@ -3,13 +3,11 @@ import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
-  Submission,
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
-  DatatableConfig, 
-  DatatableColumn,
+  DatatableConfig,
   DatatableActionEvent,
   DatatableRowClickEvent,
   DatatableSortEvent
@@ -30,40 +28,35 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
 
   submissionsData: SubmissionsData[] = [];
+  linkSource?: string;
   isLoading = true;
   error: string | null = null;
 
   // Datatable configuration
   submissionsTableConfig: DatatableConfig = {
     tableId: 'submissions-table',
-    defaultSortField: 'lastModified',
+    defaultSortField: 'receivedTime',
     enableSortPersistence: true,
     columns: [
-      { key: 'submissionId', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
-      { key: 'submissionDate', label: 'Date', sortable: true, type: 'date', cssClass: 'submission-date-column' },
+      { key: 'referenceNo', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
+      { key: 'submissionTime', label: 'Submitted', sortable: true, type: 'date', cssClass: 'submission-date-column' },
       { key: 'projectName', label: 'Project Name', sortable: true, cssClass: 'project-name-column' },
       { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' },
-      { key: 'lastModified', label: 'Updated On', sortable: true, type: 'date', cssClass: 'updated-on-column' },
-      { key: 'paidAmount', label: 'Paid Amount', sortable: true, type: 'currency', cssClass: 'paid-amount-column' }
+      { key: 'receivedTime', label: 'Received', sortable: true, type: 'date', cssClass: 'updated-on-column' }
     ],
     actionsType: 'chevron',
     badgeConfig: {
-      field: 'statusCode', // Field used for styling
-      displayField: 'status', // Field displayed as text
+      field: 'status',
+      displayField: 'status',
       badgeClassPrefix: 'status-badge',
       badgeClasses: {
-        'ASSIGNED': 'status-assigned',
-        'WITHDRAWN': 'status-withdrawn',
-        'CLOSED': 'status-closed',
-        'UNDER_INITIAL_REVIEW': 'status-under-initial-review',
-        'INITIAL_REVIEW_COMPLETED': 'status-initial-review-completed',
-        'ON_HOLD': 'status-on-hold',
-        'DEFER': 'status-defer',
-        'ASSESSMENT_COMPLETED': 'status-assessment-completed',
-        'GRANT_APPROVED': 'status-grant-approved',
-        'UNDER_ASSESSMENT': 'status-under-assessment',
-        'SUBMITTED': 'status-submitted',
-        'GRANT_NOT_APPROVED': 'status-grant-not-approved'
+        'Submitted': 'status-submitted',
+        'Under Review': 'status-under-initial-review',
+        'Approved': 'status-grant-approved',
+        'Declined': 'status-grant-not-approved',
+        'On Hold': 'status-on-hold',
+        'Withdrawn': 'status-withdrawn',
+        'Closed': 'status-closed'
       },
       fallbackClass: 'status-unknown'
     },
@@ -118,11 +111,11 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: (response) => {
           console.log('SubmissionsComponent - Received submissions response:', response);
-          // Extract submissionsData from the response and convert to array
+          this.linkSource = response.linkSource;
           const submissionsArray = Array.isArray(response.submissionsData) 
             ? response.submissionsData 
             : (response.submissionsData ? [response.submissionsData] : []);
-          this.submissionsData = this.processSubmissionsData(submissionsArray);
+          this.submissionsData = submissionsArray;
           this.isLoading = false;
         },
         error: (error) => {
@@ -134,30 +127,25 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       });
   }
 
-  private processSubmissionsData(data: SubmissionsData[]): SubmissionsData[] {
-    if (!Array.isArray(data)) {
-      console.warn('SubmissionsComponent - Invalid data format, expected array:', data);
-      return [];
-    }
-
-    return data.map(submission => ({
-      ...submission,
-      // Only convert to Date if the field exists and is valid
-      submissionDate: submission.submissionDate ? new Date(submission.submissionDate) : undefined,
-      lastModified: submission.lastModified ? new Date(submission.lastModified) : undefined
-    }));
-  }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  onSubmissionClick(submission: Submission): void {
-    // Handle submission click - navigate to detail view
+  onSubmissionClick(submission: SubmissionsData): void {
     console.log('Clicked submission:', submission);
-    // Navigate to submission detail page
-    // this.router.navigate(['/submissions', submission.id]);
+    if (this.linkSource && submission.linkId) {
+      try {
+        const url = new URL(submission.linkId, this.linkSource);
+        window.open(url.toString(), '_blank', 'noopener,noreferrer');
+      } catch (e) {
+        console.error('Invalid submission URL:', {
+          linkSource: this.linkSource,
+          linkId: submission.linkId,
+          error: e
+        });
+      }
+    }
   }
 
   getStatusClass(status: string): string {

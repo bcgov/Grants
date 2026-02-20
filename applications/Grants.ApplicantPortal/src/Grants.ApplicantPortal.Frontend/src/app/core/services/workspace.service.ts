@@ -88,8 +88,8 @@ export class WorkspaceService {
   /**
    * Select a workspace and optionally a provider
    */
-  selectWorkspace(workspace: Plugin, provider?: string): void {
-    console.log('WorkspaceService - Selecting workspace:', workspace.pluginId, 'provider:', provider);
+  selectWorkspace(workspace: Plugin, provider?: string, providerName?: string): void {
+    console.log('WorkspaceService - Selecting workspace:', workspace.pluginId, 'provider:', provider, 'providerName:', providerName);
     
     // Set loading state
     this.changingWorkspace$.next(true);
@@ -111,11 +111,15 @@ export class WorkspaceService {
     }
     
     const currentState = this.workspaceState$.value;
+    // When a provider is explicitly supplied without a name, clear the stale
+    // providerName so the header doesn't show a mismatched label.
+    // Keep the previous name only when neither provider nor providerName changed.
+    const resolvedProviderName = providerName ?? (provider ? null : currentState.selectedProviderName);
     const newState = {
       ...currentState,
       selectedWorkspace: workspace,
       selectedProvider: provider || null,
-      selectedProviderName: currentState.selectedProviderName,
+      selectedProviderName: resolvedProviderName,
       isWorkspaceSelected: true,
       isProviderSelected: !!provider
     };
@@ -286,8 +290,9 @@ export class WorkspaceService {
           // Provider validity is no longer checked against workspace.providers
           // because provider lists are now fetched from the API.
           if (provider) {
-            console.log('WorkspaceService - Restored saved workspace and provider');
-            this.selectWorkspace(matchingWorkspace, provider);
+            const providerName = parsed.providerName;
+            console.log('WorkspaceService - Restored saved workspace and provider, providerName:', providerName);
+            this.selectWorkspace(matchingWorkspace, provider, providerName);
           } else {
             console.log('WorkspaceService - Restored workspace without provider');
             this.selectWorkspace(matchingWorkspace);

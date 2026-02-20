@@ -170,11 +170,12 @@ public partial class DemoPlugin(
                         scenario.Key,
                         mockData);
 
-                    // Store in distributed cache with 1-year expiration
+                    // Store in distributed cache with configured expiration
                     var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);
                     var cacheOptions = new DistributedCacheEntryOptions
                     {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_cacheOptions.Value.CacheExpiryMinutes),
+                        SlidingExpiration = TimeSpan.FromMinutes(_cacheOptions.Value.SlidingExpiryMinutes)
                     };
                     
                     await distributedCache.SetAsync(cacheKey, profileDataBytes, cacheOptions, cancellationToken);
@@ -199,7 +200,8 @@ public partial class DemoPlugin(
             
             var flagCacheOptions = new DistributedCacheEntryOptions
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_cacheOptions.Value.CacheExpiryMinutes),
+                SlidingExpiration = TimeSpan.FromMinutes(_cacheOptions.Value.SlidingExpiryMinutes)
             };
             
             await distributedCache.SetAsync(seedingFlagKey, seedingFlag, flagCacheOptions, cancellationToken);
