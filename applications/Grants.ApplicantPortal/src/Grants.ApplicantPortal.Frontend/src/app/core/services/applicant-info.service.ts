@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { map, switchMap, retry, catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { map, retry, catchError } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
@@ -73,14 +73,14 @@ export class ApplicantInfoService {
   ): { addressesData: any[] } {
     try {
       console.log('Parsing addresses response:', response);
-      const jsonData = response.data || response.jsonData;
+      const jsonData = response.data ?? response.jsonData;
       console.log('Raw addresses JSON data:', jsonData);
 
       const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
       console.log('Parsed addresses data:', parsedData);
 
       return {
-        addressesData: parsedData.addresses || []
+        addressesData: parsedData.addresses ?? []
       };
     } catch (error) {
       console.error('Error parsing addresses data:', error, response);
@@ -96,14 +96,14 @@ export class ApplicantInfoService {
   ): { contactsData: any[] } {
     try {
       console.log('Parsing contacts response:', response);
-      const jsonData = response.data || response.jsonData;
+      const jsonData = response.data ?? response.jsonData;
       console.log('Raw contacts JSON data:', jsonData);
 
       const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
       console.log('Parsed contacts data:', parsedData);
 
       return {
-        contactsData: parsedData.contacts || []
+        contactsData: parsedData.contacts ?? []
       };
     } catch (error) {
       console.error('Error parsing contacts data:', error, response);
@@ -119,7 +119,7 @@ export class ApplicantInfoService {
   ): OrganizationResponse {
     try {
       // Handle both new format (data) and old format (jsonData)
-      const jsonData = response.data || response.jsonData;
+      const jsonData = response.data ?? response.jsonData;
       console.log('Parsing organization response:', jsonData);
 
       let parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
@@ -156,7 +156,7 @@ export class ApplicantInfoService {
   ): SubmissionsResponse {
     try {
       // Handle both old 'jsonData' format and new 'data' format
-      const dataString = (response as any).data || response.jsonData;
+      const dataString = (response as any).data ?? response.jsonData;
       console.log('Parsing submissions response:', dataString);
       const parsedData = typeof dataString === 'string' ? JSON.parse(dataString) : dataString;
       console.log('Parsed submissions data:', parsedData);
@@ -171,7 +171,7 @@ export class ApplicantInfoService {
         submissionsData: parsedData.submissions,
       };
     } catch (error) {
-      console.error('Error parsing submissions data:', error, (response as any).data || response.jsonData);
+      console.error('Error parsing submissions data:', error, (response as any).data ?? response.jsonData);
       throw new Error('Failed to parse submissions data');
     }
   }
@@ -202,7 +202,7 @@ export class ApplicantInfoService {
     console.log('ApplicantInfoService - Saving organization info:', orgInfo);
     
     // Get the required parameters for the API endpoint
-    const addressId = orgInfo.organizationId || orgInfo.orgNumber || 'CD12E345-6789-0ABC-DEF1-234567890ABC';
+    const addressId = orgInfo.organizationId ?? orgInfo.orgNumber;
     
     // Map to the API payload structure with required properties
     const apiPayload = {
@@ -232,7 +232,7 @@ export class ApplicantInfoService {
         console.error('Error saving organization:', error);
         return throwError(() => ({
           error: 'Failed to save organization information',
-          message: error.error?.message || 'Please try again later',
+          message: error.error?.message ?? 'Please try again later',
           details: error
         }));
       })

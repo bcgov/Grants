@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  OidcClientNotification,
-  OidcSecurityService,
-  OpenIdConfiguration,
-} from 'angular-auth-oidc-client';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Observable, map, catchError, of, BehaviorSubject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { ErrorHandlerService } from './error-handler.service';
@@ -12,14 +8,14 @@ import { ErrorHandlerService } from './error-handler.service';
   providedIn: 'root',
 })
 export class AuthService {
-  private authState$ = new BehaviorSubject<{ isAuthenticated: boolean; error?: string }>(
+  private readonly authState$ = new BehaviorSubject<{ isAuthenticated: boolean; error?: string }>(
     { isAuthenticated: false }
   );
 
   constructor(
     private readonly oidcSecurityService: OidcSecurityService,
-    private router: Router,
-    private errorHandler: ErrorHandlerService
+    private readonly router: Router,
+    private readonly errorHandler: ErrorHandlerService
   ) {
     // Monitor authentication state changes with error handling
     this.oidcSecurityService.isAuthenticated$.subscribe({
@@ -46,7 +42,7 @@ export class AuthService {
         } else {
           this.authState$.next({ 
             isAuthenticated: false, 
-            error: error.message || 'Authentication error' 
+            error: error.message ?? 'Authentication error' 
           });
         }
       }
@@ -120,7 +116,7 @@ export class AuthService {
     console.log('AuthService - Forcing session refresh');
     return this.oidcSecurityService.forceRefreshSession().pipe(
       tap((result) => {
-        if (result && result.isAuthenticated) {
+        if (result?.isAuthenticated) {
           console.log('AuthService - Session refresh successful');
         }
       }),
