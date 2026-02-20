@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using Grants.ApplicantPortal.API.Core;
 using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
@@ -37,9 +38,12 @@ public partial class UnityPlugin
                         $"Unity service call failed for ProfileId {metadata.ProfileId}: {response.ErrorMessage} (Status: {response.StatusCode})");
                 }
 
-                // Parse the Unity API response and extract the data element
+                // Parse the Unity API response and extract the data element,
+                // stripping the internal dataType field before forwarding to the frontend
                 var apiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
-                var dataElement = apiResponse.GetProperty("data");
+                var dataNode = JsonNode.Parse(apiResponse.GetProperty("data").GetRawText())!;
+                dataNode.AsObject().Remove("dataType");
+                var cleanedData = JsonSerializer.Deserialize<JsonElement>(dataNode.ToJsonString());
 
                 await FireProfileUpdatedMessage(metadata, ct);
 
@@ -48,7 +52,7 @@ public partial class UnityPlugin
                     metadata.PluginId,
                     metadata.Provider,
                     metadata.Key,
-                    dataElement.Clone());
+                    cleanedData);
             },
             cancellationToken: cancellationToken);
     }

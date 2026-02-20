@@ -7,14 +7,13 @@ export interface BackendResponse {
 }
 
 export interface Submission {
-  applicationId: string;
-  submissionId: string;
-  submissionDate: Date;
+  id: string;
+  linkId: string;
+  receivedTime: string;
+  submissionTime: string;
+  referenceNo: string;
   projectName: string;
   status: string;
-  updatedOn?: string;
-  paidAmount?: number;
-  submissionLink?: string;
 }
 
 export interface Address {
@@ -78,20 +77,12 @@ export interface OrganizationData {
 
 export interface SubmissionsData {
   id: string;
-  submissionId: string;
-  applicationId: string;
+  linkId: string;
+  receivedTime: string;
+  submissionTime: string;
+  referenceNo: string;
   projectName: string;
-  programName: string;
-  requestedAmount: number;
-  paidAmount: number;
   status: string;
-  statusCode: string; // Used for badge styling
-  submissionDate?: Date;
-  lastModified?: Date;
-  projectPeriod?: {
-    startDate: Date;
-    endDate: Date;
-  };
 }
 
 // Single response interface for parsed data
@@ -112,7 +103,8 @@ export interface SubmissionsResponse {
     key: string;
     populatedAt: string;
   };
-  submissionsData: SubmissionsData;
+  submissionsData: SubmissionsData[];
+  linkSource?: string;
 }
 
 export interface OrgSearchResult {

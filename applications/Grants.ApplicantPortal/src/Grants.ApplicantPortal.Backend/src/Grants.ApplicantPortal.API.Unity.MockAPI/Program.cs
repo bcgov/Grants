@@ -127,9 +127,9 @@ app.Run();
 static object ResolveProfileData(string tenantId, string key) => key switch
 {
     "CONTACTINFO" => GetContactInfoData(tenantId),
-    "ADDRESSINFO" => GetAddressInfoData(),
+    "ADDRESSINFO" => GetAddressInfoData(tenantId),
     "ORGINFO" => GetOrgInfoData(tenantId),
-    "SUBMISSIONINFO" => GetSubmissionInfoData(),
+    "SUBMISSIONINFO" => GetSubmissionInfoData(tenantId),
     "PAYMENTINFO" => GetPaymentInfoData(),
     _ => new { message = $"No mock data for key: {key}", supportedKeys = new[] { "CONTACTINFO", "ADDRESSINFO", "ORGINFO", "SUBMISSIONINFO", "PAYMENTINFO" } }
 };
@@ -156,20 +156,34 @@ static object GetContactInfoData(string tenantId) => tenantId.ToUpperInvariant()
     }
 };
 
-static object GetAddressInfoData() => new
+static object GetAddressInfoData(string tenantId) => tenantId.ToUpperInvariant() switch
 {
-    Addresses = new[]
+    "DGP" => new
     {
-        new { Id = "AAD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-001", Type = "Physical", AddressLine1 = "1234 Government Street", AddressLine2 = "Suite 500", City = "Victoria", Province = "BC", PostalCode = "V8W 1A4", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-30) },
-        new { Id = "BBD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-002", Type = "Mailing", AddressLine1 = "5678 Unity Drive", AddressLine2 = "", City = "Vancouver", Province = "BC", PostalCode = "V6B 2C3", Country = "Canada", IsPrimary = false, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-15) }
+        dataType = "ADDRESSINFO",
+        Addresses = new[]
+        {
+            new { Id = "AAD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-001", Type = "Physical", AddressLine1 = "1234 Government Street", AddressLine2 = "Suite 500", City = "Victoria", Province = "BC", PostalCode = "V8W 1A4", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-30) },
+            new { Id = "BBD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-002", Type = "Mailing", AddressLine1 = "5678 Unity Drive", AddressLine2 = "", City = "Vancouver", Province = "BC", PostalCode = "V6B 2C3", Country = "Canada", IsPrimary = false, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-15) }
+        },
+        Summary = new { TotalAddresses = 2, PrimaryAddressCount = 1, ActiveAddressCount = 2 }
     },
-    Summary = new { TotalAddresses = 2, PrimaryAddressCount = 1, ActiveAddressCount = 2 }
+    _ => new
+    {
+        dataType = "ADDRESSINFO",
+        Addresses = new[]
+        {
+            new { Id = "CCD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-003", Type = "Physical", AddressLine1 = "900 Research Parkway", AddressLine2 = "Building C", City = "Kelowna", Province = "BC", PostalCode = "V1Y 8K2", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-10) }
+        },
+        Summary = new { TotalAddresses = 1, PrimaryAddressCount = 1, ActiveAddressCount = 1 }
+    }
 };
 
 static object GetOrgInfoData(string tenantId) => tenantId.ToUpperInvariant() switch
 {
     "DGP" => new
     {
+        dataType = "ORGINFO",
         OrganizationInfo = new
         {
             OrgName = "Unity Government Solutions", OrgNumber = "UGS001234", OrgStatus = "Active",
@@ -182,6 +196,7 @@ static object GetOrgInfoData(string tenantId) => tenantId.ToUpperInvariant() swi
     },
     _ => new
     {
+        dataType = "ORGINFO",
         OrganizationInfo = new
         {
             OrgName = "Unity ABC Division", OrgNumber = "ABC987654", OrgStatus = "Active",
@@ -194,58 +209,79 @@ static object GetOrgInfoData(string tenantId) => tenantId.ToUpperInvariant() swi
     }
 };
 
-static object GetSubmissionInfoData() => new
+static object GetSubmissionInfoData(string tenantId) => tenantId.ToUpperInvariant() switch
 {
-    Submissions = new[]
+    "DGP" => new
     {
-        new
+        dataType = "SUBMISSIONINFO",
+        submissions = new[]
         {
-            Id = "A1234E56-789A-BC01-23DE-F4567890AB12",
-            SubmissionId = "UNI-SUB-001",
-            ApplicationId = "APP-UNI-2024-001",
-            ProjectName = "Digital Government Transformation",
-            ProgramName = "Unity - Digital Innovation",
-            RequestedAmount = 350000,
-            PaidAmount = 175000,
-            Status = "Approved",
-            StatusCode = "GRANT_APPROVED",
-            SubmissionDate = DateTime.UtcNow.AddDays(-30),
-            LastModified = DateTime.UtcNow.AddDays(-7)
+            new
+            {
+                id = "3a1ed607-d049-b152-c059-40288fe412d9",
+                linkId = "d59aa865-9d15-45e6-bb07-6b963ce3c9de",
+                receivedTime = DateTime.UtcNow.AddDays(-30).ToString("o"),
+                submissionTime = DateTime.UtcNow.AddDays(-30).AddMinutes(-9).ToString("o"),
+                referenceNo = "D59AA865",
+                projectName = "Digital Government Transformation",
+                status = "Submitted"
+            },
+            new
+            {
+                id = "3a1eac9f-dcb4-2df4-4faa-11179f15e872",
+                linkId = "1faccaa3-69c6-4d88-9ed1-73a953b8e417",
+                receivedTime = DateTime.UtcNow.AddDays(-14).ToString("o"),
+                submissionTime = DateTime.UtcNow.AddDays(-14).AddMinutes(-55).ToString("o"),
+                referenceNo = "1FACCAA3",
+                projectName = "Cybersecurity Enhancement Program",
+                status = "Under Review"
+            },
+            new
+            {
+                id = "3a1f420f-091f-b547-de4c-9e153795e21b",
+                linkId = "1987843f-7c56-4022-8fa1-8f5c1b7449cb",
+                receivedTime = DateTime.UtcNow.AddDays(-3).ToString("o"),
+                submissionTime = DateTime.UtcNow.AddDays(-3).AddMinutes(-40).ToString("o"),
+                referenceNo = "1987843F",
+                projectName = "Citizen Services Portal",
+                status = "Submitted"
+            }
         },
-        new
-        {
-            Id = "A2345E67-890A-BC12-34DE-F5678901AB23",
-            SubmissionId = "UNI-SUB-002",
-            ApplicationId = "APP-UNI-2024-002",
-            ProjectName = "Cybersecurity Enhancement Program",
-            ProgramName = "Unity - Security Solutions",
-            RequestedAmount = 200000,
-            PaidAmount = 50000,
-            Status = "Under Review",
-            StatusCode = "UNDER_INITIAL_REVIEW",
-            SubmissionDate = DateTime.UtcNow.AddDays(-14),
-            LastModified = DateTime.UtcNow.AddDays(-2)
-        },
-        new
-        {
-            Id = "A3456E78-901A-BC23-45DE-F6789012AB34",
-            SubmissionId = "UNI-SUB-003",
-            ApplicationId = "APP-UNI-2024-003",
-            ProjectName = "Citizen Services Portal",
-            ProgramName = "Unity - Public Services",
-            RequestedAmount = 175000,
-            PaidAmount = 0,
-            Status = "Submitted",
-            StatusCode = "SUBMITTED",
-            SubmissionDate = DateTime.UtcNow.AddDays(-3),
-            LastModified = DateTime.UtcNow.AddDays(-1)
-        }
+        linkSource = "https://chefs-dev.apps.silver.devops.gov.bc.ca/app/form/view?s="
     },
-    Summary = new { TotalSubmissions = 3, TotalRequestedAmount = 725000, TotalPaidAmount = 225000, ApprovedCount = 1, UnderReviewCount = 1, SubmittedCount = 1 }
+    _ => new
+    {
+        dataType = "SUBMISSIONINFO",
+        submissions = new[]
+        {
+            new
+            {
+                id = "4b2fe718-e15a-c263-d16a-51399gf523ea",
+                linkId = "e68bb976-a026-56f7-cc18-7c074df4dafe",
+                receivedTime = DateTime.UtcNow.AddDays(-7).ToString("o"),
+                submissionTime = DateTime.UtcNow.AddDays(-7).AddMinutes(-12).ToString("o"),
+                referenceNo = "E68BB976",
+                projectName = "Advanced Research Initiative",
+                status = "Under Review"
+            },
+            new
+            {
+                id = "5c3gf829-f26b-d374-e27b-62410hg634fb",
+                linkId = "f79cc087-b137-67g8-dd29-8d185eg5ebgf",
+                receivedTime = DateTime.UtcNow.AddDays(-21).ToString("o"),
+                submissionTime = DateTime.UtcNow.AddDays(-21).AddMinutes(-33).ToString("o"),
+                referenceNo = "F79CC087",
+                projectName = "Community Outreach Program",
+                status = "Submitted"
+            }
+        },
+        linkSource = "https://chefs-dev.apps.silver.devops.gov.bc.ca/app/form/view?s="
+    }
 };
 
 static object GetPaymentInfoData() => new
 {
+    dataType = "PAYMENTINFO",
     Payments = new[]
     {
         new

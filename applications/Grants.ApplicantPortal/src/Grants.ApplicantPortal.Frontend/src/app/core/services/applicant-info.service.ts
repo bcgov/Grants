@@ -168,7 +168,8 @@ export class ApplicantInfoService {
           key: response.key,
           populatedAt: response.populatedAt,
         },
-        submissionsData: parsedData.submissions,
+        submissionsData: parsedData.submissions ?? [],
+        linkSource: parsedData.linkSource,
       };
     } catch (error) {
       console.error('Error parsing submissions data:', error, (response as any).data ?? response.jsonData);

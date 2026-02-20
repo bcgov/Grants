@@ -45,7 +45,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   get displayText(): string {
     if (!this.selectedWorkspace) return 'No Workspace';
-    if (!this.selectedProviderName || !this.hasMultipleProviders) {
+    if (!this.selectedProviderName) {
       return this.selectedWorkspace.description;
     }
     return `${this.selectedWorkspace.description} > ${this.selectedProviderName}`;
@@ -120,8 +120,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     if (url.includes('applicant-info')) {
       this.pageTitle = 'Applicant Info';
-    } else if (url.includes('submissions')) {
-      this.pageTitle = 'Submissions';
     } else if (url.includes('payments')) {
       this.pageTitle = 'Payments';
     } else {

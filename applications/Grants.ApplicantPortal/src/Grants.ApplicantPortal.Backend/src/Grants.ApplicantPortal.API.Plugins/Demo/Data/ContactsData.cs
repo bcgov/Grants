@@ -525,7 +525,6 @@ public static class ContactsData
 
     return new
     {
-      DataType = "CONTACTINFO",
       Contacts = allContacts
         .OrderByDescending(c => c.LastUpdated)
         .Select(c => new
@@ -604,7 +603,6 @@ public static class ContactsData
 
     return new
     {
-      DataType = "CONTACTINFO",
       Contacts = allContacts
         .OrderByDescending(c => c.LastUpdated)
         .Select(c => new

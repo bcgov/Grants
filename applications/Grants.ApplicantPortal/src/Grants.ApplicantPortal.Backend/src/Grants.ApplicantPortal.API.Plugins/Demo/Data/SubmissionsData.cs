@@ -1,7 +1,9 @@
 ﻿namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
-/// Static data provider for demo submission information
+/// Static data provider for demo submission information.
+/// Field names match the Unity API contract (id, linkId, receivedTime,
+/// submissionTime, referenceNo, projectName, status) plus linkSource.
 /// </summary>
 public static class SubmissionsData
 {
@@ -9,96 +11,50 @@ public static class SubmissionsData
   {
     return new
     {
-      Submissions = new[]
-          {
-                  new
-                  {
-                      Id = "S1234E56-789A-BC01-23DE-F4567890AB12", // Added GUID ID
-                      SubmissionId = "PROG1-SUB-001",
-                      ApplicationId = "APP-2024-0001",
-                      ProjectName = "Community Health Initiative",
-                      ProgramName = "Program1 - Health & Wellness",
-                      RequestedAmount = 150000,
-                      PaidAmount = 100000,
-                      Status = "On hold",
-                      StatusCode = "ON_HOLD",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-15),
-                      LastModified = DateTime.UtcNow.AddDays(-2),
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(2),
-                          EndDate = DateTime.UtcNow.AddMonths(14)
-                      }
-                  },
-                  new
-                  {
-                      Id = "S2345E67-890A-BC12-34DE-F5678901AB23", // Added GUID ID
-                      SubmissionId = "PROG1-SUB-002",
-                      ApplicationId = "APP-2024-0002",
-                      ProjectName = "Youth Mental Health Support Program",
-                      ProgramName = "Program1 - Health & Wellness",
-                      RequestedAmount = 85000,
-                      PaidAmount = 82000,
-                      Status = "Approved",
-                      StatusCode = "GRANT_APPROVED",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-45),
-                      LastModified = DateTime.UtcNow.AddDays(-10),
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(1),
-                          EndDate = DateTime.UtcNow.AddMonths(13)
-                      }
-                  },
-                   new
-                  {
-                      Id = "S3456E78-901A-BC23-45DE-F6789012AB34", // Added GUID ID
-                      SubmissionId = "PROG1-SUB-003",
-                      ApplicationId = "APP-2024-0003",
-                      ProjectName = "Wellness Fitness Program",
-                      ProgramName = "Program1 - Fitness",
-                      RequestedAmount = 120000,
-                      PaidAmount = 75000,
-                      Status = "Declined",
-                      StatusCode = "GRANT_NOT_APPROVED",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-30),
-                      LastModified = DateTime.UtcNow.AddDays(-5),
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(1),
-                          EndDate = DateTime.UtcNow.AddMonths(17)
-                      }
-                  },
-                   new
-                  {
-                      Id = "S4567E89-012A-BC34-56DE-F7890123AB45", // Added GUID ID
-                      SubmissionId = "PROG1-SUB-004",
-                      ApplicationId = "APP-2024-0004",
-                      ProjectName = "Digital Community Program",
-                      ProgramName = "Program1 - Digital Health",
-                      RequestedAmount = 250000,
-                      PaidAmount = 220000,
-                      Status = "Submitted",
-                      StatusCode = "SUBMITTED",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-18),
-                      LastModified = DateTime.UtcNow.AddDays(-1), // More recent than submission 003
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(4),
-                          EndDate = DateTime.UtcNow.AddMonths(14)
-                      }
-                  }
-              }
-              .OrderByDescending(s => s.LastModified) // Sort by most recently modified first
-              .ToArray(),
-      Summary = new
+      submissions = new[]
       {
-        TotalSubmissions = 4,
-        TotalRequestedAmount = 605000,
-        TotalPaidAmount = 477000,
-        ApprovedCount = 1,
-        InProgressCount = 2,
-        DeclinedCount = 1
-      }
+        new
+        {
+          id = "a1234e56-789a-bc01-23de-f4567890ab12",
+          linkId = "b1234e56-789a-bc01-23de-f4567890ab12",
+          receivedTime = "2025-06-15T22:51:06.241061Z",
+          submissionTime = "2025-06-15T22:42:24.115Z",
+          referenceNo = "B1234E56",
+          projectName = "Community Health Initiative",
+          status = "Submitted"
+        },
+        new
+        {
+          id = "a2345e67-890a-bc12-34de-f5678901ab23",
+          linkId = "b2345e67-890a-bc12-34de-f5678901ab23",
+          receivedTime = "2025-05-01T18:30:00Z",
+          submissionTime = "2025-05-01T18:20:15.5Z",
+          referenceNo = "B2345E67",
+          projectName = "Youth Mental Health Support Program",
+          status = "Under Review"
+        },
+        new
+        {
+          id = "a3456e78-901a-bc23-45de-f6789012ab34",
+          linkId = "b3456e78-901a-bc23-45de-f6789012ab34",
+          receivedTime = "2025-05-16T14:05:22.832421Z",
+          submissionTime = "2025-05-16T13:55:10.974Z",
+          referenceNo = "B3456E78",
+          projectName = "Wellness Fitness Program",
+          status = "Submitted"
+        },
+        new
+        {
+          id = "a4567e89-012a-bc34-56de-f7890123ab45",
+          linkId = "b4567e89-012a-bc34-56de-f7890123ab45",
+          receivedTime = "2025-06-28T20:12:47.914247Z",
+          submissionTime = "2025-06-28T19:58:33.29Z",
+          referenceNo = "B4567E89",
+          projectName = "Digital Community Program",
+          status = "Under Review"
+        }
+      },
+      linkSource = "https://demo-forms.example.com/app/form/view?s="
     };
   }
 
@@ -106,77 +62,40 @@ public static class SubmissionsData
   {
     return new
     {
-      Submissions = new[]
-          {
-                  new
-                  {
-                      Id = "S5678E90-123A-BC45-67DE-F8901234AB56", // Added GUID ID
-                      SubmissionId = "PROG2-SUB-001",
-                      ApplicationId = "APP-2024-0078",
-                      ProjectName = "STEM Education Excellence Initiative",
-                      ProgramName = "Program2 - Education & Technology",
-                      RequestedAmount = 275000,
-                      PaidAmount = 10000,
-                      Status = "Approved",
-                      StatusCode = "GRANT_APPROVED",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-30),
-                      LastModified = DateTime.UtcNow.AddDays(-5),
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(1),
-                          EndDate = DateTime.UtcNow.AddMonths(25)
-                      }
-                  },
-                  new
-                  {
-                      Id = "S6789E01-234A-BC56-78DE-F9012345AB67", // Added GUID ID
-                      SubmissionId = "PROG2-SUB-002",
-                      ApplicationId = "APP-2024-0089",
-                      ProjectName = "Digital Literacy for Seniors",
-                      ProgramName = "Program2 - Education & Technology",
-                      RequestedAmount = 120000,
-                      PaidAmount = 2000,
-                      Status = "Under Review",
-                      StatusCode = "UNDER_INITIAL_REVIEW",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-20),
-                      LastModified = DateTime.UtcNow.AddDays(-1), // Most recent
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(3),
-                          EndDate = DateTime.UtcNow.AddMonths(15)
-                      }
-                  },
-                  new
-                  {
-                      Id = "S7890E12-345A-BC67-89DE-F0123456AB78", // Added GUID ID
-                      SubmissionId = "PROG2-SUB-003",
-                      ApplicationId = "APP-2024-0095",
-                      ProjectName = "Rural Broadband Access Project",
-                      ProgramName = "Program2 - Education & Technology",
-                      RequestedAmount = 450000,
-                      PaidAmount = 40000,
-                      Status = "Under Review",
-                      StatusCode = "INITITAL_REVIEW_COMPLETED",
-                      SubmissionDate = DateTime.UtcNow.AddDays(-10),
-                      LastModified = DateTime.UtcNow.AddDays(-3),
-                      ProjectPeriod = new
-                      {
-                          StartDate = DateTime.UtcNow.AddMonths(4),
-                          EndDate = DateTime.UtcNow.AddMonths(28)
-                      }                        
-                  }
-              }
-              .OrderByDescending(s => s.LastModified) // Sort by most recently modified first
-              .ToArray(),
-      Summary = new
+      submissions = new[]
       {
-        TotalSubmissions = 3,
-        TotalRequestedAmount = 845000,
-        TotalPaidAmount = 52000,
-        ApprovedCount = 1,
-        UnderReviewCount = 1,
-        InReviewCount = 1
-      }
+        new
+        {
+          id = "c5678e90-123a-bc45-67de-f8901234ab56",
+          linkId = "d5678e90-123a-bc45-67de-f8901234ab56",
+          receivedTime = "2025-05-16T21:53:07.791002Z",
+          submissionTime = "2025-05-16T20:57:37.29Z",
+          referenceNo = "D5678E90",
+          projectName = "STEM Education Excellence Initiative",
+          status = "Under Review"
+        },
+        new
+        {
+          id = "c6789e01-234a-bc56-78de-f9012345ab67",
+          linkId = "d6789e01-234a-bc56-78de-f9012345ab67",
+          receivedTime = "2025-06-25T22:17:58.832421Z",
+          submissionTime = "2025-06-25T21:37:52.974Z",
+          referenceNo = "D6789E01",
+          projectName = "Digital Literacy for Seniors",
+          status = "Submitted"
+        },
+        new
+        {
+          id = "c7890e12-345a-bc67-89de-f0123456ab78",
+          linkId = "d7890e12-345a-bc67-89de-f0123456ab78",
+          receivedTime = "2025-06-10T17:34:47.914247Z",
+          submissionTime = "2025-06-10T16:50:22.115Z",
+          referenceNo = "D7890E12",
+          projectName = "Rural Broadband Access Project",
+          status = "Submitted"
+        }
+      },
+      linkSource = "https://demo-forms.example.com/app/form/view?s="
     };
   }
 }
