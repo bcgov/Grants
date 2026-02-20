@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { Router } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { ErrorHandlerService } from './core/services/error-handler.service';
 
 @Component({
@@ -16,9 +15,9 @@ export class AppComponent implements OnInit {
   private authCheckInProgress = false;
 
   constructor(
-    private oidcSecurityService: OidcSecurityService,
-    private router: Router,
-    private errorHandler: ErrorHandlerService
+    private readonly oidcSecurityService: OidcSecurityService,
+    private readonly router: Router,
+    private readonly errorHandler: ErrorHandlerService
   ) {}
 
   ngOnInit(): void {

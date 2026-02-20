@@ -89,7 +89,7 @@ export class CallbackComponent implements OnInit {
           // Handle specific error types
           if (error.name === 'TimeoutError') {
             this.errorMessage = 'Authentication timed out. Please try again.';
-          } else if (error.message && error.message.includes('could not find matching config for state')) {
+          } else if (error.message?.includes('could not find matching config for state')) {
             this.errorMessage = 'Authentication state mismatch. Please try logging in again.';
             // Clear all auth storage for state mismatch errors
             this.clearAllStorage();
