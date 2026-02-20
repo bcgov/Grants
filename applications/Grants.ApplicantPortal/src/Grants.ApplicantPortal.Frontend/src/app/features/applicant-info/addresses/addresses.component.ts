@@ -7,7 +7,6 @@ import { take, takeUntil } from 'rxjs/operators';
 import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
-import { Address } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig,
@@ -208,7 +207,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       const addressParts = [line1, line2].filter(Boolean).join(', ');
 
       return {
-        id: addr.id ?? `address-${Math.random()}`,
+        id: addr.id ?? '00000000-0000-0000-0000-000000000000',
         addressId: addr.addressId,
         type: addr.type ?? 'Unknown',
         addressLine1: line1,
