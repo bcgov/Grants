@@ -63,13 +63,14 @@ public partial class DemoPlugin
           CacheStore = _cacheStoreType
       };
 
-      // Store in Redis with long-term expiration
+      // Store in cache using configured expiration settings
       var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);
-      var longTermCacheOptions = new DistributedCacheEntryOptions
+      var cacheEntryOptions = new DistributedCacheEntryOptions
       {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_cacheOptions.Value.CacheExpiryMinutes),
+        SlidingExpiration = TimeSpan.FromMinutes(_cacheOptions.Value.SlidingExpiryMinutes)
       };
-      await distributedCache.SetAsync(cacheKey, profileDataBytes, longTermCacheOptions, cancellationToken);
+      await distributedCache.SetAsync(cacheKey, profileDataBytes, cacheEntryOptions, cancellationToken);
 
       logger.LogInformation("Demo plugin successfully generated and persisted fresh profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
