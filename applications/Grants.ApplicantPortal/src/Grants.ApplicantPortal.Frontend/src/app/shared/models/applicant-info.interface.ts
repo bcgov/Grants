@@ -41,13 +41,6 @@ export interface Certification {
   validUntil: string;
 }
 
-export interface Program1Specific {
-  eligibilityStatus: string;
-  lastAuditDate: string;
-  complianceScore: number;
-  specialDesignations: string[];
-}
-
 export interface OrganizationData {
   orgName: string;
   orgNumber: string;
@@ -70,7 +63,6 @@ export interface OrganizationData {
   mission: string;
   servicesAreas: string[];
   certifications: Certification[];
-  program1Specific: Program1Specific;
   lastUpdated?: string;
   allowEdit?: boolean;
 }

@@ -111,11 +111,15 @@ export class WorkspaceService {
     }
     
     const currentState = this.workspaceState$.value;
+    // When a provider is explicitly supplied without a name, clear the stale
+    // providerName so the header doesn't show a mismatched label.
+    // Keep the previous name only when neither provider nor providerName changed.
+    const resolvedProviderName = providerName ?? (provider ? null : currentState.selectedProviderName);
     const newState = {
       ...currentState,
       selectedWorkspace: workspace,
       selectedProvider: provider || null,
-      selectedProviderName: providerName ?? currentState.selectedProviderName,
+      selectedProviderName: resolvedProviderName,
       isWorkspaceSelected: true,
       isProviderSelected: !!provider
     };

@@ -7,8 +7,7 @@ import {
 } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
-  DatatableConfig, 
-  DatatableColumn,
+  DatatableConfig,
   DatatableActionEvent,
   DatatableRowClickEvent,
   DatatableSortEvent
