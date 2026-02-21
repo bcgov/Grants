@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Nodes;
 using Grants.ApplicantPortal.API.Core;
 using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
@@ -39,11 +38,26 @@ public partial class UnityPlugin
                 }
 
                 // Parse the Unity API response and extract the data element,
-                // stripping the internal dataType field before forwarding to the frontend
+                // stripping the internal dataType field before forwarding to the frontend.
+                // Uses Utf8JsonWriter to avoid JsonObject dictionary issues with duplicate keys.
                 var apiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
-                var dataNode = JsonNode.Parse(apiResponse.GetProperty("data").GetRawText())!;
-                dataNode.AsObject().Remove("dataType");
-                var cleanedData = JsonSerializer.Deserialize<JsonElement>(dataNode.ToJsonString());
+                var dataElement = apiResponse.GetProperty("data");
+
+                using var stream = new MemoryStream();
+                using (var writer = new Utf8JsonWriter(stream))
+                {
+                    writer.WriteStartObject();
+                    foreach (var property in dataElement.EnumerateObject())
+                    {
+                        if (!property.NameEquals("dataType"))
+                        {
+                            property.WriteTo(writer);
+                        }
+                    }
+                    writer.WriteEndObject();
+                }
+
+                var cleanedData = JsonSerializer.Deserialize<JsonElement>(stream.ToArray());
 
                 await FireProfileUpdatedMessage(metadata, ct);
 
