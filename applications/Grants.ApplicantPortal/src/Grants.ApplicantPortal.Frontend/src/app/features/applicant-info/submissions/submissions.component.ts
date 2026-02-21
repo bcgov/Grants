@@ -135,16 +135,8 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   onSubmissionClick(submission: SubmissionsData): void {
     console.log('Clicked submission:', submission);
     if (this.linkSource && submission.linkId) {
-      try {
-        const url = new URL(submission.linkId, this.linkSource);
-        window.open(url.toString(), '_blank', 'noopener,noreferrer');
-      } catch (e) {
-        console.error('Invalid submission URL:', {
-          linkSource: this.linkSource,
-          linkId: submission.linkId,
-          error: e
-        });
-      }
+      const url = `${this.linkSource}${submission.linkId}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   }
 
