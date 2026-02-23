@@ -37,9 +37,27 @@ public partial class UnityPlugin
                         $"Unity service call failed for ProfileId {metadata.ProfileId}: {response.ErrorMessage} (Status: {response.StatusCode})");
                 }
 
-                // Parse the Unity API response and extract the data element
+                // Parse the Unity API response and extract the data element,
+                // stripping the internal dataType field before forwarding to the frontend.
+                // Uses Utf8JsonWriter to avoid JsonObject dictionary issues with duplicate keys.
                 var apiResponse = JsonSerializer.Deserialize<JsonElement>(response.Data!);
                 var dataElement = apiResponse.GetProperty("data");
+
+                using var stream = new MemoryStream();
+                using (var writer = new Utf8JsonWriter(stream))
+                {
+                    writer.WriteStartObject();
+                    foreach (var property in dataElement.EnumerateObject())
+                    {
+                        if (!property.NameEquals("dataType"))
+                        {
+                            property.WriteTo(writer);
+                        }
+                    }
+                    writer.WriteEndObject();
+                }
+
+                var cleanedData = JsonSerializer.Deserialize<JsonElement>(stream.ToArray());
 
                 await FireProfileUpdatedMessage(metadata, ct);
 
@@ -48,7 +66,7 @@ public partial class UnityPlugin
                     metadata.PluginId,
                     metadata.Provider,
                     metadata.Key,
-                    dataElement.Clone());
+                    cleanedData);
             },
             cancellationToken: cancellationToken);
     }

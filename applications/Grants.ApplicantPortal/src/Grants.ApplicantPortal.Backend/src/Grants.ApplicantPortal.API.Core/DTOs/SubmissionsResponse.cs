@@ -1,47 +1,25 @@
 ﻿namespace Grants.ApplicantPortal.API.Core.DTOs;
 
 /// <summary>
-/// Typed response for submissions data
+/// Typed response for submissions data returned by the Unity API.
+/// The <c>data</c> envelope from the Unity profile endpoint contains
+/// a <c>submissions</c> array and an optional <c>linkSource</c> URL prefix.
 /// </summary>
 public record SubmissionsResponse(
+    string DataType,
     IReadOnlyList<SubmissionResponse> Submissions,
-    SubmissionsSummary Summary
+    string? LinkSource
 );
 
 /// <summary>
-/// Individual submission information
+/// Individual submission returned by the Unity API.
 /// </summary>
 public record SubmissionResponse(
     string Id,
-    string SubmissionId,
-    string ApplicationId,
+    string LinkId,
+    DateTime ReceivedTime,
+    DateTime SubmissionTime,
+    string ReferenceNo,
     string ProjectName,
-    string ProgramName,
-    decimal RequestedAmount,
-    decimal PaidAmount,
-    string Status,
-    string StatusCode,
-    DateTime SubmissionDate,
-    DateTime LastModified,
-    ProjectPeriod ProjectPeriod
-);
-
-/// <summary>
-/// Project period information
-/// </summary>
-public record ProjectPeriod(
-    DateTime StartDate,
-    DateTime EndDate
-);
-
-/// <summary>
-/// Summary information for submissions
-/// </summary>
-public record SubmissionsSummary(
-    int TotalSubmissions,
-    decimal TotalRequestedAmount,
-    decimal TotalPaidAmount,
-    int ApprovedCount,
-    int UnderReviewCount,
-    int InReviewCount
+    string Status
 );

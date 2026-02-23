@@ -62,13 +62,6 @@ export const routes: Routes = [
           ).then((m) => m.ApplicantInfoComponent),
       },
       {
-        path: 'submissions',
-        loadComponent: () =>
-          import(
-            './features/submissions/submissions.component'
-          ).then((m) => m.SubmissionsComponent),
-      },
-      {
         path: 'payments',
         loadComponent: () =>
           import('./features/payments/payments.component').then(

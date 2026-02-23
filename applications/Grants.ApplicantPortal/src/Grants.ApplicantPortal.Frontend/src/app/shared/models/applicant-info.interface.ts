@@ -7,14 +7,13 @@ export interface BackendResponse {
 }
 
 export interface Submission {
-  applicationId: string;
-  submissionId: string;
-  submissionDate: Date;
+  id: string;
+  linkId: string;
+  receivedTime: string;
+  submissionTime: string;
+  referenceNo: string;
   projectName: string;
   status: string;
-  updatedOn?: string;
-  paidAmount?: number;
-  submissionLink?: string;
 }
 
 export interface Address {
@@ -42,13 +41,6 @@ export interface Certification {
   validUntil: string;
 }
 
-export interface Program1Specific {
-  eligibilityStatus: string;
-  lastAuditDate: string;
-  complianceScore: number;
-  specialDesignations: string[];
-}
-
 export interface OrganizationData {
   orgName: string;
   orgNumber: string;
@@ -71,27 +63,18 @@ export interface OrganizationData {
   mission: string;
   servicesAreas: string[];
   certifications: Certification[];
-  program1Specific: Program1Specific;
   lastUpdated?: string;
   allowEdit?: boolean;
 }
 
 export interface SubmissionsData {
   id: string;
-  submissionId: string;
-  applicationId: string;
+  linkId: string;
+  receivedTime: string;
+  submissionTime: string;
+  referenceNo: string;
   projectName: string;
-  programName: string;
-  requestedAmount: number;
-  paidAmount: number;
   status: string;
-  statusCode: string; // Used for badge styling
-  submissionDate?: Date;
-  lastModified?: Date;
-  projectPeriod?: {
-    startDate: Date;
-    endDate: Date;
-  };
 }
 
 // Single response interface for parsed data
@@ -112,7 +95,8 @@ export interface SubmissionsResponse {
     key: string;
     populatedAt: string;
   };
-  submissionsData: SubmissionsData;
+  submissionsData: SubmissionsData[];
+  linkSource?: string;
 }
 
 export interface OrgSearchResult {
