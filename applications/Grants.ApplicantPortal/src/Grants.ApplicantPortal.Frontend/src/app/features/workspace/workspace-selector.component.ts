@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, switchMap, takeUntil, timer } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
 
 @Component({
@@ -118,6 +119,20 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
                   &larr; Back to Workspaces
                 </button>
               </div>
+            </div>
+
+            <!-- No Applications Message -->
+            <div *ngIf="showNoApplicationsMessage && !isLoading && !isAutoSelecting" class="no-applications">
+              <p class="no-applications-text">
+                You don't have any active or submitted applications yet. Please start a new application before accessing the Applicant Portal, or contact the grant administrator if you believe you have already submitted an application.
+              </p>
+              <button
+                type="button"
+                class="btn-back"
+                (click)="backToLogin()"
+              >
+                &larr; Back to Login
+              </button>
             </div>
           </div>
         </div>
@@ -308,18 +323,18 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
       display: block;
       width: 100%;
       margin-top: 0.75rem;
-      padding: 0.5rem;
-      background: none;
+      padding: 10px;
+      background-color: var(--bc-bg-info);
       border: none;
-      color: var(--bc-primary);
+      border-radius: 4px;
+      color: var(--bc-white);
       font-size: var(--bc-font-size-14);
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: color 0.2s ease;
+      transition: all 0.2s ease;
 
       &:hover {
-        color: var(--bc-blue);
-        text-decoration: underline;
+        opacity: 0.9;
       }
     }
 
@@ -375,6 +390,20 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
           text-decoration: underline;
         }
       }
+    }
+
+    /* ===== No Applications ===== */
+    .no-applications {
+      padding: 1.5rem 0;
+      text-align: center;
+    }
+
+    .no-applications-text {
+      color: var(--bc-primary);
+      font-size: var(--bc-font-size-14);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0 0.5rem;
     }
 
     /* ===== Responsive (mirrors login) ===== */
@@ -491,11 +520,13 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   showWorkspaceSelection = false;
   showSelectedWorkspace = false;
   showProviderSelection = false;
+  showNoApplicationsMessage = false;
   private destroy$ = new Subject<void>();
 
   constructor(
-    private workspaceService: WorkspaceService,
-    private router: Router
+    private readonly workspaceService: WorkspaceService,
+    private readonly authService: AuthService,
+    private readonly router: Router
   ) {}
 
   private hasFetchedWorkspaces = false;
@@ -582,7 +613,8 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         if (response.providers.length === 1) {
           this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
         } else if (response.providers.length === 0) {
-          this.selectWorkspace(workspace);
+          this.isAutoSelecting = false;
+          this.showNoApplicationsMessage = true;
         } else {
           // Multiple providers - show selection
           this.isAutoSelecting = false;
@@ -612,7 +644,8 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         if (response.providers.length === 1) {
           this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
         } else if (response.providers.length === 0) {
-          this.selectWorkspace(workspace);
+          this.isAutoSelecting = false;
+          this.showNoApplicationsMessage = true;
         } else {
           // Multiple providers from API - show selection
           this.isAutoSelecting = false;
@@ -650,9 +683,9 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
             // Auto-select single provider
             this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
           } else if (response.providers.length === 0) {
-            // No providers, select workspace directly (fallback)
-            console.warn('No providers returned for workspace:', workspace.pluginId);
-            this.selectWorkspace(workspace);
+            // No providers - show no applications message
+            this.showProviderSelection = false;
+            this.showNoApplicationsMessage = true;
           }
         },
         error: (error) => {
@@ -706,5 +739,9 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     this.availableProviders = [];
     this.showProviderSelection = false;
     this.showWorkspaceSelection = true;
+  }
+
+  backToLogin(): void {
+    this.authService.logout();
   }
 }
