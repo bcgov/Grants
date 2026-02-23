@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, switchMap, takeUntil, timer } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
 
 @Component({
@@ -118,6 +119,28 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
                   &larr; Back to Workspaces
                 </button>
               </div>
+            </div>
+
+            <!-- No Applications Message -->
+            <div *ngIf="showNoApplicationsMessage && !isLoading && !isAutoSelecting" class="no-applications">
+              <div class="no-applications-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+              </div>
+              <p class="no-applications-text">
+                You don't have any active or submitted applications yet. Please start a new application before accessing the Applicant Portal, or contact the grant administrator if you believe you have already submitted an application.
+              </p>
+              <button
+                type="button"
+                class="btn-back"
+                (click)="backToLogin()"
+              >
+                &larr; Back to Login
+              </button>
             </div>
           </div>
         </div>
@@ -377,6 +400,25 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
       }
     }
 
+    /* ===== No Applications ===== */
+    .no-applications {
+      padding: 1.5rem 0;
+      text-align: center;
+    }
+
+    .no-applications-icon {
+      color: var(--bc-gray-50, #606060);
+      margin-bottom: 1rem;
+    }
+
+    .no-applications-text {
+      color: var(--bc-primary);
+      font-size: var(--bc-font-size-14);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0 0.5rem;
+    }
+
     /* ===== Responsive (mirrors login) ===== */
     @media (max-width: 768px) {
       .preview-section {
@@ -491,10 +533,12 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   showWorkspaceSelection = false;
   showSelectedWorkspace = false;
   showProviderSelection = false;
+  showNoApplicationsMessage = false;
   private destroy$ = new Subject<void>();
 
   constructor(
     private workspaceService: WorkspaceService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -582,7 +626,8 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         if (response.providers.length === 1) {
           this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
         } else if (response.providers.length === 0) {
-          this.selectWorkspace(workspace);
+          this.isAutoSelecting = false;
+          this.showNoApplicationsMessage = true;
         } else {
           // Multiple providers - show selection
           this.isAutoSelecting = false;
@@ -612,7 +657,8 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         if (response.providers.length === 1) {
           this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
         } else if (response.providers.length === 0) {
-          this.selectWorkspace(workspace);
+          this.isAutoSelecting = false;
+          this.showNoApplicationsMessage = true;
         } else {
           // Multiple providers from API - show selection
           this.isAutoSelecting = false;
@@ -650,9 +696,9 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
             // Auto-select single provider
             this.selectWorkspaceWithProviderDetails(workspace, response.providers[0]);
           } else if (response.providers.length === 0) {
-            // No providers, select workspace directly (fallback)
-            console.warn('No providers returned for workspace:', workspace.pluginId);
-            this.selectWorkspace(workspace);
+            // No providers - show no applications message
+            this.showProviderSelection = false;
+            this.showNoApplicationsMessage = true;
           }
         },
         error: (error) => {
@@ -706,5 +752,9 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     this.availableProviders = [];
     this.showProviderSelection = false;
     this.showWorkspaceSelection = true;
+  }
+
+  backToLogin(): void {
+    this.authService.logout();
   }
 }
