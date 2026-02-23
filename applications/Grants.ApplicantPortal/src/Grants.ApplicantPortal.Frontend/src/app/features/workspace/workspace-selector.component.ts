@@ -537,9 +537,9 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private workspaceService: WorkspaceService,
-    private authService: AuthService,
-    private router: Router
+    private readonly workspaceService: WorkspaceService,
+    private readonly authService: AuthService,
+    private readonly router: Router
   ) {}
 
   private hasFetchedWorkspaces = false;
