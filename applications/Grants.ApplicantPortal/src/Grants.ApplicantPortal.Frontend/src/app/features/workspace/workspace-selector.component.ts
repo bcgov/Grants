@@ -323,18 +323,18 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
       display: block;
       width: 100%;
       margin-top: 0.75rem;
-      padding: 0.5rem;
-      background: none;
+      padding: 10px;
+      background-color: var(--bc-bg-info);
       border: none;
-      color: var(--bc-primary);
+      border-radius: 4px;
+      color: var(--bc-white);
       font-size: var(--bc-font-size-14);
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: color 0.2s ease;
+      transition: all 0.2s ease;
 
       &:hover {
-        color: var(--bc-blue);
-        text-decoration: underline;
+        opacity: 0.9;
       }
     }
 
