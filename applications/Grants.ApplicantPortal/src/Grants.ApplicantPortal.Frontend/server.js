@@ -16,8 +16,7 @@ const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:510
 const envVars = {
   KEYCLOAK__AUTHSERVERURL: process.env.KEYCLOAK__AUTHSERVERURL || 'https://dev.loginproxy.gov.bc.ca/auth',
   KEYCLOAK__REALM: process.env.KEYCLOAK__REALM || 'standard',
-  KEYCLOAK__RESOURCE: process.env.KEYCLOAK__RESOURCE || 'grants-portal-5361',
-  KEYCLOAK__CREDENTIALS__SECRET: process.env.KEYCLOAK__CREDENTIALS__SECRET || 'placeholder-client-secret'
+  KEYCLOAK__RESOURCE: process.env.KEYCLOAK__RESOURCE || 'grants-portal-5361'
 };
 
 // Configure Express to trust proxy headers properly for container environments
