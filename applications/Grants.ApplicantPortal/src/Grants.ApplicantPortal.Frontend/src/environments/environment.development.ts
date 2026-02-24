@@ -4,7 +4,6 @@ export const environment = {
   keycloak: {
     authority: 'https://dev.loginproxy.gov.bc.ca/auth',
     realm: 'standard',
-    clientId: 'grants-portal-5361',
-    clientSecret: 'placeholder-client-secret'
+    clientId: 'grants-portal-5361'    
   }
 };
