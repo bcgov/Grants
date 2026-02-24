@@ -39,8 +39,8 @@ public partial class DemoPlugin
             await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
 
             // Log the address edit details
-            logger.LogInformation("Demo plugin edited address - ID: {AddressId}, Type: {Type}, Address: {Address}, City: {City}",
-                editRequest.AddressId, editRequest.Type, editRequest.Address, editRequest.City);
+            logger.LogInformation("Demo plugin edited address - ID: {AddressId}, AddressType: {AddressType}, Street: {Street}, City: {City}",
+                editRequest.AddressId, editRequest.AddressType, editRequest.Street, editRequest.City);
 
             return Result.Success();
         }

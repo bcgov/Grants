@@ -161,21 +161,19 @@ static object GetAddressInfoData(string tenantId) => tenantId.ToUpperInvariant()
     "DGP" => new
     {
         dataType = "ADDRESSINFO",
-        Addresses = new[]
+        addresses = new[]
         {
-            new { Id = "AAD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-001", Type = "Physical", AddressLine1 = "1234 Government Street", AddressLine2 = "Suite 500", City = "Victoria", Province = "BC", PostalCode = "V8W 1A4", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-30) },
-            new { Id = "BBD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-002", Type = "Mailing", AddressLine1 = "5678 Unity Drive", AddressLine2 = "", City = "Vancouver", Province = "BC", PostalCode = "V6B 2C3", Country = "Canada", IsPrimary = false, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-15) }
-        },
-        Summary = new { TotalAddresses = 2, PrimaryAddressCount = 1, ActiveAddressCount = 2 }
+            new { id = "AAD12E34-6789-0ABC-DEF1-234567890ABC", addressType = "Physical", street = "1234 Government Street", street2 = "Suite 500", unit = "", city = "Victoria", province = "BC", postalCode = "V8W1A4", country = "", isPrimary = true, isEditable = false, referenceNo = "D59AA865" },
+            new { id = "BBD12E34-6789-0ABC-DEF1-234567890ABC", addressType = "Mailing", street = "5678 Unity Drive", street2 = "", unit = "", city = "Vancouver", province = "BC", postalCode = "V6B2C3", country = "", isPrimary = false, isEditable = false, referenceNo = "D59AA865" }
+        }
     },
     _ => new
     {
         dataType = "ADDRESSINFO",
-        Addresses = new[]
+        addresses = new[]
         {
-            new { Id = "CCD12E34-6789-0ABC-DEF1-234567890ABC", AddressId = "ADDR-U-003", Type = "Physical", AddressLine1 = "900 Research Parkway", AddressLine2 = "Building C", City = "Kelowna", Province = "BC", PostalCode = "V1Y 8K2", Country = "Canada", IsPrimary = true, IsActive = true, AllowEdit = true, LastVerified = DateTime.UtcNow.AddDays(-10) }
-        },
-        Summary = new { TotalAddresses = 1, PrimaryAddressCount = 1, ActiveAddressCount = 1 }
+            new { id = "CCD12E34-6789-0ABC-DEF1-234567890ABC", addressType = "Physical", street = "900 Research Parkway", street2 = "Building C", unit = "", city = "Kelowna", province = "BC", postalCode = "V1Y8K2", country = "", isPrimary = true, isEditable = false, referenceNo = "E68BB976" }
+        }
     }
 };
 

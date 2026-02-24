@@ -18,12 +18,14 @@ public class EditAddressHandler(
     {
       var editRequest = new EditAddressRequest(
         request.AddressId,
-        request.Type,
-        request.Address,
+        request.AddressType,
+        request.Street,
         request.City,
         request.Province,
         request.PostalCode,
         request.IsPrimary,
+        request.Street2,
+        request.Unit,
         request.Country);
 
       var profileContext = new ProfileContext(
