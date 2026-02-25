@@ -1,7 +1,7 @@
 <header class="header">
   <div class="header-left">
     <div class="page-title">
-      <h3 class="m-0">{{ pageTitle }}</h3>
+      <h3 id="header-page-title" class="m-0">{{ pageTitle }}</h3>
     </div>
   </div>
   <div class="header-right">
@@ -41,6 +41,7 @@
             <li *ngFor="let provider of currentProviders">
               <button 
                 class="dropdown-item provider-item"
+                [attr.id]="'provider-item-' + provider.id"
                 [class.active]="provider.id === selectedProvider"
                 (click)="selectProviderById(provider)"
                 type="button"
@@ -60,6 +61,7 @@
           <div *ngIf="availableWorkspaces.length > 1">
             <li>
               <button 
+                id="change-workspace-btn"
                 class="dropdown-item change-workspace-item"
                 (click)="changeWorkspace()"
                 type="button"

@@ -68,6 +68,7 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
 
               <button
                 type="button"
+                id="workspace-continue-btn"
                 class="btn btn-primary selector-btn"
                 [disabled]="!selectedDropdownWorkspace"
                 (click)="confirmWorkspaceSelection()"
@@ -104,6 +105,7 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
 
                 <button
                   type="button"
+                  id="provider-continue-btn"
                   class="btn btn-primary selector-btn"
                   [disabled]="!selectedDropdownProvider"
                   (click)="confirmProviderSelection()"
@@ -113,6 +115,7 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
 
                 <button
                   type="button"
+                  id="provider-back-btn"
                   class="btn-back"
                   (click)="goBackToWorkspaceSelection()"
                 >
@@ -128,6 +131,7 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
               </p>
               <button
                 type="button"
+                id="workspace-back-to-login-btn"
                 class="btn-back"
                 (click)="backToLogin()"
               >

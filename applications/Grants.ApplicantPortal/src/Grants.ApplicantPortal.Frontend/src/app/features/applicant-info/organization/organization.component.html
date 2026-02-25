@@ -47,7 +47,7 @@
 
             <!-- Search Results Dropdown -->
             @if (showDropdown && searchResults.length > 0) {
-            <div class="search-dropdown">
+            <div id="org-search-results" class="search-dropdown">
               @for (result of searchResults; track result.id) {
               <div
                 class="search-result-item"
