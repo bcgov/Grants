@@ -17,11 +17,18 @@ export interface Submission {
 }
 
 export interface Address {
+  id: string;
+  addressType: string;
   street: string;
+  street2: string;
+  unit: string;
   city: string;
-  state: string;
-  zipCode: string;
+  province: string;
+  postalCode: string;
   country: string;
+  isPrimary: boolean;
+  isEditable: boolean;
+  referenceNo: string;
 }
 
 export interface Contact {

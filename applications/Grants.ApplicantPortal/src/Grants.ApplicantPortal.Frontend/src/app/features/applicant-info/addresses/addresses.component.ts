@@ -17,22 +17,18 @@ import {
 
 interface AddressDisplay {
   id: string;
-  addressId?: string;
-  type: string;
-  addressLine1?: string;
-  addressLine2?: string;
+  addressType: string;
   street: string;
+  street2: string;
+  unit: string;
   city: string;
   province: string;
-  state: string;
   postalCode: string;
-  zipCode: string;
-  country?: string;
-  isPrimary?: boolean;
-  isActive?: boolean;
-  lastVerified?: string;
-  allowEdit?: boolean;
-  fullAddress?: string;
+  country: string;
+  isPrimary: boolean;
+  isEditable: boolean;
+  referenceNo: string;
+  fullAddress: string;
 }
 
 @Component({
@@ -64,24 +60,22 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
     tableId: 'addresses-table',
-    defaultSortField: 'lastVerified',
+    defaultSortField: 'addressType',
     enableSortPersistence: true,
     columns: [
-      { key: 'type', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
-      { key: 'addressId', label: 'Address ID', sortable: true, cssClass: 'address-id-column' },
+      { key: 'addressType', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
       { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' },
-      { key: 'isActive', label: 'Active', sortable: true, type: 'boolean', cssClass: 'active-column' }
+      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
     ],
     actionsType: 'dropdown',
     actionItems: [
       { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
     ],
     badgeConfig: {
-      field: 'type',
+      field: 'addressType',
       badgeClassPrefix: 'address-type-badge',
       badgeClasses: {
         'Physical': 'address-type-physical',
@@ -198,31 +192,25 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
   private processAddressesData(addresses: any[]): AddressDisplay[] {
     return addresses.map(addr => {
-      const line1 = addr.addressLine1 ?? addr.street ?? '';
-      const line2 = addr.addressLine2 ?? '';
-      const city = addr.city ?? '';
-      const province = addr.province ?? addr.state ?? '';
-      const postalCode = addr.postalCode ?? addr.zipCode ?? '';
+      const street = addr.street ?? '';
+      const street2 = addr.street2 ?? '';
+      const unit = addr.unit ?? '';
 
-      const addressParts = [line1, line2].filter(Boolean).join(', ');
+      const addressParts = [street, street2, unit].filter(Boolean).join(', ');
 
       return {
         id: addr.id ?? '00000000-0000-0000-0000-000000000000',
-        addressId: addr.addressId,
-        type: addr.type ?? 'Unknown',
-        addressLine1: line1,
-        addressLine2: line2,
-        street: line1,
-        city,
-        province,
-        state: province,
-        postalCode,
-        zipCode: postalCode,
+        addressType: addr.addressType ?? 'Unknown',
+        street,
+        street2,
+        unit,
+        city: addr.city ?? '',
+        province: addr.province ?? '',
+        postalCode: addr.postalCode ?? '',
         country: addr.country ?? '',
         isPrimary: addr.isPrimary ?? false,
-        isActive: addr.isActive !== false,
-        lastVerified: addr.lastVerified,
-        allowEdit: addr.allowEdit !== false,
+        isEditable: addr.isEditable ?? false,
+        referenceNo: addr.referenceNo ?? '',
         fullAddress: addressParts
       };
     });
@@ -246,18 +234,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
   onSetAsPrimary(address: AddressDisplay): void {
     console.log('Setting as primary address...', address);
-    
-    // Make API call to set address as primary
-    const addressData = {
-      addressLine1: address.addressLine1,
-      addressLine2: address.addressLine2,
-      city: address.city,
-      province: address.province,
-      postalCode: address.postalCode,
-      country: address.country,
-      type: address.type,
-      isPrimary: true
-    };
 
     this.applicantInfoService.setAddressAsPrimary(
       address.id,
@@ -280,7 +256,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       },
       error: (error) => {
         console.error('Failed to set address as primary:', error);
-        // Optionally show an error message to the user
       }
     });
   }
@@ -292,10 +267,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private formatFullAddress(address: AddressDisplay): string {
-    const parts = [];
-    if (address.addressLine1) parts.push(address.addressLine1);
-    if (address.addressLine2) parts.push(address.addressLine2);
-    if (parts.length === 0 && address.street) parts.push(address.street);
+    const parts = [address.street, address.street2, address.unit].filter(Boolean);
     return parts.join(', ') || address.fullAddress || '';
   }
 
