@@ -25,8 +25,8 @@ public partial class UnityPlugin
       // 🔥 Invalidate the ADDRESSES cache when address edit is queued
       await InvalidateAddressesCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
 
-      logger.LogInformation("Unity plugin queued address edit - ID: {AddressId}, Type: {Type}, Address: {Address}",
-          editRequest.AddressId, editRequest.Type, editRequest.Address);
+      logger.LogInformation("Unity plugin queued address edit - ID: {AddressId}, AddressType: {AddressType}, Street: {Street}",
+          editRequest.AddressId, editRequest.AddressType, editRequest.Street);
 
       return Result.Success();
     }
@@ -90,8 +90,10 @@ public partial class UnityPlugin
           profileContext.Provider,
           Data = new
           {
-            editRequest.Type,
-            editRequest.Address,
+            editRequest.AddressType,
+            editRequest.Street,
+            editRequest.Street2,
+            editRequest.Unit,
             editRequest.City,
             editRequest.Province,
             editRequest.PostalCode,

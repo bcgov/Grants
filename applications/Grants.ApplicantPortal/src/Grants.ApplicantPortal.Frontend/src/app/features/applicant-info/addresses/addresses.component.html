@@ -12,7 +12,7 @@
         </div>
       </div>
       } @else if (primaryAddress) {
-      <div class="primary-address-info">
+      <div id="primary-address-info" class="primary-address-info">
         <div class="row">
           <div class="col-md-10 col-sm-12">
             <label class="form-label">Full Address</label>
@@ -23,13 +23,13 @@
           <div class="col-md-2 col-sm-12">
             <label class="form-label">Type</label>
             <p class="address-value">
-                {{ primaryAddress.type }}
+                {{ primaryAddress.addressType }}
             </p>
           </div>
         </div>
       </div>
       } @else {
-      <div class="no-primary-address text-center text-muted">
+      <div id="no-addresses-message" class="no-primary-address text-center text-muted">
         <p>No addresses found.</p>
       </div>
       }

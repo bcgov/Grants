@@ -2,15 +2,18 @@
 
 /// <summary>
 /// Edit an existing Address.
+/// Field names aligned with real Unity API address structure.
 /// </summary>
 public record EditAddressCommand(
   Guid AddressId,
-  string Type,
-  string Address,
+  string AddressType,
+  string Street,
   string City,
   string Province,
   string PostalCode,
   bool IsPrimary,
+  string? Street2,
+  string? Unit,
   string? Country,
   Guid ProfileId,
   string PluginId,

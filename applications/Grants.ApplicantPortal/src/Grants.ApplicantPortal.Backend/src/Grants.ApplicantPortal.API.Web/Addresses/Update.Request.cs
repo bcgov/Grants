@@ -11,24 +11,28 @@ public class UpdateAddressRequest
             .Replace("{Provider}", provider);
 
   [Required]
-  public string? Type { get; set; }
-  
+  public string? AddressType { get; set; }
+
   [Required]
-  public string? Address { get; set; }
-  
+  public string? Street { get; set; }
+
+  public string? Street2 { get; set; }
+
+  public string? Unit { get; set; }
+
   [Required]
   public string? City { get; set; }
-  
+
   [Required]
   public string? Province { get; set; }
-  
+
   [Required]
   public string? PostalCode { get; set; }
-  
+
   public string? Country { get; set; }
-  
+
   public bool IsPrimary { get; set; }
-  
+
   // Route parameters
   public Guid AddressId { get; set; }
   public string PluginId { get; set; } = string.Empty;

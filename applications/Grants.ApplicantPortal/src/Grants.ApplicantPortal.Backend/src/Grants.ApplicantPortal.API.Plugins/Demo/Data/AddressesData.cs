@@ -11,24 +11,22 @@ public static class AddressesData
   private static readonly object _lock = new object();
 
   /// <summary>
-  /// Internal address information structure
+  /// Internal address information structure aligned with real Unity API response
   /// </summary>
   private sealed record AddressInfo
   {
     public string Id { get; init; } = string.Empty;
-    public string AddressId { get; init; } = string.Empty;
-    public string Type { get; init; } = string.Empty;
-    public string AddressLine1 { get; init; } = string.Empty;
-    public string AddressLine2 { get; init; } = string.Empty;
+    public string AddressType { get; init; } = string.Empty;
     public string Street { get; init; } = string.Empty;
+    public string Street2 { get; init; } = string.Empty;
+    public string Unit { get; init; } = string.Empty;
     public string City { get; init; } = string.Empty;
     public string Province { get; init; } = string.Empty;
     public string PostalCode { get; init; } = string.Empty;
     public string Country { get; init; } = string.Empty;
     public bool IsPrimary { get; init; }
-    public bool IsActive { get; init; } = true;
-    public DateTime LastVerified { get; init; } = DateTime.UtcNow;
-    public bool AllowEdit { get; init; } = true;
+    public bool IsEditable { get; init; }
+    public string ReferenceNo { get; init; } = string.Empty;
   }
 
   /// <summary>
@@ -43,53 +41,47 @@ public static class AddressesData
         new AddressInfo
         {
           Id = "AD12E345-6789-0ABC-DEF1-234567890ABC",
-          AddressId = "ADDR-P1-001",
-          Type = "Physical",
-          AddressLine1 = "123 Main Street",
-          AddressLine2 = "Suite 100",
-          Street = "123 Main Street, Suite 100",
+          AddressType = "Physical",
+          Street = "123 Main Street",
+          Street2 = "Suite 100",
+          Unit = "",
           City = "Vancouver",
           Province = "BC",
-          PostalCode = "V6B 1A1",
-          Country = "Canada",
+          PostalCode = "V6B1A1",
+          Country = "",
           IsPrimary = true,
-          IsActive = true,
-          LastVerified = DateTime.UtcNow.AddDays(-10),
-          AllowEdit = true
+          IsEditable = false,
+          ReferenceNo = "DEMO0001"
         },
         new AddressInfo
         {
           Id = "BD12E345-6789-0ABC-DEF1-234567890ABC",
-          AddressId = "ADDR-P1-002",
-          Type = "Mailing",
-          AddressLine1 = "456 Business Ave",
-          AddressLine2 = "",
+          AddressType = "Mailing",
           Street = "456 Business Ave",
+          Street2 = "",
+          Unit = "",
           City = "Victoria",
-          Province = "BC", 
-          PostalCode = "V8W 2Y7",
-          Country = "Canada",
+          Province = "BC",
+          PostalCode = "V8W2Y7",
+          Country = "",
           IsPrimary = false,
-          IsActive = true,
-          LastVerified = DateTime.UtcNow.AddDays(-7),
-          AllowEdit = true
+          IsEditable = false,
+          ReferenceNo = "DEMO0001"
         },
         new AddressInfo
         {
           Id = "CD12E345-6789-0ABC-DEF1-234567890ABC",
-          AddressId = "ADDR-P1-003",
-          Type = "Mailing",
-          AddressLine1 = "PO Box 789",
-          AddressLine2 = "",
+          AddressType = "Mailing",
           Street = "PO Box 789",
+          Street2 = "",
+          Unit = "",
           City = "Burnaby",
-          Province = "BC", 
-          PostalCode = "V5H 3Z4",
-          Country = "Canada",
+          Province = "BC",
+          PostalCode = "V5H3Z4",
+          Country = "",
           IsPrimary = false,
-          IsActive = true,
-          LastVerified = DateTime.UtcNow.AddDays(-4),
-          AllowEdit = true
+          IsEditable = false,
+          ReferenceNo = "DEMO0002"
         }
       ],
       "PROGRAM2" =>
@@ -97,50 +89,47 @@ public static class AddressesData
         new AddressInfo
         {
           Id = "DD12E345-6789-0ABC-DEF1-234567890ABC",
-          AddressId = "ADDR-P2-001",
-          Type = "Physical",
-          AddressLine1 = "456 Innovation Drive",
-          AddressLine2 = "Building A",
-          Street = "456 Innovation Drive, Building A",
+          AddressType = "Physical",
+          Street = "456 Innovation Drive",
+          Street2 = "Building A",
+          Unit = "",
           City = "Tech Valley",
           Province = "AB",
-          PostalCode = "T2P 4K6",
-          Country = "Canada",
+          PostalCode = "T2P4K6",
+          Country = "",
           IsPrimary = true,
-          IsActive = true,
-          LastVerified = DateTime.UtcNow.AddDays(-9)
+          IsEditable = false,
+          ReferenceNo = "DEMO0003"
         },
         new AddressInfo
         {
           Id = "ED12E345-6789-0ABC-DEF1-234567890ABC",
-          AddressId = "ADDR-P2-002",
-          Type = "Mailing",
-          AddressLine1 = "789 Research Blvd",
-          AddressLine2 = "Suite 200",
-          Street = "789 Research Blvd, Suite 200",
+          AddressType = "Mailing",
+          Street = "789 Research Blvd",
+          Street2 = "Suite 200",
+          Unit = "",
           City = "Innovation City",
           Province = "AB",
-          PostalCode = "T2P 4K7",
-          Country = "Canada",
+          PostalCode = "T2P4K7",
+          Country = "",
           IsPrimary = false,
-          IsActive = true,
-          LastVerified = DateTime.UtcNow.AddDays(-6)
+          IsEditable = false,
+          ReferenceNo = "DEMO0003"
         },
         new AddressInfo
         {
           Id = "FD12E345-6789-0ABC-DEF1-234567890ABC",
-          AddressId = "ADDR-P2-003",
-          Type = "Mailing",
-          AddressLine1 = "PO Box 1234",
-          AddressLine2 = "",
+          AddressType = "Mailing",
           Street = "PO Box 1234",
+          Street2 = "",
+          Unit = "",
           City = "Calgary",
           Province = "AB",
-          PostalCode = "T2G 5L8",
-          Country = "Canada",
+          PostalCode = "T2G5L8",
+          Country = "",
           IsPrimary = false,
-          IsActive = true,
-          LastVerified = DateTime.UtcNow.AddDays(-3)
+          IsEditable = false,
+          ReferenceNo = "DEMO0004"
         }
       ],
       _ => Array.Empty<AddressInfo>()
@@ -177,14 +166,14 @@ public static class AddressesData
     System.Diagnostics.Debug.WriteLine($"Found {defaultAddresses.Length} default addresses for provider {provider}");
     foreach (var da in defaultAddresses)
     {
-      System.Diagnostics.Debug.WriteLine($"  Default Address ID: {da.Id}, Type: {da.Type}");
+      System.Diagnostics.Debug.WriteLine($"  Default Address ID: {da.Id}, AddressType: {da.AddressType}");
     }
     
     var defaultAddress = defaultAddresses.FirstOrDefault(a => string.Equals(a.Id, addressId, StringComparison.OrdinalIgnoreCase));
     
     if (defaultAddress != null)
     {
-      System.Diagnostics.Debug.WriteLine($"Materializing default address: {defaultAddress.Type} (ID: {defaultAddress.Id})");
+      System.Diagnostics.Debug.WriteLine($"Materializing default address: {defaultAddress.AddressType} (ID: {defaultAddress.Id})");
       // Materialize the default address into stored addresses
       addresses.Add(defaultAddress);
     }
@@ -235,15 +224,15 @@ public static class AddressesData
       var existingAddress = addresses[addressIndex];
       addresses[addressIndex] = existingAddress with
       {
-        Type = editRequest.Type,
-        AddressLine1 = editRequest.Address,
-        Street = editRequest.Address,
+        AddressType = editRequest.AddressType,
+        Street = editRequest.Street,
+        Street2 = editRequest.Street2 ?? "",
+        Unit = editRequest.Unit ?? "",
         City = editRequest.City,
         Province = editRequest.Province,
         PostalCode = editRequest.PostalCode,
-        Country = editRequest.Country ?? "Canada",
-        IsPrimary = editRequest.IsPrimary,
-        LastVerified = DateTime.UtcNow // Always update timestamp when editing
+        Country = editRequest.Country ?? "",
+        IsPrimary = editRequest.IsPrimary
       };
 
       return true;
@@ -275,7 +264,7 @@ public static class AddressesData
       System.Diagnostics.Debug.WriteLine($"Found {addresses.Count} stored addresses");
       foreach (var address in addresses)
       {
-        System.Diagnostics.Debug.WriteLine($"  Address ID: {address.Id}, Type: {address.Type}");
+        System.Diagnostics.Debug.WriteLine($"  Address ID: {address.Id}, AddressType: {address.AddressType}");
       }
       
       var addressIndex = addresses.FindIndex(a => string.Equals(a.Id, addressId.ToString(), StringComparison.OrdinalIgnoreCase));
@@ -293,8 +282,7 @@ public static class AddressesData
       {
         addresses[i] = addresses[i] with 
         { 
-          IsPrimary = i == addressIndex,
-          LastVerified = i == addressIndex ? DateTime.UtcNow : addresses[i].LastVerified // Update timestamp for primary address
+          IsPrimary = i == addressIndex
         };
       }
 
@@ -343,8 +331,7 @@ public static class AddressesData
     if (primaryAddresses.Count > 1)
     {
       // If there are multiple primary addresses, prefer stored addresses over default addresses
-      // and if there are multiple stored primary addresses, keep the most recent one
-      var storedPrimary = primaryAddresses.Where(a => storedAddresses.Contains(a)).OrderByDescending(a => a.LastVerified).FirstOrDefault();
+      var storedPrimary = primaryAddresses.Where(a => storedAddresses.Contains(a)).FirstOrDefault();
       
       if (storedPrimary != null)
       {
@@ -366,30 +353,21 @@ public static class AddressesData
     return new
     {
       Addresses = allAddresses
-        .OrderByDescending(a => a.LastVerified) // Most recently updated first
         .Select(a => new
         {
           a.Id,
-          a.AddressId,
-          a.Type,
-          a.AddressLine1,
-          a.AddressLine2,
+          a.AddressType,
           a.Street,
+          a.Street2,
+          a.Unit,
           a.City,
           a.Province,
           a.PostalCode,
           a.Country,
           a.IsPrimary,
-          a.IsActive,
-          a.LastVerified,
-          a.AllowEdit
-        }).ToArray(),
-      Summary = new
-      {
-        TotalAddresses = allAddresses.Count,
-        PrimaryAddressCount = allAddresses.Count(a => a.IsPrimary),
-        ActiveAddressCount = allAddresses.Count(a => a.IsActive)
-      }
+          a.IsEditable,
+          a.ReferenceNo
+        }).ToArray()
     };
   }
 
@@ -423,9 +401,8 @@ public static class AddressesData
     if (primaryAddresses.Count > 1)
     {
       // If there are multiple primary addresses, prefer stored addresses over default addresses
-      // and if there are multiple stored primary addresses, keep the most recent one
-      var storedPrimary = primaryAddresses.Where(a => storedAddresses.Contains(a)).OrderByDescending(a => a.LastVerified).FirstOrDefault();
-      
+      var storedPrimary = primaryAddresses.Where(a => storedAddresses.Contains(a)).FirstOrDefault();
+
       if (storedPrimary != null)
       {
         // Set stored address as primary and make all others non-primary
@@ -446,30 +423,21 @@ public static class AddressesData
     return new
     {
       Addresses = allAddresses
-        .OrderByDescending(a => a.LastVerified) // Most recently updated first
         .Select(a => new
         {
           a.Id,
-          a.AddressId,
-          a.Type,
-          a.AddressLine1,
-          a.AddressLine2,
+          a.AddressType,
           a.Street,
+          a.Street2,
+          a.Unit,
           a.City,
           a.Province,
           a.PostalCode,
           a.Country,
           a.IsPrimary,
-          a.IsActive,
-          a.LastVerified,
-          AllowEdit = true // All stored addresses are editable; default addresses have their own AllowEdit setting
-        }).ToArray(),
-      Summary = new
-      {
-        TotalAddresses = allAddresses.Count,
-        PrimaryAddressCount = allAddresses.Count(a => a.IsPrimary),
-        ActiveAddressCount = allAddresses.Count(a => a.IsActive)
-      }
+          a.IsEditable,
+          a.ReferenceNo
+        }).ToArray()
     };
   }
 }

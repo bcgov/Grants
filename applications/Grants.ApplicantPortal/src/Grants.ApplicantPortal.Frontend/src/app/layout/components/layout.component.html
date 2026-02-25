@@ -4,6 +4,7 @@
     <div class="mobile-header d-lg-none">
       <div class="mobile-header-content">
         <button
+          id="mobile-hamburger-btn"
           class="hamburger-btn"
           (click)="toggleSidebar()"
           [class.active]="sidebarOpen"
@@ -55,7 +56,7 @@
     >
       <div class="sidebar-container">
         <!-- Close button for mobile -->
-        <button class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
+        <button id="mobile-close-btn" class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
           <i class="fa-solid fa-times"></i>
         </button>
         <app-sidebar (menuItemClicked)="closeSidebar()"></app-sidebar>

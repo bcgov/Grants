@@ -12,7 +12,7 @@
         </div>
       </div>
       } @else if (primaryContact) {
-      <div class="primary-contact-info">
+      <div id="primary-contact-info" class="primary-contact-info">
         <div class="row">
           <div class="col-md-3 col-sm-6">
             <label class="form-label">Name</label>
@@ -33,7 +33,7 @@
         </div>
       </div>
       } @else {
-      <div class="no-primary-contact text-center text-muted">
+      <div id="no-primary-contact" class="no-primary-contact text-center text-muted">
         <p>No primary contact found. Click "Add" to create a contact.</p>
       </div>
       }
@@ -50,14 +50,14 @@
 </div>
 
 <!-- Add Contact Modal -->
-<div class="modal fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" [attr.aria-hidden]="!showAddContactModal">
+<div id="contact-modal" class="modal fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" [attr.aria-hidden]="!showAddContactModal">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addContactModalLabel">
           {{ isEditMode ? 'Edit Contact' : 'Add New Contact' }}
         </h5>
-        <button type="button" class="btn-close" (click)="onCancelAddContact()" aria-label="Close"></button>
+        <button type="button" id="contact-modal-close-btn" class="btn-close" (click)="onCancelAddContact()" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <!-- Error Display -->
@@ -175,6 +175,7 @@
       <div class="modal-footer">
         <button 
           type="button" 
+          id="contact-modal-cancel-btn"
           class="btn btn-secondary" 
           (click)="onCancelAddContact()"
           [disabled]="isSavingContact">
@@ -182,6 +183,7 @@
         </button>
         <button 
           type="button" 
+          id="contact-modal-save-btn"
           class="btn btn-primary" 
           (click)="onSaveNewContact()"
           [disabled]="!isValidContact(newContact) || isSavingContact">
@@ -201,7 +203,7 @@
 <div class="modal-backdrop fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" *ngIf="showAddContactModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteContactModalLabel" [attr.aria-hidden]="!showDeleteConfirmModal">
+<div id="contact-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteContactModalLabel" [attr.aria-hidden]="!showDeleteConfirmModal">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">
@@ -242,6 +244,7 @@
       <div class="modal-footer delete-modal-footer">
         <button 
           type="button" 
+          id="contact-delete-cancel-btn"
           class="btn delete-modal-cancel" 
           (click)="onCancelDeleteContact()"
           [disabled]="isDeletingContact">
@@ -249,6 +252,7 @@
         </button>
         <button 
           type="button" 
+          id="contact-delete-confirm-btn"
           class="btn delete-modal-confirm" 
           (click)="onConfirmDeleteContact()"
           [disabled]="isDeletingContact">

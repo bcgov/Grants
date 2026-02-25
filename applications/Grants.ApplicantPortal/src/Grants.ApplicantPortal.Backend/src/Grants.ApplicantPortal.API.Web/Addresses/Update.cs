@@ -29,12 +29,14 @@ public class Update(IMediator _mediator)
       s.ExampleRequest = new UpdateAddressRequest 
       { 
         AddressId = Guid.NewGuid(),
-        Type = "Business",
-        Address = "123 Main Street",
+        AddressType = "Physical",
+        Street = "123 Main Street",
+        Street2 = "Suite 100",
+        Unit = "",
         City = "Victoria",
         Province = "BC",
-        PostalCode = "V8W 1A1",
-        Country = "Canada",
+        PostalCode = "V8W1A1",
+        Country = "",
         IsPrimary = true,        
         PluginId = "DEMO",
         Provider = "PROGRAM1"
@@ -53,12 +55,14 @@ public class Update(IMediator _mediator)
 
     var command = new EditAddressCommand(
       request.AddressId,
-      request.Type!,
-      request.Address!,
+      request.AddressType!,
+      request.Street!,
       request.City!,
       request.Province!,
       request.PostalCode!,
       request.IsPrimary,
+      request.Street2,
+      request.Unit,
       request.Country,
       profileId,
       request.PluginId,
