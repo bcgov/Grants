@@ -7,11 +7,15 @@
   border-radius: 4px 0px 0px 4px;
   padding: 1rem;
   border-left: 8px solid var(--bc-blue);
+
+  h6 {
+    color: var(--bc-primary);
+  }
   
   .form-label {
     font-weight: 600;
     font-size: var(--bc-font-size-13);
-    color: var(--bc-primary);
+    color: var(--bc-gray-80);
     margin-bottom: 0.5rem;
   }
 
