@@ -64,39 +64,152 @@
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
     
-    <!-- Nest RetrieveProfile-related files under RetrieveProfile.cs -->
-    <Compile Update="Profiles\RetrieveProfile.Request.cs">
-      <DependentUpon>RetrieveProfile.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Profiles\RetrieveProfile.Response.cs">
-      <DependentUpon>RetrieveProfile.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Profiles\RetrieveProfile.Validator.cs">
-      <DependentUpon>RetrieveProfile.cs</DependentUpon>
-    </Compile>
-
     <!-- Nest CreatePluginConfiguration-related files under Create.cs -->
-    <Compile Update="PluginConfigurations\Create.Request.cs">
-      <DependentUpon>Create.cs</DependentUpon>
-    </Compile>
-    <Compile Update="PluginConfigurations\Create.Response.cs">
-      <DependentUpon>Create.cs</DependentUpon>
-    </Compile>
-    <Compile Update="PluginConfigurations\Create.Validator.cs">
-      <DependentUpon>Create.cs</DependentUpon>
-    </Compile>
 
     <!-- Nest UpdatePluginConfiguration-related files under Update.cs -->
-    <Compile Update="PluginConfigurations\Update.Request.cs">
+
+    <!-- Nest Contacts-related files under Create.cs -->
+    <Compile Update="Contacts\Create.Request.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\Create.Response.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\Create.Validator.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest Contacts-related files under Update.cs -->
+    <Compile Update="Contacts\Update.Request.cs">
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
-    <Compile Update="PluginConfigurations\Update.Response.cs">
+    <Compile Update="Contacts\Update.Response.cs">
       <DependentUpon>Update.cs</DependentUpon>
     </Compile>
-    <Compile Update="PluginConfigurations\Update.Validator.cs">
+    <Compile Update="Contacts\Update.Validator.cs">
       <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+
+     <!-- Nest Contacts-related files under Delete.cs -->
+    <Compile Update="Contacts\Delete.Request.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\Delete.Response.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\Delete.Validator.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest Contacts-related files under SetAsPrimary.cs -->
+    <Compile Update="Contacts\SetAsPrimary.Request.cs">
+      <DependentUpon>SetAsPrimary.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\SetAsPrimary.Response.cs">
+      <DependentUpon>SetAsPrimary.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\SetAsPrimary.Validator.cs">
+      <DependentUpon>SetAsPrimary.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest RetrieveContacts-related files under GetById.cs (RetrieveContacts endpoint) -->
+    <Compile Update="Contacts\RetrieveContacts.Request.cs">
+      <DependentUpon>RetrieveContacts.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\RetrieveContacts.Response.cs">
+      <DependentUpon>RetrieveContacts.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\RetrieveContacts.Validator.cs">
+      <DependentUpon>RetrieveContacts.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest RetrieveSubmissions-related files under RetrieveSubmissions.cs -->
+    <Compile Update="Submissions\RetrieveSubmissions.Request.cs">
+      <DependentUpon>RetrieveSubmissions.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Submissions\RetrieveSubmissions.Response.cs">
+      <DependentUpon>RetrieveSubmissions.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Submissions\RetrieveSubmissions.Validator.cs">
+      <DependentUpon>RetrieveSubmissions.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest RetrieveAddresses-related files under RetrieveAddresses.cs -->
+    <Compile Update="Addresses\RetrieveAddresses.Request.cs">
+      <DependentUpon>RetrieveAddresses.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\RetrieveAddresses.Response.cs">
+      <DependentUpon>RetrieveAddresses.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\RetrieveAddresses.Validator.cs">
+      <DependentUpon>RetrieveAddresses.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest Addresses-related files under SetAsPrimary.cs -->
+    <Compile Update="Addresses\SetAsPrimary.Request.cs">
+      <DependentUpon>SetAsPrimary.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\SetAsPrimary.Response.cs">
+      <DependentUpon>SetAsPrimary.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\SetAsPrimary.Validator.cs">
+      <DependentUpon>SetAsPrimary.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest CreateAddress-related files under Update.cs -->
+    <Compile Update="Addresses\Update.Request.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\Update.Response.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\Update.Validator.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest RetrieveOrganizations-related files under RetrieveOrganizations.cs -->
+    <Compile Update="Organizations\RetrieveOrganizations.Request.cs">
+      <DependentUpon>RetrieveOrganizations.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Organizations\RetrieveOrganizations.Response.cs">
+      <DependentUpon>RetrieveOrganizations.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Organizations\RetrieveOrganizations.Validator.cs">
+      <DependentUpon>RetrieveOrganizations.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest Organizations-related files under Update.cs -->
+    <Compile Update="Organizations\Update.Request.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Organizations\Update.Response.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Organizations\Update.Validator.cs">
+      <DependentUpon>Update.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest Plugins-related files under RetrievePluginConfigurations.cs -->
+    <Compile Update="Plugins\RetrieveProviders.Request.cs">
+      <DependentUpon>RetrieveProviders.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Plugins\RetrieveProviders.Response.cs">
+      <DependentUpon>RetrieveProviders.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Plugins\RetrieveProviders.Validator.cs">
+      <DependentUpon>RetrieveProviders.cs</DependentUpon>
     </Compile>
     
+    <!-- Nest Contact Roles files under RetrieveContactRoles.cs -->
+    <Compile Update="Contacts\RetrieveContactRoles.Request.cs">
+      <DependentUpon>RetrieveContactRoles.cs</DependentUpon>      
+    </Compile>
+    <Compile Update="Contacts\RetrieveContactRoles.Response.cs">
+      <DependentUpon>RetrieveContactRoles.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Contacts\RetrieveContactRoles.Validator.cs">
+      <DependentUpon>RetrieveContactRoles.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

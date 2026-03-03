@@ -14,7 +14,7 @@
     [attr.aria-labelledby]="dropdownId"
   >
     <li *ngIf="showLogout">
-      <a class="dropdown-item" href="#" (click)="onLogout($event)">Log out</a>
+      <a class="dropdown-item" [attr.id]="dropdownId + '-logout'" href="#" (click)="onLogout($event)">Log out</a>
     </li>
   </ul>
 </div>

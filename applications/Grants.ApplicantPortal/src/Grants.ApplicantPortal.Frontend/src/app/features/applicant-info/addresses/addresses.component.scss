@@ -1,0 +1,93 @@
+// Address-specific customizations only
+.primary-address-info {
+  // Use same styles as .primary-info-display
+  background-color: #faf9f8;
+  border-width: 0px;
+  margin-bottom: 1rem;
+  border-radius: 4px 0px 0px 4px;
+  padding: 1rem;
+  border-left: 8px solid var(--bc-blue);
+
+  h6 {
+    color: var(--bc-primary);
+  }
+  
+  .form-label {
+    font-weight: 600;
+    font-size: var(--bc-font-size-13);
+    color: var(--bc-gray-80);
+    margin-bottom: 0.5rem;
+  }
+
+  .address-value {
+    color: var(--bc-primary);
+    font-size: var(--bc-font-size-14);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+
+    @media (max-width: 768px) {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+.no-primary-address {
+  padding: 2rem;
+  text-align: center;
+  color: var(--bc-gray);
+
+  p {
+    margin: 0;
+    font-size: var(--bc-font-size-14);
+    font-style: italic;
+  }
+}
+
+.addresses-container {
+  padding: 0;
+}
+
+// Address type badges - using base badge styles
+.address-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: var(--bc-font-size-12);
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  // Primary address types
+  &.address-type-physical {
+    background-color: #003366; // BC Gov navy blue
+    color: #ffffff;
+  }
+
+  &.address-type-mailing {
+    background-color: #2E8540; // BC Gov green
+    color: #ffffff;
+  }
+
+  // Secondary/legacy types
+  &.address-type-primary {
+    background-color: var(--bc-bg-info);
+    color: var(--bc-white);
+  }
+
+  &.address-type-billing {
+    background-color: #7F4098; // BC Gov purple
+    color: #ffffff;
+  }
+
+  &.address-type-office {
+    background-color: #D8292F; // BC Gov red
+    color: #ffffff;
+  }
+
+  // Fallback for unknown types
+  &.address-type-other {
+    background-color: #606060; // Neutral gray
+    color: #ffffff;
+  }
+}

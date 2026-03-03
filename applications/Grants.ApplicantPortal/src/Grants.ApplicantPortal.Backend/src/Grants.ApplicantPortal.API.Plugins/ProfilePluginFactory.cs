@@ -8,8 +8,6 @@ namespace Grants.ApplicantPortal.API.Plugins;
 /// </summary>
 public class ProfilePluginFactory(IServiceProvider serviceProvider, ILogger<ProfilePluginFactory> logger) : IProfilePluginFactory
 {
-  private readonly Dictionary<string, Type> _pluginTypes = new(StringComparer.OrdinalIgnoreCase);
-  private readonly object _lock = new();
 
   public IProfilePlugin? GetPlugin(string pluginId)
   {
@@ -21,39 +19,21 @@ public class ProfilePluginFactory(IServiceProvider serviceProvider, ILogger<Prof
       return null;
     }
 
-    // Try to get from cache first
-    if (_pluginTypes.TryGetValue(pluginId, out var cachedType))
+    // Get all registered plugins and find the one with matching ID
+    var plugins = serviceProvider.GetServices<IProfilePlugin>();
+    
+    foreach (var plugin in plugins)
     {
-      return (IProfilePlugin?)serviceProvider.GetService(cachedType);
-    }
-
-    // If not in cache, scan available plugins
-    lock (_lock)
-    {
-      // Double-check pattern
-      if (_pluginTypes.TryGetValue(pluginId, out cachedType))
+      if (plugin.PluginId.Equals(pluginId, StringComparison.OrdinalIgnoreCase))
       {
-        return (IProfilePlugin?)serviceProvider.GetService(cachedType);
-      }
-
-      // Get all registered plugins
-      var plugins = serviceProvider.GetServices<IProfilePlugin>();
-
-      foreach (var plugin in plugins)
-      {
-        var pluginType = plugin.GetType();
-        _pluginTypes[plugin.PluginId] = pluginType;
-
-        if (plugin.PluginId.Equals(pluginId, StringComparison.OrdinalIgnoreCase))
-        {
-          logger.LogDebug("Found plugin {PluginType} for plugin ID: {PluginId}",
-              pluginType.Name, pluginId);
-          return plugin;
-        }
+        logger.LogDebug("Found plugin {PluginType} for plugin ID: {PluginId}",
+            plugin.GetType().Name, pluginId);
+        return plugin;
       }
     }
 
-    logger.LogWarning("No plugin found for plugin ID: {PluginId}", pluginId);
+    logger.LogWarning("No plugin found for plugin ID: {PluginId}. Available plugins: {AvailablePlugins}", 
+        pluginId, string.Join(", ", plugins.Select(p => p.PluginId)));
     return null;
   }
 

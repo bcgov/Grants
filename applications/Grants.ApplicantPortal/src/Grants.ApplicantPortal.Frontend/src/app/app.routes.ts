@@ -25,6 +25,23 @@ export const routes: Routes = [
         (m) => m.LoginComponent
       ),
   },
+  {
+    path: 'logout',
+    loadComponent: () =>
+      import('./features/auth/logout/logout.component').then(
+        (m) => m.LogoutComponent
+      ),
+  },
+
+  // Workspace selector route (protected but outside main layout)
+  {
+    path: 'workspace-selector',
+    loadComponent: () =>
+      import('./features/workspace/workspace-selector.component').then(
+        (m) => m.WorkspaceSelectorComponent
+      ),
+    canActivate: [authGuard],
+  },
 
   // Protected routes under 'app' path
   {
@@ -41,20 +58,13 @@ export const routes: Routes = [
         path: 'applicant-info',
         loadComponent: () =>
           import(
-            './features/applicant-info/components/applicant-info.component'
+            './features/applicant-info/applicant-info.component'
           ).then((m) => m.ApplicantInfoComponent),
-      },
-      {
-        path: 'submissions',
-        loadComponent: () =>
-          import(
-            './features/submissions/components/submissions.component'
-          ).then((m) => m.SubmissionsComponent),
       },
       {
         path: 'payments',
         loadComponent: () =>
-          import('./features/payments/components/payments.component').then(
+          import('./features/payments/payments.component').then(
             (m) => m.PaymentsComponent
           ),
       },

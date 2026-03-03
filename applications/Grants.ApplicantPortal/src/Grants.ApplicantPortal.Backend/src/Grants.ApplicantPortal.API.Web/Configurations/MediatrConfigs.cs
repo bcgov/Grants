@@ -1,6 +1,6 @@
 ﻿using Ardalis.SharedKernel;
-using Grants.ApplicantPortal.API.Core.Features.Contributors.ContributorAggregate;
-using Grants.ApplicantPortal.API.UseCases.Contributors.Create;
+using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
+using Grants.ApplicantPortal.API.UseCases.Organizations.Retrieve;
 using System.Reflection;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
@@ -11,8 +11,9 @@ public static class MediatrConfigs
   {
     var mediatRAssemblies = new[]
       {
-        Assembly.GetAssembly(typeof(Contributor)), // Core
-        Assembly.GetAssembly(typeof(CreateContributorCommand)) // UseCases
+        Assembly.GetAssembly(typeof(Profile)), // Core.Features
+        Assembly.GetAssembly(typeof(RetrieveOrganizationsQueryHandler)), // UseCases
+        Assembly.GetAssembly(typeof(Program)) // Web (current assembly)
       };
 
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(mediatRAssemblies!))

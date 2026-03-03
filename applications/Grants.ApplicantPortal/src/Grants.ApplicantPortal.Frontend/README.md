@@ -177,6 +177,37 @@ Dockerfile                 # Docker build configuration
 
 ## 🔍 Troubleshooting
 
+### HTTP 431 - Request Header Fields Too Large
+
+Keycloak JWT tokens stored in cookies can exceed Node.js's default 8KB header size limit, causing `HTTP ERROR 431` in local development after authenticating.
+
+**Root Cause**: The OIDC tokens from Keycloak are large and get stored in cookies/headers. When the Angular dev server (Vite/Node.js) receives these requests, the headers exceed the default 8KB limit and Node.js rejects them with a 431 status.
+
+**Fix**: Set the `NODE_OPTIONS` environment variable to increase the max header size to 32KB. This only needs to be done **once per machine**:
+
+```powershell
+# Set permanently (Windows User environment variable)
+[System.Environment]::SetEnvironmentVariable("NODE_OPTIONS", "--max-http-header-size=32768", "User")
+```
+
+**Important**: After setting this you must **fully close and reopen VS Code** (not just the terminal tab). VS Code's integrated terminals inherit environment variables from VS Code's own process, so new terminal tabs within the same VS Code session will NOT pick up the change.
+
+To verify it's set correctly:
+
+```powershell
+echo $env:NODE_OPTIONS
+# Should output: --max-http-header-size=32768
+```
+
+If you need a quick fix in the current terminal without restarting VS Code:
+
+```powershell
+$env:NODE_OPTIONS="--max-http-header-size=32768"
+npm start
+```
+
+> **Note**: This is a local development issue only. Production deployments (Docker/OpenShift) handle this via `server.js` which passes `--max-http-header-size=32768` directly to Node.
+
 ### Port Issues
 
 - Default port: 4000

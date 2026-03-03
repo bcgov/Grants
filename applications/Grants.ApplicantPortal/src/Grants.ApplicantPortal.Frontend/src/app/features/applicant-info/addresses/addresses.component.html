@@ -1,0 +1,47 @@
+<div class="addresses-container">
+      @if (isLoading) {      
+      <div
+        class="loading-spinner-container d-flex justify-content-center align-items-center"
+        style="min-height: 150px"
+      >
+        <div class="text-center">
+          <div class="spinner-border">
+            <span class="sr-only">Loading addresses...</span>
+          </div>
+          <p class="loading-text mt-3">Loading your addresses...</p>
+        </div>
+      </div>
+      } @else if (primaryAddress) {
+      <div id="primary-address-info" class="primary-address-info">
+        <h6 class="mb-2">PRIMARY ADDRESS</h6>
+        <div class="row">
+          <div class="col-md-10 col-sm-12">
+            <label class="form-label">Full Address</label>
+            <p class="address-value">
+              {{ getPrimaryFullAddress() }}, {{ primaryAddress.city }}, {{ primaryAddress.province }}, {{ primaryAddress.postalCode }}
+            </p>
+          </div>
+          <div class="col-md-2 col-sm-12">
+            <label class="form-label">Type</label>
+            <p class="address-value">
+                {{ primaryAddress.addressType }}
+            </p>
+          </div>
+        </div>
+      </div>
+      } @else {
+      <div id="no-addresses-message" class="no-primary-address text-center text-muted">
+        <p>No addresses found.</p>
+      </div>
+      }
+
+      <!-- Addresses Table -->
+      <app-datatable
+        [config]="addressesTableConfig"
+        [data]="getAddressesForTable()"
+        [loading]="isLoading"
+        (rowClick)="onAddressRowClick($event)"
+        (actionClick)="onAddressAction($event)"
+        (sort)="onAddressSort($event)"
+      ></app-datatable>
+</div>

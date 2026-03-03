@@ -16,8 +16,7 @@ const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:510
 const envVars = {
   KEYCLOAK__AUTHSERVERURL: process.env.KEYCLOAK__AUTHSERVERURL || 'https://dev.loginproxy.gov.bc.ca/auth',
   KEYCLOAK__REALM: process.env.KEYCLOAK__REALM || 'standard',
-  KEYCLOAK__RESOURCE: process.env.KEYCLOAK__RESOURCE || 'grants-portal-5361',
-  KEYCLOAK__CREDENTIALS__SECRET: process.env.KEYCLOAK__CREDENTIALS__SECRET || 'placeholder-client-secret'
+  KEYCLOAK__RESOURCE: process.env.KEYCLOAK__RESOURCE || 'grants-portal-5361'
 };
 
 // Configure Express to trust proxy headers properly for container environments
@@ -60,8 +59,13 @@ if (enableProxy) {
     target: backendServiceUrl,
     pathRewrite: {'^/api': ''},
     changeOrigin: true,
+    timeout: 30000,
+    proxyTimeout: 60000,
     onError: (err, req, res) => {
-      console.error('Proxy error:', err.message);
+      console.error(`Proxy error [${req.method} ${req.url}]:`, err.message);
+      if (!res.headersSent) {
+        res.status(502).json({ error: 'Backend service unavailable' });
+      }
     },
     onProxyReq: (proxyReq, req, res) => {
       console.log(`Proxying ${req.method} ${req.url} to ${backendServiceUrl}`);
@@ -202,6 +206,7 @@ app.get('*', catchAllLimiter, (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
+  console.log(`Max HTTP header size: ${process.env.NODE_OPTIONS?.includes('--max-http-header-size') ? 'Custom' : 'Default (8KB)'}`);
   if (enableProxy) {
     console.log(`API proxy: ENABLED - /api/* → ${backendServiceUrl}`);
   } else {

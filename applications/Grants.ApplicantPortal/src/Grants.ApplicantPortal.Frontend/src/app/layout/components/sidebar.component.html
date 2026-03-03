@@ -14,7 +14,8 @@
 <aside>
   <nav class="nav-menu">
     <a
-      routerLink="/applicant-info"
+      id="nav-applicant-info"
+      routerLink="/app/applicant-info"
       routerLinkActive="active"
       class="nav-item"
       (click)="onMenuItemClick()"
@@ -23,16 +24,8 @@
       Applicant Info
     </a>
     <a
-      routerLink="/submissions"
-      routerLinkActive="active"
-      class="nav-item"
-      (click)="onMenuItemClick()"
-    >
-      <i class="fa-regular fa-rectangle-list nav-icon"></i>
-      Submissions
-    </a>
-    <a
-      routerLink="/payments"
+      id="nav-payments"
+      routerLink="/app/payments"
       routerLinkActive="active"
       class="nav-item"
       (click)="onMenuItemClick()"

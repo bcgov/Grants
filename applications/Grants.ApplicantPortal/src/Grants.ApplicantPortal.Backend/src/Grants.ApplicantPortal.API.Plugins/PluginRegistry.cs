@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Grants.ApplicantPortal.API.Core.Plugins;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Grants.ApplicantPortal.API.Plugins;
 
@@ -13,21 +14,23 @@ public static class PluginRegistry
   private static readonly ConcurrentDictionary<string, PluginInfo> _plugins = new(StringComparer.OrdinalIgnoreCase);
   private static bool _isInitialized = false;
   private static readonly object _initLock = new();
+  private static PluginConfiguration? _configuration;
 
   /// <summary>
-  /// Information about a registered plugin
+  /// Information about a registered plugin with its configuration
   /// </summary>
   public record PluginInfo(
       string PluginId,
       Type PluginType,
       string Description,
-      IReadOnlyList<PluginSupportedFeature> SupportedFeatures);
+      IReadOnlyList<string> SupportedFeatures,
+      PluginOptions? Configuration = null);
 
   /// <summary>
-  /// Initialize the plugin registry with available plugins
+  /// Initialize the plugin registry with available plugins and configuration
   /// Should be called during application startup
   /// </summary>
-  public static void Initialize(IServiceProvider serviceProvider)
+  public static void Initialize(IServiceProvider serviceProvider, PluginConfiguration? configuration = null)
   {
     if (_isInitialized) return;
 
@@ -35,18 +38,24 @@ public static class PluginRegistry
     {
       if (_isInitialized) return;
 
+      _configuration = configuration;
       var plugins = serviceProvider.GetServices<IProfilePlugin>();
 
       foreach (var plugin in plugins)
       {
         var pluginType = plugin.GetType();
         var description = pluginType.Name.Replace("Plugin", "").Replace("Profile", "");
+        
+        // Get configuration for this plugin if available
+        PluginOptions? pluginConfig = null;
+        _configuration?.TryGetValue(plugin.PluginId, out pluginConfig);
 
         _plugins[plugin.PluginId] = new PluginInfo(
             plugin.PluginId,
             pluginType,
             description,
-            plugin.GetSupportedFeatures());
+            plugin.GetSupportedFeatures(),
+            pluginConfig);
       }
 
       _isInitialized = true;
@@ -60,22 +69,6 @@ public static class PluginRegistry
   {
     if (string.IsNullOrWhiteSpace(pluginId)) return false;
     return _plugins.ContainsKey(pluginId);
-  }
-
-  /// <summary>
-  /// Check if a plugin supports a specific provider/key combination
-  /// </summary>
-  public static bool IsValidProviderKey(string? pluginId, string? provider, string? key)
-  {
-    if (string.IsNullOrWhiteSpace(pluginId) || string.IsNullOrWhiteSpace(provider) || string.IsNullOrWhiteSpace(key))
-      return false;
-
-    if (!_plugins.TryGetValue(pluginId, out var pluginInfo))
-      return false;
-
-    return pluginInfo.SupportedFeatures.Any(f =>
-        f.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase) &&
-        f.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
   }
 
   /// <summary>
@@ -104,27 +97,34 @@ public static class PluginRegistry
   }
 
   /// <summary>
-  /// Get supported features for a specific plugin
+  /// Get all configured plugins (only those with configuration)
   /// </summary>
-  public static IReadOnlyList<PluginSupportedFeature> GetSupportedFeatures(string pluginId)
+  /// <param name="enabledOnly">If true, only return enabled plugins</param>
+  public static IEnumerable<PluginInfo> GetConfiguredPlugins(bool enabledOnly = true)
   {
-    if (_plugins.TryGetValue(pluginId, out var pluginInfo))
-      return pluginInfo.SupportedFeatures;
-
-    return new List<PluginSupportedFeature>();
+    return _plugins.Values
+      .Where(p => p.Configuration != null)
+      .Where(p => !enabledOnly || p.Configuration!.Enabled)
+      .OrderBy(p => p.PluginId);
   }
 
   /// <summary>
-  /// Get all supported providers across all plugins
+  /// Get configured plugin by ID
   /// </summary>
-  public static IReadOnlyList<string> GetAllSupportedProviders()
+  /// <param name="pluginId">Plugin ID</param>
+  /// <param name="enabledOnly">If true, only return if enabled</param>
+  public static PluginInfo? GetConfiguredPlugin(string pluginId, bool enabledOnly = true)
   {
-    return _plugins.Values
-        .SelectMany(p => p.SupportedFeatures)
-        .Select(f => f.Provider)
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .OrderBy(p => p)
-        .ToList();
+    if (!_plugins.TryGetValue(pluginId, out var plugin))
+      return null;
+      
+    if (plugin.Configuration == null)
+      return null;
+      
+    if (enabledOnly && !plugin.Configuration.Enabled)
+      return null;
+      
+    return plugin;
   }
 
   /// <summary>

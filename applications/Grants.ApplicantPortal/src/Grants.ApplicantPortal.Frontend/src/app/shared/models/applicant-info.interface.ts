@@ -1,5 +1,4 @@
 export interface BackendResponse {
-  profileId: string;
   pluginId: string;
   provider: string;
   key: string;
@@ -8,22 +7,28 @@ export interface BackendResponse {
 }
 
 export interface Submission {
-  applicationId: string;
-  submissionId: string;
-  submissionDate: Date;
+  id: string;
+  linkId: string;
+  receivedTime: string;
+  submissionTime: string;
+  referenceNo: string;
   projectName: string;
   status: string;
-  updatedOn?: string;
-  paidAmount?: number;
-  submissionLink?: string;
 }
 
 export interface Address {
+  id: string;
+  addressType: string;
   street: string;
+  street2: string;
+  unit: string;
   city: string;
-  state: string;
-  zipCode: string;
+  province: string;
+  postalCode: string;
   country: string;
+  isPrimary: boolean;
+  isEditable: boolean;
+  referenceNo: string;
 }
 
 export interface Contact {
@@ -43,22 +48,17 @@ export interface Certification {
   validUntil: string;
 }
 
-export interface Program1Specific {
-  eligibilityStatus: string;
-  lastAuditDate: string;
-  complianceScore: number;
-  specialDesignations: string[];
-}
-
 export interface OrganizationData {
   orgName: string;
   orgNumber: string;
   orgStatus: string;
   organizationType: string;
-  nonRegOrgName: string;
+  nonRegOrgName?: string;
   orgSize: string;
   fiscalMonth: string;
   fiscalDay: number;
+  fiscalYearEndMonth?: number;
+  fiscalYearEndDay?: number;
   organizationId: string;
   legalName: string;
   doingBusinessAs: string;
@@ -66,28 +66,27 @@ export interface OrganizationData {
   founded: number;
   address: Address;
   contactInfo: ContactInfo;
+  submissions?: SubmissionsData[];
   mission: string;
   servicesAreas: string[];
   certifications: Certification[];
-  program1Specific: Program1Specific;
+  lastUpdated?: string;
+  allowEdit?: boolean;
 }
 
 export interface SubmissionsData {
-  submissionId: string;
-  applicationId: string;
+  id: string;
+  linkId: string;
+  receivedTime: string;
+  submissionTime: string;
+  referenceNo: string;
   projectName: string;
-  programName: string;
-  requestedAmount: number;
-  paidAmount: number;
   status: string;
-  submissionDate: Date;
-  lastModified: Date;
 }
 
 // Single response interface for parsed data
 export interface OrganizationResponse {
   metadata: {
-    profileId: string;
     pluginId: string;
     provider: string;
     key: string;
@@ -98,13 +97,13 @@ export interface OrganizationResponse {
 
 export interface SubmissionsResponse {
   metadata: {
-    profileId: string;
     pluginId: string;
     provider: string;
     key: string;
     populatedAt: string;
   };
-  submissionsData: SubmissionsData;
+  submissionsData: SubmissionsData[];
+  linkSource?: string;
 }
 
 export interface OrgSearchResult {
