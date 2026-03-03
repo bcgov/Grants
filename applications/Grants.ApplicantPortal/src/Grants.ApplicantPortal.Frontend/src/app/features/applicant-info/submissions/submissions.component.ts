@@ -112,6 +112,16 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
         next: (response) => {
           console.log('SubmissionsComponent - Received submissions response:', response);
           this.linkSource = response.linkSource;
+          // Set linkConfig on datatable so chevrons render as <a> tags
+          if (this.linkSource) {
+            this.submissionsTableConfig = {
+              ...this.submissionsTableConfig,
+              linkConfig: {
+                baseUrl: this.linkSource,
+                linkField: 'linkId'
+              }
+            };
+          }
           const submissionsArray = Array.isArray(response.submissionsData) 
             ? response.submissionsData 
             : (response.submissionsData ? [response.submissionsData] : []);
