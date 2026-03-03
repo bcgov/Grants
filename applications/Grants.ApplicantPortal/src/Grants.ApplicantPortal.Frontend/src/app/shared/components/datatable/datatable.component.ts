@@ -1,17 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { 
   DatatableConfig, 
   DatatableColumn,
   DatatableRowClickEvent,
   DatatableActionEvent,
-  DatatableSortEvent,
-  DatatableActionItem,
-  DatatableBadgeConfig,
-  DatatableLinkConfig,
-  DatatableSortState
+  DatatableSortEvent
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
 
