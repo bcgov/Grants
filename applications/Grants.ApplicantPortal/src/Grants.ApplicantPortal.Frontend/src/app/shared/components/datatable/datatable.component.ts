@@ -10,6 +10,7 @@ import {
   DatatableSortEvent,
   DatatableActionItem,
   DatatableBadgeConfig,
+  DatatableLinkConfig,
   DatatableSortState
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
@@ -101,6 +102,14 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   onActionClick(actionType: string, row: any, index: number, event: Event): void {
     event.stopPropagation();
     this.actionClick.emit({ action: actionType, row, index });
+  }
+
+  getRowLink(row: any): string | null {
+    const linkConfig = this.config.linkConfig;
+    if (!linkConfig?.baseUrl || !row[linkConfig.linkField]) {
+      return null;
+    }
+    return `${linkConfig.baseUrl}${row[linkConfig.linkField]}`;
   }
 
   onSort(column: string): void {
