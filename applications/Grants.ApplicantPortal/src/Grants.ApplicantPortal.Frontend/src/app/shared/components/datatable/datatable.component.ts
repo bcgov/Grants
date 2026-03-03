@@ -1,16 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { 
   DatatableConfig, 
   DatatableColumn,
   DatatableRowClickEvent,
   DatatableActionEvent,
-  DatatableSortEvent,
-  DatatableActionItem,
-  DatatableBadgeConfig,
-  DatatableSortState
+  DatatableSortEvent
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
 
@@ -101,6 +97,14 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   onActionClick(actionType: string, row: any, index: number, event: Event): void {
     event.stopPropagation();
     this.actionClick.emit({ action: actionType, row, index });
+  }
+
+  getRowLink(row: any): string | null {
+    const linkConfig = this.config.linkConfig;
+    if (!linkConfig?.baseUrl || !row[linkConfig.linkField]) {
+      return null;
+    }
+    return `${linkConfig.baseUrl}${row[linkConfig.linkField]}`;
   }
 
   onSort(column: string): void {
