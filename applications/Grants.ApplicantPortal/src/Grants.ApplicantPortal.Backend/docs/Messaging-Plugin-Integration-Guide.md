@@ -1,392 +1,859 @@
 # Messaging System - Plugin Integration Guide
 
-## ?? **Overview**
+## Overview
 
-This messaging system provides **reliable, asynchronous communication** between your application and external systems using the **Inbox/Outbox pattern**. It's designed to work seamlessly with all plugins and handle various message types including acknowledgments.
+This messaging system provides **reliable, asynchronous communication** between the Grants Applicant Portal and external systems using the **Inbox/Outbox pattern**. The infrastructure is **plugin-agnostic** - any plugin can use it by publishing messages to the outbox and registering a handler for incoming responses.
 
-## ??? **Architecture**
+### Key Concepts
 
-```mermaid
-graph TB
-    subgraph "Your Application"
-        A[Demo Plugin] -->|PublishAsync| B[IMessagePublisher]
-        C[Unity Plugin] -->|PublishAsync| B
-        
-        B --> D[OutboxMessages Table]
-        E[OutboxProcessorJob] --> D
-        E -->|Distributed Lock| F[Redis/Memory]
-        E --> G[RabbitMQ Publisher]
-    end
-    
-    subgraph "Message Broker"
-        G --> H[RabbitMQ Exchange]
-        H --> I[grants.demo.queue]
-        H --> J[grants.unity.queue]
-        H --> K[grants.system.queue]
-    end
-    
-    subgraph "External Systems"
-        L[External Unity System] --> J
-        M[External Demo System] --> I
-        N[System Events] --> K
-    end
-    
-    subgraph "Incoming Processing"
-        I --> O[RabbitMQ Consumer]
-        J --> O
-        K --> O
-        O --> P[InboxMessages Table]
-        
-        Q[InboxProcessorJob] --> P
-        Q -->|Distributed Lock| F
-        Q --> R[Plugin Message Router]
-        
-        R --> S[Demo Plugin Handler]
-        R --> T[Unity Plugin Handler]
-        R --> U[System Event Handler]
-        R --> V[Acknowledgment Handler]
-    end
+- **Outbox**: Transactional store for outbound commands. The portal writes here; a background job publishes to RabbitMQ.
+- **Inbox**: Transactional store for inbound messages. RabbitMQ delivers here; a background job routes to plugin handlers.
+- **Plugin-agnostic routing**: The `PluginId` on every message drives routing. Add a new plugin, register a handler, done.
+
+---
+
+## Architecture
+
+```
+Portal                                      RabbitMQ                           External System
+=======                                     ========                           ===============
+
+Plugin fires command                        Exchange: grants.messaging
+  via IMessagePublisher                     (topic)
+        |                                       |
+        v                                       |
+  OutboxMessage table                           |
+  (status: Pending)                             |
+        |                                       |
+  OutboxProcessorJob (Quartz)                   |
+        |                                       |
+        +--- publishes to RabbitMQ ------------>|
+             routing key:                       |
+             commands.{plugin}.plugindata       +---> External consumer queue
+                                                |     (e.g. unity.mockapi.commands
+                                                |      bound to commands.unity.plugindata)
+                                                |
+                                                |     External processes command,
+                                                |     publishes ack back:
+                                                |<--- routing key: grants.{plugin}.acknowledgment
+                                                |
+  RabbitMQConsumer (Portal)  <------------------+
+  queue: grants.messaging.inbox
+  bound to: grants.*.#
+        |
+        v
+  InboxMessage table
+  (status: Pending)
+        |
+  InboxProcessorJob (Quartz)
+        |
+  PluginMessageRouter
+        |
+        +---> UnityPluginMessageHandler   (PluginId = "UNITY")
+        +---> DemoPluginMessageHandler    (PluginId = "DEMO")
+        +---> YourNewPluginHandler        (PluginId = "NEWPLUGIN")
 ```
 
-## ?? **Message Flow**
+### Routing Key Namespaces
 
-### **Outbound Messages (Plugin ? External System)**
+Two routing key prefixes keep outbound and inbound traffic separated:
 
-1. **Plugin Action**: Plugin calls `IMessagePublisher.PublishAsync()`
-2. **Outbox Storage**: Message stored in `OutboxMessages` table (transactional safety)
-3. **Background Processing**: `OutboxProcessorJob` processes messages with distributed locking
-4. **RabbitMQ Publishing**: Message sent to appropriate exchange with routing key
-5. **External Receipt**: External system receives and processes the message
+| Direction | Prefix | Example | Consumed by |
+|-----------|--------|---------|-------------|
+| **Outbound** (Portal to External) | `commands.` | `commands.unity.plugindata` | External system queue |
+| **Inbound** (External to Portal) | `grants.` | `grants.unity.acknowledgment` | Portal inbox queue (`grants.*.#`) |
 
-### **Inbound Messages (External System ? Plugin)**
+This prevents the Portal from consuming its own outbound commands.
 
-1. **External Send**: External system publishes message to RabbitMQ queue
-2. **Consumer Receipt**: `RabbitMQConsumer` receives message from queue
-3. **Inbox Storage**: Message stored in `InboxMessages` table (duplicate detection)
-4. **Background Processing**: `InboxProcessorJob` processes with distributed locking
-5. **Plugin Routing**: Message routed to appropriate plugin or system handler
+---
 
-## ?? **Message Types & Routing**
+## Outbound Message Flow (Portal to External)
 
-### **Outbound Routing Pattern**
-```
-grants.{plugin}.{messagetype}
-```
+1. Plugin calls `IMessagePublisher.PublishAsync(message)`
+2. `OutboxMessagePublisher` serializes the message and writes an `OutboxMessage` row (status: `Pending`)
+3. `OutboxProcessorJob` (Quartz, every N seconds):
+   - Acquires distributed lock
+   - Picks up pending messages in batches
+   - Publishes each to RabbitMQ via `IRabbitMQPublisher`
+   - Routing key: `commands.{pluginId}.plugindata` (generated by `GenerateRoutingKey`)
+   - Marks message as `Published` or `Failed`
+4. External system consumer picks up the message from its own queue
 
-**Examples:**
-- `grants.demo.profileupdated` - Demo plugin profile update
-- `grants.unity.contactcreated` - Unity plugin contact creation
-- `grants.system.healthcheck` - System health check
+### OutboxMessage Table Schema
 
-### **Inbound Message Types**
+| Column | Type | Description |
+|--------|------|-------------|
+| `Id` | `long` | Primary key (auto-increment) |
+| `MessageId` | `Guid` | Unique message identifier (matches the original `PluginDataMessage.MessageId`) |
+| `MessageType` | `string` | Message type for routing/deserialization (e.g. `"PluginDataMessage"`) |
+| `Payload` | `string` | Full JSON-serialized message body |
+| `PluginId` | `string?` | ID of the plugin that created this message (e.g. `"UNITY"`) |
+| `CorrelationId` | `string?` | Correlation ID for tracing (e.g. `"profile-{profileId}"`) |
+| `Status` | `OutboxMessageStatus` | Current lifecycle status (see below) |
+| `CreatedAt` | `DateTime` | When the message was created (UTC) |
+| `ProcessedAt` | `DateTime?` | When the message was published or permanently failed (UTC) |
+| `RetryCount` | `int` | Number of publish attempts so far |
+| `LastError` | `string?` | Error message from the most recent failed attempt |
+| `LockToken` | `string?` | Distributed lock token (prevents duplicate processing across pods) |
+| `LockExpiry` | `DateTime?` | When the lock expires |
 
-#### **1. Plugin Data Messages**
+### OutboxMessageStatus Values
+
+| Value | Name | Meaning |
+|-------|------|---------|
+| `0` | **Pending** | Waiting to be published. Set on creation, or after a failed attempt when retries remain. |
+| `1` | **Published** | Successfully published to RabbitMQ. Terminal state. |
+| `2` | **Failed** | Permanently failed after max retries exhausted. Terminal state. |
+| `3` | **Processing** | Currently locked by a job instance for publishing. |
+
+### Outbound Command Payload
+
+All plugin write operations (contact create/edit/delete, address edit, org edit, etc.) use `PluginDataMessage`:
+
 ```json
 {
-  "messageId": "123e4567-e89b-12d3-a456-426614174000",
-  "messageType": "ProfileUpdatedMessage",
-  "correlationId": "profile-456",
+  "messageId": "326a1072-bf82-4ee9-9daa-b76ca147fa50",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:11:19Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
   "pluginId": "UNITY",
+  "dataType": "CONTACT_SET_PRIMARY_COMMAND",
   "data": {
-    "profileId": "456",
-    "provider": "PROGRAM1",
-    "key": "ORGINFO"
+    "action": "SetContactAsPrimary",
+    "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP"
   }
 }
 ```
 
-#### **2. Acknowledgment Messages**
+### Unity Command Types Currently Published
+
+| `dataType` | Action | Published by |
+|------------|--------|-------------|
+| `CONTACT_CREATE_COMMAND` | Create a new contact | `Unity.Contacts.cs` |
+| `CONTACT_EDIT_COMMAND` | Edit an existing contact | `Unity.Contacts.cs` |
+| `CONTACT_SET_PRIMARY_COMMAND` | Set a contact as primary | `Unity.Contacts.cs` |
+| `CONTACT_DELETE_COMMAND` | Delete a contact | `Unity.Contacts.cs` |
+| `ADDRESS_EDIT_COMMAND` | Edit an address | `Unity.Addresses.cs` |
+| `ADDRESS_SET_PRIMARY_COMMAND` | Set an address as primary | `Unity.Addresses.cs` |
+| `ORGANIZATION_EDIT_COMMAND` | Edit an organization | `Unity.Organizations.cs` |
+
+### Full Command Payload Examples
+
+<details>
+<summary><b>CONTACT_CREATE_COMMAND</b></summary>
+
 ```json
 {
-  "messageId": "987f6543-e21b-34c5-b789-123456789abc", 
+  "messageId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:11:19Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "CONTACT_CREATE_COMMAND",
+  "data": {
+    "action": "CreateContact",
+    "contactId": "c8d27b95-20fe-4ef4-ad1e-15fd99ced56b",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "data": {
+      "name": "Andre Goncalves",
+      "email": "andre@example.com",
+      "title": "Program Director",
+      "contactType": "ApplicantProfile",
+      "homePhoneNumber": null,
+      "mobilePhoneNumber": "555 987-6543",
+      "workPhoneNumber": "555 864-2100",
+      "workPhoneExtension": "101",
+      "role": "Executive",
+      "isPrimary": true
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>CONTACT_EDIT_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:12:00Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "CONTACT_EDIT_COMMAND",
+  "data": {
+    "action": "EditContact",
+    "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "data": {
+      "name": "Alex Johnson Updated",
+      "email": "alex.johnson.updated@unity.gov",
+      "title": "Senior Program Director",
+      "contactType": "ApplicantProfile",
+      "homePhoneNumber": "555 123-4567",
+      "mobilePhoneNumber": "555 987-6543",
+      "workPhoneNumber": "555 864-2100",
+      "workPhoneExtension": "102",
+      "role": "Executive",
+      "isPrimary": true
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>CONTACT_SET_PRIMARY_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "326a1072-bf82-4ee9-9daa-b76ca147fa50",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:11:19Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "CONTACT_SET_PRIMARY_COMMAND",
+  "data": {
+    "action": "SetContactAsPrimary",
+    "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>CONTACT_DELETE_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "d4e5f6a7-b8c9-0123-def0-123456789abc",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:13:00Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "CONTACT_DELETE_COMMAND",
+  "data": {
+    "action": "DeleteContact",
+    "contactId": "b5a01793-e247-48c7-8257-25b0ed239883",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>ADDRESS_EDIT_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "e5f6a7b8-c9d0-1234-ef01-23456789abcd",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:14:00Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "ADDRESS_EDIT_COMMAND",
+  "data": {
+    "action": "EditAddress",
+    "addressId": "AAD12E34-6789-0ABC-DEF1-234567890ABC",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "data": {
+      "addressType": "Physical",
+      "street": "1234 Government Street",
+      "street2": "Suite 600",
+      "unit": "",
+      "city": "Victoria",
+      "province": "BC",
+      "postalCode": "V8W1A4",
+      "country": "",
+      "isPrimary": true
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>ADDRESS_SET_PRIMARY_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "f6a7b8c9-d0e1-2345-f012-3456789abcde",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:15:00Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "ADDRESS_SET_PRIMARY_COMMAND",
+  "data": {
+    "action": "SetAddressAsPrimary",
+    "addressId": "BBD12E34-6789-0ABC-DEF1-234567890ABC",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>ORGANIZATION_EDIT_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "a7b8c9d0-e1f2-3456-0123-456789abcdef",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:16:00Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "ORGANIZATION_EDIT_COMMAND",
+  "data": {
+    "action": "EditOrganization",
+    "organizationId": "7AEF7815-27D3-5E9C-9686-68E6F36C51EA",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "data": {
+      "name": "Unity Government Solutions Updated",
+      "organizationType": "Government Department",
+      "organizationNumber": "UGS001234",
+      "status": "Active",
+      "nonRegOrgName": "Unity Tech Division",
+      "fiscalMonth": "Apr",
+      "fiscalDay": 1,
+      "organizationSize": 150
+    }
+  }
+}
+```
+</details>
+
+### RabbitMQ Properties Set by Publisher
+
+| Property | Value |
+|----------|-------|
+| `Type` | `"PluginDataMessage"` |
+| `MessageId` | Unique GUID |
+| `CorrelationId` | e.g. `"profile-{profileId}"` |
+| `ContentType` | `"application/json"` |
+| `Persistent` | `true` |
+
+---
+
+## Inbound Message Flow (External to Portal)
+
+1. External system publishes a `MessageAcknowledgment` to the `grants.messaging` exchange
+2. Routing key: `grants.{pluginId}.acknowledgment` (e.g. `grants.unity.acknowledgment`)
+3. Portal's `RabbitMQConsumer` receives it (queue bound to `grants.*.#`)
+4. Stores as `InboxMessage` (with duplicate detection)
+5. `InboxProcessorJob` picks it up, routes via `PluginMessageRouter`
+6. `PluginMessageRouter` looks up `IPluginMessageHandler` by `PluginId` and calls `HandleAcknowledgmentAsync`
+
+### InboxMessage Table Schema
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `Id` | `long` | Primary key (auto-increment) |
+| `MessageId` | `Guid` | Unique message identifier (used for duplicate detection) |
+| `MessageType` | `string` | Message type (e.g. `"MessageAcknowledgment"`, `"PluginDataMessage"`) |
+| `Payload` | `string` | Full JSON-serialized message body |
+| `CorrelationId` | `string?` | Correlation ID for tracing (matches the original outbound command) |
+| `Status` | `InboxMessageStatus` | Current lifecycle status (see below) |
+| `ReceivedAt` | `DateTime` | When the message was received from RabbitMQ (UTC) |
+| `ProcessedAt` | `DateTime?` | When processing completed or permanently failed (UTC) |
+| `RetryCount` | `int` | Number of processing attempts so far |
+| `LastError` | `string?` | Error message from the most recent failed attempt |
+| `LockToken` | `string?` | Distributed lock token (prevents duplicate processing across pods) |
+| `LockExpiry` | `DateTime?` | When the lock expires |
+
+### InboxMessageStatus Values
+
+| Value | Name | Meaning |
+|-------|------|---------|
+| `0` | **Pending** | Waiting to be processed. Set on receipt, or after a failed attempt when retries remain. |
+| `1` | **Processed** | Successfully processed by the plugin handler. Terminal state. |
+| `2` | **Failed** | Permanently failed after max retries exhausted. Terminal state. |
+| `3` | **Processing** | Currently locked by a job instance for processing. |
+| `4` | **Duplicate** | Duplicate message detected (same `MessageId` already exists). Terminal state. |
+
+### Inbound Acknowledgment Payload
+
+```json
+{
+  "messageId": "f1e2d3c4-b5a6-9870-fedc-ba9876543210",
   "messageType": "MessageAcknowledgment",
-  "correlationId": "profile-456",
+  "createdAt": "2026-03-04T20:11:20Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
   "pluginId": "UNITY",
-  "data": {
-    "originalMessageId": "123e4567-e89b-12d3-a456-426614174000",
-    "status": "SUCCESS|FAILED|PROCESSING",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "details": "Profile successfully updated in external system"
-  }
+  "originalMessageId": "326a1072-bf82-4ee9-9daa-b76ca147fa50",
+  "status": "SUCCESS",
+  "details": "Contact set as primary successfully",
+  "processedAt": "2026-03-04T20:11:20Z"
 }
 ```
 
-#### **3. System Events**
+### Acknowledgment `status` Values
+
+| Status | Meaning | Portal Handler Action |
+|--------|---------|----------------------|
+| `SUCCESS` | Command processed successfully | Log success, optionally invalidate cache |
+| `FAILED` | Command could not be processed | Log error, trigger compensation/retry logic |
+| `PROCESSING` | Command received, still working | Log info, no action (wait for final ack) |
+
+---
+
+## External System Consumer Contract
+
+This section documents **what an external system must implement** to participate in the messaging pattern. Use this as a spec when building the real Unity consumer (or any other plugin's external system).
+
+### 1. Consume Commands
+
+**Queue setup:**
+- Declare your own queue (e.g. `unity.commands`)
+- Bind to exchange `grants.messaging` (topic) with routing key `commands.{yourPluginId}.plugindata`
+- Use `autoAck: false` (manual acknowledgment after processing)
+
+**Message you receive:**
+- `BasicProperties.Type` = `"PluginDataMessage"`
+- `BasicProperties.MessageId` = unique GUID (use this as `originalMessageId` in your ack)
+- `BasicProperties.CorrelationId` = correlation ID (pass through in your ack)
+- Body = JSON `PluginDataMessage` with `dataType` indicating the action
+
+**Processing:**
+1. Parse the JSON body
+2. Read `dataType` to determine the action (e.g. `CONTACT_CREATE_COMMAND`)
+3. Read `data` for the action payload
+4. Process the command in your system
+5. Publish an acknowledgment (see below)
+6. BasicAck the delivery
+
+### 2. Publish Acknowledgments
+
+After processing a command, publish an acknowledgment back to the same exchange.
+
+**Routing key:** `grants.{yourPluginId}.acknowledgment` (e.g. `grants.unity.acknowledgment`)
+
+**Required AMQP properties:**
+
+| Property | Value |
+|----------|-------|
+| `Type` | `"MessageAcknowledgment"` |
+| `MessageId` | New unique GUID |
+| `CorrelationId` | Same value from the incoming command |
+| `ContentType` | `"application/json"` |
+| `ContentEncoding` | `"utf-8"` |
+| `Persistent` | `true` |
+
+**Required JSON body:**
+
 ```json
 {
-  "messageId": "abc12345-f678-90gh-ijkl-mnopqrstuvwx",
-  "messageType": "SystemEventMessage", 
-  "correlationId": "system-event-001",
-  "pluginId": "SYSTEM",
-  "data": {
-    "eventType": "MAINTENANCE_WINDOW",
-    "description": "System maintenance starting at 2 AM",
-    "scheduledTime": "2024-01-16T02:00:00Z"
-  }
+  "messageId": "NEW-GUID",
+  "messageType": "MessageAcknowledgment",
+  "createdAt": "2026-03-04T20:11:19Z",
+  "correlationId": "profile-019b4788-...",
+  "pluginId": "UNITY",
+  "originalMessageId": "MESSAGE-ID-FROM-INCOMING-COMMAND",
+  "status": "SUCCESS",
+  "details": "Contact set as primary successfully",
+  "processedAt": "2026-03-04T20:11:19Z"
 }
 ```
 
-## ?? **Plugin Integration**
+### 3. Acknowledgment Status Values
 
-### **Sending Messages from Plugins**
+| Status | Meaning | When to use |
+|--------|---------|-------------|
+| `SUCCESS` | Command processed successfully | Happy path |
+| `FAILED` | Command could not be processed | Validation error, system error, etc. |
+| `PROCESSING` | Command received, still working | Long-running operations (optional) |
+
+### 4. Error Handling
+
+- If processing fails, still publish a `FAILED` acknowledgment with error details
+- Always BasicAck the RabbitMQ delivery (don't leave messages unacked)
+- The Portal will route the FAILED ack to the plugin handler for compensation logic
+
+---
+
+## Plugin-Agnostic Design
+
+The entire inbox/outbox infrastructure is **generic** and routes by `PluginId`. Here's what makes it plugin-agnostic:
+
+| Component | Plugin-specific? | How it routes |
+|-----------|-----------------|---------------|
+| `OutboxMessage` / `InboxMessage` | No - stores any plugin's messages | `PluginId` column |
+| `OutboxProcessorJob` | No - publishes all pending messages | Routing key includes `PluginId` |
+| `RabbitMQConsumer` | No - consumes from single inbox queue | Stores all incoming messages |
+| `InboxProcessorJob` | No - processes all pending messages | Delegates to `PluginMessageRouter` |
+| `PluginMessageRouter` | No - resolves handler by `PluginId` | `IPluginMessageHandler.PluginId` |
+| `IPluginMessageHandler` | **Yes** - one per plugin | Registered in DI |
+
+### Adding a New Plugin to the Messaging System
+
+To add a plugin called `NEWPLUGIN`:
+
+**Step 1: Publish commands from your plugin**
 
 ```csharp
-public class UnityProfilePlugin : IProfilePlugin
+public partial class NewPlugin(
+    ILogger<NewPlugin> logger,
+    IMessagePublisher? messagePublisher = null) : IProfilePlugin
 {
-    private readonly IMessagePublisher _messagePublisher;
+    public string PluginId => "NEWPLUGIN";
 
-    public async Task UpdateProfileAsync(ProfileData data)
+    private async Task FireSomeCommand(Guid entityId, ProfileContext ctx, CancellationToken ct)
     {
-        // Do the work...
-        await UpdateExternalSystem(data);
-        
-        // Fire message - reliable delivery guaranteed
-        await _messagePublisher.PublishAsync(new ProfileUpdatedMessage(
-            data.ProfileId, 
-            "UNITY", 
-            data.Provider, 
-            data.Key,
-            correlationId: $"profile-{data.ProfileId}"));
+        if (messagePublisher == null)
+            throw new InvalidOperationException("Message publisher is required");
+
+        var message = new PluginDataMessage(
+            PluginId,
+            "ENTITY_UPDATE_COMMAND",
+            new
+            {
+                Action = "UpdateEntity",
+                EntityId = entityId,
+                ctx.ProfileId,
+                ctx.Provider
+            },
+            correlationId: $"profile-{ctx.ProfileId}");
+
+        await messagePublisher.PublishAsync(message, ct);
     }
 }
 ```
 
-### **Handling Incoming Messages for Plugins**
+This will be published to RabbitMQ with routing key `commands.newplugin.plugindata`.
+
+**Step 2: Create a message handler**
 
 ```csharp
-public class UnityAcknowledgmentHandler : IMessageHandler<MessageAcknowledgment>
+public class NewPluginMessageHandler : IPluginMessageHandler
 {
-    private readonly ILogger<UnityAcknowledgmentHandler> _logger;
-    private readonly IUnityProfilePlugin _unityPlugin;
+    private readonly ILogger<NewPluginMessageHandler> _logger;
 
-    public async Task<Result> HandleAsync(MessageAcknowledgment message, MessageContext context)
+    public NewPluginMessageHandler(ILogger<NewPluginMessageHandler> logger)
     {
-        // Only handle acknowledgments for Unity plugin
-        if (message.PluginId != "UNITY") 
-            return Result.Success();
+        _logger = logger;
+    }
 
-        switch (message.Data.Status)
+    public string PluginId => "NEWPLUGIN";
+
+    public async Task<Result> HandleAcknowledgmentAsync(
+        MessageAcknowledgment acknowledgment, MessageContext context)
+    {
+        switch (acknowledgment.Status.ToUpperInvariant())
         {
             case "SUCCESS":
-                await _unityPlugin.HandleSuccessfulUpdate(message.Data.OriginalMessageId);
+                _logger.LogInformation("NEWPLUGIN: Command {Id} succeeded", 
+                    acknowledgment.OriginalMessageId);
+                // TODO: Update cache, notify user, etc.
                 break;
-            case "FAILED": 
-                await _unityPlugin.HandleFailedUpdate(message.Data.OriginalMessageId, message.Data.Details);
+            case "FAILED":
+                _logger.LogWarning("NEWPLUGIN: Command {Id} failed: {Details}", 
+                    acknowledgment.OriginalMessageId, acknowledgment.Details);
+                // TODO: Retry, compensate, alert, etc.
                 break;
             case "PROCESSING":
-                await _unityPlugin.HandleProcessingUpdate(message.Data.OriginalMessageId);
+                _logger.LogInformation("NEWPLUGIN: Command {Id} still processing", 
+                    acknowledgment.OriginalMessageId);
                 break;
         }
-        
         return Result.Success();
+    }
+
+    public async Task<Result> HandleIncomingDataAsync(
+        PluginDataMessage message, MessageContext context)
+    {
+        _logger.LogInformation("NEWPLUGIN: Received data of type {DataType}", message.DataType);
+        // TODO: Handle data pushed from external system
+        return Result.Success();
+    }
+
+    public bool CanHandle(IMessage message)
+    {
+        return message.PluginId != null &&
+               message.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);
     }
 }
 ```
 
-## ?? **Message Correlation & Acknowledgments**
+**Step 3: Register in DI**
 
-### **How Correlation Works**
-
-1. **Outbound**: Plugin sends message with `correlationId: "profile-123"`
-2. **External Processing**: External system processes and sends acknowledgment
-3. **Inbound**: Acknowledgment arrives with same `correlationId: "profile-123"`
-4. **Routing**: System matches correlation ID to route acknowledgment to correct plugin
-
-### **Plugin Acknowledgment Handling**
+In `MessagingServiceExtensions.cs`:
 
 ```csharp
-public interface IPluginMessageHandler
-{
-    /// <summary>
-    /// Plugin ID that this handler supports
-    /// </summary>
-    string PluginId { get; }
-    
-    /// <summary>
-    /// Handle acknowledgment for a message sent by this plugin
-    /// </summary>
-    Task<Result> HandleAcknowledgmentAsync(MessageAcknowledgment ack, MessageContext context);
-    
-    /// <summary>
-    /// Handle incoming data message for this plugin
-    /// </summary>
-    Task<Result> HandleIncomingMessageAsync(IMessage message, MessageContext context);
-}
+services.AddScoped<IPluginMessageHandler, NewPluginMessageHandler>();
 ```
 
-## ?? **Message Tracking & Monitoring**
+**Step 4: Configure the external system's queue**
 
-### **Outbox Monitoring**
-```sql
--- Check outbound message status
-SELECT PluginId, MessageType, Status, COUNT(*) as Count
-FROM OutboxMessages 
-GROUP BY PluginId, MessageType, Status;
+The external system binds its own queue to exchange `grants.messaging` with routing key `commands.newplugin.plugindata`, and publishes acks back with routing key `grants.newplugin.acknowledgment`.
 
--- Check failed messages
-SELECT * FROM OutboxMessages 
-WHERE Status = 2 AND RetryCount >= 5;
+**That's it.** The outbox, inbox, Quartz jobs, RabbitMQ publisher/consumer, and router all work automatically.
+
+---
+
+## DEMO vs UNITY Plugin Comparison
+
+The two existing plugins use different strategies intentionally:
+
+| Aspect | DEMO | UNITY |
+|--------|------|-------|
+| **Purpose** | Self-contained mock for development | Real distributed integration |
+| **Write operations** | Direct (in-memory + Redis cache) | Event-driven (outbox + RabbitMQ) |
+| **Cache strategy** | Synchronous — writes to in-memory store, then persists to Redis | Optimistic — patches cached JSON, then fires async command |
+| **Uses `IMessagePublisher`?** | Only for profile population notification | Yes, for all write commands |
+| **Uses RabbitMQ?** | No | Yes |
+| **Has `IPluginMessageHandler`?** | Yes (logs only, scaffolding) | Yes (handles acks from external system) |
+| **Ack/Nack flow?** | Not needed (writes are synchronous) | Full round-trip via inbox |
+| **External system?** | None | Unity Mock API (dev) / Real Unity (prod) |
+| **`primaryContactId` in responses?** | Yes — resolved from Redis cache | Yes — resolved from optimistically-patched cache |
+
+---
+
+## Optimistic Cache Update Strategy
+
+The UNITY plugin uses an **optimistic cache update** pattern for all write operations. Because commands are asynchronous (outbox → RabbitMQ → external system), the UI needs to see changes immediately without waiting for the external system to process the command.
+
+### How it works
+
+```
+1. Plugin reads cached ProfileData from IPluginCacheService.TryGetAsync()
+2. Patches the JSON data in-memory (add/edit/remove items, toggle flags)
+3. Writes the patched data back via IPluginCacheService.SetAsync()
+4. Fires the command to the outbox (async, eventually consistent)
+5. Returns success to the caller — UI sees changes immediately
 ```
 
-### **Inbox Monitoring** 
-```sql
--- Check inbound message status
-SELECT MessageType, Status, COUNT(*) as Count
-FROM InboxMessages
-GROUP BY MessageType, Status;
+### Operations and their cache effects
 
--- Check unprocessed acknowledgments
-SELECT * FROM InboxMessages
-WHERE MessageType = 'MessageAcknowledgment' 
-AND Status = 0;
+| Operation | Cache Patch | Primary Contact Rules |
+|-----------|-------------|----------------------|
+| **Contact Create** | Appends new contact to `contacts` array | If `isPrimary: true`, clears `isPrimary` on all existing contacts |
+| **Contact Edit** | Replaces matching contact in `contacts` array | If `isPrimary: true`, clears `isPrimary` on all other contacts |
+| **Contact SetPrimary** | Toggles `isPrimary` on all contacts | Target gets `true`, all others get `false` |
+| **Contact Delete** | Removes contact from `contacts` array | If deleted contact was primary, auto-promotes first remaining contact |
+| **Address Edit** | Replaces matching address in `addresses` array | — |
+| **Address SetPrimary** | Toggles `isPrimary` on all addresses | Target gets `true`, all others get `false` |
+| **Organization Edit** | Patches `OrganizationInfo` object | — |
+
+### Shared helpers (`Unity.CacheHelpers.cs`)
+
+| Helper | Purpose |
+|--------|---------|
+| `PatchCachedProfileDataAsync()` | Reads cache → applies transform → writes back. No-op if cache is empty. |
+| `RebuildWithArray()` | Rebuilds a JSON object, replacing a named array with a callback-built array. |
+| `RebuildWithObject()` | Rebuilds a JSON object, replacing a named object property with a patched version. |
+
+### Cache key format
+
+```
+{CacheKeyPrefix}{profileId}:{pluginId}:{provider}:{dataKey}
+Example: profile:019b4788-...:UNITY:DGP:CONTACTINFO
 ```
 
-## ??? **Configuration**
+### Eventually consistent
 
-### **Basic Setup (appsettings.json)**
+The cache is patched optimistically. When the cache TTL expires (default 60 min absolute, 15 min sliding), the next read will fetch fresh data from the external API, reconciling any drift.
+
+---
+
+## Configuration
+
+### Portal-side (appsettings.json)
+
 ```json
 {
   "Messaging": {
     "RabbitMQ": {
-      "HostName": "rabbitmq-server",
+      "HostName": "localhost",
       "Port": 5672,
-      "UserName": "grants_user",
-      "Password": "grants_password",
-      "DefaultExchange": "grants.messaging",
-      "DefaultQueue": "grants.messaging.inbox"
+      "UserName": "guest",
+      "Password": "guest",
+      "VirtualHost": "/",
+      "UseSsl": false,
+      "ConnectionTimeout": "00:00:30",
+      "RetryCount": 3,
+      "RetryDelay": "00:00:30"
     },
     "Outbox": {
-      "PollingIntervalSeconds": 30,
+      "PollingIntervalSeconds": 15,
       "BatchSize": 100,
-      "MaxRetries": 5
+      "MaxRetries": 3,
+      "RetentionDays": 14,
+      "CleanupIntervalHours": 24
     },
     "Inbox": {
-      "PollingIntervalSeconds": 15, 
+      "PollingIntervalSeconds": 15,
       "BatchSize": 50,
-      "MaxRetries": 3
+      "MaxRetries": 3,
+      "RetentionDays": 14,
+      "CleanupIntervalHours": 24
+    },
+    "DistributedLocks": {
+      "DefaultTimeoutMinutes": 5,
+      "RenewalIntervalMinutes": 2,
+      "WaitTimeoutSeconds": 5
+    },
+    "BackgroundJobs": {
+      "MaxConcurrency": 3,
+      "Enabled": true,
+      "MisfireThresholdSeconds": 60
     }
   }
 }
 ```
 
-### **Plugin-Specific Queues**
-You can configure dedicated queues per plugin for better isolation:
+### Configuration Reference
+
+| Section | Key | Default | Description |
+|---------|-----|---------|-------------|
+| `RabbitMQ` | `HostName` | `localhost` | RabbitMQ server hostname |
+| | `Port` | `5672` | AMQP port |
+| | `UserName` / `Password` | `guest` | Credentials |
+| | `VirtualHost` | `/` | Virtual host |
+| | `UseSsl` | `false` | Enable TLS |
+| | `ConnectionTimeout` | `00:00:30` | Connection timeout |
+| | `RetryCount` | `3` | Retry attempts for failed connections |
+| | `RetryDelay` | `00:00:30` | Delay between retries |
+| `Outbox` | `PollingIntervalSeconds` | `30` | How often `OutboxProcessorJob` runs |
+| | `BatchSize` | `100` | Messages per batch |
+| | `MaxRetries` | `5` | Max publish attempts before `Failed` |
+| | `RetentionDays` | `7` | Days to keep published/failed messages |
+| | `CleanupIntervalHours` | `24` | How often `MessageCleanupJob` runs |
+| `Inbox` | `PollingIntervalSeconds` | `15` | How often `InboxProcessorJob` runs |
+| | `BatchSize` | `50` | Messages per batch |
+| | `MaxRetries` | `3` | Max processing attempts before `Failed` |
+| | `RetentionDays` | `7` | Days to keep processed/failed messages |
+| | `CleanupIntervalHours` | `24` | How often cleanup runs |
+| `DistributedLocks` | `DefaultTimeoutMinutes` | `5` | Lock duration for job processing |
+| | `RenewalIntervalMinutes` | `2` | Lock renewal frequency |
+| | `WaitTimeoutSeconds` | `5` | Max wait to acquire a lock |
+| `BackgroundJobs` | `MaxConcurrency` | CPU count | Max concurrent Quartz jobs |
+| | `Enabled` | `true` | Enable/disable all background jobs |
+| | `MisfireThresholdSeconds` | `60` | Quartz misfire tolerance |
+
+### External System / Mock API (appsettings.json)
 
 ```json
 {
-  "Messaging": {
-    "PluginQueues": {
-      "DEMO": "grants.demo.inbox",
-      "UNITY": "grants.unity.inbox", 
-      "SYSTEM": "grants.system.inbox"
-    }
+  "RabbitMQ": {
+    "HostName": "localhost",
+    "Port": 5672,
+    "UserName": "guest",
+    "Password": "guest",
+    "VirtualHost": "/",
+    "Exchange": "grants.messaging",
+    "ExchangeType": "topic",
+    "InboundQueue": "unity.mockapi.commands",
+    "InboundRoutingKeys": [ "commands.unity.plugindata" ],
+    "AckRoutingKey": "grants.unity.acknowledgment"
   }
 }
 ```
 
-## ?? **Deployment Scenarios**
+---
 
-### **Development** 
-- **Distributed Lock**: In-Memory (single pod)
-- **RabbitMQ**: Optional (simulation mode if not available)
-- **Redis**: Optional (falls back to in-memory caching)
+## Message Tracking & Monitoring
 
-### **Production**
-- **Distributed Lock**: Redis (multi-pod safe)
-- **RabbitMQ**: Required (external message integration)  
-- **Redis**: Required (distributed caching)
+### Outbox Monitoring
+```sql
+-- Check outbound message status by plugin
+SELECT "PluginId", "MessageType", "Status", COUNT(*) as "Count"
+FROM "OutboxMessages"
+GROUP BY "PluginId", "MessageType", "Status";
 
-## ?? **Plugin Development Guide**
+-- Pending messages waiting to be published
+SELECT * FROM "OutboxMessages"
+WHERE "Status" = 0  -- Pending
+ORDER BY "CreatedAt";
 
-### **1. Add Message Publisher to Plugin**
-```csharp
-public class MyPlugin : IProfilePlugin
-{
-    private readonly IMessagePublisher? _messagePublisher;
-    
-    public MyPlugin(ILogger<MyPlugin> logger, IMessagePublisher? messagePublisher = null)
-    {
-        _logger = logger;
-        _messagePublisher = messagePublisher; // Nullable for graceful degradation
-    }
-}
+-- Currently processing (locked)
+SELECT * FROM "OutboxMessages"
+WHERE "Status" = 3  -- Processing
+AND "LockExpiry" > NOW();
+
+-- Permanently failed messages (exhausted retries)
+SELECT * FROM "OutboxMessages"
+WHERE "Status" = 2  -- Failed
+ORDER BY "ProcessedAt" DESC;
+
+-- Messages stuck in processing (lock expired)
+SELECT * FROM "OutboxMessages"
+WHERE "Status" = 3  -- Processing
+AND "LockExpiry" < NOW();
 ```
 
-### **2. Send Messages from Plugin**
-```csharp
-await _messagePublisher?.PublishAsync(new MyCustomMessage(
-    someId, 
-    PluginId, 
-    correlationId: $"operation-{someId}"));
+### Inbox Monitoring
+```sql
+-- Check inbound message status
+SELECT "MessageType", "Status", COUNT(*) as "Count"
+FROM "InboxMessages"
+GROUP BY "MessageType", "Status";
+
+-- Pending acknowledgments waiting to be processed
+SELECT * FROM "InboxMessages"
+WHERE "Status" = 0  -- Pending
+ORDER BY "ReceivedAt";
+
+-- Successfully processed
+SELECT * FROM "InboxMessages"
+WHERE "Status" = 1  -- Processed
+ORDER BY "ProcessedAt" DESC
+LIMIT 20;
+
+-- Failed after max retries
+SELECT * FROM "InboxMessages"
+WHERE "Status" = 2  -- Failed
+ORDER BY "ProcessedAt" DESC;
+
+-- Duplicates detected
+SELECT * FROM "InboxMessages"
+WHERE "Status" = 4  -- Duplicate
+ORDER BY "ReceivedAt" DESC;
+
+-- Trace a command end-to-end using CorrelationId
+SELECT 'OUTBOX' as "Source", "MessageId", "MessageType", "Status", "CreatedAt", "ProcessedAt"
+FROM "OutboxMessages"
+WHERE "CorrelationId" = 'profile-019b4788-d7a7-7c40-b25e-98a361adbbfc'
+UNION ALL
+SELECT 'INBOX', "MessageId", "MessageType", "Status", "ReceivedAt", "ProcessedAt"
+FROM "InboxMessages"
+WHERE "CorrelationId" = 'profile-019b4788-d7a7-7c40-b25e-98a361adbbfc'
+ORDER BY "CreatedAt";
 ```
-
-### **3. Create Message Handlers**
-```csharp
-public class MyPluginAckHandler : IMessageHandler<MessageAcknowledgment>
-{
-    public async Task<Result> HandleAsync(MessageAcknowledgment message, MessageContext context)
-    {
-        if (message.PluginId != "MYPLUGIN") return Result.Success();
-        
-        // Handle acknowledgment logic
-        return Result.Success();
-    }
-}
-```
-
-### **4. Register Handlers**
-```csharp
-// In MessagingServiceExtensions.cs
-services.AddScoped<IMessageHandler<MessageAcknowledgment>, MyPluginAckHandler>();
-```
-
-## ?? **Error Handling & Reliability**
-
-### **Message Delivery Guarantees**
-- ? **At-least-once delivery** for outbound messages
-- ? **Duplicate detection** for inbound messages  
-- ? **Retry with exponential backoff** for failed messages
-- ? **Dead letter handling** for permanently failed messages
-
-### **Failure Scenarios**
-1. **Database Down**: Messages queued in RabbitMQ until service recovery
-2. **RabbitMQ Down**: Messages remain in outbox for retry when restored
-3. **Plugin Error**: Message marked as failed with retry logic
-4. **External System Down**: Acknowledgments delayed but tracked
-
-## ?? **Performance Tuning**
-
-### **Outbox Performance**
-- **Batch Size**: Increase for higher throughput, decrease for lower latency
-- **Polling Interval**: Faster polling = lower latency, higher CPU usage
-- **Max Retries**: Balance between reliability and resource usage
-
-### **Inbox Performance**
-- **Consumer Concurrency**: Multiple consumers for high volume
-- **Message Partitioning**: Route different plugins to different queues
-- **Handler Optimization**: Async processing, minimal blocking operations
-
-## ?? **Security Considerations**
-
-### **Message Security**
-- **Authentication**: RabbitMQ user credentials
-- **Authorization**: Queue/exchange permissions 
-- **Encryption**: TLS for RabbitMQ connections
-- **Message Validation**: Schema validation for incoming messages
-
-### **Plugin Isolation**
-- **Correlation ID Validation**: Prevent cross-plugin message handling
-- **Plugin Authentication**: Verify message sender identity
-- **Resource Limits**: Per-plugin message rate limiting
 
 ---
 
-## ?? **Getting Started**
+## Error Handling & Reliability
 
-1. **Configure RabbitMQ** connection in appsettings
-2. **Run database migration** to create message tables
-3. **Register message handlers** for your plugins
-4. **Start sending messages** from plugins using `IMessagePublisher`
-5. **Monitor message flow** using database queries and logs
+### Message Delivery Guarantees
+- **At-least-once delivery** for outbound messages (outbox retry)
+- **Duplicate detection** for inbound messages (inbox checks `MessageId`)
+- **Configurable retry** with max retry count for failed messages
+- **Distributed locking** prevents duplicate processing across pods
 
-The system is designed to **work out of the box** with minimal configuration and **gracefully degrade** when external dependencies are unavailable.
+### Failure Scenarios
+1. **Database Down**: Messages queued in RabbitMQ until service recovery
+2. **RabbitMQ Down**: Messages remain in outbox for retry when restored (simulation mode fallback)
+3. **Plugin Error**: Message marked as failed with retry logic
+4. **External System Down**: Acknowledgments delayed but command remains tracked in outbox
+
+---
+
+## Development Setup
+
+1. Start RabbitMQ: `docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management`
+2. Start the Unity Mock API: `dotnet run --project src/Grants.ApplicantPortal.API.Unity.MockAPI`
+3. Start the Portal API
+4. Trigger a write operation (e.g. edit a contact via UNITY plugin)
+5. Watch logs: outbox publish -> RabbitMQ -> Mock API consume -> ack publish -> inbox receive -> handler processes
+
+Management UI: http://localhost:15672 (guest/guest)

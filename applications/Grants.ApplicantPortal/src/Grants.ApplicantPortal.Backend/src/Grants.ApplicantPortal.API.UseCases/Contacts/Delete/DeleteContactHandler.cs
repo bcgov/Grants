@@ -5,7 +5,6 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
 
 public class DeleteContactHandler(
   IContactManagementService contactManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<DeleteContactHandler> logger)
   : ICommandHandler<DeleteContactCommand, Result>
 {
@@ -30,17 +29,6 @@ public class DeleteContactHandler(
       {
         logger.LogInformation("Successfully deleted contact {ContactId} for ProfileId: {ProfileId}",
           request.ContactId, request.ProfileId);
-          
-        // Invalidate contacts cache so the deleted contact disappears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "CONTACTINFO", 
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after contact deletion", 
-          request.ProfileId);
       }
       else
       {

@@ -86,6 +86,7 @@ Once started, the Unity Mock API will be available at:
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Health check endpoint |
+| `/messaging/status` | GET | RabbitMQ consumer configuration and status |
 
 ## Configuration
 
@@ -165,11 +166,51 @@ curl "http://localhost:5555/api/v1/profiles/123e4567-e89b-12d3-a456-426614174000
 
 ## Development Workflow
 
-1. **Start Unity Mock API**: Run `.\scripts\Start-UnityMockAPI.ps1`
-2. **Start Main Application**: Run your main Grants Portal API
-3. **Test Integration**: The Unity plugin will now fetch data from the mock API
-4. **View Logs**: Monitor both APIs to see the data flow
-5. **Modify Mock Data**: Edit the Unity Mock API endpoints as needed
+1. **Start RabbitMQ**: Ensure a local RabbitMQ instance is running (default: `localhost:5672`, guest/guest)
+2. **Start Unity Mock API**: Run `.\scripts\Start-UnityMockAPI.ps1`
+3. **Start Main Application**: Run your main Grants Portal API
+4. **Test Integration**: The Unity plugin will now fetch data from the mock API
+5. **Test Messaging**: Trigger a write operation (e.g., edit a contact) — the outbox job publishes to RabbitMQ, the Mock API consumes the command and sends an acknowledgment back
+6. **View Logs**: Monitor both APIs to see the data and messaging flow
+7. **Modify Mock Data**: Edit the Unity Mock API endpoints or consumer logic as needed
+
+### RabbitMQ Messaging
+
+The Mock API includes a `UnityCommandConsumerService` background service that:
+
+- **Consumes** command messages from the `unity.mockapi.commands` queue (bound to `grants.unity.#`)
+- **Processes** each command with a simulated delay (50-200ms)
+- **Publishes** a `MessageAcknowledgment` back to the `grants.messaging` exchange with routing key `grants.unity.acknowledgment`
+- Uses a **90% success / 10% failure** ratio for realistic testing
+
+#### RabbitMQ Configuration
+
+Configuration is in `appsettings.json` under the `RabbitMQ` section:
+
+```json
+{
+  "RabbitMQ": {
+    "HostName": "localhost",
+    "Port": 5672,
+    "UserName": "guest",
+    "Password": "guest",
+    "VirtualHost": "/",
+    "Exchange": "grants.messaging",
+    "ExchangeType": "topic",
+    "InboundQueue": "unity.mockapi.commands",
+    "InboundRoutingKeys": [ "grants.unity.#" ],
+    "AckRoutingKey": "grants.unity.acknowledgment"
+  }
+}
+```
+
+#### Starting RabbitMQ with Docker
+
+```bash
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+```
+
+Management UI: http://localhost:15672 (guest/guest)
 
 ## Troubleshooting
 

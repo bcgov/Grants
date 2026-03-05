@@ -5,7 +5,6 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.SetAsPrimary;
 
 public class SetAsPrimaryContactHandler(
   IContactManagementService contactManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<SetAsPrimaryContactHandler> logger)
   : ICommandHandler<SetAsPrimaryContactCommand, Result>
 {
@@ -30,17 +29,6 @@ public class SetAsPrimaryContactHandler(
       {
         logger.LogInformation("Successfully set contact {ContactId} as primary for ProfileId: {ProfileId}",
           request.ContactId, request.ProfileId);
-          
-        // Invalidate contacts cache so the primary contact change appears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "CONTACTINFO",
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after setting primary contact", 
-          request.ProfileId);
       }
       else
       {

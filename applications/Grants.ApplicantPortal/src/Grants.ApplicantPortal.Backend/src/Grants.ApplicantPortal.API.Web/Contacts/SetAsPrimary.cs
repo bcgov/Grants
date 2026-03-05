@@ -1,4 +1,5 @@
-﻿using Grants.ApplicantPortal.API.UseCases.Contacts.SetAsPrimary;
+﻿using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.UseCases.Contacts.SetAsPrimary;
 using Grants.ApplicantPortal.API.Web.Auth;
 using Grants.ApplicantPortal.API.Web.Extensions;
 
@@ -10,7 +11,7 @@ namespace Grants.ApplicantPortal.API.Web.Contacts;
 /// <remarks>
 /// Sets an existing Contact as the primary contact.
 /// </remarks>
-public class SetAsPrimary(IMediator _mediator)
+public class SetAsPrimary(IMediator _mediator, IPluginCacheService _cacheService)
   : Endpoint<SetAsPrimaryContactRequest, SetAsPrimaryContactResponse>
 {
   public override void Configure()
@@ -54,10 +55,14 @@ public class SetAsPrimary(IMediator _mediator)
 
     if (result.IsSuccess)
     {
+      var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
+          _cacheService, profileId, request.PluginId, request.Provider, ct);
+
       Response = new SetAsPrimaryContactResponse
       {
         ContactId = request.ContactId,
-        Message = "Contact set as primary successfully"
+        Message = "Contact set as primary successfully",
+        PrimaryContactId = primaryId
       };
       return;
     }

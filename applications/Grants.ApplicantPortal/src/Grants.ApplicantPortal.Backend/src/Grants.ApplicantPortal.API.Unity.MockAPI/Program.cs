@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Grants.ApplicantPortal.API.Unity.MockAPI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,10 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+// Register RabbitMQ consumer that listens for commands from the Grants Portal outbox
+// and sends acknowledgments back via RabbitMQ (consumed by the Portal inbox)
+builder.Services.AddHostedService<UnityCommandConsumerService>();
 
 var app = builder.Build();
 
@@ -119,6 +124,27 @@ app.MapGet("/api/app/applicant-profiles/tenants", (Guid? ProfileId, string? Subj
 app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }))
    .WithName("HealthCheck")
    .WithOpenApi();
+
+// Messaging status endpoint — shows the RabbitMQ configuration used by this mock
+app.MapGet("/messaging/status", (IConfiguration config) =>
+{
+    var host = config["RabbitMQ:HostName"] ?? "localhost";
+    var port = config.GetValue("RabbitMQ:Port", 5672);
+    var queue = config["RabbitMQ:InboundQueue"] ?? "unity.mockapi.commands";
+    var exchange = config["RabbitMQ:Exchange"] ?? "grants.messaging";
+    var routingKeys = config.GetSection("RabbitMQ:InboundRoutingKeys").Get<string[]>() ?? ["grants.unity.#"];
+    var ackRoutingKey = config["RabbitMQ:AckRoutingKey"] ?? "grants.unity.acknowledgment";
+
+    return Results.Ok(new
+    {
+        RabbitMQ = new { Host = host, Port = port },
+        Consumer = new { Queue = queue, Exchange = exchange, RoutingKeys = routingKeys },
+        Publisher = new { AckRoutingKey = ackRoutingKey },
+        Timestamp = DateTime.UtcNow
+    });
+})
+.WithName("MessagingStatus")
+.WithOpenApi();
 
 app.Run();
 
@@ -245,7 +271,7 @@ static object GetSubmissionInfoData(string tenantId) => tenantId.ToUpperInvarian
                 status = "Submitted"
             }
         },
-        linkSource = "https://chefs-dev.apps.silver.devops.gov.bc.ca/app/form/view?s="
+        linkSource = "https://chefs-dev.apps.silver.devops.gov.bc.ca/app/user/view?s="
     },
     _ => new
     {
@@ -273,7 +299,7 @@ static object GetSubmissionInfoData(string tenantId) => tenantId.ToUpperInvarian
                 status = "Submitted"
             }
         },
-        linkSource = "https://chefs-dev.apps.silver.devops.gov.bc.ca/app/form/view?s="
+        linkSource = "https://chefs-dev.apps.silver.devops.gov.bc.ca/app/user/view?s="
     }
 };
 

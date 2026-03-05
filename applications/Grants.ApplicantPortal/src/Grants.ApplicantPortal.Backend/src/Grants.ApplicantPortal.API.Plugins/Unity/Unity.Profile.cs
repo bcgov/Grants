@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using Grants.ApplicantPortal.API.Core;
 using Grants.ApplicantPortal.API.Core.Plugins;
-using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 
 namespace Grants.ApplicantPortal.API.Plugins.Unity;
 
@@ -59,8 +58,6 @@ public partial class UnityPlugin
 
                 var cleanedData = JsonSerializer.Deserialize<JsonElement>(stream.ToArray());
 
-                await FireProfileUpdatedMessage(metadata, ct);
-
                 return new ProfileData(
                     metadata.ProfileId,
                     metadata.PluginId,
@@ -109,36 +106,4 @@ public partial class UnityPlugin
           "PAYMENTINFO" => "PAYMENTINFO",
         _ => key?.ToUpperInvariant() ?? string.Empty
     };
-
-    /// <summary>
-    /// Helper method to fire profile updated message
-    /// </summary>
-    private async Task FireProfileUpdatedMessage(ProfilePopulationMetadata metadata, CancellationToken cancellationToken)
-    {
-        if (messagePublisher == null)
-        {
-            logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
-            return;
-        }
-
-        try
-        {
-            var message = new ProfileUpdatedMessage(
-                metadata.ProfileId, 
-                PluginId, 
-                metadata.Provider, 
-                metadata.Key,
-                correlationId: $"profile-{metadata.ProfileId}");
-
-            await messagePublisher.PublishAsync(message, cancellationToken);
-            
-            logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}", 
-                metadata.ProfileId, metadata.Provider, metadata.Key);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
-            // Don't throw - messaging failures shouldn't break the main operation
-        }
-    }
 }

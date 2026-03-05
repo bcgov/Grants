@@ -5,7 +5,6 @@ namespace Grants.ApplicantPortal.API.UseCases.Addresses.SetAsPrimary;
 
 public class SetAsPrimaryAddressHandler(
   IAddressManagementService addressManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<SetAsPrimaryAddressHandler> logger)
   : ICommandHandler<SetAsPrimaryAddressCommand, Result>
 {
@@ -30,17 +29,6 @@ public class SetAsPrimaryAddressHandler(
       {
         logger.LogInformation("Successfully set address {AddressId} as primary for ProfileId: {ProfileId}",
           request.AddressId, request.ProfileId);
-          
-        // Invalidate addresses cache so the primary address change appears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "ADDRESSINFO",
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated addresses cache for ProfileId: {ProfileId} after setting primary address", 
-          request.ProfileId);
       }
       else
       {

@@ -5,7 +5,6 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Edit;
 
 public class EditContactHandler(
   IContactManagementService contactManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<EditContactHandler> logger)
   : ICommandHandler<EditContactCommand, Result>
 {
@@ -43,17 +42,6 @@ public class EditContactHandler(
       {
         logger.LogInformation("Successfully edited contact {ContactId} for ProfileId: {ProfileId}",
           request.ContactId, request.ProfileId);
-          
-        // Invalidate contacts cache so the updated contact appears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "CONTACTINFO",
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after contact edit", 
-          request.ProfileId);
       }
       else
       {

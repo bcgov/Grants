@@ -107,7 +107,7 @@ public class OutboxOptions
     /// <summary>
     /// How long to keep processed messages before cleanup (in days)
     /// </summary>
-    public int RetentionDays { get; set; } = 30;
+    public int RetentionDays { get; set; } = 7;
 
     /// <summary>
     /// How often to run cleanup job (in hours)
@@ -118,7 +118,7 @@ public class OutboxOptions
 /// <summary>
 /// Inbox processing configuration
 /// </summary>
-public class InboxOptions
+ public class InboxOptions
 {
     /// <summary>
     /// How often to poll for new messages (in seconds)
@@ -138,7 +138,7 @@ public class InboxOptions
     /// <summary>
     /// How long to keep processed messages before cleanup (in days)
     /// </summary>
-    public int RetentionDays { get; set; } = 30;
+    public int RetentionDays { get; set; } = 7;
 
     /// <summary>
     /// How often to run cleanup job (in hours)

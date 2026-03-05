@@ -5,7 +5,6 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Create;
 
 public class CreateContactHandler(
   IContactManagementService contactManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
   ILogger<CreateContactHandler> logger)
   : ICommandHandler<CreateContactCommand, Result<Guid>>
 {
@@ -43,17 +42,6 @@ public class CreateContactHandler(
       {
         logger.LogInformation("Successfully created contact {ContactId} for ProfileId: {ProfileId}",
           result.Value, request.ProfileId);
-          
-        // Invalidate contacts cache so the new contact appears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "CONTACTINFO",
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after contact creation", 
-          request.ProfileId);
       }
       else
       {

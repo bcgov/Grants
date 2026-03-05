@@ -1,6 +1,7 @@
 ﻿using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.BackgroundJobs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Configuration;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Events;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Handlers;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
@@ -8,6 +9,7 @@ using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.RabbitMQ;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Services;
+using Grants.ApplicantPortal.API.Core.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Quartz;
 using StackExchange.Redis;
@@ -34,6 +36,9 @@ public static class MessagingServiceExtensions
         services.AddScoped<IMessagePublisher, OutboxMessagePublisher>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IInboxRepository, InboxRepository>();
+
+        // Register plugin event service (failure tracking + compensation)
+        services.AddScoped<IPluginEventService, PluginEventService>();
 
         // Register distributed locking (requires Redis connection)
         services.AddDistributedLocking(configuration, logger);
@@ -168,7 +173,7 @@ public static class MessagingServiceExtensions
             // Configure the Inbox processor job
             var inboxJobKey = new JobKey("InboxProcessorJob");
             q.AddJob<InboxProcessorJob>(opts => opts.WithIdentity(inboxJobKey));
-            
+
             q.AddTrigger(opts => opts
                 .ForJob(inboxJobKey)
                 .WithIdentity("InboxProcessorJob-trigger")
@@ -177,7 +182,15 @@ public static class MessagingServiceExtensions
                     .RepeatForever())
                 .StartNow());
 
-            // TODO: Add cleanup jobs for old messages
+            // Configure the nightly message cleanup job
+            var cleanupJobKey = new JobKey("MessageCleanupJob");
+            q.AddJob<MessageCleanupJob>(opts => opts.WithIdentity(cleanupJobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(cleanupJobKey)
+                .WithIdentity("MessageCleanupJob-trigger")
+                .WithCronSchedule("0 0 2 * * ?") // Every day at 2:00 AM UTC
+                .StartNow());
 
             logger.LogInformation("Quartz.NET background jobs configured with {MaxConcurrency} max concurrency", 
                 messagingOptions.BackgroundJobs.MaxConcurrency);
@@ -262,9 +275,7 @@ public static class MessagingServiceExtensions
 
         // Register plugin-specific message handlers
         services.AddScoped<IPluginMessageHandler, DemoPluginMessageHandler>();
-
-        // TODO: Add more plugin handlers as needed
-        // services.AddScoped<IPluginMessageHandler, UnityPluginMessageHandler>();
+        services.AddScoped<IPluginMessageHandler, UnityPluginMessageHandler>();
 
         // TODO: Add more domain message handlers as needed
         // services.AddScoped<IMessageHandler<AddressUpdatedMessage>, AddressUpdatedMessageHandler>();

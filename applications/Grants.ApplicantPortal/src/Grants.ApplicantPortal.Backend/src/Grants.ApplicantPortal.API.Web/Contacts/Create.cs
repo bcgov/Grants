@@ -1,4 +1,5 @@
-﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Create;
+﻿using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.UseCases.Contacts.Create;
 using Grants.ApplicantPortal.API.Web.Auth;
 using Grants.ApplicantPortal.API.Web.Extensions;
 
@@ -10,7 +11,7 @@ namespace Grants.ApplicantPortal.API.Web.Contacts;
 /// <remarks>
 /// Creates a new Contact given a name and other details.
 /// </remarks>
-public class Create(IMediator _mediator)
+public class Create(IMediator _mediator, IPluginCacheService _cacheService)
   : Endpoint<CreateContactRequest, CreateContactResponse>
 {
   public override void Configure()
@@ -68,10 +69,14 @@ public class Create(IMediator _mediator)
 
     if (result.IsSuccess)
     {
+      var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
+          _cacheService, profileId, request.PluginId, request.Provider, ct);
+
       Response = new CreateContactResponse
       {
         ContactId = result.Value,
-        Name = request.Name!
+        Name = request.Name!,
+        PrimaryContactId = primaryId
       };
       return;
     }

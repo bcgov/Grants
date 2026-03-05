@@ -1,4 +1,5 @@
-﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
+﻿using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
 using Grants.ApplicantPortal.API.Web.Auth;
 using Grants.ApplicantPortal.API.Web.Extensions;
 
@@ -10,7 +11,7 @@ namespace Grants.ApplicantPortal.API.Web.Contacts;
 /// <remarks>
 /// Deletes an existing Contact from the system.
 /// </remarks>
-public class Delete(IMediator _mediator)
+public class Delete(IMediator _mediator, IPluginCacheService _cacheService)
   : Endpoint<DeleteContactRequest, DeleteContactResponse>
 {
   public override void Configure()
@@ -54,10 +55,14 @@ public class Delete(IMediator _mediator)
 
     if (result.IsSuccess)
     {
+      var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
+          _cacheService, profileId, request.PluginId, request.Provider, ct);
+
       Response = new DeleteContactResponse
       {
         ContactId = request.ContactId,
-        Message = "Contact deleted successfully"
+        Message = "Contact deleted successfully",
+        PrimaryContactId = primaryId
       };
       return;
     }

@@ -4,4 +4,5 @@ public class CreateContactResponse
 {
   public Guid ContactId { get; set; }
   public string Name { get; set; } = string.Empty;
+  public Guid? PrimaryContactId { get; set; }
 }
