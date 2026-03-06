@@ -189,4 +189,28 @@ public class BackgroundJobOptions
     /// Misfire threshold for Quartz jobs (in seconds)
     /// </summary>
     public int MisfireThresholdSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Base interval (in seconds) for the first backoff step when a job fails.
+    /// Subsequent failures increase the delay exponentially.
+    /// </summary>
+    public int BaseBackoffSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum backoff interval (in seconds) between retry attempts.
+    /// The exponential delay is capped at this value (default: 5 minutes).
+    /// </summary>
+    public int MaxBackoffSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Multiplier applied for each consecutive failure.
+    /// Delay = BaseBackoffSeconds * BackoffMultiplier^(failures-1).
+    /// </summary>
+    public double BackoffMultiplier { get; set; } = 2.0;
+
+    /// <summary>
+    /// During sustained failures, emit a full warning log every Nth failure
+    /// to provide periodic visibility without flooding logs.
+    /// </summary>
+    public int LogEveryNthFailure { get; set; } = 20;
 }

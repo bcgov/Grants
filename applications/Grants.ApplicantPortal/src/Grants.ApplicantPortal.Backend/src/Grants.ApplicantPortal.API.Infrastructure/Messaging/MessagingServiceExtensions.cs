@@ -148,8 +148,10 @@ public static class MessagingServiceExtensions
         }
 
         // Add Quartz.NET
+        services.AddSingleton<JobCircuitBreaker>();
+
         services.AddQuartz(q =>
-        {                        
+        {
             // Configure Quartz options
             q.UseSimpleTypeLoader();
             q.UseInMemoryStore();
@@ -161,13 +163,14 @@ public static class MessagingServiceExtensions
             // Configure the Outbox processor job
             var outboxJobKey = new JobKey("OutboxProcessorJob");
             q.AddJob<OutboxProcessorJob>(opts => opts.WithIdentity(outboxJobKey));
-            
+
             q.AddTrigger(opts => opts
                 .ForJob(outboxJobKey)
                 .WithIdentity("OutboxProcessorJob-trigger")
                 .WithSimpleSchedule(x => x
                     .WithIntervalInSeconds(messagingOptions.Outbox.PollingIntervalSeconds)
-                    .RepeatForever())
+                    .RepeatForever()
+                    .WithMisfireHandlingInstructionFireNow())
                 .StartNow());
 
             // Configure the Inbox processor job
@@ -179,7 +182,8 @@ public static class MessagingServiceExtensions
                 .WithIdentity("InboxProcessorJob-trigger")
                 .WithSimpleSchedule(x => x
                     .WithIntervalInSeconds(messagingOptions.Inbox.PollingIntervalSeconds)
-                    .RepeatForever())
+                    .RepeatForever()
+                    .WithMisfireHandlingInstructionFireNow())
                 .StartNow());
 
             // Configure the nightly message cleanup job
@@ -189,7 +193,8 @@ public static class MessagingServiceExtensions
             q.AddTrigger(opts => opts
                 .ForJob(cleanupJobKey)
                 .WithIdentity("MessageCleanupJob-trigger")
-                .WithCronSchedule("0 0 2 * * ?") // Every day at 2:00 AM UTC
+                .WithCronSchedule("0 0 2 * * ?", x => x
+                    .WithMisfireHandlingInstructionDoNothing()) // Skip missed runs, wait for next scheduled time
                 .StartNow());
 
             logger.LogInformation("Quartz.NET background jobs configured with {MaxConcurrency} max concurrency", 

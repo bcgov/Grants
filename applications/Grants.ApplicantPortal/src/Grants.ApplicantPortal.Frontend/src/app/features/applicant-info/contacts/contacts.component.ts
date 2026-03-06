@@ -252,11 +252,19 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
    * on all contacts and update the primaryContact reference.
    */
   private applyPrimaryFromResponse(primaryContactId: string | null | undefined): void {
+    console.log('applyPrimaryFromResponse called with:', primaryContactId);
+    console.log('Current contact IDs:', this.contacts.map(c => ({ id: c.id, wasPrimary: c.isPrimary })));
+
+    const normalizedPrimaryId = primaryContactId?.toLowerCase() ?? null;
+
     this.contacts = this.contacts.map(c => ({
       ...c,
-      isPrimary: c.id === primaryContactId
+      isPrimary: c.id.toLowerCase() === normalizedPrimaryId
     }));
     this.primaryContact = this.contacts.find(c => c.isPrimary) ?? null;
+
+    console.log('After applyPrimaryFromResponse:', this.contacts.map(c => ({ id: c.id, isPrimary: c.isPrimary })));
+    console.log('Primary contact:', this.primaryContact?.id);
   }
 
   // Event handlers

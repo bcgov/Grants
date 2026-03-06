@@ -3,16 +3,17 @@
 namespace Grants.ApplicantPortal.API.Core.Services;
 
 /// <summary>
-/// Service for recording, querying, and acknowledging plugin failure events.
-/// When a failure is recorded the relevant cache segment is invalidated (compensation)
-/// so the next user read fetches fresh data from the external API.
+/// Service for recording, querying, and acknowledging plugin events.
+/// Events can be informational, warnings, or errors. Error events additionally
+/// trigger compensation (e.g. cache invalidation).
 /// </summary>
 public interface IPluginEventService
 {
   /// <summary>
-  /// Records a failure event and invalidates the relevant cache segment.
+  /// Records a plugin event. If the severity is <see cref="PluginEventSeverity.Error"/>,
+  /// compensation logic (cache invalidation) is also triggered.
   /// </summary>
-  Task RecordFailureAsync(PluginFailureContext context, CancellationToken cancellationToken = default);
+  Task RecordAsync(PluginEventContext context, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Returns unacknowledged events for a user/plugin/provider combination.
@@ -28,4 +29,23 @@ public interface IPluginEventService
   /// Acknowledges all events for a user/plugin/provider combination.
   /// </summary>
   Task AcknowledgeAllAsync(Guid profileId, string pluginId, string provider, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Convenience extensions for common event patterns.
+/// </summary>
+public static class PluginEventServiceExtensions
+{
+  /// <summary>
+  /// Shorthand for recording an error event with compensation.
+  /// </summary>
+  public static Task RecordFailureAsync(
+      this IPluginEventService service,
+      PluginEventContext context,
+      CancellationToken cancellationToken = default)
+  {
+    // Ensure severity is Error regardless of what was passed
+    var errorContext = context with { Severity = PluginEventSeverity.Error };
+    return service.RecordAsync(errorContext, cancellationToken);
+  }
 }

@@ -9,14 +9,16 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
 /// <summary>
 /// Background job that processes inbox messages and routes them to appropriate handlers
 /// </summary>
+[DisallowConcurrentExecution]
 public class InboxProcessorJob : IJob
 {
     private readonly IInboxRepository _inboxRepository;
     private readonly IDistributedLock _distributedLock;
     private readonly IMessageHandlerResolver? _messageHandlerResolver;
     private readonly IPluginMessageRouter? _pluginMessageRouter;
+    private readonly JobCircuitBreaker _circuitBreaker;
     private readonly ILogger<InboxProcessorJob> _logger;
-    
+
     // Configuration - these could come from appsettings
     private readonly string _lockKey = "inbox-processor";
     private readonly TimeSpan _lockDuration = TimeSpan.FromMinutes(5);
@@ -27,12 +29,14 @@ public class InboxProcessorJob : IJob
     public InboxProcessorJob(
         IInboxRepository inboxRepository,
         IDistributedLock distributedLock,
+        JobCircuitBreaker circuitBreaker,
         ILogger<InboxProcessorJob> logger,
         IMessageHandlerResolver? messageHandlerResolver = null,
         IPluginMessageRouter? pluginMessageRouter = null)
     {
         _inboxRepository = inboxRepository;
         _distributedLock = distributedLock;
+        _circuitBreaker = circuitBreaker;
         _messageHandlerResolver = messageHandlerResolver;
         _pluginMessageRouter = pluginMessageRouter;
         _logger = logger;
@@ -46,69 +50,79 @@ public class InboxProcessorJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var cancellationToken = context.CancellationToken;
-        
-        _logger.LogDebug("Inbox processor job starting");
 
-        // First, release any expired locks
-        await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
-
-        // Acquire distributed lock to ensure only one instance processes messages
-        var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
-        
-        if (!lockResult.IsSuccess)
+        if (!_circuitBreaker.ShouldExecute(_lockKey))
         {
-            _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", string.Join(", ", lockResult.Errors));
             return;
         }
 
-        var lockToken = lockResult.Value;
-        
+        _logger.LogDebug("Inbox processor job starting");
+
         try
         {
-            var processed = 0;
-            var startTime = DateTime.UtcNow;
-            
-            // Process messages in batches
-            while (!cancellationToken.IsCancellationRequested)
+            // First, release any expired locks
+            await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
+
+            // Acquire distributed lock to ensure only one instance processes messages
+            var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
+
+            if (!lockResult.IsSuccess)
             {
-                var messages = await _inboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
-                
-                if (!messages.Any())
-                {
-                    break; // No more messages to process
-                }
-
-                foreach (var message in messages)
-                {
-                    await ProcessMessage(message, cancellationToken);
-                    processed++;
-                }
-
-                // Renew lock if we're still processing
-                if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
-                {
-                    await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
-                    startTime = DateTime.UtcNow;
-                }
+                _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", string.Join(", ", lockResult.Errors));
+                return;
             }
 
-            if (processed > 0)
+            var lockToken = lockResult.Value;
+
+            try
             {
-                _logger.LogInformation("Inbox processor job completed. Processed {Count} messages", processed);
+                var processed = 0;
+                var startTime = DateTime.UtcNow;
+
+                // Process messages in batches
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var messages = await _inboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
+
+                    if (!messages.Any())
+                    {
+                        break; // No more messages to process
+                    }
+
+                    foreach (var message in messages)
+                    {
+                        await ProcessMessage(message, cancellationToken);
+                        processed++;
+                    }
+
+                    // Renew lock if we're still processing
+                    if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
+                    {
+                        await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        startTime = DateTime.UtcNow;
+                    }
+                }
+
+                if (processed > 0)
+                {
+                    _logger.LogInformation("Inbox processor job completed. Processed {Count} messages", processed);
+                }
+                else
+                {
+                    _logger.LogDebug("Inbox processor job completed. No messages to process");
+                }
             }
-            else
+            finally
             {
-                _logger.LogDebug("Inbox processor job completed. No messages to process");
+                // Release the lock
+                await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
             }
+
+            _circuitBreaker.RecordSuccess(_lockKey);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during inbox processing");
-        }
-        finally
-        {
-            // Release the lock
-            await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+            _circuitBreaker.RecordFailure(_lockKey, ex);
         }
     }
 

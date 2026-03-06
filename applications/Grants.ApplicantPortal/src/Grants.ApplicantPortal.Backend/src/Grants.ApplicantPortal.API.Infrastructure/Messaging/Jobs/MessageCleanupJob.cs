@@ -1,4 +1,5 @@
-﻿using Grants.ApplicantPortal.API.Infrastructure.Messaging.Configuration;
+﻿using Grants.ApplicantPortal.API.Infrastructure.Messaging.BackgroundJobs;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Configuration;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 using Microsoft.Extensions.Logging;
@@ -17,17 +18,26 @@ public class MessageCleanupJob : IJob
 {
     private readonly IOutboxRepository _outboxRepository;
     private readonly IInboxRepository _inboxRepository;
+    private readonly IDistributedLock _distributedLock;
+    private readonly JobCircuitBreaker _circuitBreaker;
     private readonly MessagingOptions _options;
     private readonly ILogger<MessageCleanupJob> _logger;
+
+    private readonly string _lockKey = "message-cleanup";
+    private readonly TimeSpan _lockDuration = TimeSpan.FromMinutes(10);
 
     public MessageCleanupJob(
         IOutboxRepository outboxRepository,
         IInboxRepository inboxRepository,
+        IDistributedLock distributedLock,
+        JobCircuitBreaker circuitBreaker,
         IOptions<MessagingOptions> options,
         ILogger<MessageCleanupJob> logger)
     {
         _outboxRepository = outboxRepository;
         _inboxRepository = inboxRepository;
+        _distributedLock = distributedLock;
+        _circuitBreaker = circuitBreaker;
         _options = options.Value;
         _logger = logger;
     }
@@ -36,31 +46,56 @@ public class MessageCleanupJob : IJob
     {
         var cancellationToken = context.CancellationToken;
 
-        _logger.LogInformation("Message cleanup job starting");
+        if (!_circuitBreaker.ShouldExecute(_lockKey))
+        {
+            return;
+        }
 
-        var outboxCutoff = DateTime.UtcNow.AddDays(-_options.Outbox.RetentionDays);
-        var inboxCutoff = DateTime.UtcNow.AddDays(-_options.Inbox.RetentionDays);
+        _logger.LogInformation("Message cleanup job starting");
 
         try
         {
-            var outboxDeleted = await _outboxRepository.CleanupOldMessagesAsync(outboxCutoff, cancellationToken);
-            var inboxDeleted = await _inboxRepository.CleanupOldMessagesAsync(inboxCutoff, cancellationToken);
+            // Acquire distributed lock to ensure only one instance runs cleanup
+            var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
 
-            if (outboxDeleted > 0 || inboxDeleted > 0)
+            if (!lockResult.IsSuccess)
             {
-                _logger.LogInformation(
-                    "Message cleanup completed. Outbox: {OutboxDeleted} removed (older than {OutboxDays}d), Inbox: {InboxDeleted} removed (older than {InboxDays}d)",
-                    outboxDeleted, _options.Outbox.RetentionDays,
-                    inboxDeleted, _options.Inbox.RetentionDays);
+                _logger.LogDebug("Could not acquire lock for message cleanup: {Error}", string.Join(", ", lockResult.Errors));
+                return;
             }
-            else
+
+            var lockToken = lockResult.Value;
+
+            try
             {
-                _logger.LogDebug("Message cleanup completed. No messages to remove");
+                var outboxCutoff = DateTime.UtcNow.AddDays(-_options.Outbox.RetentionDays);
+                var inboxCutoff = DateTime.UtcNow.AddDays(-_options.Inbox.RetentionDays);
+
+                var outboxDeleted = await _outboxRepository.CleanupOldMessagesAsync(outboxCutoff, cancellationToken);
+                var inboxDeleted = await _inboxRepository.CleanupOldMessagesAsync(inboxCutoff, cancellationToken);
+
+                if (outboxDeleted > 0 || inboxDeleted > 0)
+                {
+                    _logger.LogInformation(
+                        "Message cleanup completed. Outbox: {OutboxDeleted} removed (older than {OutboxDays}d), Inbox: {InboxDeleted} removed (older than {InboxDays}d)",
+                        outboxDeleted, _options.Outbox.RetentionDays,
+                        inboxDeleted, _options.Inbox.RetentionDays);
+                }
+                else
+                {
+                    _logger.LogDebug("Message cleanup completed. No messages to remove");
+                }
             }
+            finally
+            {
+                await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+            }
+
+            _circuitBreaker.RecordSuccess(_lockKey);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during message cleanup");
+            _circuitBreaker.RecordFailure(_lockKey, ex);
         }
     }
 }

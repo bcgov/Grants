@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Events;
 
 /// <summary>
-/// Persists plugin failure events and compensates by invalidating the relevant cache segment.
+/// Persists plugin events and, for error-severity events, compensates by
+/// invalidating the relevant cache segment.
 /// Uses <see cref="IPluginCommandMetadataRegistry"/> for cache segment resolution,
 /// keeping this service completely plugin-agnostic.
 /// </summary>
@@ -18,7 +19,7 @@ public class PluginEventService(
     IPluginCommandMetadataRegistry metadataRegistry,
     ILogger<PluginEventService> logger) : IPluginEventService
 {
-  public async Task RecordFailureAsync(PluginFailureContext context, CancellationToken cancellationToken = default)
+  public async Task RecordAsync(PluginEventContext context, CancellationToken cancellationToken = default)
   {
     try
     {
@@ -29,7 +30,7 @@ public class PluginEventService(
           context.Provider,
           context.DataType,
           context.EntityId,
-          PluginEventSeverity.Error,
+          context.Severity,
           context.Source,
           context.UserMessage,
           context.TechnicalDetails,
@@ -39,33 +40,35 @@ public class PluginEventService(
       dbContext.PluginEvents.Add(pluginEvent);
       await dbContext.SaveChangesAsync(cancellationToken);
 
-      logger.LogWarning(
-          "Recorded plugin failure event {EventId} for ProfileId: {ProfileId}, DataType: {DataType}, Source: {Source}",
-          pluginEvent.EventId, context.ProfileId, context.DataType, context.Source);
+      logger.LogInformation(
+          "Recorded plugin event {EventId} [{Severity}] for ProfileId: {ProfileId}, DataType: {DataType}, Source: {Source}",
+          pluginEvent.EventId, context.Severity, context.ProfileId, context.DataType, context.Source);
 
-      // 2. Compensate: invalidate the relevant cache segment so next read fetches fresh data.
-      //    The registry delegates to the plugin's own metadata provider.
-      var cacheSegment = metadataRegistry.GetCacheSegment(context.PluginId, context.DataType);
-
-      if (cacheSegment != null)
+      // 2. Compensate only for errors — invalidate cache so next read fetches fresh data
+      if (context.Severity == PluginEventSeverity.Error)
       {
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-            context.ProfileId,
-            context.PluginId,
-            context.Provider,
-            cacheSegment,
-            cancellationToken);
+        var cacheSegment = metadataRegistry.GetCacheSegment(context.PluginId, context.DataType);
 
-        logger.LogInformation(
-            "Compensated failure by invalidating cache segment {CacheSegment} for ProfileId: {ProfileId}",
-            cacheSegment, context.ProfileId);
+        if (cacheSegment != null)
+        {
+          await cacheInvalidationService.InvalidateProfileDataCacheAsync(
+              context.ProfileId,
+              context.PluginId,
+              context.Provider,
+              cacheSegment,
+              cancellationToken);
+
+          logger.LogInformation(
+              "Compensated error by invalidating cache segment {CacheSegment} for ProfileId: {ProfileId}",
+              cacheSegment, context.ProfileId);
+        }
       }
     }
     catch (Exception ex)
     {
       // Don't let event recording failures break the caller
       logger.LogError(ex,
-          "Failed to record plugin failure event for ProfileId: {ProfileId}, DataType: {DataType}",
+          "Failed to record plugin event for ProfileId: {ProfileId}, DataType: {DataType}",
           context.ProfileId, context.DataType);
     }
   }

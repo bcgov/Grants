@@ -11,7 +11,8 @@ public enum PluginEventSeverity
 }
 
 /// <summary>
-/// Source that triggered the plugin event
+/// Source that triggered the plugin event.
+/// Extend this enum as new event sources are added.
 /// </summary>
 public enum PluginEventSource
 {
@@ -23,12 +24,28 @@ public enum PluginEventSource
   /// <summary>
   /// External system returned a FAILED acknowledgment
   /// </summary>
-  InboxRejection = 1
+  InboxRejection = 1,
+
+  /// <summary>
+  /// External system sent a notification or status update
+  /// </summary>
+  ExternalNotification = 2,
+
+  /// <summary>
+  /// System-generated informational event (e.g. cache refresh, background job)
+  /// </summary>
+  System = 3,
+
+  /// <summary>
+  /// Event raised by plugin-specific business logic
+  /// </summary>
+  Plugin = 4
 }
 
 /// <summary>
-/// Represents a failure event surfaced to the user when an async command fails.
-/// Stored in the database so events persist across sessions.
+/// Represents a plugin event surfaced to the user.
+/// Events can be informational notifications, warnings, or error alerts.
+/// Stored in the database so they persist across sessions.
 /// </summary>
 public class PluginEvent
 {

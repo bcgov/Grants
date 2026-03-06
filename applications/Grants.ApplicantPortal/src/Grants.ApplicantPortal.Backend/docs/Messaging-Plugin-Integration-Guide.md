@@ -705,7 +705,11 @@ The cache is patched optimistically. When the cache TTL expires (default 60 min 
     "BackgroundJobs": {
       "MaxConcurrency": 3,
       "Enabled": true,
-      "MisfireThresholdSeconds": 60
+      "MisfireThresholdSeconds": 60,
+      "BaseBackoffSeconds": 15,
+      "MaxBackoffSeconds": 300,
+      "BackoffMultiplier": 2.0,
+      "LogEveryNthFailure": 20
     }
   }
 }
@@ -739,6 +743,10 @@ The cache is patched optimistically. When the cache TTL expires (default 60 min 
 | `BackgroundJobs` | `MaxConcurrency` | CPU count | Max concurrent Quartz jobs |
 | | `Enabled` | `true` | Enable/disable all background jobs |
 | | `MisfireThresholdSeconds` | `60` | Quartz misfire tolerance |
+| | `BaseBackoffSeconds` | `15` | Initial delay (seconds) before retrying after a job failure |
+| | `MaxBackoffSeconds` | `300` | Maximum backoff cap (5 minutes) — delay stops growing beyond this |
+| | `BackoffMultiplier` | `2.0` | Exponential multiplier per consecutive failure (15→30→60→120→300) |
+| | `LogEveryNthFailure` | `20` | During sustained failures, emit a Warning log every Nth failure |
 
 ### External System / Mock API (appsettings.json)
 
@@ -834,6 +842,36 @@ ORDER BY "CreatedAt";
 
 ## Error Handling & Reliability
 
+### Job Circuit Breaker (Exponential Backoff)
+
+All background jobs (`OutboxProcessorJob`, `InboxProcessorJob`, `MessageCleanupJob`) are protected by a shared `JobCircuitBreaker` singleton that prevents log flooding and wasted work when infrastructure is unavailable (e.g. missing DB tables, connection failures).
+
+**How it works:**
+- Quartz triggers continue firing at their configured interval (e.g. every 15s)
+- On each tick, the job asks `JobCircuitBreaker.ShouldExecute(jobKey)` before doing any real work
+- If the backoff period hasn't elapsed, the job returns immediately (no DB calls, no error logs)
+- On success, the breaker resets to zero failures
+- On failure, the breaker computes an exponential delay: `BaseBackoffSeconds × BackoffMultiplier^(failures-1)`, capped at `MaxBackoffSeconds`
+
+**Logging strategy:**
+| Failure # | Log Level | Content |
+|-----------|-----------|---------|
+| 1st | `Error` | Full exception with stack trace |
+| 2nd–19th | `Debug` | Suppressed — only failure count and next retry time |
+| Every 20th | `Warning` | Periodic reminder with failure count and error message |
+| Recovery | `Information` | "Circuit recovered after N consecutive failures" |
+
+**Backoff progression (with defaults):**
+| Consecutive Failures | Delay Before Next Attempt |
+|---------------------|--------------------------|
+| 1 | 15 seconds |
+| 2 | 30 seconds |
+| 3 | 60 seconds |
+| 4 | 120 seconds |
+| 5+ | 300 seconds (5 min cap) |
+
+**Configuration:** All values are tunable under `Messaging:BackgroundJobs` in `appsettings.json` — see [Configuration Reference](#configuration-reference) above.
+
 ### Message Delivery Guarantees
 - **At-least-once delivery** for outbound messages (outbox retry)
 - **Duplicate detection** for inbound messages (inbox checks `MessageId`)
@@ -841,10 +879,186 @@ ORDER BY "CreatedAt";
 - **Distributed locking** prevents duplicate processing across pods
 
 ### Failure Scenarios
-1. **Database Down**: Messages queued in RabbitMQ until service recovery
-2. **RabbitMQ Down**: Messages remain in outbox for retry when restored (simulation mode fallback)
-3. **Plugin Error**: Message marked as failed with retry logic
-4. **External System Down**: Acknowledgments delayed but command remains tracked in outbox
+1. **Database Down**: Messages queued in RabbitMQ until service recovery. Job circuit breaker backs off to 5-minute intervals, preventing log flooding.
+2. **Missing Tables (Migration Issue)**: Jobs detect failure on first attempt, circuit opens, backoff escalates to 5 minutes. Only 1 error log + periodic warnings instead of thousands.
+3. **RabbitMQ Down**: Messages remain in outbox for retry when restored (simulation mode fallback)
+4. **Plugin Error**: Message marked as failed with retry logic
+5. **External System Down**: Acknowledgments delayed but command remains tracked in outbox
+
+---
+
+## Plugin Event System
+
+The plugin event system provides a **general-purpose, persistent notification channel** between the backend and the user. Events can be informational messages, warnings, or errors — they are not limited to failures.
+
+### Use Cases
+
+| Severity | Example | Compensation? |
+|----------|---------|---------------|
+| **Info** | "Your profile has been synced with the external system" | No |
+| **Info** | "A new grant program is available for your organization" | No |
+| **Warning** | "Your submission is approaching the deadline" | No |
+| **Error** | "The external system rejected your contact creation: duplicate detected" | Yes — cache invalidated |
+| **Error** | "Your address update could not be sent to the external system" | Yes — cache invalidated |
+
+### Architecture
+
+```
+Any caller (plugin, handler, job)
+        |
+        v
+  IPluginEventService.RecordAsync(PluginEventContext)
+        |
+        +---> Persists PluginEvent to database
+        |
+        +---> If severity == Error:
+                Invalidate cache segment via IPluginCommandMetadataRegistry
+                (so next read fetches fresh data from external API)
+```
+
+Existing callers that record error events automatically:
+
+| Caller | Trigger | Source |
+|--------|---------|--------|
+| `OutboxProcessorJob` | Message permanently fails to publish (max retries) | `OutboxFailure` |
+| `UnityPluginMessageHandler` | External system returns FAILED ack | `InboxRejection` |
+
+### PluginEvents Table Schema
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `Id` | `long` | Primary key (auto-increment) |
+| `EventId` | `Guid` | Unique event identifier (public, used in API) |
+| `ProfileId` | `Guid` | Which user this event is for |
+| `PluginId` | `string` | Which plugin raised the event (e.g. `"UNITY"`) |
+| `Provider` | `string` | Which provider (e.g. `"DGP"`) |
+| `DataType` | `string` | Context — command type or event category (e.g. `"CONTACT_CREATE_COMMAND"`, `"DEADLINE_WARNING"`) |
+| `EntityId` | `string?` | Affected entity (e.g. contactId, addressId) |
+| `Severity` | `PluginEventSeverity` | `Info (0)`, `Warning (1)`, `Error (2)` |
+| `Source` | `PluginEventSource` | What triggered the event (see below) |
+| `UserMessage` | `string` | Human-readable message safe for UI display |
+| `TechnicalDetails` | `string?` | Detailed error/diagnostic info for logs |
+| `OriginalMessageId` | `Guid?` | Links to outbox/inbox message (if applicable) |
+| `CorrelationId` | `string?` | For tracing |
+| `IsAcknowledged` | `bool` | User dismissed this event |
+| `CreatedAt` | `DateTime` | When the event was created (UTC) |
+| `AcknowledgedAt` | `DateTime?` | When user dismissed |
+
+### PluginEventSeverity Values
+
+| Value | Name | Compensation? |
+|-------|------|---------------|
+| `0` | **Info** | No |
+| `1` | **Warning** | No |
+| `2` | **Error** | Yes — cache segment invalidated |
+
+### PluginEventSource Values
+
+| Value | Name | Description |
+|-------|------|-------------|
+| `0` | **OutboxFailure** | Outbox message failed to publish after max retries |
+| `1` | **InboxRejection** | External system returned a FAILED acknowledgment |
+| `2` | **ExternalNotification** | External system sent a notification or status update |
+| `3` | **System** | System-generated event (e.g. cache refresh, background job) |
+| `4` | **Plugin** | Event raised by plugin-specific business logic |
+
+### API Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/Events/{PluginId}/{Provider}` | Returns unacknowledged events for the current user |
+| `PATCH` | `/Events/{EventId}/acknowledge` | Acknowledges (dismisses) a single event |
+| `PATCH` | `/Events/{PluginId}/{Provider}/acknowledge-all` | Acknowledges all events for plugin/provider |
+
+**Example response** (`GET /Events/UNITY/DGP`):
+
+```json
+{
+  "events": [
+    {
+      "eventId": "abc-123",
+      "severity": "Error",
+      "source": "InboxRejection",
+      "dataType": "CONTACT_CREATE_COMMAND",
+      "entityId": "c8d27b95-...",
+      "userMessage": "The external system rejected your contact creation: duplicate detected. Your data may revert on next refresh.",
+      "createdAt": "2026-03-04T20:11:20Z",
+      "isAcknowledged": false
+    },
+    {
+      "eventId": "def-456",
+      "severity": "Info",
+      "source": "ExternalNotification",
+      "dataType": "PROGRAM_UPDATE",
+      "entityId": null,
+      "userMessage": "A new grant program 'Digital Innovation Fund' is now available.",
+      "createdAt": "2026-03-04T18:00:00Z",
+      "isAcknowledged": false
+    }
+  ]
+}
+```
+
+### Recording Events from Plugin Code
+
+```csharp
+// Info event — no compensation
+await pluginEventService.RecordAsync(new PluginEventContext(
+    profileId,
+    "UNITY",
+    "DGP",
+    "PROGRAM_UPDATE",
+    EntityId: null,
+    PluginEventSeverity.Info,
+    PluginEventSource.ExternalNotification,
+    "A new grant program 'Digital Innovation Fund' is now available."),
+    cancellationToken);
+
+// Error event — triggers cache invalidation automatically
+await pluginEventService.RecordFailureAsync(new PluginEventContext(
+    profileId,
+    "UNITY",
+    "DGP",
+    "CONTACT_CREATE_COMMAND",
+    entityId,
+    PluginEventSeverity.Error,
+    PluginEventSource.InboxRejection,
+    "The external system rejected your contact creation.",
+    TechnicalDetails: "Duplicate key violation"),
+    cancellationToken);
+```
+
+### Extensibility — `IPluginCommandMetadataProvider`
+
+Each plugin registers a metadata provider that maps its command types to cache segments and friendly names. The event system uses this registry for compensation, keeping the core service plugin-agnostic.
+
+```csharp
+// A new plugin just registers its provider — everything else works automatically
+services.AddSingleton<IPluginCommandMetadataProvider, NewPluginCommandMetadataProvider>();
+```
+
+### Plugin Event Monitoring
+
+```sql
+-- Active (unacknowledged) events by severity
+SELECT "PluginId", "Severity", COUNT(*) as "Count"
+FROM "PluginEvents"
+WHERE "IsAcknowledged" = false
+GROUP BY "PluginId", "Severity";
+
+-- Recent error events
+SELECT "EventId", "PluginId", "DataType", "UserMessage", "CreatedAt"
+FROM "PluginEvents"
+WHERE "Severity" = 2  -- Error
+ORDER BY "CreatedAt" DESC
+LIMIT 20;
+
+-- Events for a specific user
+SELECT * FROM "PluginEvents"
+WHERE "ProfileId" = '019b4788-d7a7-7c40-b25e-98a361adbbfc'
+AND "IsAcknowledged" = false
+ORDER BY "CreatedAt" DESC;
+```
 
 ---
 

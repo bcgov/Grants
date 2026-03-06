@@ -157,17 +157,18 @@ public class UnityPluginMessageHandler : IPluginMessageHandler
         var dataType = metadata?.DataType ?? "UNKNOWN";
         var friendlyAction = _metadataRegistry.GetFriendlyActionName(PluginId, dataType);
 
-        var failureContext = new PluginFailureContext(
+        var failureContext = new PluginEventContext(
             profileId,
             PluginId,
             metadata?.Provider ?? "UNKNOWN",
             dataType,
             metadata?.EntityId,
+            PluginEventSeverity.Error,
+            PluginEventSource.InboxRejection,
             $"The external system rejected your {friendlyAction}: {acknowledgment.Details ?? "no details provided"}. Your data may revert on next refresh.",
             $"External system FAILED ack for message {acknowledgment.OriginalMessageId}. Details: {acknowledgment.Details}",
             acknowledgment.OriginalMessageId,
-            acknowledgment.CorrelationId,
-            PluginEventSource.InboxRejection);
+            acknowledgment.CorrelationId);
 
         await _pluginEventService.RecordFailureAsync(failureContext, context.CancellationToken);
     }

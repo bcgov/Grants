@@ -10,6 +10,7 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
 /// <summary>
 /// Background job that processes outbox messages and publishes them to RabbitMQ
 /// </summary>
+[DisallowConcurrentExecution]
 public class OutboxProcessorJob : IJob
 {
     private readonly IOutboxRepository _outboxRepository;
@@ -17,6 +18,7 @@ public class OutboxProcessorJob : IJob
     private readonly IRabbitMQPublisher? _rabbitMQPublisher; // Nullable for fallback scenarios
     private readonly IPluginEventService _pluginEventService;
     private readonly IPluginCommandMetadataRegistry _metadataRegistry;
+    private readonly JobCircuitBreaker _circuitBreaker;
     private readonly ILogger<OutboxProcessorJob> _logger;
 
     // Configuration - these could come from appsettings
@@ -30,6 +32,7 @@ public class OutboxProcessorJob : IJob
         IDistributedLock distributedLock,
         IPluginEventService pluginEventService,
         IPluginCommandMetadataRegistry metadataRegistry,
+        JobCircuitBreaker circuitBreaker,
         ILogger<OutboxProcessorJob> logger,
         IRabbitMQPublisher? rabbitMQPublisher = null)
     {
@@ -37,6 +40,7 @@ public class OutboxProcessorJob : IJob
         _distributedLock = distributedLock;
         _pluginEventService = pluginEventService;
         _metadataRegistry = metadataRegistry;
+        _circuitBreaker = circuitBreaker;
         _rabbitMQPublisher = rabbitMQPublisher;
         _logger = logger;
     }
@@ -44,69 +48,79 @@ public class OutboxProcessorJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var cancellationToken = context.CancellationToken;
-        
-        _logger.LogDebug("Outbox processor job starting");
 
-        // First, release any expired locks
-        await _outboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
-
-        // Acquire distributed lock to ensure only one instance processes messages
-        var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
-        
-        if (!lockResult.IsSuccess)
+        if (!_circuitBreaker.ShouldExecute(_lockKey))
         {
-            _logger.LogDebug("Could not acquire lock for outbox processing: {Error}", string.Join(", ", lockResult.Errors));
             return;
         }
 
-        var lockToken = lockResult.Value;
-        
+        _logger.LogDebug("Outbox processor job starting");
+
         try
         {
-            var processed = 0;
-            var startTime = DateTime.UtcNow;
-            
-            // Process messages in batches
-            while (!cancellationToken.IsCancellationRequested)
+            // First, release any expired locks
+            await _outboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
+
+            // Acquire distributed lock to ensure only one instance processes messages
+            var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
+
+            if (!lockResult.IsSuccess)
             {
-                var messages = await _outboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
-                
-                if (!messages.Any())
-                {
-                    break; // No more messages to process
-                }
-
-                foreach (var message in messages)
-                {
-                    await ProcessMessage(message, cancellationToken);
-                    processed++;
-                }
-
-                // Renew lock if we're still processing
-                if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
-                {
-                    await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
-                    startTime = DateTime.UtcNow;
-                }
+                _logger.LogDebug("Could not acquire lock for outbox processing: {Error}", string.Join(", ", lockResult.Errors));
+                return;
             }
 
-            if (processed > 0)
+            var lockToken = lockResult.Value;
+
+            try
             {
-                _logger.LogInformation("Outbox processor job completed. Processed {Count} messages", processed);
+                var processed = 0;
+                var startTime = DateTime.UtcNow;
+
+                // Process messages in batches
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var messages = await _outboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
+
+                    if (!messages.Any())
+                    {
+                        break; // No more messages to process
+                    }
+
+                    foreach (var message in messages)
+                    {
+                        await ProcessMessage(message, cancellationToken);
+                        processed++;
+                    }
+
+                    // Renew lock if we're still processing
+                    if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
+                    {
+                        await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        startTime = DateTime.UtcNow;
+                    }
+                }
+
+                if (processed > 0)
+                {
+                    _logger.LogInformation("Outbox processor job completed. Processed {Count} messages", processed);
+                }
+                else
+                {
+                    _logger.LogDebug("Outbox processor job completed. No messages to process");
+                }
             }
-            else
+            finally
             {
-                _logger.LogDebug("Outbox processor job completed. No messages to process");
+                // Release the lock
+                await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
             }
+
+            _circuitBreaker.RecordSuccess(_lockKey);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during outbox processing");
-        }
-        finally
-        {
-            // Release the lock
-            await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+            _circuitBreaker.RecordFailure(_lockKey, ex);
         }
     }
 
@@ -227,17 +241,18 @@ public class OutboxProcessorJob : IJob
 
             var friendlyAction = _metadataRegistry.GetFriendlyActionName(pluginId, metadata.DataType);
 
-            var failureContext = new PluginFailureContext(
+            var failureContext = new PluginEventContext(
                 metadata.ProfileId,
                 pluginId,
                 metadata.Provider,
                 metadata.DataType,
                 metadata.EntityId,
+                PluginEventSeverity.Error,
+                PluginEventSource.OutboxFailure,
                 $"Your {friendlyAction} could not be sent to the external system. Please try again.",
                 $"Outbox publish failed after {message.RetryCount} retries. Last error: {error}",
                 message.MessageId,
-                message.CorrelationId,
-                PluginEventSource.OutboxFailure);
+                message.CorrelationId);
 
             await _pluginEventService.RecordFailureAsync(failureContext, cancellationToken);
         }

@@ -131,28 +131,50 @@ services:
 
 ## ?? **Code Usage (Same Regardless of Mode)**
 
+All background jobs should use the `JobCircuitBreaker` to prevent log flooding and wasted work during infrastructure outages:
+
 ```csharp
 public class SomeBackgroundJob : IJob
 {
     private readonly IDistributedLock _distributedLock;
-    
+    private readonly JobCircuitBreaker _circuitBreaker;
+    private const string JobKey = "my-job";
+
     public async Task Execute(IJobExecutionContext context)
     {
-        // Works the same whether using Redis or in-memory!
-        var lockResult = await _distributedLock.AcquireLockAsync(
-            "my-job-lock", 
-            TimeSpan.FromMinutes(5));
-            
-        if (lockResult.IsSuccess)
+        // Circuit breaker: skip this tick if still in backoff period
+        if (!_circuitBreaker.ShouldExecute(JobKey))
+            return;
+
+        try
         {
-            try
+            // Works the same whether using Redis or in-memory!
+            var lockResult = await _distributedLock.AcquireLockAsync(
+                JobKey, 
+                TimeSpan.FromMinutes(5));
+
+            if (lockResult.IsSuccess)
             {
-                // Do work...
+                try
+                {
+                    // Do work...
+                }
+                finally
+                {
+                    await _distributedLock.ReleaseLockAsync(JobKey, lockResult.Value);
+                }
             }
-            finally
-            {
-                await _distributedLock.ReleaseLockAsync("my-job-lock", lockResult.Value);
-            }
+
+            _circuitBreaker.RecordSuccess(JobKey);
+        }
+        catch (Exception ex)
+        {
+            // Circuit breaker handles logging with exponential backoff:
+            // 1st failure = Error (full stack trace)
+            // 2nd-19th   = Debug (suppressed)
+            // Every 20th = Warning (periodic reminder)
+            // Recovery   = Information ("circuit recovered after N failures")
+            _circuitBreaker.RecordFailure(JobKey, ex);
         }
     }
 }

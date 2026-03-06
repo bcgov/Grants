@@ -78,6 +78,15 @@ public class PluginCacheService(
 {
   private readonly string _storeType = distributedCache.GetType().Name;
 
+  /// <summary>
+  /// Shared options for deserialization — case-insensitive so cache entries written
+  /// with camelCase (e.g. DEMO plugin) or PascalCase both deserialize correctly.
+  /// </summary>
+  private static readonly JsonSerializerOptions _readOptions = new()
+  {
+    PropertyNameCaseInsensitive = true
+  };
+
   public async Task<T> GetOrFetchAsync<T>(
       Guid profileId,
       string pluginId,
@@ -94,7 +103,7 @@ public class PluginCacheService(
     {
       try
       {
-        var deserialized = JsonSerializer.Deserialize<T>(cached);
+        var deserialized = JsonSerializer.Deserialize<T>(cached, _readOptions);
         if (deserialized is not null)
         {
           logger.LogDebug("Cache hit for {PluginId}:{Segment}, ProfileId: {ProfileId}",
@@ -174,7 +183,7 @@ public class PluginCacheService(
       var cached = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
       if (cached is null) return null;
 
-      return JsonSerializer.Deserialize<T>(cached);
+      return JsonSerializer.Deserialize<T>(cached, _readOptions);
     }
     catch (Exception ex)
     {
