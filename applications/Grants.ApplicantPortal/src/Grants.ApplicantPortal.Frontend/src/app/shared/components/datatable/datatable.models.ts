@@ -22,11 +22,17 @@ export interface DatatableActionItem {
   cssClass?: string;
 }
 
+export interface DatatableLinkConfig {
+  baseUrl: string;     // Base URL prefix (e.g., linkSource from API)
+  linkField: string;   // Field on the row containing the link id to append
+}
+
 export interface DatatableConfig {
   columns: DatatableColumn[];
   actionsType?: 'chevron' | 'dropdown' | 'none';
   actionItems?: DatatableActionItem[];
   actionsVisibilityField?: string; // Field name to check for row-level action visibility
+  linkConfig?: DatatableLinkConfig; // When set with chevron, renders an <a> tag instead of a button
   badgeConfig?: DatatableBadgeConfig;
   rowClickable?: boolean;
   responsive?: boolean;

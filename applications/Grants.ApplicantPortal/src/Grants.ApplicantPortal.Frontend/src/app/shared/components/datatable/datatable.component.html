@@ -89,14 +89,26 @@
               @if (config.actionsType && config.actionsType !== 'none') {
                 <td class="actions-column">
                   @if (config.actionsType === 'chevron') {
-                    <button
-                      type="button"
-                      class="btn btn-link p-0 border-0"
-                      (click)="onActionClick('view', row, i, $event)"
-                      aria-label="View details"
-                    >
-                      <i class="fas fa-chevron-right"></i>
-                    </button>
+                    @if (getRowLink(row)) {
+                      <a
+                        [href]="getRowLink(row)"
+                        target="_blank"
+                        class="btn btn-link p-0 border-0"
+                        (click)="$event.stopPropagation()"
+                        aria-label="Open submission"
+                      >
+                        <i class="fas fa-chevron-right"></i>
+                      </a>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 border-0"
+                        (click)="onActionClick('view', row, i, $event)"
+                        aria-label="View details"
+                      >
+                        <i class="fas fa-chevron-right"></i>
+                      </button>
+                    }
                   } @else if (config.actionsType === 'dropdown' && config.actionItems) {
                     <div class="dropdown" [style.visibility]="shouldShowActions(row) ? 'visible' : 'hidden'">
                       <button
