@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
+import { NotificationsDropdownComponent } from '../../shared/components/notifications-dropdown/notifications-dropdown.component';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
@@ -12,7 +13,7 @@ import { Subject } from 'rxjs';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, UserDropdownComponent],
+  imports: [CommonModule, UserDropdownComponent, NotificationsDropdownComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
 })

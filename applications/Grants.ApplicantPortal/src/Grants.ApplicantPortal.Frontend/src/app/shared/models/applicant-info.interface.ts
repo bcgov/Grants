@@ -113,3 +113,18 @@ export interface OrgSearchResult {
   orgStatus: string;
   organizationType: string;
 }
+
+// Plugin Events
+export type EventSeverity = 'Error' | 'Warning' | 'Info';
+
+export interface PluginEventDto {
+  eventId: string;
+  severity: EventSeverity;
+  userMessage: string;
+  createdAt: string;
+  acknowledgedAt?: string | null;
+}
+
+export interface PluginEventsResponse {
+  events: PluginEventDto[];
+}

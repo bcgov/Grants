@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
   OrganizationResponse,
   SubmissionsResponse,
+  PluginEventDto,
+  PluginEventsResponse,
 } from '../../shared/models/applicant-info.interface';
 import { environment } from '../../../environments/environment';
 
@@ -437,5 +439,38 @@ export class ApplicantInfoService {
         throw error;
       })
     );
+  }
+
+  // ── Plugin Events ──────────────────────────────────────────────
+
+  /**
+   * Gets unacknowledged events for the current workspace/provider.
+   * Fails silently — events are non-blocking.
+   */
+  getEvents(pluginId: string, provider: string): Observable<PluginEventDto[]> {
+    const url = `${this.baseUrl}/Events/${pluginId}/${provider}`;
+    return this.http.get<PluginEventsResponse>(url).pipe(
+      map(response => response.events),
+      catchError(error => {
+        console.error('Failed to load plugin events:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Acknowledges (dismisses) a single event.
+   */
+  acknowledgeEvent(eventId: string): Observable<any> {
+    const url = `${this.baseUrl}/Events/${eventId}/acknowledge`;
+    return this.http.patch(url, {});
+  }
+
+  /**
+   * Acknowledges (dismisses) all events for a workspace/provider.
+   */
+  acknowledgeAllEvents(pluginId: string, provider: string): Observable<any> {
+    const url = `${this.baseUrl}/Events/${pluginId}/${provider}/acknowledge-all`;
+    return this.http.patch(url, {});
   }
 }
