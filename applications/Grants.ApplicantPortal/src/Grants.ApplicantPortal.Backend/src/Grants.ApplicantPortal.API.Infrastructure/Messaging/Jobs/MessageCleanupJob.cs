@@ -9,9 +9,11 @@ using Quartz;
 namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
 
 /// <summary>
-/// Nightly cleanup job that removes processed inbox and outbox messages
+/// Hourly cleanup job that removes processed inbox and outbox messages
 /// older than the configured retention period (default: 7 days).
-/// Only deletes messages that have been fully processed (Published/Completed).
+/// Only deletes messages in terminal statuses (Published/Failed/TimedOut for outbox,
+/// Processed/Failed/Duplicate for inbox) — never touches Pending or Processing.
+/// Starts after a configurable startup delay to avoid contention during application boot.
 /// </summary>
 [DisallowConcurrentExecution]
 public class MessageCleanupJob : IJob

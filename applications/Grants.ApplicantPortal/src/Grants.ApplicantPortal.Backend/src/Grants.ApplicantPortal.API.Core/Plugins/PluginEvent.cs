@@ -39,7 +39,12 @@ public enum PluginEventSource
   /// <summary>
   /// Event raised by plugin-specific business logic
   /// </summary>
-  Plugin = 4
+  Plugin = 4,
+
+  /// <summary>
+  /// Published message received no acknowledgment within the configured timeout
+  /// </summary>
+  AckTimeout = 5
 }
 
 /// <summary>

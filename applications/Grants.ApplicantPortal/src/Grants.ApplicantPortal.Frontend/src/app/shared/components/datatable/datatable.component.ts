@@ -33,6 +33,9 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   sortedData: any[] = [];
   private sortConfig: TableSortConfig | null = null;
   private readonly destroy$ = new Subject<void>();
+
+  // Pagination
+  currentPage = 1;
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
 
@@ -54,6 +57,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     this.config.loadingMessage = this.config.loadingMessage ?? 'Loading data...';
     this.config.enableSortPersistence = this.config.enableSortPersistence ?? true;
     this.config.defaultSortField = this.config.defaultSortField ?? 'lastUpdated';
+    this.config.pageSize = this.config.pageSize ?? 4;
     
     // Setup sorting configuration
     if (this.config.tableId) {
@@ -142,6 +146,9 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       );
     }
     
+    // Reset to first page when data/sort changes
+    this.currentPage = 1;
+
     // Emit the sorted data
     this.dataChange.emit(this.sortedData);
   }
@@ -243,12 +250,41 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Gets the data to display (sorted data)
+   * Gets the data to display (sorted + paginated)
    */
   getDisplayData(): any[] {
     const data = this.sortedData.length > 0 ? this.sortedData : this.data;
-    // Filter out any undefined or null items to prevent trackByFn errors
-    return data ? data.filter(item => item != null) : [];
+    const filtered = data ? data.filter(item => item != null) : [];
+    const pageSize = this.config.pageSize!;
+    if (pageSize <= 0 || filtered.length <= pageSize) {
+      return filtered;
+    }
+    const start = (this.currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }
+
+  get totalRows(): number {
+    const data = this.sortedData.length > 0 ? this.sortedData : this.data;
+    return data ? data.filter(item => item != null).length : 0;
+  }
+
+  get totalPages(): number {
+    const pageSize = this.config.pageSize!;
+    return pageSize > 0 ? Math.ceil(this.totalRows / pageSize) : 1;
+  }
+
+  get showPager(): boolean {
+    return this.totalRows > this.config.pageSize!;
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  get pagerPages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   shouldShowActions(row: any): boolean {

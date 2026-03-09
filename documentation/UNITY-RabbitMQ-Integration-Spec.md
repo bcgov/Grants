@@ -44,7 +44,7 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
 | `content_type` | `"application/json"` |
 | `content_encoding` | `"utf-8"` |
 | `persistent` | `true` |
-| `message_id` | GUID string (unique per message) |
+| `message_id` | GUID string — **identical** to the `messageId` inside the JSON body. Use either source for the ack's `originalMessageId`. |
 | `correlation_id` | `"profile-{profileId}"` format |
 | `timestamp` | Unix epoch seconds |
 

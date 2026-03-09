@@ -175,4 +175,59 @@ public class OutboxMessageTests
         msg.Status.Should().Be(OutboxMessageStatus.Failed);
         msg.LastError.Should().Be($"attempt {maxRetries}");
     }
+
+    [Fact]
+    public void MarkAsTimedOut_SetsStatusAndClearsLock()
+    {
+        var msg = CreateMessage();
+        msg.MarkAsPublished();
+
+        msg.MarkAsTimedOut();
+
+        msg.Status.Should().Be(OutboxMessageStatus.TimedOut);
+        msg.ProcessedAt.Should().NotBeNull();
+        msg.LockToken.Should().BeNull();
+        msg.LockExpiry.Should().BeNull();
+    }
+
+    [Fact]
+    public void MarkAsAcknowledged_SetsStatusAndClearsLock()
+    {
+        var msg = CreateMessage();
+        msg.MarkAsPublished();
+
+        msg.MarkAsAcknowledged();
+
+        msg.Status.Should().Be(OutboxMessageStatus.Acknowledged);
+        msg.ProcessedAt.Should().NotBeNull();
+        msg.LockToken.Should().BeNull();
+        msg.LockExpiry.Should().BeNull();
+    }
+
+    [Fact]
+    public void FullLifecycle_PublishedToAcknowledged()
+    {
+        var msg = CreateMessage();
+
+        msg.MarkAsProcessing("tok", TimeSpan.FromMinutes(5));
+        msg.MarkAsPublished();
+        msg.MarkAsAcknowledged();
+
+        msg.Status.Should().Be(OutboxMessageStatus.Acknowledged);
+    }
+
+    [Fact]
+    public void FullLifecycle_PublishedToTimedOutToAcknowledged_LateAck()
+    {
+        var msg = CreateMessage();
+
+        msg.MarkAsProcessing("tok", TimeSpan.FromMinutes(5));
+        msg.MarkAsPublished();
+        msg.MarkAsTimedOut();
+        msg.Status.Should().Be(OutboxMessageStatus.TimedOut);
+
+        // Late ack should still transition to Acknowledged
+        msg.MarkAsAcknowledged();
+        msg.Status.Should().Be(OutboxMessageStatus.Acknowledged);
+    }
 }

@@ -113,6 +113,19 @@ public class OutboxOptions
     /// How often to run cleanup job (in hours)
     /// </summary>
     public int CleanupIntervalHours { get; set; } = 24;
+
+    /// <summary>
+    /// Minutes after publishing before a message with no acknowledgment is considered timed out.
+    /// The timeout job will mark these messages as TimedOut, record a PluginEvent,
+    /// and invalidate the relevant cache segment.
+    /// Set to 0 to disable ack-timeout processing.
+    /// </summary>
+    public int AckTimeoutMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Polling interval (in seconds) for the ack-timeout background job.
+    /// </summary>
+    public int AckTimeoutPollingIntervalSeconds { get; set; } = 60;
 }
 
 /// <summary>
@@ -213,4 +226,11 @@ public class BackgroundJobOptions
     /// to provide periodic visibility without flooding logs.
     /// </summary>
     public int LogEveryNthFailure { get; set; } = 20;
+
+    /// <summary>
+    /// Delay (in seconds) before background jobs start executing after application boot.
+    /// Prevents cleanup and processing jobs from competing with startup tasks
+    /// (EF migrations, cache warm-up, broker connections, etc.).
+    /// </summary>
+    public int StartupDelaySeconds { get; set; } = 60;
 }

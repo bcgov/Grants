@@ -184,12 +184,14 @@ public class OutboxProcessorJob : IJob
         // Generate routing key based on message type
         var routingKey = GenerateRoutingKey(message.MessageType, message.PluginId);
 
-        // Publish the message
+        // Publish the message — pass the outbox MessageId so the AMQP MessageId property
+        // matches the outbox record; the external system echoes this back in its ack.
         var publishResult = await _rabbitMQPublisher.PublishAsync(
             message.MessageType,
             message.Payload,
             routingKey,
             message.CorrelationId,
+            message.MessageId,
             cancellationToken);
 
         if (!publishResult.IsSuccess)

@@ -149,6 +149,42 @@
       </table>
     </div>
 
+    <!-- Pager -->
+    @if (showPager) {
+      <nav class="datatable-pager" aria-label="Table pagination">
+        <button
+          type="button"
+          class="pager-btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Previous page"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        @for (page of pagerPages; track page) {
+          <button
+            type="button"
+            class="pager-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+            [attr.aria-label]="'Page ' + page"
+            [attr.aria-current]="page === currentPage ? 'page' : null"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Next page"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </nav>
+    }
+
     <!-- No Data State -->
     @if (getDisplayData().length === 0) {
       <div class="no-data">

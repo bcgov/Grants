@@ -186,18 +186,39 @@ public static class MessagingServiceExtensions
                     .WithMisfireHandlingInstructionFireNow())
                 .StartNow());
 
-            // Configure the nightly message cleanup job
+            // Configure the hourly message cleanup job (with startup delay to avoid boot contention)
             var cleanupJobKey = new JobKey("MessageCleanupJob");
             q.AddJob<MessageCleanupJob>(opts => opts.WithIdentity(cleanupJobKey));
 
             q.AddTrigger(opts => opts
                 .ForJob(cleanupJobKey)
                 .WithIdentity("MessageCleanupJob-trigger")
-                .WithCronSchedule("0 0 2 * * ?", x => x
-                    .WithMisfireHandlingInstructionDoNothing()) // Skip missed runs, wait for next scheduled time
-                .StartNow());
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInHours(1)
+                    .RepeatForever()
+                    .WithMisfireHandlingInstructionFireNow())
+                .StartAt(DateTimeOffset.UtcNow.AddSeconds(messagingOptions.BackgroundJobs.StartupDelaySeconds)));
 
-            logger.LogInformation("Quartz.NET background jobs configured with {MaxConcurrency} max concurrency", 
+            // Configure the outbox ack-timeout job
+            if (messagingOptions.Outbox.AckTimeoutMinutes > 0)
+            {
+                var timeoutJobKey = new JobKey("OutboxTimeoutJob");
+                q.AddJob<OutboxTimeoutJob>(opts => opts.WithIdentity(timeoutJobKey));
+
+                q.AddTrigger(opts => opts
+                    .ForJob(timeoutJobKey)
+                    .WithIdentity("OutboxTimeoutJob-trigger")
+                    .WithSimpleSchedule(x => x
+                        .WithIntervalInSeconds(messagingOptions.Outbox.AckTimeoutPollingIntervalSeconds)
+                        .RepeatForever()
+                        .WithMisfireHandlingInstructionFireNow())
+                    .StartNow());
+
+                logger.LogInformation("Outbox ack-timeout job configured with {Timeout}m threshold, polling every {Interval}s",
+                    messagingOptions.Outbox.AckTimeoutMinutes, messagingOptions.Outbox.AckTimeoutPollingIntervalSeconds);
+            }
+
+            logger.LogInformation("Quartz.NET background jobs configured with {MaxConcurrency} max concurrency",
                 messagingOptions.BackgroundJobs.MaxConcurrency);
         });
 

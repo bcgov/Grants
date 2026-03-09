@@ -1,7 +1,11 @@
 ﻿using System.Text.Json;
+using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Core.Services;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.BackgroundJobs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 using Quartz;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
@@ -13,9 +17,12 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
 public class InboxProcessorJob : IJob
 {
     private readonly IInboxRepository _inboxRepository;
+    private readonly IOutboxRepository _outboxRepository;
     private readonly IDistributedLock _distributedLock;
     private readonly IMessageHandlerResolver? _messageHandlerResolver;
     private readonly IPluginMessageRouter? _pluginMessageRouter;
+    private readonly IPluginEventService _pluginEventService;
+    private readonly IPluginCommandMetadataRegistry _metadataRegistry;
     private readonly JobCircuitBreaker _circuitBreaker;
     private readonly ILogger<InboxProcessorJob> _logger;
 
@@ -28,14 +35,20 @@ public class InboxProcessorJob : IJob
 
     public InboxProcessorJob(
         IInboxRepository inboxRepository,
+        IOutboxRepository outboxRepository,
         IDistributedLock distributedLock,
+        IPluginEventService pluginEventService,
+        IPluginCommandMetadataRegistry metadataRegistry,
         JobCircuitBreaker circuitBreaker,
         ILogger<InboxProcessorJob> logger,
         IMessageHandlerResolver? messageHandlerResolver = null,
         IPluginMessageRouter? pluginMessageRouter = null)
     {
         _inboxRepository = inboxRepository;
+        _outboxRepository = outboxRepository;
         _distributedLock = distributedLock;
+        _pluginEventService = pluginEventService;
+        _metadataRegistry = metadataRegistry;
         _circuitBreaker = circuitBreaker;
         _messageHandlerResolver = messageHandlerResolver;
         _pluginMessageRouter = pluginMessageRouter;
@@ -161,6 +174,9 @@ public class InboxProcessorJob : IJob
             // Mark as successfully processed
             message.MarkAsProcessed();
             await _inboxRepository.UpdateAsync(message, cancellationToken);
+
+            // Close the outbox loop: if this was an acknowledgment, mark the original outbox message
+            await TryAcknowledgeOutboxMessageAsync(message, cancellationToken);
 
             _logger.LogDebug("Successfully processed inbox message {MessageId}", message.MessageId);
         }
@@ -349,8 +365,114 @@ public class InboxProcessorJob : IJob
     {
         // Simulate some processing time
         await Task.Delay(100, cancellationToken);
-        
+
         _logger.LogWarning("Simulating message processing for {MessageId} - message handlers not configured", 
             message.MessageId);
+    }
+
+    /// <summary>
+    /// If the inbox message is a <see cref="MessageAcknowledgment"/>, looks up the original
+    /// outbox message by <c>OriginalMessageId</c> and marks it as <see cref="OutboxMessageStatus.Acknowledged"/>.
+    /// This closes the outbox→ack loop so the timeout job won't flag acknowledged messages.
+    /// Works for both normal acks (Published → Acknowledged) and late acks (TimedOut → Acknowledged).
+    /// For FAILED acks, also records a PluginEvent (which triggers cache invalidation) so the
+    /// user is notified and stale optimistic data is evicted.
+    /// </summary>
+    private async Task TryAcknowledgeOutboxMessageAsync(InboxMessage inboxMessage, CancellationToken cancellationToken)
+    {
+        if (inboxMessage.MessageType != nameof(MessageAcknowledgment))
+        {
+            return;
+        }
+
+        try
+        {
+            var ack = JsonSerializer.Deserialize<MessageAcknowledgment>(inboxMessage.Payload, _jsonOptions);
+            if (ack == null || ack.OriginalMessageId == Guid.Empty)
+            {
+                return;
+            }
+
+            var outboxMessage = await _outboxRepository.GetByMessageIdAsync(ack.OriginalMessageId, cancellationToken);
+            if (outboxMessage == null)
+            {
+                _logger.LogDebug("No outbox message found for ack OriginalMessageId {OriginalMessageId} — may have been cleaned up",
+                    ack.OriginalMessageId);
+                return;
+            }
+
+            // Record a PluginEvent for FAILED acks so the user is notified and cache is invalidated
+            if (ack.Status.Equals("FAILED", StringComparison.OrdinalIgnoreCase))
+            {
+                await RecordAckFailureEventAsync(outboxMessage, ack, cancellationToken);
+            }
+
+            if (outboxMessage.Status == OutboxMessageStatus.Acknowledged)
+            {
+                _logger.LogDebug("Outbox message {MessageId} already acknowledged — skipping duplicate ack",
+                    outboxMessage.MessageId);
+                return;
+            }
+
+            var previousStatus = outboxMessage.Status;
+            outboxMessage.MarkAsAcknowledged();
+            await _outboxRepository.UpdateAsync(outboxMessage, cancellationToken);
+
+            _logger.LogInformation(
+                "Closed outbox loop: message {MessageId} transitioned {PreviousStatus} → Acknowledged (ack status: {AckStatus})",
+                outboxMessage.MessageId, previousStatus, ack.Status);
+        }
+        catch (Exception ex)
+        {
+            // Don't let outbox bookkeeping failures break inbox processing
+            _logger.LogWarning(ex, "Failed to acknowledge outbox message for inbox message {MessageId} — non-fatal",
+                inboxMessage.MessageId);
+        }
+    }
+
+    /// <summary>
+    /// Parses the original outbox message payload via the plugin's metadata provider
+    /// and records a PluginEvent so the user is notified and the cache is invalidated.
+    /// </summary>
+    private async Task RecordAckFailureEventAsync(OutboxMessage outboxMessage, MessageAcknowledgment ack, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pluginId = outboxMessage.PluginId ?? ack.PluginId ?? "UNKNOWN";
+            var metadata = _metadataRegistry.ParsePayload(pluginId, outboxMessage.Payload);
+
+            if (metadata == null || metadata.ProfileId == Guid.Empty)
+            {
+                _logger.LogWarning("Could not extract context from outbox message {MessageId} for failed ack",
+                    outboxMessage.MessageId);
+                return;
+            }
+
+            var friendlyAction = _metadataRegistry.GetFriendlyActionName(pluginId, metadata.DataType);
+
+            var failureContext = new PluginEventContext(
+                metadata.ProfileId,
+                pluginId,
+                metadata.Provider,
+                metadata.DataType,
+                metadata.EntityId,
+                PluginEventSeverity.Error,
+                PluginEventSource.InboxRejection,
+                $"Your {friendlyAction} was rejected by the external system: {ack.Details ?? "no details provided"}. Please try again or contact support.",
+                $"FAILED ack received for MessageId: {outboxMessage.MessageId}, Details: {ack.Details}",
+                outboxMessage.MessageId,
+                outboxMessage.CorrelationId);
+
+            await _pluginEventService.RecordFailureAsync(failureContext, cancellationToken);
+
+            _logger.LogWarning(
+                "Recorded failure event for FAILED ack on outbox message {MessageId} (plugin: {PluginId}, dataType: {DataType})",
+                outboxMessage.MessageId, pluginId, metadata.DataType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to record ack failure event for outbox message {MessageId}",
+                outboxMessage.MessageId);
+        }
     }
 }
