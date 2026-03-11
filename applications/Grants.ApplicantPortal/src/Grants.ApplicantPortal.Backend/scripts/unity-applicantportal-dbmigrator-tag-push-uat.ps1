@@ -1,4 +1,4 @@
-# Script to build, tag and push Unity Applicant Portal DB Migrator image for dev2
+# Script to build, tag and push Unity Applicant Portal DB Migrator image for uat
 # Make sure you're logged in first: 'oc login --web --server=https://api.silver.devops.gov.bc.ca:6443'
 # Run from: .\Grants\applications\Grants.ApplicantPortal\src\Grants.ApplicantPortal.Backend
 
@@ -7,9 +7,9 @@ param(
 )
 
 $OC_REGISTRY = "image-registry.apps.silver.devops.gov.bc.ca"
-$OC_TARGET_PROJECT = "d18498-dev"
+$OC_TARGET_PROJECT = "d18498-test"
 $LOCAL_IMAGE_NAME = "applicant-portal-dbmigrator"
-$IMAGESTREAM_NAME = "dev2-applicantportal-dbmigrator"
+$IMAGESTREAM_NAME = "uat-applicantportal-dbmigrator"
 
 # Build the Docker image
 Write-Host "Building Docker image..." -ForegroundColor Green
@@ -47,6 +47,6 @@ Write-Host "Successfully built, tagged and pushed: $TARGET_IMAGE" -ForegroundCol
 
 # Clean and Run dbmigrator job from project template and params file
 Write-Host "Running migration job..." -ForegroundColor Green
-oc delete jobs dev2-applicantportal-dbmigrator -n $OC_TARGET_PROJECT --ignore-not-found=true
-oc process unity-applicantportal-dbmigrator-job -n $OC_TARGET_PROJECT -p APPLICATION_GROUP=dev2-unity-applicant-portal -p DATABASE_SERVICE_NAME=dev2-unity-applicant-portal -p APPLICATION_NAME=dev2-applicantportal-dbmigrator -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT -p IMAGESTREAM_NAME=$IMAGESTREAM_NAME -p IMAGESTREAM_TAG=$ImageTag | oc create -f -
-oc wait jobs/dev2-applicantportal-dbmigrator --for condition=complete --timeout=120s -n $OC_TARGET_PROJECT
+oc delete jobs uat-applicantportal-dbmigrator -n $OC_TARGET_PROJECT --ignore-not-found=true
+oc process unity-applicantportal-dbmigrator-job -n $OC_TARGET_PROJECT -p APPLICATION_GROUP=uat-unity-applicant-portal -p DATABASE_SERVICE_NAME=uat-unity-applicant-portal -p APPLICATION_NAME=uat-applicantportal-dbmigrator -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT -p IMAGESTREAM_NAME=$IMAGESTREAM_NAME -p IMAGESTREAM_TAG=$ImageTag | oc create -f -
+oc wait jobs/uat-applicantportal-dbmigrator --for condition=complete --timeout=120s -n $OC_TARGET_PROJECT
