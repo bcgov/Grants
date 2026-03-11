@@ -128,3 +128,30 @@ export interface PluginEventDto {
 export interface PluginEventsResponse {
   events: PluginEventDto[];
 }
+
+// Orgbook API Response
+export interface OrgbookOrganization {
+  id: string;
+  orgName: string | null;
+  organizationType: string | null;
+  orgNumber: string | null;
+  orgStatus: string | null;
+  nonRegOrgName: string | null;
+  fiscalMonth: string | null;
+  fiscalDay: number | null;
+  organizationSize: string | number | null;
+  sector: string | null;
+  subSector: string | null;
+}
+
+export interface OrgbookResponse {
+  profileId: string;
+  pluginId: string;
+  provider: string;
+  data: {
+    organizations: OrgbookOrganization[];
+  };
+  populatedAt: string;
+  cacheStatus: string;
+  cacheStore: string;
+}

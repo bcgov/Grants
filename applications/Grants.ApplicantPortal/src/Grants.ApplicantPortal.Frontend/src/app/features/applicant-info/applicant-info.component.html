@@ -13,14 +13,14 @@
         <div>
           <button
             id="org-edit-btn"
-            *ngIf="!organizationComponent.isEditMode"
+            *ngIf="!organizationComponent.isEditMode && !organizationComponent.showMultipleOrgsTable"
             type="button"
             class="btn btn-primary btn-sm"
             (click)="organizationComponent.onEdit()"
           >
             Edit
           </button>
-          <div *ngIf="organizationComponent.isEditMode" class="btn-group">
+          <div *ngIf="organizationComponent.isEditMode && !organizationComponent.showMultipleOrgsTable" class="btn-group">
             <button
               id="org-save-btn"
               type="button"
@@ -67,6 +67,7 @@
         <app-organization-info
           #organizationComponent
           [organizationInfo]="organizationInfo"
+          [orgbookResponse]="orgbookResponse"
           [isLoading]="isLoading"
           [isSaving]="isSavingOrganization"
           (saveOrganization)="onSaveOrganization($event)"

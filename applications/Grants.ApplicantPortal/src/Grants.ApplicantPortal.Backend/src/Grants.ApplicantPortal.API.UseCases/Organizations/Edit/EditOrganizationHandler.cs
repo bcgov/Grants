@@ -30,7 +30,8 @@ public class EditOrganizationHandler(
       var profileContext = new ProfileContext(
         request.ProfileId,
         request.PluginId,
-        request.Provider);
+        request.Provider,
+        request.Subject);
 
       var result = await organizationManagementService.EditOrganizationAsync(
         editRequest,

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, Observable, of } from 'rxjs';
@@ -6,13 +6,17 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import {
   OrganizationData,
   OrgSearchResult,
+  OrgbookResponse,
+  OrgbookOrganization,
 } from '../../../shared/models/applicant-info.interface';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
+import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
+import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
 
 @Component({
   selector: 'app-organization-info',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingOverlayComponent],
+  imports: [CommonModule, FormsModule, LoadingOverlayComponent, DatatableComponent],
   templateUrl: './organization.component.html',
   styleUrls: ['./organization.component.scss'],
 })
@@ -20,8 +24,14 @@ export class OrganizationInfoComponent implements OnChanges {
   @Input() organizationInfo: OrganizationData | null = null;
   @Input() isLoading = false;
   @Input() isSaving = false;
+  @Input() orgbookResponse: OrgbookResponse | null = null;
   @Output() saveOrganization = new EventEmitter<OrganizationData>();
   @Output() searchResultSelected = new EventEmitter<OrgSearchResult>();
+
+  // Orgbook multiple orgs handling
+  multipleOrganizations: OrgbookOrganization[] = [];
+  showMultipleOrgsTable = false;
+  orgbookDataTableConfig!: DatatableConfig;
 
   // Search properties
   searchTerm = '';
@@ -43,16 +53,24 @@ export class OrganizationInfoComponent implements OnChanges {
   readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
   private readonly searchSubject = new Subject<string>();
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef) {
     this.setupSearch();
+    this.initializeDataTableConfig();
   }
 
   ngOnInit(): void {
     this.updateFiscalFieldsFromOrganizationInfo();
+    this.processOrgbookResponse();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     console.log('OrganizationComponent ngOnChanges called:', changes);
+    
+    if (changes['orgbookResponse']) {
+      console.log('orgbookResponse changed:', changes['orgbookResponse']);
+      this.processOrgbookResponse();
+    }
+    
     if (changes['organizationInfo']) {
       console.log('organizationInfo changed:', {
         previousValue: changes['organizationInfo'].previousValue,
@@ -67,6 +85,112 @@ export class OrganizationInfoComponent implements OnChanges {
         console.log('OrganizationComponent - organizationInfo is null/undefined');
       }
     }
+  }
+
+  private initializeDataTableConfig(): void {
+    this.orgbookDataTableConfig = {
+      columns: [
+        { key: 'orgName', label: 'Organization Name', sortable: true, type: 'text' },
+        { key: 'organizationType', label: 'Type', sortable: true, type: 'text' },
+        { key: 'orgNumber', label: 'Registration Number', sortable: true, type: 'text' },
+        { key: 'orgStatus', label: 'Status', sortable: true, type: 'badge' },
+        { key: 'organizationSize', label: 'Organization Size', sortable: true, type: 'text' },
+        { key: 'sector', label: 'Sector', sortable: true, type: 'text' },
+        { key: 'subSector', label: 'Sub Sector', sortable: true, type: 'text' }
+      ],
+      badgeConfig: {
+        field: 'orgStatus',
+        badgeClassPrefix: 'status-badge',
+        badgeClasses: {
+          'Active': 'status-active',
+          'Inactive': 'status-inactive',
+          'Suspended': 'status-suspended'
+        },
+        fallbackClass: 'status-unknown'
+      },
+      actionsType: 'none',
+      rowClickable: false,
+      tableId: 'orgbook-organizations',      
+      noDataMessage: 'No organizations found.',
+      tableClass: 'orgbook-table'
+    };
+  }
+
+  private processOrgbookResponse(): void {
+    console.log('processOrgbookResponse called:', this.orgbookResponse);
+    
+    // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      if (!this.orgbookResponse || !this.orgbookResponse.data.organizations) {
+        console.log('No orgbookResponse or organizations data, showing default form');
+        this.showMultipleOrgsTable = false;
+        this.multipleOrganizations = [];
+        this.cdr.detectChanges();
+        return;
+      }
+
+      const organizations = this.orgbookResponse.data.organizations;
+      console.log('Raw organizations:', organizations);
+      console.log('Total organizations from API:', organizations.length);
+      
+      if (organizations.length === 1) {
+        // Single organization - convert to OrganizationData for editing
+        console.log('Single organization found, converting to edit form');
+        this.showMultipleOrgsTable = false;
+        this.convertOrgbookToOrganizationData(organizations[0]);
+      } else if (organizations.length > 1) {
+        // Multiple organizations - show ALL in table and disable editing
+        console.log('Multiple organizations found, showing table with all entries');
+        this.showMultipleOrgsTable = true;
+        this.multipleOrganizations = organizations; // Show ALL organizations from API
+        this.organizationInfo = null; // Clear any existing organization data
+      } else {
+        // No organizations found
+        console.log('No organizations found');
+        this.showMultipleOrgsTable = false;
+        this.multipleOrganizations = [];
+        this.organizationInfo = null;
+      }
+      
+      this.cdr.detectChanges();
+    });
+  }
+
+  private convertOrgbookToOrganizationData(orgbookOrg: OrgbookOrganization): void {
+    console.log('Converting orgbook org to OrganizationData:', orgbookOrg);
+    
+    // Convert OrgbookOrganization to OrganizationData format
+    // Handle organizationSize which can be either string or number
+    const orgSize = orgbookOrg.organizationSize !== null && orgbookOrg.organizationSize !== undefined 
+      ? String(orgbookOrg.organizationSize) 
+      : '';
+    
+    this.organizationInfo = {
+      orgName: orgbookOrg.orgName || '',
+      orgNumber: orgbookOrg.orgNumber || '',
+      orgStatus: orgbookOrg.orgStatus || '',
+      organizationType: orgbookOrg.organizationType || '',
+      nonRegOrgName: orgbookOrg.nonRegOrgName || '',
+      orgSize: orgSize,
+      fiscalMonth: orgbookOrg.fiscalMonth || '',
+      fiscalDay: orgbookOrg.fiscalDay || 0,
+      organizationId: orgbookOrg.id,
+      // Set default/empty values for required OrganizationData fields not in orgbook
+      legalName: orgbookOrg.orgName || orgbookOrg.nonRegOrgName || '',
+      doingBusinessAs: '',
+      ein: '',
+      founded: 0,
+      address: {} as any, // You may need to handle this based on your requirements
+      contactInfo: {} as any, // You may need to handle this based on your requirements
+      mission: '',
+      servicesAreas: [],
+      certifications: [],
+      allowEdit: true
+    };
+    
+    console.log('Converted organizationInfo:', this.organizationInfo);
+    
+    this.updateFiscalFieldsFromOrganizationInfo();
   }
 
   private updateFiscalFieldsFromOrganizationInfo(): void {

@@ -7,4 +7,5 @@ public record SetAsPrimaryContactCommand(
   Guid ContactId,
   Guid ProfileId,
   string PluginId,
-  string Provider) : ICommand<Result>;
+  string Provider,
+  string? Subject = null) : ICommand<Result>;

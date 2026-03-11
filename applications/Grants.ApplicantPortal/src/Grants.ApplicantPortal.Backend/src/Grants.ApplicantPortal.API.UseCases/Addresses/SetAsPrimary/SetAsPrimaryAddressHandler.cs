@@ -18,7 +18,8 @@ public class SetAsPrimaryAddressHandler(
       var profileContext = new ProfileContext(
         request.ProfileId,
         request.PluginId,
-        request.Provider);
+        request.Provider,
+        request.Subject);
 
       var result = await addressManagementService.SetAsPrimaryAddressAsync(
         request.AddressId,

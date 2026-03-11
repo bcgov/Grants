@@ -16,4 +16,5 @@ public record CreateContactCommand(string Name,
   string? Role,
   Guid ProfileId,
   string PluginId,
-  string Provider) : ICommand<Result<Guid>>;
+  string Provider,
+  string? Subject = null) : ICommand<Result<Guid>>;

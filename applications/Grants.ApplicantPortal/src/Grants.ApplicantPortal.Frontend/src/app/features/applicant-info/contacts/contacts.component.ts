@@ -108,7 +108,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
     ],
     actionsVisibilityField: 'isEditable',
-
     noDataMessage: 'No contacts found. Click "Add" to create your first contact.',
     loadingMessage: 'Loading your contacts...'
   };

@@ -145,6 +145,10 @@
     &.status-in-progress { background-color: var(--bc-bg-info); }
     &.status-rejected { background-color: var(--bc-bg-error); }
 
+    // Orgbook-specific status badges
+    &.status-active { background-color: #003366; color: #ffffff; }
+    &.status-inactive, &.status-suspended, &.status-unknown { background-color: #6c757d; color: #ffffff; }
+
     // Contact/Address type variations
     &.contact-type-primary, &.address-type-primary { background-color: var(--bc-bg-info); }
     &.contact-type-secondary { background-color: var(--bc-bg-error); }

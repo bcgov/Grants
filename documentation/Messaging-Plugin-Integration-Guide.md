@@ -29,9 +29,9 @@ Plugin fires command                        Exchange: grants.messaging
         |                                       |
         +--- publishes to RabbitMQ ------------>|
              routing key:                       |
-             commands.{plugin}.plugindata       +---> External consumer queue
-  OutboxMessage (Published)                     |     (e.g. unity.mockapi.commands
-        |                                       |      bound to commands.unity.plugindata)
+                         commands.{plugin}.plugindata       +---> External consumer queue
+             OutboxMessage (Published)                     |     (e.g. unity.commands
+                   |                                       |      bound to commands.unity.plugindata)
         |                                       |
   OutboxTimeoutJob (Quartz)                     |     External processes command,
     If Published > AckTimeoutMinutes:           |     publishes ack back:
@@ -163,7 +163,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "action": "SetContactAsPrimary",
     "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
-    "provider": "DGP"
+    "provider": "DGP",
+    "subject": "Abad@idir"
   }
 }
 ```
@@ -198,6 +199,7 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "contactId": "c8d27b95-20fe-4ef4-ad1e-15fd99ced56b",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
+    "subject": "Abad@idir",
     "data": {
       "name": "Andre Goncalves",
       "email": "andre@example.com",
@@ -231,6 +233,7 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
+    "subject": "Abad@idir",
     "data": {
       "name": "Alex Johnson Updated",
       "email": "alex.johnson.updated@unity.gov",
@@ -263,7 +266,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "action": "SetContactAsPrimary",
     "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
-    "provider": "DGP"
+    "provider": "DGP",
+    "subject": "Abad@idir"
   }
 }
 ```
@@ -284,7 +288,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "action": "DeleteContact",
     "contactId": "b5a01793-e247-48c7-8257-25b0ed239883",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
-    "provider": "DGP"
+    "provider": "DGP",
+    "subject": "Abad@idir"
   }
 }
 ```
@@ -306,6 +311,7 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "addressId": "AAD12E34-6789-0ABC-DEF1-234567890ABC",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
+    "subject": "Abad@idir",
     "data": {
       "addressType": "Physical",
       "street": "1234 Government Street",
@@ -337,7 +343,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "action": "SetAddressAsPrimary",
     "addressId": "BBD12E34-6789-0ABC-DEF1-234567890ABC",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
-    "provider": "DGP"
+    "provider": "DGP",
+    "subject": "Abad@idir"
   }
 }
 ```
@@ -359,6 +366,7 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "organizationId": "7AEF7815-27D3-5E9C-9686-68E6F36C51EA",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
+    "subject": "Abad@idir",
     "data": {
       "name": "Unity Government Solutions Updated",
       "organizationType": "Government Department",
@@ -654,7 +662,7 @@ The two existing plugins use different strategies intentionally:
 | **Uses RabbitMQ?** | No | Yes |
 | **Has `IPluginMessageHandler`?** | Yes (logs only, scaffolding) | Yes (handles acks from external system) |
 | **Ack/Nack flow?** | Not needed (writes are synchronous) | Full round-trip via inbox |
-| **External system?** | None | Unity Mock API (dev) / Real Unity (prod) |
+| **External system?** | None | Real Unity instance + RabbitMQ |
 | **`primaryContactId` in responses?** | Yes — resolved from Redis cache | Yes — resolved from optimistically-patched cache |
 
 ---
@@ -795,7 +803,9 @@ The cache is patched optimistically. When the cache TTL expires (default 60 min 
 | | `LogEveryNthFailure` | `20` | During sustained failures, emit a Warning log every Nth failure |
 | | `StartupDelaySeconds` | `60` | Delay before cleanup job starts after application boot |
 
-### External System / Mock API (appsettings.json)
+### External System — Unity (appsettings.json)
+
+The UNITY application must declare its own inbound queue, bind to the exchange, and publish acknowledgments back. See `UNITY-RabbitMQ-Integration-Spec.md` for the full contract.
 
 ```json
 {
@@ -807,7 +817,7 @@ The cache is patched optimistically. When the cache TTL expires (default 60 min 
     "VirtualHost": "/",
     "Exchange": "grants.messaging",
     "ExchangeType": "topic",
-    "InboundQueue": "unity.mockapi.commands",
+    "InboundQueue": "unity.commands",
     "InboundRoutingKeys": [ "commands.unity.plugindata" ],
     "AckRoutingKey": "grants.unity.acknowledgment"
   }
@@ -1113,10 +1123,17 @@ ORDER BY "CreatedAt" DESC;
 
 ## Development Setup
 
-1. Start RabbitMQ: `docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management`
-2. Start the Unity Mock API: `dotnet run --project src/Grants.ApplicantPortal.API.Unity.MockAPI`
-3. Start the Portal API
-4. Trigger a write operation (e.g. edit a contact via UNITY plugin)
-5. Watch logs: outbox publish -> RabbitMQ -> Mock API consume -> ack publish -> inbox receive -> handler processes
+### Prerequisites
 
-Management UI: http://localhost:15672 (guest/guest)
+The UNITY plugin integration requires both **RabbitMQ** and a **local UNITY instance** running:
+
+1. **RabbitMQ**: `docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management`
+2. **UNITY application**: Running locally (see UNITY team documentation for setup instructions)
+3. **Portal API**: `dotnet run --project src/Grants.ApplicantPortal.API.Web`
+
+### End-to-end flow
+
+1. Trigger a write operation (e.g. edit a contact via UNITY plugin)
+2. Watch logs: outbox publish → RabbitMQ → Unity consume → ack publish → inbox receive → handler processes
+
+RabbitMQ Management UI: http://localhost:15672 (guest/guest)

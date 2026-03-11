@@ -3,6 +3,47 @@
   padding: 0;
 }
 
+/* Skeleton Loading Styles */
+.primary-loading-state {
+  padding: 16px 0;
+}
+
+.loading-skeleton {
+  .skeleton-header {
+    height: 16px;
+    width: 140px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .skeleton-content {
+    .skeleton-line {
+      height: 14px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      
+      &.short {
+        width: 60%;
+      }
+    }
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .primary-contact-info {
   // Use same styles as .primary-info-display
   background-color: #faf9f8;

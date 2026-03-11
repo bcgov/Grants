@@ -18,7 +18,8 @@ public class DeleteContactHandler(
       var profileContext = new ProfileContext(
         request.ProfileId,
         request.PluginId,
-        request.Provider);
+        request.Provider,
+        request.Subject);
 
       var result = await contactManagementService.DeleteContactAsync(
         request.ContactId,

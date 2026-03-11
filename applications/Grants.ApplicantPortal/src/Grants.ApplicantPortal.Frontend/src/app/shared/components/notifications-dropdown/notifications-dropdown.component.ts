@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, timer, of } from 'rxjs';
+import { takeUntil, switchMap } from 'rxjs/operators';
 
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { WorkspaceService } from '../../../core/services/workspace.service';
@@ -42,6 +42,32 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
           this.loadEvents();
         } else {
           this.events = [];
+        }
+      });
+
+    // Set up timer to refresh events every 15 seconds
+    timer(15000, 15000) // Start after 15 seconds, then every 15 seconds
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() => {
+          // Only refresh if we have valid pluginId and provider
+          if (this.pluginId && this.provider) {
+            return this.applicantInfoService.getEvents(this.pluginId, this.provider);
+          }
+          return of({ events: [] }); // Return empty events response
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (Array.isArray(response)) {
+            this.events = response;
+          } else {
+            this.events = response?.events || [];
+          }
+        },
+        error: (err) => {
+          console.error('Failed to refresh events:', err);
+          // Don't clear existing events on error, just log it
         }
       });
   }

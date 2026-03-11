@@ -1,14 +1,13 @@
 <div class="contacts-container">
-      @if (isLoading) {      
-      <div
-        class="loading-spinner-container d-flex justify-content-center align-items-center"
-        style="min-height: 150px"
-      >
-        <div class="text-center">
-          <div class="spinner-border">
-            <span class="sr-only">Loading contacts...</span>
+      @if (isLoading) {
+      <div class="primary-loading-state">
+        <div class="loading-skeleton">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
           </div>
-          <p class="loading-text mt-3">Loading your contacts...</p>
         </div>
       </div>
       } @else if (primaryContact) {

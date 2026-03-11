@@ -74,6 +74,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     actionItems: [
       { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
     ],
+    actionsVisibilityField: 'isEditable',
     badgeConfig: {
       field: 'addressType',
       badgeClassPrefix: 'address-type-badge',

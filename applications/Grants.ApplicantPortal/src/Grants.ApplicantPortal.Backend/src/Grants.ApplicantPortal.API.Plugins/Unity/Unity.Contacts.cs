@@ -146,6 +146,7 @@ public partial class UnityPlugin
           ContactId = contactId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             contactRequest.Name,
@@ -188,6 +189,7 @@ public partial class UnityPlugin
           editRequest.ContactId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             editRequest.Name,
@@ -229,7 +231,8 @@ public partial class UnityPlugin
           Action = "SetContactAsPrimary",
           ContactId = contactId,
           profileContext.ProfileId,
-          profileContext.Provider
+          profileContext.Provider,
+          profileContext.Subject
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
@@ -258,7 +261,8 @@ public partial class UnityPlugin
           Action = "DeleteContact",
           ContactId = contactId,
           profileContext.ProfileId,
-          profileContext.Provider
+          profileContext.Provider,
+          profileContext.Subject
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 

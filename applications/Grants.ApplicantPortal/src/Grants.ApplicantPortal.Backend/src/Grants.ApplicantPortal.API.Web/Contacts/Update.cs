@@ -48,8 +48,9 @@ public class Update(IMediator _mediator, IPluginCacheService _cacheService)
     UpdateContactRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new EditContactCommand(
       request.ContactId,
@@ -65,7 +66,8 @@ public class Update(IMediator _mediator, IPluginCacheService _cacheService)
       request.Role,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 

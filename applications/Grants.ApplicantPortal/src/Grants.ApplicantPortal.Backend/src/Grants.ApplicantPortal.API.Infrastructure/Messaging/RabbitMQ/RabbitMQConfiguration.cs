@@ -91,6 +91,12 @@ public class RabbitMQConfiguration
     public bool QueueAutoDelete { get; set; } = false;
 
     /// <summary>
+    /// Whether to declare queues as quorum queues (recommended for durability and replication).
+    /// Quorum queues require durable=true, exclusive=false, autoDelete=false.
+    /// </summary>
+    public bool UseQuorumQueues { get; set; } = true;
+
+    /// <summary>
     /// Maximum message size in bytes
     /// </summary>
     public int MaxMessageSize { get; set; } = 1024 * 1024; // 1MB

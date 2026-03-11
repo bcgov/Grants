@@ -19,6 +19,33 @@
   </div>
   } @else {
   <div class="container-fluid form-section">
+    <!-- Multiple Organizations Warning -->
+    @if (showMultipleOrgsTable) {
+      <div class="row">
+        <div class="col-md-12">
+          <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Multiple Organization Records Found</strong><br>
+            Your profile is associated with multiple organization records. Please contact support to consolidate these records before editing your organization information.
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-12">
+          <h5>Associated Organizations</h5>
+          <app-datatable
+            [config]="orgbookDataTableConfig"
+            [data]="multipleOrganizations"
+            [loading]="false">
+          </app-datatable>
+        </div>
+      </div>
+    }
+
+    <!-- Single Organization Form -->
+    @if (!showMultipleOrgsTable) {
+    <!-- Organization Book Search - only show for single org mode -->
     <div class="row">
       <div class="col-md-12">
         <div class="field">
@@ -212,6 +239,33 @@
         </div>
       </div>
     </div>
+    
+    <!-- Action Buttons for Save/Cancel in edit mode only -->
+    @if (isEditMode) {
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-actions mt-4">
+          <button 
+            type="button" 
+            class="btn btn-success me-2"
+            (click)="onSave()"
+            [disabled]="isSaving"
+          >
+            <i class="fas fa-save me-2"></i>Save Changes
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSaving"
+          >
+            <i class="fas fa-times me-2"></i>Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+    } <!-- End single organization form -->
   </div>
   }
 </div>

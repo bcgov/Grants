@@ -59,7 +59,7 @@
                 <td [class]="column.cssClass || column.key + '-column'">
                   @if (column.type === 'badge' && config.badgeConfig) {
                     <span [class]="getBadgeClass(row)">
-                      {{ getBadgeDisplayValue(row, column) }}
+                      {{ getBadgeDisplayValue(row, column) || '—' }}
                     </span>
                   } @else if (column.type === 'date') {
                     @if (getCellValue(row, column)) {
@@ -80,7 +80,11 @@
                       }
                     </div>
                   } @else {
-                    {{ getCellValue(row, column) }}
+                    @if (getCellValue(row, column)) {
+                      {{ getCellValue(row, column) }}
+                    } @else {
+                      —
+                    }
                   }
                 </td>
               }

@@ -56,6 +56,7 @@ public partial class UnityPlugin
           editRequest.OrganizationId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             editRequest.Name,

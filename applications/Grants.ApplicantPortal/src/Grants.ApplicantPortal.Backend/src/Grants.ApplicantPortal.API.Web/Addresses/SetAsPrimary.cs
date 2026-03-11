@@ -41,14 +41,16 @@ public class SetAsPrimary(IMediator _mediator)
     SetAsPrimaryAddressRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new SetAsPrimaryAddressCommand(
       request.AddressId,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 

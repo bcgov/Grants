@@ -84,6 +84,7 @@ public partial class UnityPlugin
           editRequest.AddressId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             editRequest.AddressType,
@@ -121,7 +122,8 @@ public partial class UnityPlugin
           Action = "SetAddressAsPrimary",
           AddressId = addressId,
           profileContext.ProfileId,
-          profileContext.Provider
+          profileContext.Provider,
+          profileContext.Subject
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 

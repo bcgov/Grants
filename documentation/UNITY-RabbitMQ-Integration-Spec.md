@@ -70,7 +70,7 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
 
 > **IMPORTANT:** The `dataType` field is the command discriminator — NOT `messageType` (which is always `"PluginDataMessage"`). Route your internal handling based on `dataType`.
 
-> **IMPORTANT:** Entity fields are nested inside `data.data`. The top-level `data` object contains metadata (`action`, `profileId`, `provider`, entity IDs). The actual entity fields are one level deeper.
+> **IMPORTANT:** Entity fields are nested inside `data.data`. The top-level `data` object contains metadata (`action`, `profileId`, `provider`, `subject`, entity IDs). The actual entity fields are one level deeper.
 
 ---
 
@@ -89,6 +89,7 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "contactId": "guid",
     "profileId": "guid",
     "provider": "string (e.g. PROGRAM1)",
+    "subject": "string (OIDC subject, e.g. Abad@idir)",
     "data": {
       "name": "string",
       "email": "string",
@@ -115,6 +116,7 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "contactId": "guid",
     "profileId": "guid",
     "provider": "string",
+    "subject": "string (OIDC subject)",
     "data": {
       "name": "string",
       "email": "string",
@@ -140,7 +142,8 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "action": "SetContactAsPrimary",
     "contactId": "guid",
     "profileId": "guid",
-    "provider": "string"
+    "provider": "string",
+    "subject": "string (OIDC subject)"
   }
 }
 ```
@@ -154,7 +157,8 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "action": "DeleteContact",
     "contactId": "guid",
     "profileId": "guid",
-    "provider": "string"
+    "provider": "string",
+    "subject": "string (OIDC subject)"
   }
 }
 ```
@@ -169,6 +173,7 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "addressId": "guid",
     "profileId": "guid",
     "provider": "string",
+    "subject": "string (OIDC subject)",
     "data": {
       "addressType": "string (e.g. MAILING, PHYSICAL)",
       "street": "string",
@@ -193,7 +198,8 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "action": "SetAddressAsPrimary",
     "addressId": "guid",
     "profileId": "guid",
-    "provider": "string"
+    "provider": "string",
+    "subject": "string (OIDC subject)"
   }
 }
 ```
@@ -208,6 +214,7 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "organizationId": "guid",
     "profileId": "guid",
     "provider": "string",
+    "subject": "string (OIDC subject)",
     "data": {
       "name": "string",
       "organizationType": "string | null",
@@ -474,18 +481,11 @@ Temporarily force your consumer to always return `FAILED` status. Then trigger a
 
 ## 9. Reference Implementation
 
-The Portal repository contains a complete working mock consumer at:
+The `UNITY-RabbitMQ-Integration-Spec.md` (this document) describes the full contract that the UNITY application must implement. The UNITY consumer should:
 
-```
-src/Grants.ApplicantPortal.API.Unity.MockAPI/UnityCommandConsumerService.cs
-```
-
-This is a .NET `BackgroundService` that:
-- Connects to RabbitMQ with retry/backoff
-- Declares the exchange and queue
-- Consumes commands from `commands.unity.plugindata`
-- Guards against acknowledgment loops
-- Simulates processing (50-200ms delay, 80% success / 20% failure)
-- Publishes `MessageAcknowledgment` back on `grants.unity.acknowledgment`
-
-The real UNITY consumer should follow the **exact same pattern** — replace the simulated processing with actual database operations.
+- Connect to RabbitMQ with retry/backoff
+- Declare the exchange and its own inbound queue (`unity.commands`)
+- Consume commands from routing key `commands.unity.plugindata`
+- Guard against acknowledgment loops
+- Process commands against the UNITY database
+- Publish `MessageAcknowledgment` back on `grants.unity.acknowledgment`

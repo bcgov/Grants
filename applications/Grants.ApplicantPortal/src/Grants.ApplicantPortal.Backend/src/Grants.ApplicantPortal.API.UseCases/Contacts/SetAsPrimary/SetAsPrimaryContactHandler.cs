@@ -18,7 +18,8 @@ public class SetAsPrimaryContactHandler(
       var profileContext = new ProfileContext(
         request.ProfileId,
         request.PluginId,
-        request.Provider);
+        request.Provider,
+        request.Subject);
 
       var result = await contactManagementService.SetAsPrimaryContactAsync(
         request.ContactId,
