@@ -1,0 +1,72 @@
+<div class="notifications-wrapper">
+  <!-- Bell Icon Button -->
+  <button
+    type="button"
+    class="btn btn-link notifications-bell"
+    [class.has-notifications]="unreadCount > 0"
+    (click)="toggleDropdown()"
+    [attr.aria-expanded]="isOpen"
+    aria-label="Notifications"
+  >
+    <i class="fas fa-bell fa-lg"></i>
+    @if (unreadCount > 0) {
+      <span class="notification-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    }
+  </button>
+
+  <!-- Dropdown Panel -->
+  @if (isOpen) {
+    <div class="notifications-panel" role="dialog" aria-label="Notifications">
+      <!-- Header -->
+      <div class="notifications-header">
+        <span class="notifications-title">Notifications</span>
+        @if (unreadCount > 1) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary dismiss-all-btn"
+            (click)="dismissAllEvents()"
+          >
+            Dismiss All
+          </button>
+        }
+      </div>
+
+      <!-- Body -->
+      <div class="notifications-body">
+        @if (isLoading) {
+          <div class="notifications-loading">
+            <i class="fas fa-spinner fa-spin me-2"></i>Loading...
+          </div>
+        } @else if (events.length === 0) {
+          <div class="notifications-empty">
+            <i class="far fa-bell-slash"></i>
+            <p>No notifications</p>
+          </div>
+        } @else {
+          @for (event of events; track event.eventId) {
+            <div
+              class="notification-item"
+              [class.severity-error]="event.severity === 'Error'"
+              [class.severity-warning]="event.severity === 'Warning'"
+              [class.severity-info]="event.severity === 'Info'"
+            >
+              <div class="notification-icon">
+                <i [class]="getSeverityIcon(event.severity)"></i>
+              </div>
+              <div class="notification-content">
+                <div class="notification-message">{{ event.userMessage }}</div>
+                <div class="notification-time">{{ event.createdAt | date:'medium' }}</div>
+              </div>
+              <button
+                type="button"
+                class="btn-close btn-close-sm notification-dismiss"
+                (click)="dismissEvent(event.eventId); $event.stopPropagation()"
+                aria-label="Dismiss"
+              ></button>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -99,7 +99,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { key: 'email', label: 'Email', sortable: true, type: 'email', cssClass: 'email-column' },
       { key: 'title', label: 'Title', sortable: true, cssClass: 'title-column' },
       { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
+      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
     ],
     actionsType: 'dropdown',
     actionItems: [
@@ -108,7 +108,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
     ],
     actionsVisibilityField: 'isEditable',
-
     noDataMessage: 'No contacts found. Click "Add" to create your first contact.',
     loadingMessage: 'Loading your contacts...'
   };
@@ -247,6 +246,25 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     }));
   }
 
+  /**
+   * Uses the server-returned primaryContactId to set the primary flag
+   * on all contacts and update the primaryContact reference.
+   */
+  private applyPrimaryFromResponse(primaryContactId: string | null | undefined): void {
+    // If no primary contact ID is provided, don't change current state
+    if (primaryContactId == null) {
+      return;
+    }
+
+    const normalizedPrimaryId = primaryContactId.toLowerCase();
+
+    this.contacts = this.contacts.map(c => ({
+      ...c,
+      isPrimary: c.id.toLowerCase() === normalizedPrimaryId
+    }));
+    this.primaryContact = this.contacts.find(c => c.isPrimary) ?? null;
+  }
+
   // Event handlers
   onAddContact(): void {
     this.isEditMode = false;
@@ -294,9 +312,46 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
         console.log(`Contact ${this.isEditMode ? 'updated' : 'created'} successfully:`, response);
         this.isSavingContact = false;
         this.showAddContactModal = false;
+
+        // For creates, the server must return the new contact ID.
+        const responseId = response?.contactId ?? response?.id;
+
+        if (!this.isEditMode && !responseId) {
+          console.error('Create response did not include a contact ID. Response:', response);
+          this.saveContactError = 'Contact was saved but the server did not return a valid contact ID. Please refresh and try again.';
+          return;
+        }
+
+        // Build the display row from the response + form data
+        const contactId = this.isEditMode ? this.editingContactId! : responseId;
+        const savedContact: ContactDisplay = {
+          id: contactId,
+          contactType: response?.contactType ?? 'ApplicantProfile',
+          name: contactPayload.name,
+          email: contactPayload.email,
+          workPhoneNumber: contactPayload.workPhoneNumber ?? '',
+          workPhoneExtension: response?.workPhoneExtension ?? '',
+          mobilePhoneNumber: response?.mobilePhoneNumber ?? '',
+          homePhoneNumber: response?.homePhoneNumber ?? '',
+          title: contactPayload.title ?? '',
+          role: contactPayload.role,
+          isPrimary: contactId.toLowerCase() === response?.primaryContactId?.toLowerCase(),
+          isEditable: response?.isEditable ?? true,
+          applicationId: response?.applicationId ?? null
+        };
+
+        if (this.isEditMode && this.editingContactId) {
+          this.contacts = this.contacts.map(c =>
+            c.id === this.editingContactId ? savedContact : c
+          );
+        } else {
+          this.contacts = [...this.contacts, savedContact];
+        }
+
+        // Let the server-returned primaryContactId drive which contact is primary
+        this.applyPrimaryFromResponse(response?.primaryContactId);
+
         this.resetNewContactForm();
-        // Refresh contacts data to show updated information
-        this.loadContacts();
       },
       error: (error) => {
         console.error(`Failed to ${this.isEditMode ? 'update' : 'create'} contact:`, error);
@@ -434,12 +489,18 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     ).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: () => {
-        console.log('Contact deleted successfully:', this.contactToDelete);
+      next: (response: any) => {
+        console.log('Contact deleted successfully:', this.contactToDelete, response);
+        const deletedId = this.contactToDelete!.id;
         this.isDeletingContact = false;
         this.showDeleteConfirmModal = false;
         this.contactToDelete = null;
-        this.loadContacts();
+
+        // Remove the contact locally
+        this.contacts = this.contacts.filter(c => c.id !== deletedId);
+
+        // Let the server-returned primaryContactId drive which contact is primary
+        this.applyPrimaryFromResponse(response?.primaryContactId);
       },
       error: (error) => {
         console.error('Failed to delete contact:', error);
@@ -470,14 +531,8 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       next: (response: any) => {
         console.log('Contact set as primary successfully:', response);
         
-        // Update local state after successful API call
-        this.contacts = this.contacts.map(c => ({
-          ...c,
-          isPrimary: c.id === contact.id
-        }));
-        
-        this.primaryContact = { ...contact, isPrimary: true };
-        console.log('Primary contact updated locally:', this.primaryContact);
+        // Let the server-returned primaryContactId drive which contact is primary
+        this.applyPrimaryFromResponse(response?.primaryContactId);
       },
       error: (error: any) => {
         console.error('Failed to set contact as primary:', error);

@@ -59,10 +59,10 @@
                 <td [class]="column.cssClass || column.key + '-column'">
                   @if (column.type === 'badge' && config.badgeConfig) {
                     <span [class]="getBadgeClass(row)">
-                      {{ getBadgeDisplayValue(row, column) }}
+                      {{ getBadgeDisplayValue(row, column) || '—' }}
                     </span>
                   } @else if (column.type === 'date') {
-                    @if (getCellValue(row, column)) {
+                    @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) | date:'mediumDate' }}
                     } @else {
                       —
@@ -75,12 +75,22 @@
                     <span class="phone-number">{{ getCellValue(row, column) }}</span>
                   } @else if (column.type === 'boolean') {
                     <div class="text-center">
-                      @if (getCellValue(row, column)) {
-                        <i class="fas fa-check text-success" aria-label="Yes"></i>
+                      @if (getCellValue(row, column) != null) {
+                        @if (getCellValue(row, column)) {
+                          <i class="fas fa-check text-success" aria-label="Yes"></i>
+                        } @else if (!column.booleanFalseBlank) {
+                          <i class="fas fa-times text-danger" aria-label="No"></i>
+                        }
+                      } @else {
+                        —
                       }
                     </div>
                   } @else {
-                    {{ getCellValue(row, column) }}
+                    @if (getCellValue(row, column) != null) {
+                      {{ getCellValue(row, column) }}
+                    } @else {
+                      —
+                    }
                   }
                 </td>
               }
@@ -148,6 +158,42 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pager -->
+    @if (showPager) {
+      <nav class="datatable-pager" aria-label="Table pagination">
+        <button
+          type="button"
+          class="pager-btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Previous page"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        @for (page of pagerPages; track page) {
+          <button
+            type="button"
+            class="pager-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+            [attr.aria-label]="'Page ' + page"
+            [attr.aria-current]="page === currentPage ? 'page' : null"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Next page"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </nav>
+    }
 
     <!-- No Data State -->
     @if (getDisplayData().length === 0) {

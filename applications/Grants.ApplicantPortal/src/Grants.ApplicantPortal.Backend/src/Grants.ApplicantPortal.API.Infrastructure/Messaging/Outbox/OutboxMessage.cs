@@ -23,7 +23,17 @@ public enum OutboxMessageStatus
     /// <summary>
     /// Message processing is in progress (locked)
     /// </summary>
-    Processing = 3
+    Processing = 3,
+
+    /// <summary>
+    /// Message was published but no acknowledgment was received within the timeout threshold
+    /// </summary>
+    TimedOut = 4,
+
+    /// <summary>
+    /// External system acknowledged receipt/processing of the message
+    /// </summary>
+    Acknowledged = 5
 }
 
 /// <summary>
@@ -159,6 +169,29 @@ public class OutboxMessage : HasDomainEventsBase
             Status = OutboxMessageStatus.Pending;
         }
         
+        LockToken = null;
+        LockExpiry = null;
+    }
+
+    /// <summary>
+    /// Marks the message as timed out (published but no ack received within threshold)
+    /// </summary>
+    public void MarkAsTimedOut()
+    {
+        Status = OutboxMessageStatus.TimedOut;
+        ProcessedAt = DateTime.UtcNow;
+        LockToken = null;
+        LockExpiry = null;
+    }
+
+    /// <summary>
+    /// Marks the message as acknowledged by the external system.
+    /// Can transition from Published (normal) or TimedOut (late ack).
+    /// </summary>
+    public void MarkAsAcknowledged()
+    {
+        Status = OutboxMessageStatus.Acknowledged;
+        ProcessedAt = DateTime.UtcNow;
         LockToken = null;
         LockExpiry = null;
     }

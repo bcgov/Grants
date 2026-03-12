@@ -5,129 +5,28 @@
   </div>
 
   <div class="content-grid">
-    <div id="card-organization" class="card">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <div>
-          <h3 class="mb-0 ap-pad-10">Organization Information</h3>
-        </div>
-        <div>
-          <button
-            id="org-edit-btn"
-            *ngIf="!organizationComponent.isEditMode"
-            type="button"
-            class="btn btn-primary btn-sm"
-            (click)="organizationComponent.onEdit()"
-          >
-            Edit
-          </button>
-          <div *ngIf="organizationComponent.isEditMode" class="btn-group">
-            <button
-              id="org-save-btn"
-              type="button"
-              class="btn btn-primary btn-sm"
-              [disabled]="isSavingOrganization"
-              (click)="organizationComponent.onSave()"
-            >
-              @if (isSavingOrganization) {
-                <div class="spinner-border spinner-border-sm me-2" role="status">
-                  <span class="sr-only">Saving...</span>
-                </div>
-              }
-              {{ isSavingOrganization ? 'Saving...' : 'Save' }}
-            </button>
-            <button
-              id="org-cancel-btn"
-              type="button"
-              class="btn btn-secondary btn-sm"
-              [disabled]="isSavingOrganization"
-              (click)="organizationComponent.onCancel()"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <!-- Success Message -->
-        @if (saveSuccess) {
-          <div id="org-save-success-alert" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
-            Organization information saved successfully!
-          </div>
-        }
-        
-        <!-- Error Message -->
-        @if (saveError) {
-          <div id="org-save-error-alert" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            {{ saveError }}
-          </div>
-        }
-        
-        <app-organization-info
-          #organizationComponent
-          [organizationInfo]="organizationInfo"
-          [isLoading]="isLoading"
-          [isSaving]="isSavingOrganization"
-          (saveOrganization)="onSaveOrganization($event)"
-          (searchResultSelected)="onSearchResultSelected($event)"
-        ></app-organization-info>
-      </div>
-    </div>
+    <app-organization-info
+      id="card-organization"
+      [pluginId]="pluginId"
+      [provider]="provider"
+    ></app-organization-info>
 
-    <div id="card-submissions" class="card">
-      <div class="card-header d-flex align-items-center">
-        <div>
-          <h3 class="mb-0 ap-pad-10">Submissions</h3>
-        </div>
-      </div>
-      <div class="card-body">
-        <app-applicant-info-submissions
-          [pluginId]="pluginId"
-          [provider]="provider"
-        ></app-applicant-info-submissions>
-      </div>
-    </div>
-  </div>
+    <app-applicant-info-submissions
+      id="card-submissions"
+      [pluginId]="pluginId"
+      [provider]="provider"
+    ></app-applicant-info-submissions>
 
-  <div class="content-grid">
-    <div id="card-contacts" class="card">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <div>
-          <h3 class="mb-0 ap-pad-10">Contact Information</h3>
-        </div>
-        <div>
-          <button
-            id="contact-add-btn"
-            type="button"
-            class="btn btn-primary btn-sm"
-            (click)="contactsComponent.onAddContact()"
-          >
-            Add
-          </button>
-        </div>
-      </div>
-      <div class="card-body">
-        <app-contacts
-          #contactsComponent
-          [pluginId]="pluginId"
-          [provider]="provider"
-        ></app-contacts>
-      </div>
-    </div>
+    <app-contacts
+      id="card-contacts"
+      [pluginId]="pluginId"
+      [provider]="provider"
+    ></app-contacts>
 
-    <div id="card-addresses" class="card">
-      <div class="card-header d-flex align-items-center">
-        <div>
-          <h3 class="mb-0 ap-pad-10">Address Information</h3>
-        </div>
-      </div>
-      <div class="card-body">
-        <app-addresses
-          [pluginId]="pluginId"
-          [provider]="provider"
-        ></app-addresses>
-      </div>
-    </div>
+    <app-addresses
+      id="card-addresses"
+      [pluginId]="pluginId"
+      [provider]="provider"
+    ></app-addresses>
   </div>
 </div>

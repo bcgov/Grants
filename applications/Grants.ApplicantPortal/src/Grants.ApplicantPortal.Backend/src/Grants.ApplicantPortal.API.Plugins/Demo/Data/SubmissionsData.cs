@@ -54,7 +54,7 @@ public static class SubmissionsData
           status = "Under Review"
         }
       },
-      linkSource = "https://demo-forms.example.com/app/form/view?s="
+      linkSource = "https://demo-forms.example.com/app/user/view?s="
     };
   }
 
@@ -95,7 +95,7 @@ public static class SubmissionsData
           status = "Submitted"
         }
       },
-      linkSource = "https://demo-forms.example.com/app/form/view?s="
+      linkSource = "https://demo-forms.example.com/app/user/view?s="
     };
   }
 }

@@ -120,9 +120,9 @@ public partial class DemoPlugin
                 "ADDRESSINFO",
                 jsonData);
 
-            // Store updated data in Redis
+            // Store updated data in Redis — must use _jsonOptions (camelCase) to match the read path in PopulateProfileAsync
             var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:ADDRESSINFO";
-            var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+            var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);
             var cacheOptions = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)

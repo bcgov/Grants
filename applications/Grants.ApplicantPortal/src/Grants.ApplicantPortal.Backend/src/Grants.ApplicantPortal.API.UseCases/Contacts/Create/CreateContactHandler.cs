@@ -5,11 +5,11 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Create;
 
 public class CreateContactHandler(
   IContactManagementService contactManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
+  IPluginCacheService pluginCacheService,
   ILogger<CreateContactHandler> logger)
-  : ICommandHandler<CreateContactCommand, Result<Guid>>
+  : ICommandHandler<CreateContactCommand, Result<ContactMutationResult>>
 {
-  public async Task<Result<Guid>> Handle(CreateContactCommand request,
+  public async Task<Result<ContactMutationResult>> Handle(CreateContactCommand request,
     CancellationToken cancellationToken)
   {
     logger.LogInformation("Creating contact: {Name} for ProfileId: {ProfileId} using Plugin: {PluginId}",
@@ -32,7 +32,8 @@ public class CreateContactHandler(
       var profileContext = new ProfileContext(
         request.ProfileId,
         request.PluginId,
-        request.Provider);
+        request.Provider,
+        request.Subject);
 
       var result = await contactManagementService.CreateContactAsync(
         contactRequest,
@@ -43,31 +44,23 @@ public class CreateContactHandler(
       {
         logger.LogInformation("Successfully created contact {ContactId} for ProfileId: {ProfileId}",
           result.Value, request.ProfileId);
-          
-        // Invalidate contacts cache so the new contact appears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "CONTACTINFO",
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated contacts cache for ProfileId: {ProfileId} after contact creation", 
-          request.ProfileId);
-      }
-      else
-      {
-        logger.LogWarning("Failed to create contact for ProfileId: {ProfileId}. Status: {Status}",
-          request.ProfileId, result.Status);
+
+        var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
+            pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
+
+        return new ContactMutationResult(result.Value, primaryId);
       }
 
-      return result;
+      logger.LogWarning("Failed to create contact for ProfileId: {ProfileId}. Status: {Status}",
+        request.ProfileId, result.Status);
+
+      return Result<ContactMutationResult>.Invalid(result.ValidationErrors);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error creating contact for ProfileId: {ProfileId}",
         request.ProfileId);
-      return Result<Guid>.Error("An unexpected error occurred while creating the contact");
+      return Result<ContactMutationResult>.Error("An unexpected error occurred while creating the contact");
     }
   }
 }

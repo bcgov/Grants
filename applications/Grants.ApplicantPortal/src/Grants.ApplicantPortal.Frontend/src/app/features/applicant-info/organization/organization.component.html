@@ -1,4 +1,51 @@
-<div class="organization-container position-relative">
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+      <h3 class="mb-0 ap-pad-10">Organization Information</h3>
+    </div>
+    <!-- Action Buttons - only show for single organization -->
+    @if (!showMultipleOrgsTable) {
+    <div class="d-flex">
+      <button
+        id="org-edit-btn"
+        *ngIf="!isEditMode"
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="onEdit()"
+      >
+        Edit
+      </button>
+      <div *ngIf="isEditMode" class="btn-group">
+        <button
+          id="org-save-btn"
+          type="button"
+          class="btn btn-primary btn-sm"
+          [disabled]="isSaving"
+          (click)="onSave()"
+        >
+          @if (isSaving) {
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+              <span class="sr-only">Saving...</span>
+            </div>
+          }
+          {{ isSaving ? 'Saving...' : 'Save' }}
+        </button>
+        <button
+          id="org-cancel-btn"
+          type="button"
+          class="btn btn-secondary btn-sm"
+          [disabled]="isSaving"
+          (click)="onCancel()"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+  <div class="card-body">
+    <div class="organization-container position-relative">
+
   <app-loading-overlay
     [isVisible]="isSaving"
     message="Saving organization information..."
@@ -19,6 +66,32 @@
   </div>
   } @else {
   <div class="container-fluid form-section">
+    <!-- Multiple Organizations Warning -->
+    @if (showMultipleOrgsTable) {
+      <div class="row">
+        <div class="col-md-12">
+          <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Multiple Organization Records Found</strong><br>
+            Your profile is associated with multiple organization records. Please contact support to consolidate these records before editing your organization information.
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-12">
+          <h5>Associated Organizations</h5>
+          <app-datatable
+            [config]="orgbookDataTableConfig"
+            [data]="multipleOrganizations"
+            [loading]="false">
+          </app-datatable>
+        </div>
+      </div>
+    }
+
+    <!-- Single Organization Form -->
+    @if (!showMultipleOrgsTable) {
     <div class="row">
       <div class="col-md-12">
         <div class="field">
@@ -212,6 +285,9 @@
         </div>
       </div>
     </div>
+    } <!-- End conditional sections -->
   </div>
   }
+    </div>
+  </div>
 </div>

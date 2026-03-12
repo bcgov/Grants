@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
-  OrganizationResponse,
   SubmissionsResponse,
+  PluginEventDto,
+  PluginEventsResponse,
 } from '../../shared/models/applicant-info.interface';
 import { environment } from '../../../environments/environment';
 
@@ -112,39 +113,42 @@ export class ApplicantInfoService {
   }
 
   /**
-   * Parses backend response and extracts organization data
+   * Parses organization backend response and extracts organizations array + saved organizationInfo
    */
   private parseOrganizationResponse(
     response: any
-  ): OrganizationResponse {
+  ): { organizationsData: any[]; organizationData: any } {
     try {
-      // Handle both new format (data) and old format (jsonData)
       const jsonData = response.data ?? response.jsonData;
       console.log('Parsing organization response:', jsonData);
+
+      if (!jsonData) {
+        return { organizationsData: [], organizationData: null };
+      }
 
       let parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
 
       // Check if the parsed data is still a string (double-encoded)
       if (typeof parsedData === 'string') {
-        console.log('Data was double-encoded, parsing again...');
         parsedData = JSON.parse(parsedData);
       }
-      
-      console.log('Final parsed organization data:', parsedData);
-      console.log('Organization info from parsed data:', parsedData.organizationInfo);
 
-      const result = {
-        metadata: {
-          pluginId: response.pluginId,
-          provider: response.provider,
-          key: response.key,
-          populatedAt: response.populatedAt,
-        },
-        organizationData: parsedData.organizationInfo,
-      };
-      
-      console.log('Returning organization response:', result);
-      return result;
+      // Extract organizations array
+      let organizationsData: any[] = [];
+      if (Array.isArray(parsedData)) {
+        organizationsData = parsedData;
+      } else if (parsedData && Array.isArray(parsedData.organizations)) {
+        organizationsData = parsedData.organizations;
+      } else if (parsedData?.organizationInfo) {
+        organizationsData = Array.isArray(parsedData.organizationInfo)
+          ? parsedData.organizationInfo
+          : [parsedData.organizationInfo];
+      }
+
+      // Extract saved organization data
+      const organizationData = parsedData?.organizationInfo ?? null;
+
+      return { organizationsData, organizationData };
     } catch (error) {
       console.error('Error parsing organization data:', error, response);
       throw new Error('Failed to parse organization data');
@@ -178,16 +182,16 @@ export class ApplicantInfoService {
   }
 
   /**
-   * Main method: Gets formatted organization information
+   * Gets organization information
    */
   getOrganizationInfo(
     pluginId: string,
     provider: string,
     parameters?: any
-  ): Observable<OrganizationResponse> {
+  ): Observable<any> {
     return this.getOrganizationData(pluginId, provider, parameters).pipe(
       retry({ count: 2, delay: 1000 }),
-      map((response) => this.parseOrganizationResponse(response)),
+      map(response => this.parseOrganizationResponse(response)),
       catchError((error) => {
         console.error('Failed to load organization info after retries:', error);
         throw error;
@@ -437,5 +441,38 @@ export class ApplicantInfoService {
         throw error;
       })
     );
+  }
+
+  // ── Plugin Events ──────────────────────────────────────────────
+
+  /**
+   * Gets unacknowledged events for the current workspace/provider.
+   * Fails silently — events are non-blocking.
+   */
+  getEvents(pluginId: string, provider: string): Observable<PluginEventDto[]> {
+    const url = `${this.baseUrl}/Events/${pluginId}/${provider}`;
+    return this.http.get<PluginEventsResponse>(url).pipe(
+      map(response => response.events),
+      catchError(error => {
+        console.error('Failed to load plugin events:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Acknowledges (dismisses) a single event.
+   */
+  acknowledgeEvent(eventId: string): Observable<any> {
+    const url = `${this.baseUrl}/Events/${eventId}/acknowledge`;
+    return this.http.patch(url, {});
+  }
+
+  /**
+   * Acknowledges (dismisses) all events for a workspace/provider.
+   */
+  acknowledgeAllEvents(pluginId: string, provider: string): Observable<any> {
+    const url = `${this.baseUrl}/Events/${pluginId}/${provider}/acknowledge-all`;
+    return this.http.patch(url, {});
   }
 }
