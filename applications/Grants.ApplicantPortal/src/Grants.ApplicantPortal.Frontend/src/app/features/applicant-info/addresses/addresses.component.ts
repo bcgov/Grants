@@ -63,7 +63,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     defaultSortField: 'addressType',
     enableSortPersistence: true,
     columns: [
-      { key: 'addressType', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
+      { key: 'addressType', label: 'Type', sortable: true, cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
