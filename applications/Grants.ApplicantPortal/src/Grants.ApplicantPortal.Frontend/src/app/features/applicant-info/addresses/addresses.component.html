@@ -1,6 +1,14 @@
-<div class="addresses-container">
+<div class="card">
+  <div class="card-header d-flex align-items-center">
+    <div>
+      <h3 class="mb-0 ap-pad-10">Address Information</h3>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="addresses-container">
       @if (isLoading) {
       <div class="primary-loading-state">
+        <div class="visually-hidden" aria-live="polite">Loading addresses...</div>
         <div class="loading-skeleton">
           <div class="skeleton-header"></div>
           <div class="skeleton-content">
@@ -42,4 +50,6 @@
         (actionClick)="onAddressAction($event)"
         (sort)="onAddressSort($event)"
       ></app-datatable>
+    </div>
+  </div>
 </div>

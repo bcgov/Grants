@@ -68,7 +68,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
       { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
+      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
     ],
     actionsType: 'dropdown',
     actionItems: [

@@ -99,7 +99,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { key: 'email', label: 'Email', sortable: true, type: 'email', cssClass: 'email-column' },
       { key: 'title', label: 'Title', sortable: true, cssClass: 'title-column' },
       { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
+      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
     ],
     actionsType: 'dropdown',
     actionItems: [
@@ -251,19 +251,18 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
    * on all contacts and update the primaryContact reference.
    */
   private applyPrimaryFromResponse(primaryContactId: string | null | undefined): void {
-    console.log('applyPrimaryFromResponse called with:', primaryContactId);
-    console.log('Current contact IDs:', this.contacts.map(c => ({ id: c.id, wasPrimary: c.isPrimary })));
+    // If no primary contact ID is provided, don't change current state
+    if (primaryContactId == null) {
+      return;
+    }
 
-    const normalizedPrimaryId = primaryContactId?.toLowerCase() ?? null;
+    const normalizedPrimaryId = primaryContactId.toLowerCase();
 
     this.contacts = this.contacts.map(c => ({
       ...c,
       isPrimary: c.id.toLowerCase() === normalizedPrimaryId
     }));
     this.primaryContact = this.contacts.find(c => c.isPrimary) ?? null;
-
-    console.log('After applyPrimaryFromResponse:', this.contacts.map(c => ({ id: c.id, isPrimary: c.isPrimary })));
-    console.log('Primary contact:', this.primaryContact?.id);
   }
 
   // Event handlers
@@ -336,7 +335,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
           homePhoneNumber: response?.homePhoneNumber ?? '',
           title: contactPayload.title ?? '',
           role: contactPayload.role,
-          isPrimary: contactId === response?.primaryContactId,
+          isPrimary: contactId.toLowerCase() === response?.primaryContactId?.toLowerCase(),
           isEditable: response?.isEditable ?? true,
           applicationId: response?.applicationId ?? null
         };

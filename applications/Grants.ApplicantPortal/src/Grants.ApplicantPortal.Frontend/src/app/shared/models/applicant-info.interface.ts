@@ -84,17 +84,6 @@ export interface SubmissionsData {
   status: string;
 }
 
-// Single response interface for parsed data
-export interface OrganizationResponse {
-  metadata: {
-    pluginId: string;
-    provider: string;
-    key: string;
-    populatedAt: string;
-  };
-  organizationData: OrganizationData;
-}
-
 export interface SubmissionsResponse {
   metadata: {
     pluginId: string;

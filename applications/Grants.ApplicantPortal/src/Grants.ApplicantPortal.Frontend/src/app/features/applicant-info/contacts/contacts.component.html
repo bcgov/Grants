@@ -1,6 +1,24 @@
-<div class="contacts-container">
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+      <h3 class="mb-0 ap-pad-10">Contact Information</h3>
+    </div>
+    <div>
+      <button
+        id="contact-add-btn"
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="onAddContact()"
+      >
+        Add
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="contacts-container">
       @if (isLoading) {
       <div class="primary-loading-state">
+        <div class="visually-hidden" aria-live="polite">Loading contacts...</div>
         <div class="loading-skeleton">
           <div class="skeleton-header"></div>
           <div class="skeleton-content">
@@ -264,6 +282,8 @@
           }
         </button>
       </div>
+    </div>
+  </div>
     </div>
   </div>
 </div>

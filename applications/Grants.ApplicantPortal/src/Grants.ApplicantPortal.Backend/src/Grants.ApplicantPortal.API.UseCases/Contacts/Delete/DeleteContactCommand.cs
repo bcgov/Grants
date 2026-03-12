@@ -1,4 +1,6 @@
-﻿namespace Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
+﻿using Grants.ApplicantPortal.API.UseCases.Contacts;
+
+namespace Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
 
 /// <summary>
 /// Delete an existing Contact.
@@ -8,4 +10,4 @@ public record DeleteContactCommand(
   Guid ProfileId,
   string PluginId,
   string Provider,
-  string? Subject = null) : ICommand<Result>;
+  string? Subject = null) : ICommand<Result<ContactMutationResult>>;

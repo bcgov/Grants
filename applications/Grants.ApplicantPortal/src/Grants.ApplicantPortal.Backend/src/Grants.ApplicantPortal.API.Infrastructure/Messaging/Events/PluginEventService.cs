@@ -85,18 +85,19 @@ public class PluginEventService(
         .ToListAsync(cancellationToken);
   }
 
-  public async Task AcknowledgeEventAsync(Guid eventId, CancellationToken cancellationToken = default)
+  public async Task<bool> AcknowledgeEventAsync(Guid eventId, Guid profileId, CancellationToken cancellationToken = default)
   {
     var pluginEvent = await dbContext.PluginEvents
-        .FirstOrDefaultAsync(e => e.EventId == eventId, cancellationToken);
+        .FirstOrDefaultAsync(e => e.EventId == eventId && e.ProfileId == profileId, cancellationToken);
 
-    if (pluginEvent != null)
-    {
-      pluginEvent.Acknowledge();
-      await dbContext.SaveChangesAsync(cancellationToken);
+    if (pluginEvent is null)
+      return false;
 
-      logger.LogInformation("Acknowledged plugin event {EventId}", eventId);
-    }
+    pluginEvent.Acknowledge();
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    logger.LogInformation("Acknowledged plugin event {EventId} for ProfileId: {ProfileId}", eventId, profileId);
+    return true;
   }
 
   public async Task AcknowledgeAllAsync(

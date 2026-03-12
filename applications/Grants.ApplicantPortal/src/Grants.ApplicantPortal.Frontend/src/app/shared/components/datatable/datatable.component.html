@@ -62,7 +62,7 @@
                       {{ getBadgeDisplayValue(row, column) || '—' }}
                     </span>
                   } @else if (column.type === 'date') {
-                    @if (getCellValue(row, column)) {
+                    @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) | date:'mediumDate' }}
                     } @else {
                       —
@@ -75,12 +75,18 @@
                     <span class="phone-number">{{ getCellValue(row, column) }}</span>
                   } @else if (column.type === 'boolean') {
                     <div class="text-center">
-                      @if (getCellValue(row, column)) {
-                        <i class="fas fa-check text-success" aria-label="Yes"></i>
+                      @if (getCellValue(row, column) != null) {
+                        @if (getCellValue(row, column)) {
+                          <i class="fas fa-check text-success" aria-label="Yes"></i>
+                        } @else if (!column.booleanFalseBlank) {
+                          <i class="fas fa-times text-danger" aria-label="No"></i>
+                        }
+                      } @else {
+                        —
                       }
                     </div>
                   } @else {
-                    @if (getCellValue(row, column)) {
+                    @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) }}
                     } @else {
                       —

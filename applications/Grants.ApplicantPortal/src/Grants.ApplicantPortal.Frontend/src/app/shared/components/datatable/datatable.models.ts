@@ -5,6 +5,7 @@ export interface DatatableColumn {
   type?: 'text' | 'date' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean';
   cssClass?: string;
   width?: string;
+  booleanFalseBlank?: boolean;
 }
 
 export interface DatatableBadgeConfig {

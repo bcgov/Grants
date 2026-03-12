@@ -1,8 +1,7 @@
 ﻿using System.Text.Json;
 using Grants.ApplicantPortal.API.Core.Plugins;
-using Grants.ApplicantPortal.API.UseCases;
 
-namespace Grants.ApplicantPortal.API.Web.Contacts;
+namespace Grants.ApplicantPortal.API.UseCases.Contacts;
 
 /// <summary>
 /// Reads the primary contact ID from the optimistically-updated cache.
@@ -58,6 +57,7 @@ public static class PrimaryContactResolver
   /// <summary>
   /// Normalizes the ProfileData.Data value (object) into a JsonElement.
   /// Handles both JsonElement (from Unity) and string (from Demo) storage shapes.
+  /// Each JsonDocument is disposed after cloning the root element to avoid memory leaks.
   /// </summary>
   private static JsonElement? ResolveDataElement(object data)
   {
@@ -68,17 +68,24 @@ public static class PrimaryContactResolver
       {
         var inner = element.GetString();
         if (inner != null)
-          return JsonDocument.Parse(inner).RootElement;
+        {
+          using var doc = JsonDocument.Parse(inner);
+          return doc.RootElement.Clone();
+        }
       }
       return element;
     }
 
     // Data stored as a raw string (e.g. Demo plugin serialized to JSON string)
     if (data is string jsonString)
-      return JsonDocument.Parse(jsonString).RootElement;
+    {
+      using var doc = JsonDocument.Parse(jsonString);
+      return doc.RootElement.Clone();
+    }
 
     // Fallback: serialize then parse
     var json = JsonSerializer.Serialize(data);
-    return JsonDocument.Parse(json).RootElement;
+    using var fallbackDoc = JsonDocument.Parse(json);
+    return fallbackDoc.RootElement.Clone();
   }
 }

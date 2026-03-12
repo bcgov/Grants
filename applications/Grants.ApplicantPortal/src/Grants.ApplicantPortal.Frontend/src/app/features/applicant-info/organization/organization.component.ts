@@ -1,14 +1,16 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Subject, Observable, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil, finalize } from 'rxjs/operators';
 import {
   OrganizationData,
   OrgSearchResult,
   OrgbookResponse,
   OrgbookOrganization,
 } from '../../../shared/models/applicant-info.interface';
+import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
@@ -20,15 +22,17 @@ import { DatatableConfig } from '../../../shared/components/datatable/datatable.
   templateUrl: './organization.component.html',
   styleUrls: ['./organization.component.scss'],
 })
-export class OrganizationInfoComponent implements OnChanges {
-  @Input() organizationInfo: OrganizationData | null = null;
-  @Input() isLoading = false;
-  @Input() isSaving = false;
-  @Input() orgbookResponse: OrgbookResponse | null = null;
-  @Output() saveOrganization = new EventEmitter<OrganizationData>();
-  @Output() searchResultSelected = new EventEmitter<OrgSearchResult>();
+export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() pluginId: string = '';
+  @Input() provider: string = '';
+  
+  // Internal state
+  organizationInfo: OrganizationData | null = null;
+  orgbookResponse: OrgbookResponse | null = null; // Keep to store the response
+  isLoading = false;
+  isSaving = false;
 
-  // Orgbook multiple orgs handling
+  // Multiple organizations handling
   multipleOrganizations: OrgbookOrganization[] = [];
   showMultipleOrgsTable = false;
   orgbookDataTableConfig!: DatatableConfig;
@@ -52,39 +56,99 @@ export class OrganizationInfoComponent implements OnChanges {
   // Constants
   readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
   private readonly searchSubject = new Subject<string>();
+  private readonly destroy$ = new Subject<void>();
 
-  constructor(private readonly cdr: ChangeDetectorRef) {
+  constructor(
+    private readonly cdr: ChangeDetectorRef,
+    private readonly http: HttpClient,
+    private readonly applicantInfoService: ApplicantInfoService
+  ) {
     this.setupSearch();
     this.initializeDataTableConfig();
   }
 
   ngOnInit(): void {
     this.updateFiscalFieldsFromOrganizationInfo();
-    this.processOrgbookResponse();
+    // Data loading will be handled by ngOnChanges when pluginId/provider are set
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     console.log('OrganizationComponent ngOnChanges called:', changes);
     
-    if (changes['orgbookResponse']) {
-      console.log('orgbookResponse changed:', changes['orgbookResponse']);
-      this.processOrgbookResponse();
-    }
-    
-    if (changes['organizationInfo']) {
-      console.log('organizationInfo changed:', {
-        previousValue: changes['organizationInfo'].previousValue,
-        currentValue: changes['organizationInfo'].currentValue,
-        firstChange: changes['organizationInfo'].firstChange
-      });
+    // If pluginId or provider changed, reload data
+    if (changes['pluginId'] || changes['provider']) {
+      const hasPluginId = this.pluginId && this.pluginId.trim() !== '';
+      const hasProvider = this.provider && this.provider.trim() !== '';
       
-      if (changes['organizationInfo'].currentValue) {
-        console.log('OrganizationComponent - organizationInfo received, updating fields');
-        this.updateFiscalFieldsFromOrganizationInfo();
-      } else {
-        console.log('OrganizationComponent - organizationInfo is null/undefined');
+      if (hasPluginId && hasProvider) {
+        console.log('pluginId or provider changed, reloading data');
+        this.loadOrganizationData();
       }
     }
+  }
+
+  private loadOrganizationData(): void {
+    if (!this.pluginId || !this.provider) {
+      console.log('No pluginId or provider, skipping organization data load');
+      this.showMultipleOrgsTable = false;
+      this.multipleOrganizations = [];
+      this.organizationInfo = null;
+      return;
+    }
+
+    console.log('Loading organization data for pluginId:', this.pluginId, 'provider:', this.provider);
+    this.isLoading = true;
+    
+    this.applicantInfoService.getOrganizationInfo(this.pluginId, this.provider)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          console.log('Organization data received:', result);
+          this.handleOrganizationResponse(result);
+        },
+        error: (error) => {
+          console.error('Failed to load organization data:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  private handleOrganizationResponse(result: any): void {
+    const organizations = result.organizationsData || [];
+    console.log(`Found ${organizations.length} organizations:`, organizations);
+    
+    if (organizations.length > 1) {
+      this.showMultipleOrgsTable = true;
+      this.multipleOrganizations = organizations;
+      this.organizationInfo = null;
+      this.isLoading = false;
+    } else if (organizations.length === 1) {
+      this.showMultipleOrgsTable = false;
+      this.convertOrgbookToOrganizationData(organizations[0]);
+
+      // Merge saved data on top of the orgbook data
+      if (result.organizationData) {
+        this.organizationInfo = {
+          ...this.organizationInfo,
+          ...result.organizationData
+        };
+        this.updateFiscalFieldsFromOrganizationInfo();
+      }
+
+      this.isLoading = false;
+    } else {
+      this.showMultipleOrgsTable = false;
+      this.multipleOrganizations = [];
+      this.organizationInfo = null;
+      this.isLoading = false;
+    }
+    
+    this.cdr.detectChanges();
   }
 
   private initializeDataTableConfig(): void {
@@ -102,9 +166,9 @@ export class OrganizationInfoComponent implements OnChanges {
         field: 'orgStatus',
         badgeClassPrefix: 'status-badge',
         badgeClasses: {
-          'Active': 'status-active',
-          'Inactive': 'status-inactive',
-          'Suspended': 'status-suspended'
+          'ACTIVE': 'status-active',
+          'INACTIVE': 'status-inactive',
+          'SUSPENDED': 'status-suspended'
         },
         fallbackClass: 'status-unknown'
       },
@@ -114,46 +178,6 @@ export class OrganizationInfoComponent implements OnChanges {
       noDataMessage: 'No organizations found.',
       tableClass: 'orgbook-table'
     };
-  }
-
-  private processOrgbookResponse(): void {
-    console.log('processOrgbookResponse called:', this.orgbookResponse);
-    
-    // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
-    setTimeout(() => {
-      if (!this.orgbookResponse?.data?.organizations) {
-        console.log('No orgbookResponse or organizations data, showing default form');
-        this.showMultipleOrgsTable = false;
-        this.multipleOrganizations = [];
-        this.cdr.detectChanges();
-        return;
-      }
-
-      const organizations = this.orgbookResponse.data.organizations;
-      console.log('Raw organizations:', organizations);
-      console.log('Total organizations from API:', organizations.length);
-      
-      if (organizations.length === 1) {
-        // Single organization - convert to OrganizationData for editing
-        console.log('Single organization found, converting to edit form');
-        this.showMultipleOrgsTable = false;
-        this.convertOrgbookToOrganizationData(organizations[0]);
-      } else if (organizations.length > 1) {
-        // Multiple organizations - show ALL in table and disable editing
-        console.log('Multiple organizations found, showing table with all entries');
-        this.showMultipleOrgsTable = true;
-        this.multipleOrganizations = organizations; // Show ALL organizations from API
-        this.organizationInfo = null; // Clear any existing organization data
-      } else {
-        // No organizations found
-        console.log('No organizations found');
-        this.showMultipleOrgsTable = false;
-        this.multipleOrganizations = [];
-        this.organizationInfo = null;
-      }
-      
-      this.cdr.detectChanges();
-    });
   }
 
   private convertOrgbookToOrganizationData(orgbookOrg: OrgbookOrganization): void {
@@ -284,9 +308,13 @@ export class OrganizationInfoComponent implements OnChanges {
   }
 
   onSearchResultSelect(result: OrgSearchResult): void {
-    this.searchTerm = result.orgName;
+    console.log('Search result selected:', result);
+    // For now, just log the selected result
+    // This could be used to populate form fields or trigger additional actions
+    
+    // Hide the dropdown
     this.showDropdown = false;
-    this.searchResultSelected.emit(result);
+    this.searchTerm = result.orgName;
   }
 
   onFiscalMonthChange(event: Event): void {
@@ -323,8 +351,32 @@ export class OrganizationInfoComponent implements OnChanges {
       fiscalYearEndDay: this.selectedFiscalDay ? parseInt(this.selectedFiscalDay) : this.organizationInfo.fiscalYearEndDay
     };
     
-    this.isEditMode = false;
-    this.saveOrganization.emit(updatedOrgInfo);
+    console.log('Saving organization...', updatedOrgInfo);
+    
+    this.isSaving = true;
+    
+    this.applicantInfoService.saveOrganizationInfo(
+      updatedOrgInfo,
+      this.pluginId,
+      this.provider
+    )
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isSaving = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('Organization saved successfully:', response);
+          this.isEditMode = false;
+          this.organizationInfo = updatedOrgInfo; // Update local state
+        },
+        error: (error) => {
+          console.error('Failed to save organization:', error);
+          // Could add user-visible error handling here if needed
+        }
+      });
   }
 
   onCancel(): void {

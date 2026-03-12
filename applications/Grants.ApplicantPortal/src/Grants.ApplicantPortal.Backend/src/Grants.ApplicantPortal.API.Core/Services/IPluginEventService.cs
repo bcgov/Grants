@@ -21,9 +21,10 @@ public interface IPluginEventService
   Task<List<PluginEvent>> GetActiveEventsAsync(Guid profileId, string pluginId, string provider, CancellationToken cancellationToken = default);
 
   /// <summary>
-  /// Acknowledges (dismisses) a single event.
+  /// Acknowledges (dismisses) a single event owned by the specified profile.
+  /// Returns <c>false</c> when the event does not exist or does not belong to the profile.
   /// </summary>
-  Task AcknowledgeEventAsync(Guid eventId, CancellationToken cancellationToken = default);
+  Task<bool> AcknowledgeEventAsync(Guid eventId, Guid profileId, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Acknowledges all events for a user/plugin/provider combination.

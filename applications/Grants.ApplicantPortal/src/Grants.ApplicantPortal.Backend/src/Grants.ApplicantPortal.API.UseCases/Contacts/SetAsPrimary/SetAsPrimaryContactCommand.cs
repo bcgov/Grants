@@ -1,4 +1,6 @@
-﻿namespace Grants.ApplicantPortal.API.UseCases.Contacts.SetAsPrimary;
+﻿using Grants.ApplicantPortal.API.UseCases.Contacts;
+
+namespace Grants.ApplicantPortal.API.UseCases.Contacts.SetAsPrimary;
 
 /// <summary>
 /// Set a contact as the primary contact.
@@ -8,4 +10,4 @@ public record SetAsPrimaryContactCommand(
   Guid ProfileId,
   string PluginId,
   string Provider,
-  string? Subject = null) : ICommand<Result>;
+  string? Subject = null) : ICommand<Result<ContactMutationResult>>;

@@ -5,10 +5,11 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Edit;
 
 public class EditContactHandler(
   IContactManagementService contactManagementService,
+  IPluginCacheService pluginCacheService,
   ILogger<EditContactHandler> logger)
-  : ICommandHandler<EditContactCommand, Result>
+  : ICommandHandler<EditContactCommand, Result<ContactMutationResult>>
 {
-  public async Task<Result> Handle(EditContactCommand request, CancellationToken cancellationToken)
+  public async Task<Result<ContactMutationResult>> Handle(EditContactCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation("Editing contact {ContactId} for ProfileId: {ProfileId} using Plugin: {PluginId}",
       request.ContactId, request.ProfileId, request.PluginId);
@@ -43,20 +44,26 @@ public class EditContactHandler(
       {
         logger.LogInformation("Successfully edited contact {ContactId} for ProfileId: {ProfileId}",
           request.ContactId, request.ProfileId);
-      }
-      else
-      {
-        logger.LogWarning("Failed to edit contact {ContactId} for ProfileId: {ProfileId}. Status: {Status}",
-          request.ContactId, request.ProfileId, result.Status);
+
+        var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
+            pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
+
+        return new ContactMutationResult(request.ContactId, primaryId);
       }
 
-      return result;
+      logger.LogWarning("Failed to edit contact {ContactId} for ProfileId: {ProfileId}. Status: {Status}",
+        request.ContactId, request.ProfileId, result.Status);
+
+      if (result.Status == ResultStatus.NotFound)
+        return Result<ContactMutationResult>.NotFound();
+
+      return Result<ContactMutationResult>.Invalid(result.ValidationErrors);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error editing contact {ContactId} for ProfileId: {ProfileId}",
         request.ContactId, request.ProfileId);
-      return Result.Error("An unexpected error occurred while editing the contact");
+      return Result<ContactMutationResult>.Error("An unexpected error occurred while editing the contact");
     }
   }
 }

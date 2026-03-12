@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.Services;
 using Grants.ApplicantPortal.API.Web.Auth;
+using Grants.ApplicantPortal.API.Web.Extensions;
 
 namespace Grants.ApplicantPortal.API.Web.Events;
 
@@ -31,13 +32,22 @@ public class AcknowledgeEvent(IPluginEventService _eventService)
       s.Description = "Marks a plugin failure event as acknowledged (dismissed by the user).";
       s.Responses[200] = "Event acknowledged";
       s.Responses[401] = "Unauthorized";
+      s.Responses[404] = "Event not found or not owned by the current user";
     });
     Tags("Events", "Plugin Events");
   }
 
   public override async Task HandleAsync(AcknowledgeEventRequest request, CancellationToken ct)
   {
-    await _eventService.AcknowledgeEventAsync(request.EventId, ct);
+    var profileId = HttpContext.GetRequiredProfileId();
+
+    var acknowledged = await _eventService.AcknowledgeEventAsync(request.EventId, profileId, ct);
+
+    if (!acknowledged)
+    {
+      await SendNotFoundAsync(ct);
+      return;
+    }
 
     Response = new AcknowledgeEventResponse
     {

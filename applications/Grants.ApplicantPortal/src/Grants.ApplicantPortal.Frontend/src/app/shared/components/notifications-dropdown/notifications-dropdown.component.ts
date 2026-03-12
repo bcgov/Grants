@@ -54,16 +54,12 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
           if (this.pluginId && this.provider) {
             return this.applicantInfoService.getEvents(this.pluginId, this.provider);
           }
-          return of({ events: [] }); // Return empty events response
+          return of([]); // Return empty array to match PluginEventDto[] type
         })
       )
       .subscribe({
         next: (response) => {
-          if (Array.isArray(response)) {
-            this.events = response;
-          } else {
-            this.events = response?.events ?? [];
-          }
+          this.events = response;
         },
         error: (err) => {
           console.error('Failed to refresh events:', err);
@@ -80,7 +76,7 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
   /** Close dropdown when clicking outside */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (this.isOpen && !this.elementRef.nativeElement.contains(event.target)) {
+    if (this.isOpen && event.target && !this.elementRef.nativeElement.contains(event.target as Node)) {
       this.isOpen = false;
     }
   }

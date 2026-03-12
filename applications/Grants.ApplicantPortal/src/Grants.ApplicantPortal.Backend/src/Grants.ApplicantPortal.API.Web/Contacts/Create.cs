@@ -1,5 +1,4 @@
-﻿using Grants.ApplicantPortal.API.UseCases;
-using Grants.ApplicantPortal.API.UseCases.Contacts.Create;
+﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Create;
 using Grants.ApplicantPortal.API.Web.Auth;
 using Grants.ApplicantPortal.API.Web.Extensions;
 
@@ -11,7 +10,7 @@ namespace Grants.ApplicantPortal.API.Web.Contacts;
 /// <remarks>
 /// Creates a new Contact given a name and other details.
 /// </remarks>
-public class Create(IMediator _mediator, IPluginCacheService _cacheService)
+public class Create(IMediator _mediator)
   : Endpoint<CreateContactRequest, CreateContactResponse>
 {
   public override void Configure()
@@ -39,7 +38,7 @@ public class Create(IMediator _mediator, IPluginCacheService _cacheService)
         Provider = "PROGRAM1"
       };
     });
-    
+
     Tags("Contacts", "Contact Management");
   }
 
@@ -47,7 +46,6 @@ public class Create(IMediator _mediator, IPluginCacheService _cacheService)
     CreateContactRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile from the HTTP context
     var profile = HttpContext.GetRequiredProfile();
     var profileId = profile.Id;
 
@@ -71,14 +69,11 @@ public class Create(IMediator _mediator, IPluginCacheService _cacheService)
 
     if (result.IsSuccess)
     {
-      var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
-          _cacheService, profileId, request.PluginId, request.Provider, ct);
-
       Response = new CreateContactResponse
       {
-        ContactId = result.Value,
+        ContactId = result.Value.ContactId,
         Name = request.Name!,
-        PrimaryContactId = primaryId
+        PrimaryContactId = result.Value.PrimaryContactId
       };
       return;
     }
@@ -99,7 +94,6 @@ public class Create(IMediator _mediator, IPluginCacheService _cacheService)
       return;
     }
 
-    // Handle other error cases
     if (result.Errors.Any())
     {
       foreach (var error in result.Errors)

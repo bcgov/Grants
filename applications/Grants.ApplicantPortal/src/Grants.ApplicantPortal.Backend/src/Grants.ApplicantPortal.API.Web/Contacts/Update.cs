@@ -1,5 +1,4 @@
-﻿using Grants.ApplicantPortal.API.UseCases;
-using Grants.ApplicantPortal.API.UseCases.Contacts.Edit;
+﻿using Grants.ApplicantPortal.API.UseCases.Contacts.Edit;
 using Grants.ApplicantPortal.API.Web.Auth;
 using Grants.ApplicantPortal.API.Web.Extensions;
 
@@ -11,7 +10,7 @@ namespace Grants.ApplicantPortal.API.Web.Contacts;
 /// <remarks>
 /// Updates an existing Contact with new information.
 /// </remarks>
-public class Update(IMediator _mediator, IPluginCacheService _cacheService)
+public class Update(IMediator _mediator)
   : Endpoint<UpdateContactRequest, UpdateContactResponse>
 {
   public override void Configure()
@@ -73,14 +72,11 @@ public class Update(IMediator _mediator, IPluginCacheService _cacheService)
 
     if (result.IsSuccess)
     {
-      var primaryId = await PrimaryContactResolver.GetPrimaryContactIdAsync(
-          _cacheService, profileId, request.PluginId, request.Provider, ct);
-
       Response = new UpdateContactResponse
       {
-        ContactId = request.ContactId,
+        ContactId = result.Value.ContactId,
         Message = "Contact updated successfully",
-        PrimaryContactId = primaryId
+        PrimaryContactId = result.Value.PrimaryContactId
       };
       return;
     }

@@ -1026,7 +1026,7 @@ Existing callers that record error events automatically:
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET` | `/Events/{PluginId}/{Provider}` | Returns unacknowledged events for the current user |
-| `PATCH` | `/Events/{EventId}/acknowledge` | Acknowledges (dismisses) a single event |
+| `PATCH` | `/Events/{EventId}/acknowledge` | Acknowledges (dismisses) a single event owned by the current user. Returns `404` if the event does not exist or belongs to another user |
 | `PATCH` | `/Events/{PluginId}/{Provider}/acknowledge-all` | Acknowledges all events for plugin/provider |
 
 **Example response** (`GET /Events/UNITY/DGP`):
