@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -119,7 +119,7 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private handleOrganizationResponse(result: any): void {
-    const organizations = result.organizationsData || [];
+    const organizations = result.organizationsData ?? [];
     console.log(`Found ${organizations.length} organizations:`, organizations);
     
     if (organizations.length > 1) {

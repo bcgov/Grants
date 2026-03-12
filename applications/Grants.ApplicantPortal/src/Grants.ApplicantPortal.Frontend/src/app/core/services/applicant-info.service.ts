@@ -119,7 +119,7 @@ export class ApplicantInfoService {
     response: any
   ): { organizationsData: any[]; organizationData: any } {
     try {
-      const jsonData = (response as any).data ?? response.jsonData;
+      const jsonData = response.data ?? response.jsonData;
       console.log('Parsing organization response:', jsonData);
 
       if (!jsonData) {
@@ -139,7 +139,7 @@ export class ApplicantInfoService {
         organizationsData = parsedData;
       } else if (parsedData && Array.isArray(parsedData.organizations)) {
         organizationsData = parsedData.organizations;
-      } else if (parsedData && parsedData.organizationInfo) {
+      } else if (parsedData?.organizationInfo) {
         organizationsData = Array.isArray(parsedData.organizationInfo)
           ? parsedData.organizationInfo
           : [parsedData.organizationInfo];
