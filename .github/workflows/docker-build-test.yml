@@ -10,8 +10,8 @@ on:
       - '.gitignore'
       - 'database/**'
       - 'documentation/**'
-      - 'openshift/**'
-      - 'tests/**'
+      - '**/docs/**'
+      - '**/README*'
       - 'CODE_OF_CONDUCT.md'
       - 'COMPLIANCE.yaml'
       - 'CONTRIBUTING.md'
@@ -63,7 +63,7 @@ jobs:
     environment: test
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Get short commitId
@@ -91,7 +91,7 @@ jobs:
     environment: test
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Generate Next Git Tag
@@ -118,7 +118,7 @@ jobs:
     environment: test
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Set repository version variables
@@ -145,12 +145,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: test
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Build Docker images
       run: |
         echo "buildArgs GRANTS_BUILD_VERSION: ${{env.GRANTS_BUILD_VERSION}}, GRANTS_BUILD_REVISION: ${{env.GRANTS_BUILD_REVISION}}"
         docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-backend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
         docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} --build-arg BUILD_CONFIG=deploy -t grants-applicant-portal-frontend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+        echo "Building Docker image for database migrator..."
+        docker build -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Migrations/Dockerfile -t test-applicantportal-dbmigrator applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
       working-directory: ./
     - name: Connect to JFrog Artifactory non-interactive login using --password-stdin
       run: |
@@ -161,6 +163,8 @@ jobs:
         docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend
         docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend
         docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend
+        docker tag test-applicantportal-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/test-applicantportal-dbmigrator
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/test-applicantportal-dbmigrator
     - name: Disconnect docker from JFrog Artifactory
       run: |
         docker logout
@@ -182,9 +186,18 @@ jobs:
         docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-backend
         docker tag grants-applicant-portal-frontend $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend
         docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend
+        echo "Tagging and pushing database migrator image..."
+        docker tag test-applicantportal-dbmigrator $OC_REGISTRY/$OC_TARGET_PROJECT/test-applicantportal-dbmigrator:latest
+        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/test-applicantportal-dbmigrator:latest
     - name: Disconnect docker from OpenShift container registry
       run: |
         docker logout
+    - name: Clean and Run dbmigrator job from project template and params file
+      run: |
+        echo "Running migration job..."
+        oc delete jobs test-applicantportal-dbmigrator -n $OC_TARGET_PROJECT --ignore-not-found=true
+        oc process unity-applicantportal-dbmigrator-job -n $OC_TARGET_PROJECT -p APPLICATION_GROUP=test-unity-applicant-portal -p DATABASE_SERVICE_NAME=test-unity-applicant-portal -p APPLICATION_NAME=test-applicantportal-dbmigrator -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT -p IMAGESTREAM_NAME=test-applicantportal-dbmigrator -p IMAGESTREAM_TAG=latest | oc create -f -
+        oc wait jobs/test-applicantportal-dbmigrator --for condition=complete --timeout=120s -n $OC_TARGET_PROJECT
     - name: Trigger OpenShift deployment restart
       run: |
         oc rollout restart statefulset test-grants-web
