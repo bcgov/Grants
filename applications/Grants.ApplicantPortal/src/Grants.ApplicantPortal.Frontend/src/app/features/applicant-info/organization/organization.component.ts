@@ -53,7 +53,7 @@ export class OrganizationInfoComponent implements OnChanges {
   readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
   private readonly searchSubject = new Subject<string>();
 
-  constructor(private cdr: ChangeDetectorRef) {
+  constructor(private readonly cdr: ChangeDetectorRef) {
     this.setupSearch();
     this.initializeDataTableConfig();
   }
@@ -121,7 +121,7 @@ export class OrganizationInfoComponent implements OnChanges {
     
     // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
-      if (!this.orgbookResponse || !this.orgbookResponse.data.organizations) {
+      if (!this.orgbookResponse?.data?.organizations) {
         console.log('No orgbookResponse or organizations data, showing default form');
         this.showMultipleOrgsTable = false;
         this.multipleOrganizations = [];
@@ -166,17 +166,17 @@ export class OrganizationInfoComponent implements OnChanges {
       : '';
     
     this.organizationInfo = {
-      orgName: orgbookOrg.orgName || '',
-      orgNumber: orgbookOrg.orgNumber || '',
-      orgStatus: orgbookOrg.orgStatus || '',
-      organizationType: orgbookOrg.organizationType || '',
-      nonRegOrgName: orgbookOrg.nonRegOrgName || '',
+      orgName: orgbookOrg.orgName ?? '',
+      orgNumber: orgbookOrg.orgNumber ?? '',
+      orgStatus: orgbookOrg.orgStatus ?? '',
+      organizationType: orgbookOrg.organizationType ?? '',
+      nonRegOrgName: orgbookOrg.nonRegOrgName ?? '',
       orgSize: orgSize,
-      fiscalMonth: orgbookOrg.fiscalMonth || '',
-      fiscalDay: orgbookOrg.fiscalDay || 0,
+      fiscalMonth: orgbookOrg.fiscalMonth ?? '',
+      fiscalDay: orgbookOrg.fiscalDay ?? 0,
       organizationId: orgbookOrg.id,
       // Set default/empty values for required OrganizationData fields not in orgbook
-      legalName: orgbookOrg.orgName || orgbookOrg.nonRegOrgName || '',
+      legalName: orgbookOrg.orgName ?? orgbookOrg.nonRegOrgName ?? '',
       doingBusinessAs: '',
       ein: '',
       founded: 0,
@@ -195,7 +195,7 @@ export class OrganizationInfoComponent implements OnChanges {
 
   private updateFiscalFieldsFromOrganizationInfo(): void {
     if (this.organizationInfo) {
-      this.selectedFiscalMonth = this.organizationInfo.fiscalMonth || '';
+      this.selectedFiscalMonth = this.organizationInfo.fiscalMonth ?? '';
       this.selectedFiscalDay =
         this.organizationInfo.fiscalDay != null
           ? String(this.organizationInfo.fiscalDay)

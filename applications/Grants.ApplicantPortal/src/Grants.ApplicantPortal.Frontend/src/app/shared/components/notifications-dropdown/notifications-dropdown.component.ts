@@ -62,7 +62,7 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
           if (Array.isArray(response)) {
             this.events = response;
           } else {
-            this.events = response?.events || [];
+            this.events = response?.events ?? [];
           }
         },
         error: (err) => {
