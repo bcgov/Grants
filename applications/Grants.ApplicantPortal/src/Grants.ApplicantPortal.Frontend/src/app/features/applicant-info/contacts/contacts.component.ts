@@ -98,16 +98,16 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { key: 'name', label: 'Name', sortable: true, cssClass: 'name-column' },
       { key: 'email', label: 'Email', sortable: true, type: 'email', cssClass: 'email-column' },
       { key: 'title', label: 'Title', sortable: true, cssClass: 'title-column' },
-      { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
+      { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' }      
     ],
     actionsType: 'dropdown',
     actionItems: [
       { label: 'Set as primary', icon: 'fa-phone', action: 'setAsPrimary' },
       { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
       { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
-    ],
-    actionsVisibilityField: 'isEditable',
+    ],    
+    disabledActionsField: 'isEditable',
+    disabledActionsTooltip: 'This contact is linked to a submission. Contact the grant program administrator to update it',
     noDataMessage: 'No contacts found. Click "Add" to create your first contact.',
     loadingMessage: 'Loading your contacts...'
   };

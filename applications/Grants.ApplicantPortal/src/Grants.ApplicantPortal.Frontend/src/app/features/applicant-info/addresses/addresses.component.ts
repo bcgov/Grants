@@ -57,36 +57,31 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   isHydratingAddresses = false;
   error: string | null = null;
 
+  // Edit modal state
+  showEditAddressModal = false;
+  isSavingAddress = false;
+  saveAddressError: string | null = null;
+  editingAddressId: string | null = null;
+  editAddress: Partial<AddressDisplay> = {};
+
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
     tableId: 'addresses-table',
     defaultSortField: 'addressType',
     enableSortPersistence: true,
     columns: [
-      { key: 'addressType', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
+      { key: 'addressType', label: 'Type', sortable: true, cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
-      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
+      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' }
     ],
     actionsType: 'dropdown',
     actionItems: [
-      { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
-    ],
-    actionsVisibilityField: 'isEditable',
-    badgeConfig: {
-      field: 'addressType',
-      badgeClassPrefix: 'address-type-badge',
-      badgeClasses: {
-        'Physical': 'address-type-physical',
-        'Mailing': 'address-type-mailing',
-        'Primary': 'address-type-primary',
-        'Billing': 'address-type-billing',
-        'Office': 'address-type-office'
-      },
-      fallbackClass: 'address-type-other'
-    },
+      { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' }      
+    ],    
+    disabledActionsField: 'isEditable',
+    disabledActionsTooltip: 'This address is linked to a submission. Contact the grant program administrator to update it',
     noDataMessage: 'No addresses found.',
     loadingMessage: 'Loading your addresses...'
   };
@@ -224,13 +219,114 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onAddressAction(event: DatatableActionEvent): void {
+    const address = event.row as AddressDisplay;
+
+    if ((event.action === 'edit' || event.action === 'setAsPrimary') && !address.isEditable) {
+      console.log('Action not allowed: Address cannot be edited');
+      return;
+    }
+
     switch (event.action) {
       case 'setAsPrimary':
-        this.onSetAsPrimary(event.row);
+        this.onSetAsPrimary(address);
+        break;
+      case 'edit':
+        this.onEditAddress(address);
         break;
       default:
         console.log('Unknown action:', event.action);
     }
+  }
+
+  onEditAddress(address: AddressDisplay): void {
+    console.log('Editing address...', address);
+    this.editingAddressId = address.id;
+    this.saveAddressError = null;
+    this.editAddress = {
+      addressType: address.addressType,
+      street: address.street,
+      street2: address.street2,
+      unit: address.unit,
+      city: address.city,
+      province: address.province,
+      postalCode: address.postalCode,
+      country: address.country,
+      isPrimary: address.isPrimary,
+    };
+    this.showEditAddressModal = true;
+  }
+
+  onSaveAddress(): void {
+    if (!this.editingAddressId || !this.isValidAddress()) {
+      return;
+    }
+
+    this.isSavingAddress = true;
+    this.saveAddressError = null;
+
+    const payload = {
+      addressType: this.editAddress.addressType ?? '',
+      street: this.editAddress.street ?? '',
+      city: this.editAddress.city ?? '',
+      province: this.editAddress.province ?? '',
+      postalCode: this.editAddress.postalCode ?? '',
+      isPrimary: this.editAddress.isPrimary ?? false,
+      street2: this.editAddress.street2 ?? '',
+      unit: this.editAddress.unit ?? '',
+      country: this.editAddress.country ?? '',
+    };
+
+    this.applicantInfoService.updateAddress(
+      this.editingAddressId,
+      this.pluginId,
+      this.provider,
+      payload
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        console.log('Address updated successfully:', response);
+        this.isSavingAddress = false;
+        this.showEditAddressModal = false;
+
+        const primaryAddressId = response?.primaryAddressId ?? null;
+
+        // Update local state
+        this.addresses = this.addresses.map(addr => {
+          const isEdited = addr.id === this.editingAddressId;
+          const street = isEdited ? (this.editAddress.street ?? '') : addr.street;
+          const street2 = isEdited ? (this.editAddress.street2 ?? '') : addr.street2;
+          const unit = isEdited ? (this.editAddress.unit ?? '') : addr.unit;
+          return {
+            ...addr,
+            ...(isEdited ? this.editAddress : {}),
+            isPrimary: primaryAddressId !== null ? addr.id === primaryAddressId : false,
+            fullAddress: isEdited ? [street, street2, unit].filter(Boolean).join(', ') : addr.fullAddress,
+          } as AddressDisplay;
+        });
+        this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
+        this.editingAddressId = null;
+      },
+      error: (error) => {
+        console.error('Failed to update address:', error);
+        this.isSavingAddress = false;
+        this.saveAddressError = error?.error?.message ?? 'Failed to update address. Please try again.';
+      },
+    });
+  }
+
+  onCancelEditAddress(): void {
+    this.showEditAddressModal = false;
+    this.isSavingAddress = false;
+    this.saveAddressError = null;
+    this.editingAddressId = null;
+    this.editAddress = {};
+  }
+
+  isValidAddress(): boolean {
+    return !!(this.editAddress.addressType && this.editAddress.addressType.trim().length > 0
+      && this.editAddress.street && this.editAddress.street.trim().length > 0
+      && this.editAddress.city && this.editAddress.city.trim().length > 0
+      && this.editAddress.province && this.editAddress.province.trim().length > 0
+      && this.editAddress.postalCode && this.editAddress.postalCode.trim().length > 0);
   }
 
   onSetAsPrimary(address: AddressDisplay): void {
@@ -246,13 +342,15 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       next: (response) => {
         console.log('Address set as primary successfully:', response);
         
-        // Update local state after successful API call
+        const primaryAddressId = response?.primaryAddressId ?? address.id;
+
+        // Update local state using primaryAddressId from response
         this.addresses = this.addresses.map(addr => ({
           ...addr,
-          isPrimary: addr.id === address.id
+          isPrimary: addr.id === primaryAddressId
         }));
         
-        this.primaryAddress = { ...address, isPrimary: true };
+        this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
         console.log('Primary address updated locally:', this.primaryAddress);
       },
       error: (error) => {

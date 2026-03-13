@@ -663,7 +663,7 @@ The two existing plugins use different strategies intentionally:
 | **Has `IPluginMessageHandler`?** | Yes (logs only, scaffolding) | Yes (handles acks from external system) |
 | **Ack/Nack flow?** | Not needed (writes are synchronous) | Full round-trip via inbox |
 | **External system?** | None | Real Unity instance + RabbitMQ |
-| **`primaryContactId` in responses?** | Yes — resolved from Redis cache | Yes — resolved from optimistically-patched cache |
+| **`primaryContactId` / `primaryAddressId` in responses?** | Yes — resolved from Redis cache | Yes — resolved from optimistically-patched cache |
 
 ---
 
@@ -683,13 +683,13 @@ The UNITY plugin uses an **optimistic cache update** pattern for all write opera
 
 ### Operations and their cache effects
 
-| Operation | Cache Patch | Primary Contact Rules |
+| Operation | Cache Patch | Primary Flag Rules |
 |-----------|-------------|----------------------|
 | **Contact Create** | Appends new contact to `contacts` array | If `isPrimary: true`, clears `isPrimary` on all existing contacts |
 | **Contact Edit** | Replaces matching contact in `contacts` array | If `isPrimary: true`, clears `isPrimary` on all other contacts |
 | **Contact SetPrimary** | Toggles `isPrimary` on all contacts | Target gets `true`, all others get `false` |
 | **Contact Delete** | Removes contact from `contacts` array | If deleted contact was primary, auto-promotes first remaining contact |
-| **Address Edit** | Replaces matching address in `addresses` array | — |
+| **Address Edit** | Replaces matching address in `addresses` array | If `isPrimary: true`, clears `isPrimary` on all other addresses |
 | **Address SetPrimary** | Toggles `isPrimary` on all addresses | Target gets `true`, all others get `false` |
 | **Organization Edit** | Patches `OrganizationInfo` object | — |
 

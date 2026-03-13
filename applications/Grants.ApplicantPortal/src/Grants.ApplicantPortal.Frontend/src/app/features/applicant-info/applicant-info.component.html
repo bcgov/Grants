@@ -1,7 +1,14 @@
 <div class="applicant-info-content">
   <div class="app-info">
-    <span id="applicant-id" class="app-id">{{ applicantInfo?.id }}</span>
-    <span id="applicant-name" class="app-name">{{ applicantInfo?.organization }}</span>
+    @if (hasMultipleOrgs) {
+      <span class="app-warning">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        Multiple organization records found — please contact support to consolidate.
+      </span>
+    } @else if (orgNumber || orgName) {
+      <span id="applicant-id" class="app-id">{{ orgNumber }}</span>
+      <span id="applicant-name" class="app-name">{{ orgName }}</span>
+    }
   </div>
 
   <div class="content-grid">
@@ -9,6 +16,8 @@
       id="card-organization"
       [pluginId]="pluginId"
       [provider]="provider"
+      (organizationLoaded)="onOrganizationLoaded($event)"
+      (multipleOrganizationsDetected)="onMultipleOrganizationsDetected($event)"
     ></app-organization-info>
 
     <app-applicant-info-submissions

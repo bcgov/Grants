@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -25,6 +25,8 @@ import { DatatableConfig } from '../../../shared/components/datatable/datatable.
 export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
   @Input() pluginId: string = '';
   @Input() provider: string = '';
+  @Output() organizationLoaded = new EventEmitter<{ orgNumber: string; orgName: string } | null>();
+  @Output() multipleOrganizationsDetected = new EventEmitter<boolean>();
   
   // Internal state
   organizationInfo: OrganizationData | null = null;
@@ -127,6 +129,8 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       this.multipleOrganizations = organizations;
       this.organizationInfo = null;
       this.isLoading = false;
+      this.multipleOrganizationsDetected.emit(true);
+      this.organizationLoaded.emit(null);
     } else if (organizations.length === 1) {
       this.showMultipleOrgsTable = false;
       this.convertOrgbookToOrganizationData(organizations[0]);
@@ -141,11 +145,18 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       }
 
       this.isLoading = false;
+      this.multipleOrganizationsDetected.emit(false);
+      this.organizationLoaded.emit({
+        orgNumber: this.organizationInfo?.orgNumber ?? '',
+        orgName: this.organizationInfo?.orgName ?? ''
+      });
     } else {
       this.showMultipleOrgsTable = false;
       this.multipleOrganizations = [];
       this.organizationInfo = null;
       this.isLoading = false;
+      this.multipleOrganizationsDetected.emit(false);
+      this.organizationLoaded.emit(null);
     }
     
     this.cdr.detectChanges();

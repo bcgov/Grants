@@ -76,8 +76,9 @@ public class Update(IMediator _mediator)
     {
       Response = new UpdateAddressResponse
       {
-        AddressId = request.AddressId,
-        Message = "Address updated successfully"
+        AddressId = result.Value.AddressId,
+        Message = "Address updated successfully",
+        PrimaryAddressId = result.Value.PrimaryAddressId
       };
       return;
     }

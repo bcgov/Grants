@@ -33,6 +33,8 @@ export interface DatatableConfig {
   actionsType?: 'chevron' | 'dropdown' | 'none';
   actionItems?: DatatableActionItem[];
   actionsVisibilityField?: string; // Field name to check for row-level action visibility
+  disabledActionsField?: string; // Field name to check if actions should render as disabled (shows X icon)
+  disabledActionsTooltip?: string; // Tooltip text for disabled action rows
   linkConfig?: DatatableLinkConfig; // When set with chevron, renders an <a> tag instead of a button
   badgeConfig?: DatatableBadgeConfig;
   rowClickable?: boolean;

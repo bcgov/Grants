@@ -4,4 +4,5 @@ public class SetAsPrimaryAddressResponse
 {
   public Guid AddressId { get; set; }
   public string Message { get; set; } = "Address set as primary successfully";
+  public Guid? PrimaryAddressId { get; set; }
 }

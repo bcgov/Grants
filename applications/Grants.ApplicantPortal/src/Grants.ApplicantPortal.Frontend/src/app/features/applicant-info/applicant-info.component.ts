@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil, filter } from 'rxjs/operators';
 
-import { ApplicantService } from '../../core/services/applicant.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
-import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { WorkspaceState } from '../../shared/models/workspace.interface';
 import { OrganizationInfoComponent } from './organization/organization.component';
 import { SubmissionsComponent } from './submissions/submissions.component';
@@ -30,14 +28,15 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   pluginId: string = '';
   provider: string = '';
   
-  // Basic applicant data
-  applicantInfo: ApplicantInfo | null = null;
+  // Organization header info
+  orgNumber: string = '';
+  orgName: string = '';
+  hasMultipleOrgs: boolean = false;
 
   // Cleanup subject
   private readonly destroy$ = new Subject<void>();
 
   constructor(
-    private readonly applicantService: ApplicantService,
     private readonly workspaceService: WorkspaceService
   ) {}
 
@@ -56,9 +55,6 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
         if (state.selectedWorkspace && state.selectedProvider) {
           this.pluginId = state.selectedWorkspace.pluginId;
           this.provider = state.selectedProvider;
-          
-          // Load basic applicant info
-          this.loadApplicantInfo();
         }
       });
   }
@@ -68,10 +64,12 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadApplicantInfo(): void {
-    this.applicantService
-      .getApplicantInfo()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((data) => (this.applicantInfo = data));
+  onOrganizationLoaded(info: { orgNumber: string; orgName: string } | null): void {
+    this.orgNumber = info?.orgNumber ?? '';
+    this.orgName = info?.orgName ?? '';
+  }
+
+  onMultipleOrganizationsDetected(hasMultiple: boolean): void {
+    this.hasMultipleOrgs = hasMultiple;
   }
 }
