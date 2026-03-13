@@ -24,13 +24,15 @@
           />
           <i class="fas fa-search search-icon" aria-hidden="true"
              [class.d-none]="searchTerm.length > 0"></i>
-          <i class="fas fa-times search-icon search-clear" aria-hidden="false"
+          <button
+             type="button"
+             class="search-icon search-clear"
              [class.d-none]="searchTerm.length === 0"
              (click)="clearSearch()"
-             role="button"
              aria-label="Clear search"
-             tabindex="0"
-             (keydown.enter)="clearSearch()"></i>
+           >
+             <i class="fas fa-times" aria-hidden="true"></i>
+           </button>
         </div>
       </div>
     }
