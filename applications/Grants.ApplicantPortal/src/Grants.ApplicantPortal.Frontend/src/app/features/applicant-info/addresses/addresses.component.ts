@@ -70,7 +70,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     defaultSortField: 'addressType',
     enableSortPersistence: true,
     columns: [
-      { key: 'addressType', label: 'Type', sortable: true, cssClass: 'type-column' },
+      { key: 'addressType', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
@@ -278,7 +278,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     this.saveAddressError = null;
 
     const payload = {
-      addressId: this.editingAddressId,
       addressType: this.editAddress.addressType ?? '',
       street: this.editAddress.street ?? '',
       city: this.editAddress.city ?? '',
@@ -336,7 +335,9 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   isValidAddress(): boolean {
-    return !!(this.editAddress.city && this.editAddress.city.trim().length > 0
+    return !!(this.editAddress.addressType && this.editAddress.addressType.trim().length > 0
+      && this.editAddress.street && this.editAddress.street.trim().length > 0
+      && this.editAddress.city && this.editAddress.city.trim().length > 0
       && this.editAddress.province && this.editAddress.province.trim().length > 0
       && this.editAddress.postalCode && this.editAddress.postalCode.trim().length > 0);
   }

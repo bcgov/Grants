@@ -379,7 +379,6 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     addressData: {
-      addressId: string;
       addressType: string;
       street: string;
       city: string;
