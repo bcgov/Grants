@@ -84,17 +84,6 @@ export interface SubmissionsData {
   status: string;
 }
 
-// Single response interface for parsed data
-export interface OrganizationResponse {
-  metadata: {
-    pluginId: string;
-    provider: string;
-    key: string;
-    populatedAt: string;
-  };
-  organizationData: OrganizationData;
-}
-
 export interface SubmissionsResponse {
   metadata: {
     pluginId: string;
@@ -106,10 +95,65 @@ export interface SubmissionsResponse {
   linkSource?: string;
 }
 
+export interface PaymentData {
+  id: string;
+  paymentNumber: string;
+  referenceNo: string;
+  amount: number;
+  paymentDate: string | null;
+  paymentStatus: string;
+}
+
+export interface PaymentsResponse {
+  paymentsData: PaymentData[];
+}
+
 export interface OrgSearchResult {
   id: string;
   orgName: string;
   orgNumber: string;
   orgStatus: string;
   organizationType: string;
+}
+
+// Plugin Events
+export type EventSeverity = 'Error' | 'Warning' | 'Info';
+
+export interface PluginEventDto {
+  eventId: string;
+  severity: EventSeverity;
+  userMessage: string;
+  createdAt: string;
+  acknowledgedAt?: string | null;
+}
+
+export interface PluginEventsResponse {
+  events: PluginEventDto[];
+}
+
+// Orgbook API Response
+export interface OrgbookOrganization {
+  id: string;
+  orgName: string | null;
+  organizationType: string | null;
+  orgNumber: string | null;
+  orgStatus: string | null;
+  nonRegOrgName: string | null;
+  fiscalMonth: string | null;
+  fiscalDay: number | null;
+  organizationSize: string | number | null;
+  sector: string | null;
+  subSector: string | null;
+}
+
+export interface OrgbookResponse {
+  profileId: string;
+  pluginId: string;
+  provider: string;
+  data: {
+    organizations: OrgbookOrganization[];
+  };
+  populatedAt: string;
+  cacheStatus: string;
+  cacheStore: string;
 }

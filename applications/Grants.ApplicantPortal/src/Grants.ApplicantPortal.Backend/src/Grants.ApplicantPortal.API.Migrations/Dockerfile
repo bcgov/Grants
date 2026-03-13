@@ -1,4 +1,4 @@
-# Use the official .NET 9 runtime image as a base image
+# Use the official .NET 9 ASP.NET runtime image as a base image (required by Serilog.AspNetCore)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 

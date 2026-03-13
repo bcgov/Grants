@@ -51,6 +51,18 @@ public interface IPluginCacheService
   /// Removes a cached entry for a given profile, plugin, and data segment.
   /// </summary>
   Task InvalidateAsync(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Tries to read an existing cached entry without invoking a factory.
+  /// Returns null if the entry is missing or corrupt.
+  /// </summary>
+  Task<T?> TryGetAsync<T>(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default) where T : class;
+
+  /// <summary>
+  /// Writes a value to cache directly (for optimistic updates).
+  /// Uses the standard cache expiration settings.
+  /// </summary>
+  Task SetAsync<T>(Guid profileId, string pluginId, string cacheSegment, T value, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -65,6 +77,15 @@ public class PluginCacheService(
     ILogger<PluginCacheService> logger) : IPluginCacheService
 {
   private readonly string _storeType = distributedCache.GetType().Name;
+
+  /// <summary>
+  /// Shared options for deserialization — case-insensitive so cache entries written
+  /// with camelCase (e.g. DEMO plugin) or PascalCase both deserialize correctly.
+  /// </summary>
+  private static readonly JsonSerializerOptions _readOptions = new()
+  {
+    PropertyNameCaseInsensitive = true
+  };
 
   public async Task<T> GetOrFetchAsync<T>(
       Guid profileId,
@@ -82,7 +103,7 @@ public class PluginCacheService(
     {
       try
       {
-        var deserialized = JsonSerializer.Deserialize<T>(cached);
+        var deserialized = JsonSerializer.Deserialize<T>(cached, _readOptions);
         if (deserialized is not null)
         {
           logger.LogDebug("Cache hit for {PluginId}:{Segment}, ProfileId: {ProfileId}",
@@ -149,6 +170,49 @@ public class PluginCacheService(
     catch (Exception ex)
     {
       logger.LogError(ex, "Failed to invalidate cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+          pluginId, cacheSegment, profileId);
+    }
+  }
+
+  public async Task<T?> TryGetAsync<T>(Guid profileId, string pluginId, string cacheSegment, CancellationToken cancellationToken = default) where T : class
+  {
+    var cacheKey = BuildCacheKey(profileId, pluginId, cacheSegment);
+
+    try
+    {
+      var cached = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+      if (cached is null) return null;
+
+      return JsonSerializer.Deserialize<T>(cached, _readOptions);
+    }
+    catch (Exception ex)
+    {
+      logger.LogWarning(ex, "Failed to read cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+          pluginId, cacheSegment, profileId);
+      return null;
+    }
+  }
+
+  public async Task SetAsync<T>(Guid profileId, string pluginId, string cacheSegment, T value, CancellationToken cancellationToken = default)
+  {
+    var cacheKey = BuildCacheKey(profileId, pluginId, cacheSegment);
+
+    try
+    {
+      var json = JsonSerializer.Serialize(value);
+      var options = new DistributedCacheEntryOptions
+      {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheOptions.Value.CacheExpiryMinutes),
+        SlidingExpiration = TimeSpan.FromMinutes(cacheOptions.Value.SlidingExpiryMinutes)
+      };
+      await distributedCache.SetStringAsync(cacheKey, json, options, cancellationToken);
+
+      logger.LogDebug("Optimistically updated cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
+          pluginId, cacheSegment, profileId);
+    }
+    catch (Exception ex)
+    {
+      logger.LogWarning(ex, "Failed to write cache for {PluginId}:{Segment}, ProfileId: {ProfileId}",
           pluginId, cacheSegment, profileId);
     }
   }

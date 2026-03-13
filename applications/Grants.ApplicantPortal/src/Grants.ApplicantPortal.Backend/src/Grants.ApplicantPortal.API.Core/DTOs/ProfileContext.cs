@@ -6,4 +6,5 @@
 public record ProfileContext(
   Guid ProfileId,
   string PluginId,
-  string Provider);
+  string Provider,
+  string? Subject = null);

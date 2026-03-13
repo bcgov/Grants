@@ -1,6 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { 
   DatatableConfig, 
   DatatableColumn,
@@ -13,7 +15,7 @@ import { TableSortService, SortState, TableSortConfig } from '../../services/tab
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './datatable.component.html',
   styleUrls: ['./datatable.component.scss'],
   encapsulation: ViewEncapsulation.None
@@ -33,6 +35,14 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   sortedData: any[] = [];
   private sortConfig: TableSortConfig | null = null;
   private readonly destroy$ = new Subject<void>();
+
+  // Search properties
+  searchTerm: string = '';
+  private filteredData: any[] = [];
+  private readonly searchSubject$ = new Subject<string>();
+
+  // Pagination
+  currentPage = 1;
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
 
@@ -54,6 +64,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     this.config.loadingMessage = this.config.loadingMessage ?? 'Loading data...';
     this.config.enableSortPersistence = this.config.enableSortPersistence ?? true;
     this.config.defaultSortField = this.config.defaultSortField ?? 'lastUpdated';
+    this.config.pageSize = this.config.pageSize ?? 4;
     
     // Setup sorting configuration
     if (this.config.tableId) {
@@ -70,6 +81,17 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Initial sort of data
     this.applySorting();
+
+    // Setup search debounce
+    if (this.config.enableSearch) {
+      this.config.searchMinChars = this.config.searchMinChars ?? 1;
+      this.config.searchPlaceholder = this.config.searchPlaceholder ?? 'Search...';
+      this.searchSubject$
+        .pipe(debounceTime(300), takeUntil(this.destroy$))
+        .subscribe((term) => {
+          this.applySearch(term);
+        });
+    }
   }
 
   ngOnDestroy(): void {
@@ -78,7 +100,32 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   }
   
   ngOnChanges(): void {
-    // Re-apply sorting when data changes
+    // Re-apply filtering and sorting when data changes
+    this.applySearch(this.searchTerm);
+  }
+
+  onSearchInput(term: string): void {
+    this.searchSubject$.next(term);
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.applySearch('');
+  }
+
+  private applySearch(term: string): void {
+    const minChars = this.config?.searchMinChars ?? 1;
+    if (this.config?.enableSearch && term.length >= minChars) {
+      const lowerTerm = term.toLowerCase();
+      this.filteredData = this.data.filter((row) =>
+        this.config.columns.some((col) => {
+          const value = this.getNestedProperty(row, col.key);
+          return value != null && String(value).toLowerCase().includes(lowerTerm);
+        })
+      );
+    } else {
+      this.filteredData = [];
+    }
     this.applySorting();
   }
 
@@ -132,16 +179,20 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
    * Applies sorting to the data and emits the sorted result
    */
   private applySorting(): void {
+    const sourceData = this.isSearchActive ? this.filteredData : this.data;
     if (!this.sortConfig) {
-      this.sortedData = [...this.data];
+      this.sortedData = [...sourceData];
     } else {
       this.sortedData = this.tableSortService.sortData(
-        this.data,
+        sourceData,
         this.currentSortState,
         this.sortConfig
       );
     }
     
+    // Reset to first page when data/sort changes
+    this.currentPage = 1;
+
     // Emit the sorted data
     this.dataChange.emit(this.sortedData);
   }
@@ -187,17 +238,17 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  onDropdownToggle(index: number, event: Event): void {
+  onDropdownToggle(toggleElement: HTMLElement, event: Event): void {
     event.stopPropagation();
     
     // Close all other open dropdowns before opening this one
-    this.closeAllDropdownsExcept(index);
+    this.closeAllDropdownsExcept(toggleElement);
   }
 
-  private closeAllDropdownsExcept(exceptIndex: number): void {
+  private closeAllDropdownsExcept(exceptElement: HTMLElement): void {
     if (this.dropdownToggles) {
-      this.dropdownToggles.forEach((toggleRef, index) => {
-        if (index !== exceptIndex) {
+      this.dropdownToggles.forEach((toggleRef) => {
+        if (toggleRef.nativeElement !== exceptElement) {
           const toggle = toggleRef.nativeElement;
           const dropdownMenu = toggle.nextElementSibling;
           
@@ -242,13 +293,47 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     return item.id || item.key || item.contactId || item.addressId || item.submissionId || index;
   }
 
+  get isSearchActive(): boolean {
+    const minChars = this.config?.searchMinChars ?? 1;
+    return !!this.config?.enableSearch && this.searchTerm.length >= minChars;
+  }
+
   /**
-   * Gets the data to display (sorted data)
+   * Gets the data to display (sorted + paginated)
    */
   getDisplayData(): any[] {
-    const data = this.sortedData.length > 0 ? this.sortedData : this.data;
-    // Filter out any undefined or null items to prevent trackByFn errors
-    return data ? data.filter(item => item != null) : [];
+    const data = (this.sortedData.length > 0 || this.isSearchActive) ? this.sortedData : this.data;
+    const filtered = data ? data.filter(item => item != null) : [];
+    const pageSize = this.config.pageSize!;
+    if (pageSize <= 0 || filtered.length <= pageSize) {
+      return filtered;
+    }
+    const start = (this.currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }
+
+  get totalRows(): number {
+    const data = (this.sortedData.length > 0 || this.isSearchActive) ? this.sortedData : this.data;
+    return data ? data.filter(item => item != null).length : 0;
+  }
+
+  get totalPages(): number {
+    const pageSize = this.config.pageSize!;
+    return pageSize > 0 ? Math.ceil(this.totalRows / pageSize) : 1;
+  }
+
+  get showPager(): boolean {
+    return this.totalRows > this.config.pageSize!;
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  get pagerPages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   shouldShowActions(row: any): boolean {
@@ -259,5 +344,12 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Check the specified field on the row data
     return !!row[this.config.actionsVisibilityField];
+  }
+
+  isActionsDisabled(row: any): boolean {
+    if (!this.config.disabledActionsField) {
+      return false;
+    }
+    return !row[this.config.disabledActionsField];
   }
 }

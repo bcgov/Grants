@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using Grants.ApplicantPortal.API.Core.Plugins;
-using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
@@ -75,9 +74,6 @@ public partial class DemoPlugin
       logger.LogInformation("Demo plugin successfully generated and persisted fresh profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
           metadata.ProfileId, metadata.Provider, metadata.Key);
 
-      // Fire a message when profile data is populated
-      await FireProfileUpdatedMessage(metadata, cancellationToken);
-
       return profileData;
     }
     catch (Exception ex)
@@ -88,35 +84,4 @@ public partial class DemoPlugin
     }
   }
 
-  /// <summary>
-  /// Helper method to fire profile updated message
-  /// </summary>
-  private async Task FireProfileUpdatedMessage(ProfilePopulationMetadata metadata, CancellationToken cancellationToken)
-  {
-    if (messagePublisher == null)
-    {
-      logger.LogDebug("Message publisher not available - skipping ProfileUpdatedMessage");
-      return;
-    }
-
-    try
-    {
-      var message = new ProfileUpdatedMessage(
-          metadata.ProfileId,
-          PluginId,
-          metadata.Provider,
-          metadata.Key,
-          correlationId: $"profile-{metadata.ProfileId}");
-
-      await messagePublisher.PublishAsync(message, cancellationToken);
-
-      logger.LogDebug("Published ProfileUpdatedMessage for {ProfileId}, Provider: {Provider}, Key: {Key}",
-          metadata.ProfileId, metadata.Provider, metadata.Key);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex, "Failed to publish ProfileUpdatedMessage for {ProfileId}", metadata.ProfileId);
-      // Don't throw - messaging failures shouldn't break the main operation
-    }
   }
-}

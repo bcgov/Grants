@@ -30,6 +30,8 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+oc project $OC_TARGET_PROJECT
+
 # Tag and push the image
 $TARGET_IMAGE = "$OC_REGISTRY/$OC_TARGET_PROJECT/$IMAGESTREAM_NAME`:$ImageTag"
 Write-Host "Tagging and pushing image: $TARGET_IMAGE" -ForegroundColor Green

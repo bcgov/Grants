@@ -1,14 +1,31 @@
-<div class="contacts-container">
-      @if (isLoading) {      
-      <div
-        class="loading-spinner-container d-flex justify-content-center align-items-center"
-        style="min-height: 150px"
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+      <h3 class="mb-0 ap-pad-10">Contact Information</h3>
+    </div>
+    <div>
+      <button
+        id="contact-add-btn"
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="onAddContact()"
       >
-        <div class="text-center">
-          <div class="spinner-border">
-            <span class="sr-only">Loading contacts...</span>
+        Add
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="contacts-container">
+      @if (isLoading) {
+      <div class="primary-loading-state">
+        <div class="visually-hidden" aria-live="polite">Loading contacts...</div>
+        <div class="loading-skeleton">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
           </div>
-          <p class="loading-text mt-3">Loading your contacts...</p>
         </div>
       </div>
       } @else if (primaryContact) {
@@ -51,7 +68,7 @@
 </div>
 
 <!-- Add Contact Modal -->
-<div id="contact-modal" class="modal fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" [attr.aria-hidden]="!showAddContactModal">
+<div id="contact-modal" class="modal fade ap-edit-modal" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" [attr.aria-hidden]="!showAddContactModal">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -265,6 +282,8 @@
           }
         </button>
       </div>
+    </div>
+  </div>
     </div>
   </div>
 </div>
