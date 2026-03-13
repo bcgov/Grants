@@ -53,3 +53,166 @@
     </div>
   </div>
 </div>
+
+<!-- Edit Address Modal -->
+<div id="address-edit-modal" class="modal fade ap-edit-modal" [class.show]="showEditAddressModal" [style.display]="showEditAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="editAddressModalLabel" [attr.aria-hidden]="!showEditAddressModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editAddressModalLabel">Edit Address</h5>
+        <button type="button" class="btn-close" (click)="onCancelEditAddress()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        @if (saveAddressError) {
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ saveAddressError }}
+          </div>
+        }
+
+        <form>
+          <!-- Row 1: Address Type / Primary -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="addressType" class="form-label">Address Type <span class="text-danger">*</span></label>
+                <select
+                  class="form-select"
+                  id="addressType"
+                  [(ngModel)]="editAddress.addressType"
+                  name="addressType"
+                  [disabled]="isSavingAddress">
+                  <option value="Physical">Physical</option>
+                  <option value="Mailing">Mailing</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-center">
+              <div class="form-check mt-2">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  id="addressIsPrimary"
+                  [(ngModel)]="editAddress.isPrimary"
+                  name="isPrimary"
+                  [disabled]="isSavingAddress">
+                <label for="addressIsPrimary" class="form-check-label">Set as Primary</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: Street / Unit -->
+          <div class="row">
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="addressStreet" class="form-label">Street <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addressStreet"
+                  [(ngModel)]="editAddress.street"
+                  name="street"
+                  [disabled]="isSavingAddress">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="addressUnit" class="form-label">Unit</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addressUnit"
+                  [(ngModel)]="editAddress.unit"
+                  name="unit"
+                  [disabled]="isSavingAddress">
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Street 2 / City -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="addressStreet2" class="form-label">Street 2</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addressStreet2"
+                  [(ngModel)]="editAddress.street2"
+                  name="street2"
+                  [disabled]="isSavingAddress">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="addressCity" class="form-label">City <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addressCity"
+                  [(ngModel)]="editAddress.city"
+                  name="city"
+                  [disabled]="isSavingAddress"
+                  required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 4: Province / Postal Code -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="addressProvince" class="form-label">Province <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addressProvince"
+                  [(ngModel)]="editAddress.province"
+                  name="province"
+                  [disabled]="isSavingAddress"
+                  required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="addressPostalCode" class="form-label">Postal Code <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="addressPostalCode"
+                  [(ngModel)]="editAddress.postalCode"
+                  name="postalCode"
+                  [disabled]="isSavingAddress"
+                  required>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onCancelEditAddress()"
+          [disabled]="isSavingAddress">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="onSaveAddress()"
+          [disabled]="!isValidAddress() || isSavingAddress">
+          @if (isSavingAddress) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Updating...
+          } @else {
+            Update Address
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showEditAddressModal" [style.display]="showEditAddressModal ? 'block' : 'none'" *ngIf="showEditAddressModal"></div>

@@ -379,14 +379,16 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     addressData: {
-      addressLine1?: string;
-      addressLine2?: string;
+      addressId: string;
+      addressType: string;
+      street: string;
       city: string;
       province: string;
       postalCode: string;
-      country?: string;
-      type: string;
       isPrimary: boolean;
+      street2?: string;
+      unit?: string;
+      country?: string;
     }
   ): Observable<any> {
     const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}`;

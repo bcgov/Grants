@@ -57,6 +57,13 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   isHydratingAddresses = false;
   error: string | null = null;
 
+  // Edit modal state
+  showEditAddressModal = false;
+  isSavingAddress = false;
+  saveAddressError: string | null = null;
+  editingAddressId: string | null = null;
+  editAddress: Partial<AddressDisplay> = {};
+
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
     tableId: 'addresses-table',
@@ -73,6 +80,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     actionsType: 'dropdown',
     actionItems: [
       { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
+      { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
     ],
     actionsVisibilityField: 'isEditable',
     badgeConfig: {
@@ -224,13 +232,110 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onAddressAction(event: DatatableActionEvent): void {
+    const address = event.row as AddressDisplay;
+
+    if ((event.action === 'edit' || event.action === 'setAsPrimary') && !address.isEditable) {
+      console.log('Action not allowed: Address cannot be edited');
+      return;
+    }
+
     switch (event.action) {
       case 'setAsPrimary':
-        this.onSetAsPrimary(event.row);
+        this.onSetAsPrimary(address);
+        break;
+      case 'edit':
+        this.onEditAddress(address);
         break;
       default:
         console.log('Unknown action:', event.action);
     }
+  }
+
+  onEditAddress(address: AddressDisplay): void {
+    console.log('Editing address...', address);
+    this.editingAddressId = address.id;
+    this.saveAddressError = null;
+    this.editAddress = {
+      addressType: address.addressType,
+      street: address.street,
+      street2: address.street2,
+      unit: address.unit,
+      city: address.city,
+      province: address.province,
+      postalCode: address.postalCode,
+      country: address.country,
+      isPrimary: address.isPrimary,
+    };
+    this.showEditAddressModal = true;
+  }
+
+  onSaveAddress(): void {
+    if (!this.editingAddressId || !this.isValidAddress()) {
+      return;
+    }
+
+    this.isSavingAddress = true;
+    this.saveAddressError = null;
+
+    const payload = {
+      addressId: this.editingAddressId,
+      addressType: this.editAddress.addressType ?? '',
+      street: this.editAddress.street ?? '',
+      city: this.editAddress.city ?? '',
+      province: this.editAddress.province ?? '',
+      postalCode: this.editAddress.postalCode ?? '',
+      isPrimary: this.editAddress.isPrimary ?? false,
+      street2: this.editAddress.street2 ?? '',
+      unit: this.editAddress.unit ?? '',
+      country: this.editAddress.country ?? '',
+    };
+
+    this.applicantInfoService.updateAddress(
+      this.editingAddressId,
+      this.pluginId,
+      this.provider,
+      payload
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        console.log('Address updated successfully');
+        this.isSavingAddress = false;
+        this.showEditAddressModal = false;
+
+        // Update local state
+        this.addresses = this.addresses.map(addr => {
+          if (addr.id !== this.editingAddressId) return addr;
+          const street = this.editAddress.street ?? '';
+          const street2 = this.editAddress.street2 ?? '';
+          const unit = this.editAddress.unit ?? '';
+          return {
+            ...addr,
+            ...this.editAddress,
+            fullAddress: [street, street2, unit].filter(Boolean).join(', '),
+          } as AddressDisplay;
+        });
+        this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
+        this.editingAddressId = null;
+      },
+      error: (error) => {
+        console.error('Failed to update address:', error);
+        this.isSavingAddress = false;
+        this.saveAddressError = error?.error?.message ?? 'Failed to update address. Please try again.';
+      },
+    });
+  }
+
+  onCancelEditAddress(): void {
+    this.showEditAddressModal = false;
+    this.isSavingAddress = false;
+    this.saveAddressError = null;
+    this.editingAddressId = null;
+    this.editAddress = {};
+  }
+
+  isValidAddress(): boolean {
+    return !!(this.editAddress.city && this.editAddress.city.trim().length > 0
+      && this.editAddress.province && this.editAddress.province.trim().length > 0
+      && this.editAddress.postalCode && this.editAddress.postalCode.trim().length > 0);
   }
 
   onSetAsPrimary(address: AddressDisplay): void {
