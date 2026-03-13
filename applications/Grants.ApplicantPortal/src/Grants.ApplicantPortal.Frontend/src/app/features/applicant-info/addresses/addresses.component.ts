@@ -70,7 +70,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     defaultSortField: 'addressType',
     enableSortPersistence: true,
     columns: [
-      { key: 'addressType', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
+      { key: 'addressType', label: 'Type', sortable: true, cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
@@ -83,18 +83,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
     ],
     actionsVisibilityField: 'isEditable',
-    badgeConfig: {
-      field: 'addressType',
-      badgeClassPrefix: 'address-type-badge',
-      badgeClasses: {
-        'Physical': 'address-type-physical',
-        'Mailing': 'address-type-mailing',
-        'Primary': 'address-type-primary',
-        'Billing': 'address-type-billing',
-        'Office': 'address-type-office'
-      },
-      fallbackClass: 'address-type-other'
-    },
     noDataMessage: 'No addresses found.',
     loadingMessage: 'Loading your addresses...'
   };
