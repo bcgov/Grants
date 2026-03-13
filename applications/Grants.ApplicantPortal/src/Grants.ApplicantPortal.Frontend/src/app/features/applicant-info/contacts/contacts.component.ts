@@ -98,8 +98,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { key: 'name', label: 'Name', sortable: true, cssClass: 'name-column' },
       { key: 'email', label: 'Email', sortable: true, type: 'email', cssClass: 'email-column' },
       { key: 'title', label: 'Title', sortable: true, cssClass: 'title-column' },
-      { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
+      { key: 'workPhoneNumber', label: 'Phone', sortable: true, type: 'phone', cssClass: 'phone-column' }      
     ],
     actionsType: 'dropdown',
     actionItems: [

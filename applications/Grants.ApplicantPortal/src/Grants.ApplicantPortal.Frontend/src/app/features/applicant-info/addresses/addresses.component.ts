@@ -74,13 +74,11 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
-      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column', booleanFalseBlank: true }
+      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' }
     ],
     actionsType: 'dropdown',
     actionItems: [
-      { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
-      { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
+      { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' }      
     ],    
     disabledActionsField: 'isEditable',
     disabledActionsTooltip: 'This address is linked to a submission. Contact the grant program administrator to update it',
