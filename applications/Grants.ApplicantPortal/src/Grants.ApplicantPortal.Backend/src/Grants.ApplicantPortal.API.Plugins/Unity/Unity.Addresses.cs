@@ -137,6 +137,7 @@ public partial class UnityPlugin
 
   /// <summary>
   /// Optimistically replaces the edited address in the cached addresses array.
+  /// When the edited address has IsPrimary set to true, other addresses are toggled to not primary.
   /// </summary>
   private async Task UpdateAddressCacheOptimistically(EditAddressRequest editRequest,
     ProfileContext profileContext,
@@ -169,6 +170,19 @@ public partial class UnityPlugin
                 referenceNo = existing.TryGetProperty("referenceNo", out var rn) ? rn.GetString() : null
               };
               JsonSerializer.Serialize(writer, updated, _camelCase);
+            }
+            else if (editRequest.IsPrimary)
+            {
+              // Toggle other addresses to not primary when the edited address becomes primary
+              writer.WriteStartObject();
+              foreach (var prop in existing.EnumerateObject())
+              {
+                if (prop.NameEquals("isPrimary"))
+                  writer.WriteBoolean("isPrimary", false);
+                else
+                  prop.WriteTo(writer);
+              }
+              writer.WriteEndObject();
             }
             else
             {

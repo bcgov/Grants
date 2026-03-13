@@ -5,10 +5,11 @@ namespace Grants.ApplicantPortal.API.UseCases.Addresses.SetAsPrimary;
 
 public class SetAsPrimaryAddressHandler(
   IAddressManagementService addressManagementService,
+  IPluginCacheService pluginCacheService,
   ILogger<SetAsPrimaryAddressHandler> logger)
-  : ICommandHandler<SetAsPrimaryAddressCommand, Result>
+  : ICommandHandler<SetAsPrimaryAddressCommand, Result<AddressMutationResult>>
 {
-  public async Task<Result> Handle(SetAsPrimaryAddressCommand request, CancellationToken cancellationToken)
+  public async Task<Result<AddressMutationResult>> Handle(SetAsPrimaryAddressCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation("Setting address {AddressId} as primary for ProfileId: {ProfileId} using Plugin: {PluginId}",
       request.AddressId, request.ProfileId, request.PluginId);
@@ -30,20 +31,26 @@ public class SetAsPrimaryAddressHandler(
       {
         logger.LogInformation("Successfully set address {AddressId} as primary for ProfileId: {ProfileId}",
           request.AddressId, request.ProfileId);
-      }
-      else
-      {
-        logger.LogWarning("Failed to set address {AddressId} as primary for ProfileId: {ProfileId}. Status: {Status}",
-          request.AddressId, request.ProfileId, result.Status);
+
+        var primaryId = await PrimaryAddressResolver.GetPrimaryAddressIdAsync(
+            pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
+
+        return new AddressMutationResult(request.AddressId, primaryId);
       }
 
-      return result;
+      logger.LogWarning("Failed to set address {AddressId} as primary for ProfileId: {ProfileId}. Status: {Status}",
+        request.AddressId, request.ProfileId, result.Status);
+
+      if (result.Status == ResultStatus.NotFound)
+        return Result<AddressMutationResult>.NotFound();
+
+      return Result<AddressMutationResult>.Invalid(result.ValidationErrors);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error setting address {AddressId} as primary for ProfileId: {ProfileId}",
         request.AddressId, request.ProfileId);
-      return Result.Error("An unexpected error occurred while setting the address as primary");
+      return Result<AddressMutationResult>.Error("An unexpected error occurred while setting the address as primary");
     }
   }
 }

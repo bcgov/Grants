@@ -8,4 +8,4 @@ public record SetAsPrimaryAddressCommand(
   Guid ProfileId,
   string PluginId,
   string Provider,
-  string? Subject = null) : ICommand<Result>;
+  string? Subject = null) : ICommand<Result<AddressMutationResult>>;

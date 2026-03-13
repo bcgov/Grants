@@ -296,21 +296,24 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       this.provider,
       payload
     ).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        console.log('Address updated successfully');
+      next: (response) => {
+        console.log('Address updated successfully:', response);
         this.isSavingAddress = false;
         this.showEditAddressModal = false;
 
+        const primaryAddressId = response?.primaryAddressId ?? null;
+
         // Update local state
         this.addresses = this.addresses.map(addr => {
-          if (addr.id !== this.editingAddressId) return addr;
-          const street = this.editAddress.street ?? '';
-          const street2 = this.editAddress.street2 ?? '';
-          const unit = this.editAddress.unit ?? '';
+          const isEdited = addr.id === this.editingAddressId;
+          const street = isEdited ? (this.editAddress.street ?? '') : addr.street;
+          const street2 = isEdited ? (this.editAddress.street2 ?? '') : addr.street2;
+          const unit = isEdited ? (this.editAddress.unit ?? '') : addr.unit;
           return {
             ...addr,
-            ...this.editAddress,
-            fullAddress: [street, street2, unit].filter(Boolean).join(', '),
+            ...(isEdited ? this.editAddress : {}),
+            isPrimary: primaryAddressId !== null ? addr.id === primaryAddressId : false,
+            fullAddress: isEdited ? [street, street2, unit].filter(Boolean).join(', ') : addr.fullAddress,
           } as AddressDisplay;
         });
         this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
@@ -351,13 +354,15 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       next: (response) => {
         console.log('Address set as primary successfully:', response);
         
-        // Update local state after successful API call
+        const primaryAddressId = response?.primaryAddressId ?? address.id;
+
+        // Update local state using primaryAddressId from response
         this.addresses = this.addresses.map(addr => ({
           ...addr,
-          isPrimary: addr.id === address.id
+          isPrimary: addr.id === primaryAddressId
         }));
         
-        this.primaryAddress = { ...address, isPrimary: true };
+        this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
         console.log('Primary address updated locally:', this.primaryAddress);
       },
       error: (error) => {
