@@ -194,17 +194,17 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  onDropdownToggle(index: number, event: Event): void {
+  onDropdownToggle(toggleElement: HTMLElement, event: Event): void {
     event.stopPropagation();
     
     // Close all other open dropdowns before opening this one
-    this.closeAllDropdownsExcept(index);
+    this.closeAllDropdownsExcept(toggleElement);
   }
 
-  private closeAllDropdownsExcept(exceptIndex: number): void {
+  private closeAllDropdownsExcept(exceptElement: HTMLElement): void {
     if (this.dropdownToggles) {
-      this.dropdownToggles.forEach((toggleRef, index) => {
-        if (index !== exceptIndex) {
+      this.dropdownToggles.forEach((toggleRef) => {
+        if (toggleRef.nativeElement !== exceptElement) {
           const toggle = toggleRef.nativeElement;
           const dropdownMenu = toggle.nextElementSibling;
           
@@ -295,5 +295,12 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Check the specified field on the row data
     return !!row[this.config.actionsVisibilityField];
+  }
+
+  isActionsDisabled(row: any): boolean {
+    if (!this.config.disabledActionsField) {
+      return false;
+    }
+    return !row[this.config.disabledActionsField];
   }
 }

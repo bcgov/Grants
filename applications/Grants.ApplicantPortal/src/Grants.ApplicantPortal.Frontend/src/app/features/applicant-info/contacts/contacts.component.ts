@@ -106,8 +106,9 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       { label: 'Set as primary', icon: 'fa-phone', action: 'setAsPrimary' },
       { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
       { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
-    ],
-    actionsVisibilityField: 'isEditable',
+    ],    
+    disabledActionsField: 'isEditable',
+    disabledActionsTooltip: 'This contact is linked to a submission. Contact the grant program administrator to update it',
     noDataMessage: 'No contacts found. Click "Add" to create your first contact.',
     loadingMessage: 'Loading your contacts...'
   };

@@ -81,8 +81,9 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     actionItems: [
       { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
       { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
-    ],
-    actionsVisibilityField: 'isEditable',
+    ],    
+    disabledActionsField: 'isEditable',
+    disabledActionsTooltip: 'This address is linked to a submission. Contact the grant program administrator to update it',
     noDataMessage: 'No addresses found.',
     loadingMessage: 'Loading your addresses...'
   };

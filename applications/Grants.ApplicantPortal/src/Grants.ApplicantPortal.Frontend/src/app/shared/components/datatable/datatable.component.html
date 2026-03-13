@@ -120,7 +120,17 @@
                       </button>
                     }
                   } @else if (config.actionsType === 'dropdown' && config.actionItems) {
-                    <div class="dropdown" [style.visibility]="shouldShowActions(row) ? 'visible' : 'hidden'">
+                    @if (!shouldShowActions(row)) {
+                      <!-- Hidden by visibility field -->
+                    } @else if (isActionsDisabled(row)) {
+                      <span
+                        class="d-inline-block text-muted"
+                        [title]="config.disabledActionsTooltip ?? ''"
+                      >
+                        <i class="fas fa-ellipsis-v"></i>
+                      </span>
+                    } @else {
+                    <div class="dropdown">
                       <button
                         #dropdownToggle
                         type="button"
@@ -128,9 +138,8 @@
                         data-bs-toggle="dropdown"
                         data-bs-auto-close="outside"
                         aria-expanded="false"
-                        (click)="onDropdownToggle(i, $event)"
+                        (click)="onDropdownToggle(dropdownToggle, $event)"
                         aria-label="Row actions"
-                        [disabled]="!shouldShowActions(row)"
                       >
                         <i class="fas fa-ellipsis-v"></i>
                       </button>
@@ -150,6 +159,7 @@
                         }
                       </ul>
                     </div>
+                    }
                   }
                 </td>
               }
