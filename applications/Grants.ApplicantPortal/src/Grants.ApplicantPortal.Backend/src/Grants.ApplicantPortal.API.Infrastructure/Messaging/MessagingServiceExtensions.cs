@@ -194,7 +194,7 @@ public static class MessagingServiceExtensions
                 .ForJob(cleanupJobKey)
                 .WithIdentity("MessageCleanupJob-trigger")
                 .WithSimpleSchedule(x => x
-                    .WithIntervalInHours(1)
+                    .WithIntervalInHours(messagingOptions.Outbox.CleanupIntervalHours)
                     .RepeatForever()
                     .WithMisfireHandlingInstructionFireNow())
                 .StartAt(DateTimeOffset.UtcNow.AddSeconds(messagingOptions.BackgroundJobs.StartupDelaySeconds)));
