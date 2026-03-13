@@ -1,0 +1,11 @@
+<div class="app-info">
+  @if (hasMultipleOrgs) {
+    <span class="app-warning">
+      <i class="fas fa-exclamation-triangle me-1"></i>
+      Multiple organization records found — please contact support to consolidate.
+    </span>
+  } @else if (orgNumber || orgName) {
+    <span id="applicant-id" class="app-id">{{ orgNumber }}</span>
+    <span id="applicant-name" class="app-name">{{ orgName }}</span>
+  }
+</div>

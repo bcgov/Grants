@@ -5,6 +5,7 @@ import { takeUntil, filter } from 'rxjs/operators';
 
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { WorkspaceState } from '../../shared/models/workspace.interface';
+import { OrgHeaderComponent } from '../../shared/components/org-header/org-header.component';
 import { OrganizationInfoComponent } from './organization/organization.component';
 import { SubmissionsComponent } from './submissions/submissions.component';
 import { ContactsComponent } from './contacts/contacts.component';
@@ -15,6 +16,7 @@ import { AddressesComponent } from './addresses/addresses.component';
   standalone: true,
   imports: [
     CommonModule,
+    OrgHeaderComponent,
     OrganizationInfoComponent,
     SubmissionsComponent,
     ContactsComponent,

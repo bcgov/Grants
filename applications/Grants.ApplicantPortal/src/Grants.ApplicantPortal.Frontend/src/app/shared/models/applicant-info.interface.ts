@@ -95,6 +95,19 @@ export interface SubmissionsResponse {
   linkSource?: string;
 }
 
+export interface PaymentData {
+  id: string;
+  paymentNumber: string;
+  referenceNo: string;
+  amount: number;
+  paymentDate: string | null;
+  paymentStatus: string;
+}
+
+export interface PaymentsResponse {
+  paymentsData: PaymentData[];
+}
+
 export interface OrgSearchResult {
   id: string;
   orgName: string;

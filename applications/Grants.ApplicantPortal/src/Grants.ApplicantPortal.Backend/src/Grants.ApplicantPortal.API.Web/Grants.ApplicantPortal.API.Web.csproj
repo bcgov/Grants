@@ -210,7 +210,19 @@
     <Compile Update="Contacts\RetrieveContactRoles.Validator.cs">
       <DependentUpon>RetrieveContactRoles.cs</DependentUpon>
     </Compile>
+
+    <!-- Nest Payments files under RetrievePayments.cs -->
+    <Compile Update="Payments\RetrievePayments.Request.cs">
+      <DependentUpon>RetrievePayments.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Payments\RetrievePayments.Response.cs">
+      <DependentUpon>RetrievePayments.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Payments\RetrievePayments.Validator.cs">
+      <DependentUpon>RetrievePayments.cs</DependentUpon>
+    </Compile>  
   </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Ardalis.ListStartupServices" />

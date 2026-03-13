@@ -6,6 +6,7 @@ import {
   BackendResponse,  
   OrganizationData,
   SubmissionsResponse,
+  PaymentsResponse,
   PluginEventDto,
   PluginEventsResponse,
 } from '../../shared/models/applicant-info.interface';
@@ -63,6 +64,18 @@ export class ApplicantInfoService {
     parameters?: any
   ): Observable<BackendResponse> {
     const url = `${this.baseUrl}/Addresses/${pluginId}/${provider}`;
+    return this.http.get<BackendResponse>(url, { params: parameters });
+  }
+
+  /**
+   * Gets payments information using the new endpoint structure
+   */
+  private getPaymentsData(
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<BackendResponse> {
+    const url = `${this.baseUrl}/Payments/${pluginId}/${provider}`;
     return this.http.get<BackendResponse>(url, { params: parameters });
   }
 
@@ -181,6 +194,22 @@ export class ApplicantInfoService {
     }
   }
 
+  private parsePaymentsResponse(
+    response: BackendResponse
+  ): PaymentsResponse {
+    try {
+      const dataString = (response as any).data ?? response.jsonData;
+      const parsedData = typeof dataString === 'string' ? JSON.parse(dataString) : dataString;
+
+      return {
+        paymentsData: parsedData.payments ?? [],
+      };
+    } catch (error) {
+      console.error('Error parsing payments data:', error, (response as any).data ?? response.jsonData);
+      throw new Error('Failed to parse payments data');
+    }
+  }
+
   /**
    * Gets organization information
    */
@@ -291,6 +320,24 @@ export class ApplicantInfoService {
       map(response => this.parseAddressesResponse(response)),
       catchError((error) => {
         console.error('Failed to load addresses info after retries:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Gets payments information
+   */
+  getPaymentsInfo(
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<PaymentsResponse> {
+    return this.getPaymentsData(pluginId, provider, parameters).pipe(
+      retry({ count: 2, delay: 1000 }),
+      map(response => this.parsePaymentsResponse(response)),
+      catchError((error) => {
+        console.error('Failed to load payments info after retries:', error);
         throw error;
       })
     );
