@@ -51,6 +51,9 @@ export interface DatatableConfig {
   defaultSortField?: string; // Field representing original server order (e.g., 'lastUpdated')
   enableSortPersistence?: boolean; // Whether to persist sort state in localStorage
   pageSize?: number; // Max rows per page before paging kicks in (default: 4)
+  enableSearch?: boolean; // Whether to show the search input
+  searchMinChars?: number; // Minimum characters before search filters (default: 1)
+  searchPlaceholder?: string; // Placeholder text for the search input
 }
 
 export interface DatatableRowClickEvent {
