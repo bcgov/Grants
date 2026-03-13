@@ -18,7 +18,6 @@ import { WorkspaceState } from '../../shared/models/workspace.interface';
   standalone: true,
   imports: [CommonModule, DatatableComponent, OrgHeaderComponent],
   templateUrl: './payments.component.html',
-  styleUrls: ['./payments.component.scss'],
 })
 export class PaymentsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -104,11 +103,13 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.paymentsData = Array.isArray(response.paymentsData)
-            ? response.paymentsData
-            : response.paymentsData
-              ? [response.paymentsData]
-              : [];
+          if (Array.isArray(response.paymentsData)) {
+            this.paymentsData = response.paymentsData;
+          } else if (response.paymentsData) {
+            this.paymentsData = [response.paymentsData];
+          } else {
+            this.paymentsData = [];
+          }
           this.isLoading = false;
         },
         error: (error) => {
