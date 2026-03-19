@@ -67,6 +67,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     },
     noDataMessage: 'No payments were found.',
     loadingMessage: 'Loading your payments...',
+    pageSize: 5
   };
 
   constructor(
