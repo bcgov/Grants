@@ -244,17 +244,17 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
 
   private updateFiscalFieldsFromOrganizationInfo(): void {
     if (this.organizationInfo) {
-      if (this.organizationInfo.fiscalYearEndMonth != null) {
-        this.selectedFiscalMonth = this.monthAbbreviations[this.organizationInfo.fiscalYearEndMonth] ?? '';
-      } else {
+      if (this.organizationInfo.fiscalYearEndMonth == null) {
         this.selectedFiscalMonth = this.organizationInfo.fiscalMonth ?? '';
+      } else {
+        this.selectedFiscalMonth = this.monthAbbreviations[this.organizationInfo.fiscalYearEndMonth] ?? '';
       }
-      this.selectedFiscalDay =
-        this.organizationInfo.fiscalYearEndDay != null
-          ? String(this.organizationInfo.fiscalYearEndDay)
-          : (this.organizationInfo.fiscalDay != null
-              ? String(this.organizationInfo.fiscalDay)
-              : '');
+
+      if (this.organizationInfo.fiscalYearEndDay == null) {
+        this.selectedFiscalDay = this.organizationInfo.fiscalDay == null ? '' : String(this.organizationInfo.fiscalDay);
+      } else {
+        this.selectedFiscalDay = String(this.organizationInfo.fiscalYearEndDay);
+      }
     }
   }
 
@@ -415,7 +415,7 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       fiscalMonth: this.selectedFiscalMonth || null,
       fiscalDay: this.selectedFiscalDay ? Number(this.selectedFiscalDay) : null,
       fiscalYearEndMonth: fiscalMonthIndex,
-      fiscalYearEndDay: this.selectedFiscalDay ? parseInt(this.selectedFiscalDay) : null
+      fiscalYearEndDay: this.selectedFiscalDay ? Number.parseInt(this.selectedFiscalDay) : null
     };
     
     console.log('Saving organization...', updatedOrgInfo);

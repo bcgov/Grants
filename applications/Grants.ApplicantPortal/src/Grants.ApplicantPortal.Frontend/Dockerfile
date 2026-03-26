@@ -35,6 +35,8 @@ RUN npm install --omit=dev
 ENV PORT=4200
 ENV BACKEND_SERVICE_URL=http://backend:5100
 ENV ENABLE_API_PROXY=false
+ENV MATOMO__URL=//dev-analytics-matomo.apps.silver.devops.gov.bc.ca/
+ENV MATOMO__SITEID=2
 
 # Expose port 4200
 EXPOSE 4200

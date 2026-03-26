@@ -3,6 +3,7 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Router, RouterOutlet } from '@angular/router';
 import { ErrorHandlerService } from './core/services/error-handler.service';
 import { ToastComponent } from './shared/components/toast/toast.component';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,9 @@ export class AppComponent implements OnInit {
     private readonly oidcSecurityService: OidcSecurityService,
     private readonly router: Router,
     private readonly errorHandler: ErrorHandlerService
-  ) {}
+  ) {
+    this.initMatomo();
+  }
 
   ngOnInit(): void {
     console.log('App component initializing...');
@@ -104,5 +107,21 @@ export class AppComponent implements OnInit {
         }
       }
     });
+  }
+
+  private initMatomo(): void {
+    const { enabled, url, siteId } = environment.matomo;
+    if (!enabled || !url || !siteId) return;
+
+    const _paq: any[][] = ((window as any)._paq = (window as any)._paq || []);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    _paq.push(['setTrackerUrl', url + 'matomo.php']);
+    _paq.push(['setSiteId', siteId]);
+
+    const g = document.createElement('script');
+    g.async = true;
+    g.src = url + 'matomo.js';
+    document.head.appendChild(g);
   }
 }
