@@ -211,7 +211,7 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     
     // Convert OrgbookOrganization to OrganizationData format
     const rawSize = orgbookOrg.organizationSize;
-    const parsedSize = rawSize != null ? Number(rawSize) : null;
+    const parsedSize = rawSize == null ? null : Number(rawSize);
     const orgSize = parsedSize != null && Number.isFinite(parsedSize) ? parsedSize : null;
     
     this.organizationInfo = {
