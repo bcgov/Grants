@@ -12,7 +12,7 @@ export interface Submission {
   receivedTime: string;
   submissionTime: string;
   referenceNo: string;
-  projectName: string;
+  type: string;
   status: string;
 }
 
@@ -80,7 +80,7 @@ export interface SubmissionsData {
   receivedTime: string;
   submissionTime: string;
   referenceNo: string;
-  projectName: string;
+  type: string;
   status: string;
 }
 
