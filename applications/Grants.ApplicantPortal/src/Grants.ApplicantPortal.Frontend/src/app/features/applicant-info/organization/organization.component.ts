@@ -211,7 +211,8 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     
     // Convert OrgbookOrganization to OrganizationData format
     const rawSize = orgbookOrg.organizationSize;
-    const orgSize = rawSize != null ? (Number.isFinite(Number(rawSize)) ? Number(rawSize) : null) : null;
+    const parsedSize = rawSize == null ? null : Number(rawSize);
+    const orgSize = parsedSize != null && Number.isFinite(parsedSize) ? parsedSize : null;
     
     this.organizationInfo = {
       orgName: orgbookOrg.orgName ?? '',
@@ -405,13 +406,15 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     if (this.orgForm?.invalid) return;
     
     // Update organization info with fiscal year data — send null when the placeholder option is selected
+    const fiscalMonthIndex = this.monthAbbreviations.includes(this.selectedFiscalMonth)
+      ? this.monthAbbreviations.indexOf(this.selectedFiscalMonth)
+      : null;
+
     const updatedOrgInfo: OrganizationData = {
       ...this.organizationInfo,
       fiscalMonth: this.selectedFiscalMonth || null,
       fiscalDay: this.selectedFiscalDay ? Number(this.selectedFiscalDay) : null,
-      fiscalYearEndMonth: this.selectedFiscalMonth
-        ? (this.monthAbbreviations.indexOf(this.selectedFiscalMonth) !== -1 ? this.monthAbbreviations.indexOf(this.selectedFiscalMonth) : null)
-        : null,
+      fiscalYearEndMonth: fiscalMonthIndex,
       fiscalYearEndDay: this.selectedFiscalDay ? parseInt(this.selectedFiscalDay) : null
     };
     
