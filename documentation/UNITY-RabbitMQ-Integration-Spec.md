@@ -222,8 +222,8 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
       "status": "string | null",
       "nonRegOrgName": "string | null",
       "fiscalMonth": "string | null",
-      "fiscalDay": "string | null",
-      "organizationSize": "string | null"
+      "fiscalDay": "integer | null (1-31)",
+      "organizationSize": "integer | null (0-999999999)"
     }
   }
 }

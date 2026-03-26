@@ -4,7 +4,7 @@
       <h3 class="mb-0 ap-pad-10">Organization Information</h3>
     </div>
     <!-- Action Buttons - only show for single organization -->
-    @if (!showMultipleOrgsTable) {
+    @if (showSingleOrgForm) {
     <div class="d-flex">
       <button
         id="org-edit-btn"
@@ -81,7 +81,8 @@
     }
 
     <!-- Single Organization Form -->
-    @if (!showMultipleOrgsTable) {
+    @if (showSingleOrgForm) {
+    <form #orgForm="ngForm" novalidate>
     <div class="row">
       <div class="col-md-12">
         <div class="field">
@@ -90,6 +91,7 @@
             <div class="input-group">
                 <input
                   id="orgSearch"
+                  name="orgSearch"
                   type="text"
                   [(ngModel)]="searchTerm"
                   (input)="onSearchInput($event)"
@@ -205,12 +207,19 @@
           <label for="nonRegOrgName">Non-Registered Organization Name</label>
           <input
             id="nonRegOrgName"
+            name="nonRegOrgName"
             type="text"
             [ngModel]="organizationInfo?.nonRegOrgName || ''"
             (ngModelChange)="organizationInfo && (organizationInfo.nonRegOrgName = $event)"
             [disabled]="!isEditMode"
             class="form-control"
+            maxlength="200"
+            #nonRegOrgNameCtrl="ngModel"
+            [class.is-invalid]="nonRegOrgNameCtrl.invalid && (nonRegOrgNameCtrl.dirty || formSubmitted)"
           />
+          @if (nonRegOrgNameCtrl.errors?.['maxlength'] && (nonRegOrgNameCtrl.dirty || formSubmitted)) {
+            <div class="validation-error">Non-registered organization name must not exceed 200 characters</div>
+          }
         </div>
       </div>
       <div class="col-md-4">
@@ -218,12 +227,23 @@
           <label for="orgSize">Organization Size</label>
           <input
             id="orgSize"
-            type="text"
+            name="orgSize"
+            type="number"
             [ngModel]="organizationInfo?.orgSize || ''"
             (ngModelChange)="organizationInfo && (organizationInfo.orgSize = $event)"
             [disabled]="!isEditMode"
             class="form-control"
+            [max]="999999999"
+            [min]="0"
+            #orgSizeCtrl="ngModel"
+            [class.is-invalid]="orgSizeCtrl.invalid && (orgSizeCtrl.dirty || formSubmitted)"
           />
+          @if (orgSizeCtrl.errors?.['max'] && (orgSizeCtrl.dirty || formSubmitted)) {
+            <div class="validation-error">Organization size must be less than 999,999,999</div>
+          }
+          @if (orgSizeCtrl.errors?.['min'] && (orgSizeCtrl.dirty || formSubmitted)) {
+            <div class="validation-error">Organization size must not be negative</div>
+          }
         </div>
       </div>
     </div>
@@ -235,11 +255,12 @@
           <select
             class="form-select"
             id="fiscalMonth"
+            name="fiscalMonth"
             [(ngModel)]="selectedFiscalMonth"
             (change)="onFiscalMonthChange($event)"
             [disabled]="!isEditMode"
           >
-            <option selected>Select Month</option>
+            <option value="" selected>Select Month</option>
             <option value="Jan">January</option>
             <option value="Feb">February</option>
             <option value="Mar">March</option>
@@ -261,11 +282,12 @@
           <select
             class="form-select"
             id="fiscalDay"
+            name="fiscalDay"
             [(ngModel)]="selectedFiscalDay"
             (change)="onFiscalDayChange($event)"
             [disabled]="!isEditMode"
           >
-            <option selected>Select Day</option>
+            <option value="" selected>Select Day</option>
             @for (day of daysArray; track day) {
             <option [value]="day">
               {{ day }}
@@ -275,6 +297,7 @@
         </div>
       </div>
     </div>
+    </form>
     } <!-- End conditional sections -->
   </div>
   }

@@ -80,46 +80,46 @@ public partial class UnityPlugin
   // ── Optimistic cache update ───────────────────────────────────────────────
 
   /// <summary>
-  /// Optimistically patches the OrganizationInfo object in the cached ORGINFO data.
-  /// The org data is a single object (not an array), so we use RebuildWithObject.
+  /// Optimistically patches the matching organization in the cached ORGINFO "organizations" array.
+  /// The org data is an array (like contacts/addresses), so we use RebuildWithArray.
   /// </summary>
   private async Task UpdateOrganizationCacheOptimistically(EditOrganizationRequest editRequest,
     ProfileContext profileContext,
     CancellationToken cancellationToken)
   {
+    var editId = editRequest.OrganizationId.ToString();
+
     await PatchCachedProfileDataAsync(
         profileContext.ProfileId, profileContext.Provider, "ORGINFO",
-        root =>
+        root => RebuildWithArray(root, "organizations", (writer, arr) =>
         {
-          // OrgInfo uses PascalCase property name "OrganizationInfo" from the API
-          var propertyName = root.TryGetProperty("OrganizationInfo", out _) ? "OrganizationInfo" : "organizationInfo";
-
-          return RebuildWithObject(root, propertyName, existing =>
+          foreach (var existing in arr.EnumerateArray())
           {
-            return new
+            if (existing.TryGetProperty("id", out var idProp) &&
+                string.Equals(idProp.GetString(), editId, StringComparison.OrdinalIgnoreCase))
             {
-              OrgName = editRequest.Name,
-              OrgNumber = editRequest.OrganizationNumber,
-              OrgStatus = editRequest.Status,
-              editRequest.OrganizationType,
-              editRequest.NonRegOrgName,
-              OrgSize = editRequest.OrganizationSize?.ToString() ?? (existing.TryGetProperty("OrgSize", out var os)
-                  ? os.GetString() : existing.TryGetProperty("orgSize", out var os2) ? os2.GetString() : null),
-              FiscalMonth = editRequest.FiscalMonth ?? (existing.TryGetProperty("FiscalMonth", out var fm)
-                  ? fm.GetString() : existing.TryGetProperty("fiscalMonth", out var fm2) ? fm2.GetString() : null),
-              FiscalDay = editRequest.FiscalDay ?? (existing.TryGetProperty("FiscalDay", out var fd)
-                  ? fd.GetInt32() : existing.TryGetProperty("fiscalDay", out var fd2) ? fd2.GetInt32() : (int?)null),
-              OrganizationId = editRequest.OrganizationId.ToString(),
-              LegalName = editRequest.LegalName ?? (existing.TryGetProperty("LegalName", out var ln)
-                  ? ln.GetString() : existing.TryGetProperty("legalName", out var ln2) ? ln2.GetString() : null),
-              DoingBusinessAs = existing.TryGetProperty("DoingBusinessAs", out var dba)
-                  ? dba.GetString() : existing.TryGetProperty("doingBusinessAs", out var dba2) ? dba2.GetString() : null,
-              LastUpdated = DateTime.UtcNow,
-              AllowEdit = existing.TryGetProperty("AllowEdit", out var ae)
-                  ? ae.GetBoolean() : existing.TryGetProperty("allowEdit", out var ae2) && ae2.GetBoolean()
-            };
-          });
-        },
+              var updated = new
+              {
+                id = editId,
+                orgName = editRequest.Name,
+                organizationType = editRequest.OrganizationType,
+                orgNumber = editRequest.OrganizationNumber,
+                orgStatus = editRequest.Status.ToUpperInvariant(),
+                nonRegOrgName = editRequest.NonRegOrgName,
+                fiscalMonth = editRequest.FiscalMonth,
+                fiscalDay = editRequest.FiscalDay,
+                organizationSize = editRequest.OrganizationSize?.ToString(),
+                sector = existing.TryGetProperty("sector", out var sec) ? sec.GetString() : null,
+                subSector = existing.TryGetProperty("subSector", out var ss) ? ss.GetString() : null
+              };
+              JsonSerializer.Serialize(writer, updated, _camelCase);
+            }
+            else
+            {
+              existing.WriteTo(writer);
+            }
+          }
+        }),
         cancellationToken);
   }
 }

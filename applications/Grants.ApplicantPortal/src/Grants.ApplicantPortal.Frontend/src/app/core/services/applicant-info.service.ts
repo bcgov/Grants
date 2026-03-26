@@ -264,11 +264,7 @@ export class ApplicantInfoService {
       })),
       catchError(error => {
         console.error('Error saving organization:', error);
-        return throwError(() => ({
-          error: 'Failed to save organization information',
-          message: error.error?.message ?? 'Please try again later',
-          details: error
-        }));
+        return throwError(() => error);
       })
     );
   }

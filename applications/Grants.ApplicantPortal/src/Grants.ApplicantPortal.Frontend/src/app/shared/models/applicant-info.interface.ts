@@ -55,10 +55,10 @@ export interface OrganizationData {
   organizationType: string;
   nonRegOrgName?: string;
   orgSize: string;
-  fiscalMonth: string;
-  fiscalDay: number;
-  fiscalYearEndMonth?: number;
-  fiscalYearEndDay?: number;
+  fiscalMonth: string | null;
+  fiscalDay: number | null;
+  fiscalYearEndMonth?: number | null;
+  fiscalYearEndDay?: number | null;
   organizationId: string;
   legalName: string;
   doingBusinessAs: string;
