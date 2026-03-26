@@ -245,7 +245,7 @@ export class ApplicantInfoService {
       OrganizationNumber: orgInfo.orgNumber,
       Status: orgInfo.orgStatus,
       NonRegOrgName: orgInfo.nonRegOrgName,
-      OrganizationSize: orgInfo.orgSize ? parseInt(orgInfo.orgSize) : null,
+      OrganizationSize: orgInfo.orgSize,
       FiscalMonth: orgInfo.fiscalMonth,
       FiscalDay: orgInfo.fiscalDay
     };

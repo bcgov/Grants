@@ -54,7 +54,7 @@ export interface OrganizationData {
   orgStatus: string;
   organizationType: string;
   nonRegOrgName?: string;
-  orgSize: string;
+  orgSize: number | null;
   fiscalMonth: string | null;
   fiscalDay: number | null;
   fiscalYearEndMonth?: number | null;

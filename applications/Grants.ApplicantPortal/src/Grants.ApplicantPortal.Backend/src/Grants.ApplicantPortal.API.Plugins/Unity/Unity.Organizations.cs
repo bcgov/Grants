@@ -108,7 +108,7 @@ public partial class UnityPlugin
                 nonRegOrgName = editRequest.NonRegOrgName,
                 fiscalMonth = editRequest.FiscalMonth,
                 fiscalDay = editRequest.FiscalDay,
-                organizationSize = editRequest.OrganizationSize?.ToString(),
+                organizationSize = editRequest.OrganizationSize,
                 sector = existing.TryGetProperty("sector", out var sec) ? sec.GetString() : null,
                 subSector = existing.TryGetProperty("subSector", out var ss) ? ss.GetString() : null
               };

@@ -1,6 +1,6 @@
 <div class="toast-container">
   @for (toast of toasts; track toast.id) {
-    <div class="toast-item" [class]="'toast-' + toast.type" role="alert">
+    <div class="toast-item" [ngClass]="'toast-' + toast.type" role="alert">
       <div class="toast-icon">
         @switch (toast.type) {
           @case ('success') { <i class="fas fa-check-circle"></i> }

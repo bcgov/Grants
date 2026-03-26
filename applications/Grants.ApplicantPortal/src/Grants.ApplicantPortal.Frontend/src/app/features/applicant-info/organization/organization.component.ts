@@ -12,6 +12,7 @@ import {
 } from '../../../shared/models/applicant-info.interface';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { environment } from '../../../../environments/environment';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
@@ -65,7 +66,7 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
   // Constants
   readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
   private readonly monthAbbreviations = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  private readonly orgbookBaseApi = 'https://orgbook.gov.bc.ca/api';
+  private readonly orgbookBaseApi = environment.orgbookApiUrl;
   private readonly searchSubject = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
@@ -209,10 +210,8 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     console.log('Converting orgbook org to OrganizationData:', orgbookOrg);
     
     // Convert OrgbookOrganization to OrganizationData format
-    // Handle organizationSize which can be either string or number
-    const orgSize = orgbookOrg.organizationSize !== null && orgbookOrg.organizationSize !== undefined 
-      ? String(orgbookOrg.organizationSize) 
-      : '';
+    const rawSize = orgbookOrg.organizationSize;
+    const orgSize = rawSize != null ? (Number.isFinite(Number(rawSize)) ? Number(rawSize) : null) : null;
     
     this.organizationInfo = {
       orgName: orgbookOrg.orgName ?? '',
@@ -410,7 +409,9 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       ...this.organizationInfo,
       fiscalMonth: this.selectedFiscalMonth || null,
       fiscalDay: this.selectedFiscalDay ? Number(this.selectedFiscalDay) : null,
-      fiscalYearEndMonth: this.selectedFiscalMonth ? this.monthAbbreviations.indexOf(this.selectedFiscalMonth) : null,
+      fiscalYearEndMonth: this.selectedFiscalMonth
+        ? (this.monthAbbreviations.indexOf(this.selectedFiscalMonth) !== -1 ? this.monthAbbreviations.indexOf(this.selectedFiscalMonth) : null)
+        : null,
       fiscalYearEndDay: this.selectedFiscalDay ? parseInt(this.selectedFiscalDay) : null
     };
     
