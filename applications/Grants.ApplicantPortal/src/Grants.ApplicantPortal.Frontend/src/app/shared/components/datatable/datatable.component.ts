@@ -75,7 +75,9 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       
       // Restore sort state from localStorage if persistence is enabled
       if (this.config.enableSortPersistence) {
-        this.currentSortState = this.tableSortService.getSortState(this.config.tableId);
+        const restoredState = this.tableSortService.getSortState(this.config.tableId);
+        const columnExists = restoredState && this.config.columns.some(c => c.key === restoredState.column);
+        this.currentSortState = columnExists ? restoredState : null;
       }
     }
     
