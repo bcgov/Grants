@@ -16,6 +16,9 @@ import {
 import { authConfig } from './core/auth/auth.config';
 import { provideAuth } from 'angular-auth-oidc-client';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { provideMatomo } from 'ngx-matomo-client/core';
+import { withRouter } from 'ngx-matomo-client/router';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,5 +34,14 @@ export const appConfig: ApplicationConfig = {
       useClass: AuthInterceptor,
       multi: true,
     },
+    // Matomo analytics with automatic router tracking
+    provideMatomo(
+      {
+        siteId: environment.matomo.siteId,
+        trackerUrl: environment.matomo.url,
+        disabled: !environment.matomo.enabled,
+      },
+      withRouter()
+    ),
   ],
 };
