@@ -1,10 +1,21 @@
 {
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:open:dev": "cypress open --env ENV=dev",
+    "cy:open:test": "cypress open --env ENV=test",
+    "cy:run": "cypress run",
+    "cy:run:dev": "cypress run --env ENV=dev",
+    "cy:run:test": "cypress run --env ENV=test",
+    "cy:run:bcsc-flow": "cypress run --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+    "cy:run:bcsc-flow:dev": "cypress run --env ENV=dev --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+    "cy:run:bcsc-flow:test": "cypress run --env ENV=test --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "cypress": "^13.17.0",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
-    "@types/cypress": "^0.1.6",
     "@types/node": "^24.0.6"
   }
 }
