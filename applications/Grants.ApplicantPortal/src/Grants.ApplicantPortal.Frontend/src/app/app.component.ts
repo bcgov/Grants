@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Router, RouterOutlet } from '@angular/router';
 import { ErrorHandlerService } from './core/services/error-handler.service';
+import { ToastComponent } from './shared/components/toast/toast.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -22,7 +23,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('App component initializing...');
-    console.log('Current URL:', window.location.href);
+    console.log('Current URL:', globalThis.location.href);
     
     // Prevent multiple simultaneous auth checks
     if (this.authCheckInProgress) {
@@ -31,7 +32,7 @@ export class AppComponent implements OnInit {
     }
     
     // Don't check auth on callback, login, or logout pages
-    const currentPath = window.location.pathname;
+    const currentPath = globalThis.location.pathname;
     const authPaths = ['/auth/callback', '/login', '/logout'];
     
     if (authPaths.some(path => currentPath.includes(path))) {

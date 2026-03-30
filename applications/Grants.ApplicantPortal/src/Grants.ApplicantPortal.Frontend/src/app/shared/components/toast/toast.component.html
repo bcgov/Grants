@@ -1,0 +1,18 @@
+<div class="toast-container">
+  @for (toast of toasts; track toast.id) {
+    <div class="toast-item" [ngClass]="'toast-' + toast.type" role="alert">
+      <div class="toast-icon">
+        @switch (toast.type) {
+          @case ('success') { <i class="fas fa-check-circle"></i> }
+          @case ('error') { <i class="fas fa-exclamation-circle"></i> }
+          @case ('warning') { <i class="fas fa-exclamation-triangle"></i> }
+          @case ('info') { <i class="fas fa-info-circle"></i> }
+        }
+      </div>
+      <div class="toast-message">{{ toast.message }}</div>
+      <button class="toast-close" (click)="remove(toast.id)" aria-label="Dismiss">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  }
+</div>

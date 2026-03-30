@@ -3,7 +3,7 @@
 /// <summary>
 /// Static data provider for demo submission information.
 /// Field names match the Unity API contract (id, linkId, receivedTime,
-/// submissionTime, referenceNo, projectName, status) plus linkSource.
+/// submissionTime, referenceNo, type, status) plus linkSource.
 /// </summary>
 public static class SubmissionsData
 {
@@ -20,7 +20,7 @@ public static class SubmissionsData
           receivedTime = "2025-06-15T22:51:06.241061Z",
           submissionTime = "2025-06-15T22:42:24.115Z",
           referenceNo = "B1234E56",
-          projectName = "Community Health Initiative",
+          type = "Community Health Initiative",
           status = "Submitted"
         },
         new
@@ -30,7 +30,7 @@ public static class SubmissionsData
           receivedTime = "2025-05-01T18:30:00Z",
           submissionTime = "2025-05-01T18:20:15.5Z",
           referenceNo = "B2345E67",
-          projectName = "Youth Mental Health Support Program",
+          type = "Youth Mental Health Support Program",
           status = "Under Review"
         },
         new
@@ -40,7 +40,7 @@ public static class SubmissionsData
           receivedTime = "2025-05-16T14:05:22.832421Z",
           submissionTime = "2025-05-16T13:55:10.974Z",
           referenceNo = "B3456E78",
-          projectName = "Wellness Fitness Program",
+          type = "Wellness Fitness Program",
           status = "Submitted"
         },
         new
@@ -50,7 +50,7 @@ public static class SubmissionsData
           receivedTime = "2025-06-28T20:12:47.914247Z",
           submissionTime = "2025-06-28T19:58:33.29Z",
           referenceNo = "B4567E89",
-          projectName = "Digital Community Program",
+          type = "Digital Community Program",
           status = "Under Review"
         }
       },
@@ -71,7 +71,7 @@ public static class SubmissionsData
           receivedTime = "2025-05-16T21:53:07.791002Z",
           submissionTime = "2025-05-16T20:57:37.29Z",
           referenceNo = "D5678E90",
-          projectName = "STEM Education Excellence Initiative",
+          type = "STEM Education Excellence Initiative",
           status = "Under Review"
         },
         new
@@ -81,7 +81,7 @@ public static class SubmissionsData
           receivedTime = "2025-06-25T22:17:58.832421Z",
           submissionTime = "2025-06-25T21:37:52.974Z",
           referenceNo = "D6789E01",
-          projectName = "Digital Literacy for Seniors",
+          type = "Digital Literacy for Seniors",
           status = "Submitted"
         },
         new
@@ -91,7 +91,7 @@ public static class SubmissionsData
           receivedTime = "2025-06-10T17:34:47.914247Z",
           submissionTime = "2025-06-10T16:50:22.115Z",
           referenceNo = "D7890E12",
-          projectName = "Rural Broadband Access Project",
+          type = "Rural Broadband Access Project",
           status = "Submitted"
         }
       },

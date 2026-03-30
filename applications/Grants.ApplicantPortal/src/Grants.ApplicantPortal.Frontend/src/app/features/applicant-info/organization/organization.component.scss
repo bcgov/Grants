@@ -105,6 +105,22 @@
   }
 }
 
+/* Validation */
+.validation-error {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.is-invalid {
+  border-color: #dc3545 !important;
+
+  &:focus {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+  }
+}
+
 /* Form Actions */
 .form-actions {
   padding: 16px 0;

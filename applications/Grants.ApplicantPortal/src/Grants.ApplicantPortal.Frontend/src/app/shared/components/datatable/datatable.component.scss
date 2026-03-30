@@ -118,7 +118,7 @@
             vertical-align: middle !important;
             border-top: 1px solid var(--bc-gray-50) !important;
 
-            &.name-column, &.project-name-column { font-weight: 500 !important; }
+            &.name-column, &.submission-type-column { font-weight: 500 !important; }
             &.email-link, &.email-column { 
               color: var(--bc-blue) !important;
               &:hover { text-decoration: underline; }

@@ -16,7 +16,9 @@ const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:510
 const envVars = {
   KEYCLOAK__AUTHSERVERURL: process.env.KEYCLOAK__AUTHSERVERURL || 'https://dev.loginproxy.gov.bc.ca/auth',
   KEYCLOAK__REALM: process.env.KEYCLOAK__REALM || 'standard',
-  KEYCLOAK__RESOURCE: process.env.KEYCLOAK__RESOURCE || 'grants-portal-5361'
+  KEYCLOAK__RESOURCE: process.env.KEYCLOAK__RESOURCE || 'grants-portal-5361',
+  MATOMO__URL: process.env.MATOMO__URL || '//dev-analytics-matomo.apps.silver.devops.gov.bc.ca/',
+  MATOMO__SITEID: process.env.MATOMO__SITEID || '2'
 };
 
 // Configure Express to trust proxy headers properly for container environments

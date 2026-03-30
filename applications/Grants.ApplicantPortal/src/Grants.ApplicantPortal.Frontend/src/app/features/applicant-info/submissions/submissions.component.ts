@@ -40,7 +40,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     columns: [
       { key: 'referenceNo', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
       { key: 'submissionTime', label: 'Submitted', sortable: true, type: 'date', cssClass: 'submission-date-column' },
-      { key: 'projectName', label: 'Project Name', sortable: true, cssClass: 'project-name-column' },
+      { key: 'type', label: 'Submission Type', sortable: true, cssClass: 'submission-type-column' },
       { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' },
       { key: 'receivedTime', label: 'Received', sortable: true, type: 'date', cssClass: 'updated-on-column' }
     ],

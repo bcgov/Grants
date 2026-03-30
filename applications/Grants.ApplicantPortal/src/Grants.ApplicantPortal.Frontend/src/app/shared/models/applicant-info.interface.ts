@@ -12,7 +12,7 @@ export interface Submission {
   receivedTime: string;
   submissionTime: string;
   referenceNo: string;
-  projectName: string;
+  type: string;
   status: string;
 }
 
@@ -54,11 +54,11 @@ export interface OrganizationData {
   orgStatus: string;
   organizationType: string;
   nonRegOrgName?: string;
-  orgSize: string;
-  fiscalMonth: string;
-  fiscalDay: number;
-  fiscalYearEndMonth?: number;
-  fiscalYearEndDay?: number;
+  orgSize: number | null;
+  fiscalMonth: string | null;
+  fiscalDay: number | null;
+  fiscalYearEndMonth?: number | null;
+  fiscalYearEndDay?: number | null;
   organizationId: string;
   legalName: string;
   doingBusinessAs: string;
@@ -80,7 +80,7 @@ export interface SubmissionsData {
   receivedTime: string;
   submissionTime: string;
   referenceNo: string;
-  projectName: string;
+  type: string;
   status: string;
 }
 
