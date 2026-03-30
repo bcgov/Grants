@@ -79,8 +79,8 @@ class NavMenuPage {
   verifyWorkspaceSelection(workspaceName: string, providerName: string): void {
     this.workspaceDropdown
       .should("be.visible")
-      .and("have.attr", "aria-label")
-      .and("include", workspaceName)
+      .invoke("attr", "aria-label")
+      .should("include", workspaceName)
       .and("include", providerName);
   }
 

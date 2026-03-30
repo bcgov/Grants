@@ -2,8 +2,16 @@ import { defineConfig } from "cypress";
 import * as fs from "fs";
 import * as path from "path";
 
+const ALLOWED_ENVS = new Set(["dev", "test"]);
+
 // https://docs.cypress.io/guides/references/configuration
-function loadEnvConfig(env: string): Record<string, string> {
+function loadEnvConfig(env: string): Record<string, unknown> {
+  if (!ALLOWED_ENVS.has(env)) {
+    throw new Error(
+      `Invalid ENV "${env}". Allowed values: ${Array.from(ALLOWED_ENVS).join(", ")}`,
+    );
+  }
+
   const configPath = path.resolve(__dirname, `cypress/config/${env}.json`);
   if (!fs.existsSync(configPath)) {
     throw new Error(`Environment config not found: ${configPath}`);
@@ -14,11 +22,15 @@ function loadEnvConfig(env: string): Record<string, string> {
 export default defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      const env = config.env["ENV"] || process.env.CYPRESS_ENV || "dev";
+      const env = String(config.env["ENV"] || process.env.CYPRESS_ENV || "dev");
+      const runtimeEnv = { ...config.env };
       const envConfig = loadEnvConfig(env);
 
-      config.baseUrl = envConfig.baseUrl;
-      Object.assign(config.env, envConfig);
+      config.baseUrl = String(
+        runtimeEnv.baseUrl || envConfig.baseUrl || config.baseUrl || "",
+      );
+      // Keep file config as defaults, but let runtime-provided values win.
+      Object.assign(config.env, envConfig, runtimeEnv);
 
       return config;
     },

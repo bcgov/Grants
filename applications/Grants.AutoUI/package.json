@@ -11,11 +11,9 @@
     "cy:run:bcsc-flow:test": "cypress run --env ENV=test --spec cypress/e2e/loginByBCSCFlow.cy.ts",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@types/node": "^24.0.6",
     "cypress": "^13.17.0",
     "typescript": "^5.8.3"
-  },
-  "devDependencies": {
-    "@types/node": "^24.0.6"
   }
 }

@@ -13,13 +13,30 @@ describe(
   "Login by BC Services Card - Full Flow",
   { testIsolation: false },
   () => {
-    const username = () => Cypress.env("bcscUsername");
-    const password = () => Cypress.env("bcscPassword");
+    const getRequiredEnv = (key: string): string => {
+      const value = Cypress.env(key);
+      if (!value) {
+        throw new Error(
+          `Missing required Cypress env variable "${key}". ` +
+            "Provide it via --env, CI config, or a local cypress.env.json.",
+        );
+      }
+      return String(value);
+    };
+
+    const username = () => getRequiredEnv("bcscUsername");
+    const password = () => getRequiredEnv("bcscPassword");
     const workspaceName = () => Cypress.env("workspaceName") || "Demo";
     const providerName = () => Cypress.env("providerName") || "PROGRAM1";
 
     before(() => {
+      // Ensure a clean logged-out browser state before linear, non-isolated flow steps.
+      cy.clearCookies();
+      cy.clearLocalStorage();
       loginPage.visit();
+      cy.window().then((win) => {
+        win.sessionStorage.clear();
+      });
     });
 
     context("Step 1: Landing Page", () => {
