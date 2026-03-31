@@ -49,7 +49,6 @@ export class LayoutComponent implements OnInit {
 
   onMobileLogout(event: Event): void {
     event.preventDefault();
-    console.log('Mobile logout clicked');
     this.authService.logout();
   }
 

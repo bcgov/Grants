@@ -24,7 +24,9 @@ public class UpdateContactRequest
   public string? WorkPhoneNumber { get; set; }
   public string? WorkPhoneExtension { get; set; }
   public bool IsPrimary { get; set; }
-  
+
+  public Guid ApplicantId { get; set; }
+
   // Route parameters
   public Guid ContactId { get; set; }
   public string PluginId { get; set; } = string.Empty;

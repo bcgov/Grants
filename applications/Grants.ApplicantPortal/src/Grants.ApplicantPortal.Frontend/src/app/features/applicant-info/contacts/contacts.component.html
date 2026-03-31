@@ -4,16 +4,19 @@
       <h3 class="mb-0 ap-pad-10">Contact Information</h3>
     </div>
     <div>
-      <button
-        id="contact-add-btn"
-        type="button"
-        class="btn btn-primary btn-sm"
-        (click)="onAddContact()"
-      >
-        Add
-      </button>
+      @if (!hasMultipleOrgs) {
+        <button
+          id="contact-add-btn"
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="onAddContact()"
+        >
+          Add
+        </button>
+      }
     </div>
   </div>
+
   <div class="card-body">
     <div class="contacts-container">
       @if (isLoading) {
@@ -86,21 +89,30 @@
           </div>
         }
         
-        <form>
+        <form #contactForm="ngForm">
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="role" class="form-label">Role</label>
+                <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
                 <select 
                   class="form-select" 
+                  [class.is-invalid]="formSubmitted && contactRole.invalid"
                   id="role" 
                   [(ngModel)]="newContact.role" 
                   name="role"
+                  #contactRole="ngModel"
+                  required
                   [disabled]="isSavingContact">                                    
+                  <option value="" disabled>Select a role</option>
                   @for (role of contactRoles; track role.key) {
                     <option [value]="role.key">{{ role.label }}</option>
                   }
                 </select>
+                @if (formSubmitted && contactRole.invalid) {
+                  <div class="invalid-feedback">
+                    Role is required
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-6">
@@ -126,15 +138,26 @@
                 <input 
                   type="text" 
                   class="form-control" 
-                  [class.is-invalid]="nameValidationError"
+                  [class.is-invalid]="(formSubmitted && contactName.invalid) || nameValidationError"
                   id="fullName" 
                   [(ngModel)]="newContact.name" 
                   (input)="onNameChange()"
                   name="fullName"
+                  #contactName="ngModel"
                   placeholder="First and Last Name"
                   [disabled]="isSavingContact"
-                  required>
-                @if (nameValidationError) {
+                  required
+                  minlength="2"
+                  maxlength="250">
+                @if (formSubmitted && contactName.errors?.['required']) {
+                  <div class="invalid-feedback">
+                    Contact name is required.
+                  </div>
+                } @else if (formSubmitted && contactName.errors?.['minlength']) {
+                  <div class="invalid-feedback">
+                    Name must be at least 2 characters.
+                  </div>
+                } @else if (nameValidationError) {
                   <div class="invalid-feedback">
                     {{ nameValidationError }}
                   </div>
@@ -147,9 +170,12 @@
                 <input 
                   type="text" 
                   class="form-control" 
+                  [class.is-invalid]="formSubmitted && contactTitle.invalid"
                   id="title" 
                   [(ngModel)]="newContact.title" 
                   name="title"
+                  #contactTitle="ngModel"
+                  maxlength="200"
                   [disabled]="isSavingContact">
               </div>
             </div>
@@ -162,13 +188,19 @@
                 <input 
                   type="email" 
                   class="form-control" 
-                  [class.is-invalid]="emailValidationError"
+                  [class.is-invalid]="(formSubmitted && contactEmail.invalid) || emailValidationError"
                   id="email" 
                   [(ngModel)]="newContact.email" 
                   (input)="onEmailChange()"
                   name="email"
+                  #contactEmail="ngModel"
+                  email
                   [disabled]="isSavingContact">
-                @if (emailValidationError) {
+                @if (formSubmitted && contactEmail.errors?.['email']) {
+                  <div class="invalid-feedback">
+                    Please enter a valid email address
+                  </div>
+                } @else if (emailValidationError) {
                   <div class="invalid-feedback">
                     {{ emailValidationError }}
                   </div>
@@ -181,10 +213,18 @@
                 <input 
                   type="tel" 
                   class="form-control" 
+                  [class.is-invalid]="formSubmitted && contactPhone.invalid"
                   id="phone" 
                   [(ngModel)]="newContact.workPhoneNumber" 
                   name="phone"
+                  #contactPhone="ngModel"
+                  pattern="^[+]?[0-9\-\.\(\)\s]*$"
                   [disabled]="isSavingContact">
+                @if (formSubmitted && contactPhone.errors?.['pattern']) {
+                  <div class="invalid-feedback">
+                    Phone number format is invalid.
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -204,7 +244,7 @@
           id="contact-modal-save-btn"
           class="btn btn-primary" 
           (click)="onSaveNewContact()"
-          [disabled]="!isValidContact(newContact) || isSavingContact">
+          [disabled]="isSavingContact">
           @if (isSavingContact) {
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
             {{ isEditMode ? 'Updating...' : 'Saving...' }}

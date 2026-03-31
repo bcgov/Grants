@@ -7,6 +7,7 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Edit;
 /// </summary>
 public record EditContactCommand(
   Guid ContactId,
+  Guid ApplicantId,
   string Name,
   string ContactType,
   bool IsPrimary,
@@ -19,5 +20,5 @@ public record EditContactCommand(
   string? Role,
   Guid ProfileId,
   string PluginId,
-  string Provider,
+  string Provider,  
   string? Subject = null) : ICommand<Result<ContactMutationResult>>;

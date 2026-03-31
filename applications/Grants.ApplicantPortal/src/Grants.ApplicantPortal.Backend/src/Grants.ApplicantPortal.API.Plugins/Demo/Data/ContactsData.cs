@@ -30,6 +30,7 @@ public static class ContactsData
     public bool IsEditable { get; init; } = true;
     public Guid? ApplicationId { get; init; }
     public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
+    public Guid ApplicantId { get; init; }
   }
 
   /// <summary>
@@ -77,7 +78,8 @@ public static class ContactsData
         IsPrimary = contactRequest.IsPrimary,
         IsEditable = true,
         ApplicationId = null,
-        LastUpdated = DateTime.UtcNow
+        LastUpdated = DateTime.UtcNow,
+        ApplicantId = contactRequest.ApplicantId
       };
 
       contacts.Add(newContact);

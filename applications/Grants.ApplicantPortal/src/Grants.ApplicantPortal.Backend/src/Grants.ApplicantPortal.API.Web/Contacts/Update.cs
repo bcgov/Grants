@@ -53,8 +53,9 @@ public class Update(IMediator _mediator)
 
     var command = new EditContactCommand(
       request.ContactId,
+      request.ApplicantId,
       request.Name!,
-      "ApplicantProfile",
+      "Applicant",
       request.IsPrimary,
       request.Title,
       request.Email,
@@ -65,7 +66,7 @@ public class Update(IMediator _mediator)
       request.Role,
       profileId,
       request.PluginId,
-      request.Provider,
+      request.Provider,      
       profile.Subject);
 
     var result = await _mediator.Send(command, ct);

@@ -27,7 +27,8 @@ public class EditContactHandler(
         request.MobilePhoneNumber,
         request.WorkPhoneNumber,
         request.WorkPhoneExtension,
-        request.Role);
+        request.Role,
+        request.ApplicantId);
 
       var profileContext = new ProfileContext(
         request.ProfileId,

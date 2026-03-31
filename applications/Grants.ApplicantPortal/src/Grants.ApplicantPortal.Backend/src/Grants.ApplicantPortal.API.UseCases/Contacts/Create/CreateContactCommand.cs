@@ -1,6 +1,4 @@
-﻿using Grants.ApplicantPortal.API.UseCases.Contacts;
-
-namespace Grants.ApplicantPortal.API.UseCases.Contacts.Create;
+﻿namespace Grants.ApplicantPortal.API.UseCases.Contacts.Create;
 
 /// <summary>
 /// Create a new Contact.
@@ -19,4 +17,5 @@ public record CreateContactCommand(string Name,
   Guid ProfileId,
   string PluginId,
   string Provider,
+  Guid ApplicantId,
   string? Subject = null) : ICommand<Result<ContactMutationResult>>;

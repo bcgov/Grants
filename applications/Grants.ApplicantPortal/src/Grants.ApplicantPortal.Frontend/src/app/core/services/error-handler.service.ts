@@ -21,20 +21,15 @@ export class ErrorHandlerService {
 
     switch (error.status) {
       case 401:
-        console.log('Unauthorized - redirecting to login');
         this.router.navigate(['/login']);
         break;
       case 403:
-        console.log('Forbidden - user lacks permissions');
         break;
       case 500:
-        console.log('Server error - please try again later');
         break;
       case 0:
-        console.log('Network error - check internet connection');
         break;
       default:
-        console.log(`HTTP Error ${error.status}: ${error.message}`);
         break;
     }
 
@@ -63,7 +58,6 @@ export class ErrorHandlerService {
 
     // Check if it's a nonce validation error
     if (this.isNonceValidationError(error)) {
-      console.log('Nonce validation failed - clearing auth state and redirecting');
       this.clearAuthState();
       this.router.navigate(['/login']);
       return throwError(() => new Error('Authentication nonce validation failed'));
@@ -71,7 +65,6 @@ export class ErrorHandlerService {
 
     // Check if it's a token validation error
     if (this.isTokenValidationError(error)) {
-      console.log('Token validation failed - clearing auth state and redirecting');
       this.clearAuthState();
       this.router.navigate(['/login']);
       return throwError(() => new Error('Authentication token validation failed'));
@@ -79,12 +72,10 @@ export class ErrorHandlerService {
 
     // Check if it's a silent renew error
     if (this.isSilentRenewError(error)) {
-      console.log('Silent renew failed - attempting manual refresh');
       return this.handleSilentRenewFailure();
     }
 
     // Generic auth error
-    console.log('Generic authentication error - redirecting to login');
     this.clearAuthState();
     this.router.navigate(['/login']);
     return throwError(() => error);
@@ -123,8 +114,6 @@ export class ErrorHandlerService {
    * Handles silent renew failure by attempting manual refresh or redirecting to login
    */
   private handleSilentRenewFailure(): Observable<never> {
-    console.log('Attempting to handle silent renew failure');
-    
     // Clear potentially corrupted auth state
     this.clearAuthState();
     
@@ -179,8 +168,6 @@ export class ErrorHandlerService {
           sessionStorage.removeItem(`${prefix}${key}`);
         });
       });
-      
-      console.log('Successfully cleared authentication state');
     } catch (clearError) {
       console.warn('Error clearing authentication state:', clearError);
     }

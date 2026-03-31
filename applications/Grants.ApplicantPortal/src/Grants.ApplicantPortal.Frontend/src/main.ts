@@ -6,7 +6,6 @@ import { AppComponent } from './app/app.component';
 function preventiveCleanup() {
   try {
     const storageSize = calculateStorageSize();
-    console.log(`Startup storage check: ${formatBytes(storageSize)}`);
     
     // If storage is over 5MB, perform cleanup
     if (storageSize > 5 * 1024 * 1024) {
@@ -23,7 +22,6 @@ function preventiveCleanup() {
         const value = localStorage.getItem(key);
         if (value && value.length > 10000) { // Remove large auth entries
           localStorage.removeItem(key);
-          console.log(`Removed large auth entry: ${key}`);
         }
       });
     }

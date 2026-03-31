@@ -87,6 +87,7 @@ public partial class DemoPlugin
 
     public async Task<Result> SetAsPrimaryContactAsync(
         Guid contactId,
+        Guid applicantId,
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
@@ -127,6 +128,7 @@ public partial class DemoPlugin
 
     public async Task<Result> DeleteContactAsync(
         Guid contactId,
+        Guid applicantId,
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
@@ -253,5 +255,4 @@ public partial class DemoPlugin
             // Don't throw - deletion tracking failure shouldn't break the main operation
         }
     }
-
 }

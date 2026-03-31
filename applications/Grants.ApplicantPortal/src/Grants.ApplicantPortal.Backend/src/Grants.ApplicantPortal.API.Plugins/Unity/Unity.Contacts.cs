@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
-using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Grants.ApplicantPortal.API.Plugins.Unity;
 
@@ -74,6 +74,7 @@ public partial class UnityPlugin
 
   public async Task<Result> SetAsPrimaryContactAsync(
       Guid contactId,
+      Guid applicantId,
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
@@ -84,7 +85,7 @@ public partial class UnityPlugin
     {
       await UpdateContactsPrimaryCacheOptimistically(contactId, profileContext, cancellationToken);
 
-      await FireContactSetPrimaryMessage(contactId, profileContext, cancellationToken);
+      await FireContactSetPrimaryMessage(contactId, applicantId, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued set contact {ContactId} as primary for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
@@ -101,6 +102,7 @@ public partial class UnityPlugin
 
   public async Task<Result> DeleteContactAsync(
       Guid contactId,
+      Guid applicantId,
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
@@ -111,7 +113,7 @@ public partial class UnityPlugin
     {
       await DeleteContactFromCacheOptimistically(contactId, profileContext, cancellationToken);
 
-      await FireContactDeleteMessage(contactId, profileContext, cancellationToken);
+      await FireContactDeleteMessage(contactId, applicantId, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued contact deletion {ContactId} for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
@@ -158,7 +160,8 @@ public partial class UnityPlugin
             contactRequest.WorkPhoneNumber,
             contactRequest.WorkPhoneExtension,
             contactRequest.Role,
-            contactRequest.IsPrimary
+            contactRequest.IsPrimary,
+            contactRequest.ApplicantId
           }
         },
         correlationId: $"profile-{profileContext.ProfileId}");
@@ -201,7 +204,8 @@ public partial class UnityPlugin
             editRequest.WorkPhoneNumber,
             editRequest.WorkPhoneExtension,
             editRequest.Role,
-            editRequest.IsPrimary
+            editRequest.IsPrimary,
+            editRequest.ApplicantId
           }
         },
         correlationId: $"profile-{profileContext.ProfileId}");
@@ -215,7 +219,10 @@ public partial class UnityPlugin
   /// <summary>
   /// Helper method to fire contact set primary command message
   /// </summary>
-  private async Task FireContactSetPrimaryMessage(Guid contactId, ProfileContext profileContext, CancellationToken cancellationToken)
+  private async Task FireContactSetPrimaryMessage(Guid contactId,
+    Guid applicantId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
     {
@@ -232,7 +239,11 @@ public partial class UnityPlugin
           ContactId = contactId,
           profileContext.ProfileId,
           profileContext.Provider,
-          profileContext.Subject
+          profileContext.Subject,
+          Data = new
+          {
+            ApplicantId = applicantId
+          },
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
@@ -245,7 +256,9 @@ public partial class UnityPlugin
   /// <summary>
   /// Helper method to fire contact delete command message
   /// </summary>
-  private async Task FireContactDeleteMessage(Guid contactId, ProfileContext profileContext, CancellationToken cancellationToken)
+  private async Task FireContactDeleteMessage(Guid contactId,
+    Guid applicantId,
+    ProfileContext profileContext, CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
     {
@@ -262,7 +275,11 @@ public partial class UnityPlugin
           ContactId = contactId,
           profileContext.ProfileId,
           profileContext.Provider,
-          profileContext.Subject
+          profileContext.Subject,
+          Data = new
+          {
+            ApplicantId = applicantId
+          },
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
