@@ -78,6 +78,9 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
     if (info) {
       this.orgNumber = info.orgNumber;
       this.orgName = info.orgName;
+    } else {
+      this.orgNumber = '';
+      this.orgName = '';
     }
   }
 

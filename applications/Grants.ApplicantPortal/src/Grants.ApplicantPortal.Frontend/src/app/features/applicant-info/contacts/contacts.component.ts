@@ -260,6 +260,11 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   onSaveNewContact(): void {
     this.formSubmitted = true;
 
+    if (!this.applicantId) {
+      this.saveContactError = 'Unable to save contact: applicant information is missing. Please refresh and try again.';
+      return;
+    }
+
     if (this.contactForm?.invalid || !this.isValidContact(this.newContact)) {
       return;
     }
@@ -270,6 +275,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     // Prepare the API payload
     const contactPayload: any = {
       ...(this.isEditMode && this.editingContactId ? { contactId: this.editingContactId } : {}),
+      applicantId: this.applicantId,
       name: this.newContact.name!,
       email: this.newContact.email ?? '',
       title: this.newContact.title ?? '',
@@ -277,11 +283,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       workPhoneNumber: this.newContact.workPhoneNumber ?? '',
       isPrimary: this.newContact.isPrimary!
     };
-
-    // Include applicantId in payload
-    if (this.applicantId) {
-      contactPayload.applicantId = this.applicantId;
-    }
 
     const apiCall = this.isEditMode
       ? this.applicantInfoService.updateContact(
@@ -315,7 +316,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
         const contactId = this.isEditMode ? this.editingContactId! : responseId;
         const savedContact: ContactDisplay = {
           id: contactId,
-          contactType: response?.contactType ?? 'ApplicantProfile',
+          contactType: response?.contactType ?? 'Applicant',
           name: contactPayload.name,
           email: contactPayload.email,
           workPhoneNumber: contactPayload.workPhoneNumber ?? '',
@@ -376,7 +377,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
         mobilePhoneNumber: '',
         homePhoneNumber: '',
         title: '',
-        contactType: 'ApplicantProfile',
+        contactType: 'Applicant',
         isPrimary: false,
         isEditable: true
       };
@@ -471,6 +472,11 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
+    if (!this.applicantId) {
+      this.deleteContactError = 'Unable to delete contact: applicant information is missing. Please refresh and try again.';
+      return;
+    }
+
     this.isDeletingContact = true;
     this.deleteContactError = null;
 
@@ -478,7 +484,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       this.contactToDelete.id,
       this.pluginId,
       this.provider,
-      this.applicantId ?? undefined
+      this.applicantId
     ).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -510,12 +516,17 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onSetAsPrimary(contact: ContactDisplay): void {
+    if (!this.applicantId) {
+      console.error('Cannot set primary contact: applicantId is missing.');
+      return;
+    }
+
     // Make API call to set contact as primary
     this.applicantInfoService.setContactAsPrimary(
       contact.id,
       this.pluginId,
       this.provider,
-      this.applicantId ?? undefined
+      this.applicantId
     )
     .pipe(takeUntil(this.destroy$))
     .subscribe({

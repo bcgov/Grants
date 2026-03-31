@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, tap, catchError, of, map, takeUntil, filter, switchMap, distinctUntilChanged } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, of, map, filter, switchMap, distinctUntilChanged } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Plugin, PluginsResponse, Provider, ProvidersResponse, WorkspaceState } from '../../shared/models/workspace.interface';
 import { ApplicantInfoService } from './applicant-info.service';
@@ -30,7 +30,6 @@ export class WorkspaceService {
 
   private changingWorkspace$ = new BehaviorSubject<boolean>(false);
   private workspaceProviderMemory = new Map<string, string>(); // workspace.pluginId -> last selected provider
-  private readonly orgLoadTrigger$ = new Subject<void>();
 
   constructor(
     private http: HttpClient,

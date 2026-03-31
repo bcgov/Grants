@@ -51,7 +51,7 @@ Returns cached contact data. If the cache is empty, automatically hydrates from 
 
 ### Create Contact
 
-Creates a new contact. The request body includes `name` (required), `email`, `title`, `role` (required), phone numbers, and `isPrimary`. The current user's profile is resolved from the JWT automatically.
+Creates a new contact. The request body includes `name` (required), `email`, `title`, `role` (required), phone numbers, `isPrimary`, and `applicantId` (required, Guid). The current user's profile is resolved from the JWT automatically.
 
 For UNITY, a `CONTACT_CREATE_COMMAND` message is published to RabbitMQ after the local cache is updated.
 
@@ -59,7 +59,7 @@ For UNITY, a `CONTACT_CREATE_COMMAND` message is published to RabbitMQ after the
 
 ### Update Contact
 
-Updates an existing contact identified by `ContactId`. Same body fields as create.
+Updates an existing contact identified by `ContactId`. Same body fields as create (including `applicantId`).
 
 For UNITY, a `CONTACT_EDIT_COMMAND` message is published.
 
@@ -67,7 +67,7 @@ For UNITY, a `CONTACT_EDIT_COMMAND` message is published.
 
 ### Delete Contact
 
-Deletes a contact by `ContactId`.
+Deletes a contact by `ContactId`. This endpoint expects a **JSON request body** containing `applicantId` (required, Guid).
 
 For UNITY, a `CONTACT_DELETE_COMMAND` message is published.
 
@@ -75,7 +75,7 @@ For UNITY, a `CONTACT_DELETE_COMMAND` message is published.
 
 ### Set Contact as Primary
 
-Sets a contact as the primary contact for the profile.
+Sets a contact as the primary contact for the profile. This endpoint expects a **JSON request body** containing `applicantId` (required, Guid).
 
 For UNITY, a `CONTACT_SET_PRIMARY_COMMAND` message is published.
 
