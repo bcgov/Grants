@@ -2,7 +2,6 @@
 using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Grants.ApplicantPortal.API.Plugins.Unity;
 
@@ -311,7 +310,8 @@ public partial class UnityPlugin
       contactRequest.Role,
       contactRequest.IsPrimary,
       isEditable = true,
-      applicationId = (string?)null
+      applicationId = (string?)null,
+      creationTime = DateTimeOffset.UtcNow
     };
 
     await PatchCachedProfileDataAsync(
@@ -375,7 +375,8 @@ public partial class UnityPlugin
                 editRequest.Role,
                 editRequest.IsPrimary,
                 isEditable = existing.TryGetProperty("isEditable", out var ed) && ed.GetBoolean(),
-                applicationId = existing.TryGetProperty("applicationId", out var aid) ? aid.GetString() : null
+                applicationId = existing.TryGetProperty("applicationId", out var aid) ? aid.GetString() : null,
+                creationTime = existing.TryGetProperty("creationTime", out var ct) ? ct.GetString() : null
               };
               JsonSerializer.Serialize(writer, updated, _camelCase);
             }
@@ -475,11 +476,26 @@ public partial class UnityPlugin
             remaining.Add(c.Clone());
           }
 
-          // If the deleted contact was primary, promote the first remaining contact
+          // If the deleted contact was primary, promote the most recently created remaining contact
           var promotedId = (string?)null;
           if (deletedWasPrimary && remaining.Count > 0)
           {
-            var candidate = remaining[0];
+            JsonElement? best = null;
+            DateTimeOffset bestTime = DateTimeOffset.MinValue;
+
+            foreach (var r in remaining)
+            {
+              if (r.TryGetProperty("creationTime", out var ctProp) &&
+                  DateTimeOffset.TryParse(ctProp.GetString(), out var ct) &&
+                  ct > bestTime)
+              {
+                bestTime = ct;
+                best = r;
+              }
+            }
+
+            // Fall back to the first remaining contact if none have a creationTime
+            var candidate = best ?? remaining[0];
             if (candidate.TryGetProperty("contactId", out var cid))
               promotedId = cid.GetString();
           }
