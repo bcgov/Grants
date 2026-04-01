@@ -45,11 +45,9 @@ export class AppComponent implements OnInit {
         
         if (!result.isAuthenticated) {
           this.router.navigate(['/login']);
-        } else {
+        } else if (currentPath === '/' || currentPath === '') {
           // If user is on root path, redirect to app
-          if (currentPath === '/' || currentPath === '') {
-            this.router.navigate(['/app']);
-          }
+          this.router.navigate(['/app']);
         }
       },
       error: (error) => {
