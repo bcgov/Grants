@@ -14,11 +14,7 @@ export const authGuard: CanActivateFn = (route, state) => {
   return authService.isAuthenticated$.pipe(
     take(1),
     switchMap((isAuthenticated) => {
-      console.log('Auth Guard - isAuthenticated:', isAuthenticated);
-      console.log('Auth Guard - current route:', state.url);
-      
       if (!isAuthenticated) {
-        console.log('Auth Guard - User not authenticated, redirecting to login');
         router.navigate(['/login']);
         return of(false);
       }
@@ -32,8 +28,6 @@ export const authGuard: CanActivateFn = (route, state) => {
       return workspaceService.currentWorkspaceState$.pipe(
         take(1),
         map(workspaceState => {
-          console.log('Auth Guard - workspace state:', workspaceState);
-          
           // If no workspaces available yet, fetch them
           if (workspaceState.availableWorkspaces.length === 0) {
             workspaceService.getAvailableWorkspaces().subscribe(response => {
@@ -46,12 +40,10 @@ export const authGuard: CanActivateFn = (route, state) => {
           
           // If workspace selection is required, redirect to selector
           if (workspaceService.isWorkspaceSelectionRequired() || !workspaceState.isWorkspaceSelected) {
-            console.log('Auth Guard - Workspace selection required');
             router.navigate(['/workspace-selector']);
             return false;
           }
           
-          console.log('Auth Guard - User authenticated and workspace selected, allowing access');
           return true;
         })
       );

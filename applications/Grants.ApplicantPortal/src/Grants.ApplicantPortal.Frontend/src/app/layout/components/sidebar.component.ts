@@ -13,7 +13,6 @@ export class SidebarComponent {
   @Output() menuItemClicked = new EventEmitter<void>();
 
   onMenuItemClick(): void {
-    console.log('Menu item clicked');
     if (window.innerWidth < 768) {
       this.menuItemClicked.emit();
     }

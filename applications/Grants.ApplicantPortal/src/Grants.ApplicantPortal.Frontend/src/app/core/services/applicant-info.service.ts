@@ -86,12 +86,9 @@ export class ApplicantInfoService {
     response: any
   ): { addressesData: any[] } {
     try {
-      console.log('Parsing addresses response:', response);
       const jsonData = response.data ?? response.jsonData;
-      console.log('Raw addresses JSON data:', jsonData);
 
       const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      console.log('Parsed addresses data:', parsedData);
 
       return {
         addressesData: parsedData.addresses ?? []
@@ -109,12 +106,9 @@ export class ApplicantInfoService {
     response: any
   ): { contactsData: any[] } {
     try {
-      console.log('Parsing contacts response:', response);
       const jsonData = response.data ?? response.jsonData;
-      console.log('Raw contacts JSON data:', jsonData);
 
       const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      console.log('Parsed contacts data:', parsedData);
 
       return {
         contactsData: parsedData.contacts ?? []
@@ -133,7 +127,6 @@ export class ApplicantInfoService {
   ): { organizationsData: any[]; organizationData: any } {
     try {
       const jsonData = response.data ?? response.jsonData;
-      console.log('Parsing organization response:', jsonData);
 
       if (!jsonData) {
         return { organizationsData: [], organizationData: null };
@@ -174,9 +167,7 @@ export class ApplicantInfoService {
     try {
       // Handle both old 'jsonData' format and new 'data' format
       const dataString = (response as any).data ?? response.jsonData;
-      console.log('Parsing submissions response:', dataString);
       const parsedData = typeof dataString === 'string' ? JSON.parse(dataString) : dataString;
-      console.log('Parsed submissions data:', parsedData);
 
       return {
         metadata: {
@@ -233,8 +224,6 @@ export class ApplicantInfoService {
     pluginId: string, 
     provider: string
   ): Observable<any> {
-    console.log('ApplicantInfoService - Saving organization info:', orgInfo);
-    
     // Get the required parameters for the API endpoint
     const addressId = orgInfo.organizationId ?? orgInfo.orgNumber;
     
@@ -360,6 +349,7 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     contactData: {
+      applicantId?: string;
       name: string;
       email: string;
       title?: string;
@@ -384,10 +374,12 @@ export class ApplicantInfoService {
   setContactAsPrimary(
     contactId: string,
     pluginId: string,
-    provider: string
+    provider: string,
+    applicantId?: string
   ): Observable<any> {
     const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}/set-primary`;
-    return this.http.patch<any>(url, {}).pipe(
+    const body = applicantId ? { applicantId } : {};
+    return this.http.patch<any>(url, body).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to set contact as primary:', error);
@@ -451,6 +443,7 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     contactData: {
+      applicantId?: string;
       name: string;
       email: string;
       title?: string;
@@ -475,10 +468,12 @@ export class ApplicantInfoService {
   deleteContact(
     contactId: string,
     pluginId: string,
-    provider: string
+    provider: string,
+    applicantId?: string
   ): Observable<any> {
     const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}`;
-    return this.http.delete<any>(url).pipe(
+    const options = applicantId ? { body: { applicantId } } : {};
+    return this.http.delete<any>(url, options).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to delete contact:', error);

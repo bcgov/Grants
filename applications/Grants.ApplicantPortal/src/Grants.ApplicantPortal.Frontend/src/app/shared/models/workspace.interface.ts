@@ -31,4 +31,8 @@ export interface WorkspaceState {
   availableWorkspaces: Plugin[];
   isWorkspaceSelected: boolean;
   isProviderSelected: boolean;
+  hasMultipleOrgs: boolean;
+  applicantId: string | null;
+  orgNumber: string;
+  orgName: string;
 }

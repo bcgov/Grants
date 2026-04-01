@@ -47,9 +47,10 @@ public class Delete(IMediator _mediator)
 
     var command = new DeleteContactCommand(
       request.ContactId,
+      request.ApplicantId,
       profileId,
       request.PluginId,
-      request.Provider,
+      request.Provider,      
       profile.Subject);
 
     var result = await _mediator.Send(command, ct);

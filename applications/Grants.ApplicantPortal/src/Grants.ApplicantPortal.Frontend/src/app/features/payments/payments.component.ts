@@ -85,11 +85,15 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         )
       )
       .subscribe((state: WorkspaceState) => {
+        // Read org state from the centralized workspace state
+        this.hasMultipleOrgs = state.hasMultipleOrgs;
+        this.orgNumber = state.orgNumber;
+        this.orgName = state.orgName;
+
         if (state.selectedWorkspace && state.selectedProvider) {
           const pluginId = state.selectedWorkspace.pluginId;
           const provider = state.selectedProvider;
           this.loadPayments(pluginId, provider);
-          this.loadOrgInfo(pluginId, provider);
         }
       });
   }
@@ -123,36 +127,6 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   }
 
   onPaymentSort(event: DatatableSortEvent): void {
-    console.log('Payments sorted by:', event.column, event.direction);
-  }
-
-  private loadOrgInfo(pluginId: string, provider: string): void {
-    this.applicantInfoService
-      .getOrganizationInfo(pluginId, provider)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (result) => {
-          const organizations = result.organizationsData ?? [];
-          if (organizations.length > 1) {
-            this.hasMultipleOrgs = true;
-            this.orgNumber = '';
-            this.orgName = '';
-          } else if (organizations.length === 1) {
-            this.hasMultipleOrgs = false;
-            this.orgNumber = organizations[0].orgNumber ?? organizations[0].businessNumber ?? '';
-            this.orgName = organizations[0].orgName ?? organizations[0].legalName ?? '';
-          } else {
-            this.hasMultipleOrgs = false;
-            this.orgNumber = '';
-            this.orgName = '';
-          }
-        },
-        error: () => {
-          this.hasMultipleOrgs = false;
-          this.orgNumber = '';
-          this.orgName = '';
-        },
-      });
   }
 
   ngOnDestroy(): void {

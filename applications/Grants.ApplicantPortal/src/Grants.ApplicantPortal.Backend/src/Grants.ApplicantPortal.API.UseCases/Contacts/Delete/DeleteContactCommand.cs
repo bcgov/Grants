@@ -7,7 +7,8 @@ namespace Grants.ApplicantPortal.API.UseCases.Contacts.Delete;
 /// </summary>
 public record DeleteContactCommand(
   Guid ContactId,
+  Guid ApplicantId,
   Guid ProfileId,
   string PluginId,
-  string Provider,
+  string Provider,  
   string? Subject = null) : ICommand<Result<ContactMutationResult>>;

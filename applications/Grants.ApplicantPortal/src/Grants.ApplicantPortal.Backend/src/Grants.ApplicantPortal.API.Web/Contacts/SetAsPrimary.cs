@@ -47,9 +47,10 @@ public class SetAsPrimary(IMediator _mediator)
 
     var command = new SetAsPrimaryContactCommand(
       request.ContactId,
+      request.ApplicantId,
       profileId,
       request.PluginId,
-      request.Provider,
+      request.Provider,      
       profile.Subject);
 
     var result = await _mediator.Send(command, ct);

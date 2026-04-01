@@ -91,15 +91,12 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('OrganizationComponent ngOnChanges called:', changes);
-    
     // If pluginId or provider changed, reload data
     if (changes['pluginId'] || changes['provider']) {
       const hasPluginId = this.pluginId && this.pluginId.trim() !== '';
       const hasProvider = this.provider && this.provider.trim() !== '';
       
       if (hasPluginId && hasProvider) {
-        console.log('pluginId or provider changed, reloading data');
         this.loadOrganizationData();
       }
     }
@@ -107,7 +104,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
 
   private loadOrganizationData(): void {
     if (!this.pluginId || !this.provider) {
-      console.log('No pluginId or provider, skipping organization data load');
       this.showMultipleOrgsTable = false;
       this.showSingleOrgForm = false;
       this.multipleOrganizations = [];
@@ -115,14 +111,12 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    console.log('Loading organization data for pluginId:', this.pluginId, 'provider:', this.provider);
     this.isLoading = true;
     
     this.applicantInfoService.getOrganizationInfo(this.pluginId, this.provider)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
-          console.log('Organization data received:', result);
           this.handleOrganizationResponse(result);
         },
         error: (error) => {
@@ -134,7 +128,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
 
   private handleOrganizationResponse(result: any): void {
     const organizations = result.organizationsData ?? [];
-    console.log(`Found ${organizations.length} organizations:`, organizations);
     
     if (organizations.length > 1) {
       this.showMultipleOrgsTable = true;
@@ -207,8 +200,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private convertOrgbookToOrganizationData(orgbookOrg: OrgbookOrganization): void {
-    console.log('Converting orgbook org to OrganizationData:', orgbookOrg);
-    
     // Convert OrgbookOrganization to OrganizationData format
     const rawSize = orgbookOrg.organizationSize;
     const parsedSize = rawSize == null ? null : Number(rawSize);
@@ -236,8 +227,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       certifications: [],
       allowEdit: true
     };
-    
-    console.log('Converted organizationInfo:', this.organizationInfo);
     
     this.updateFiscalFieldsFromOrganizationInfo();
   }
@@ -325,7 +314,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onSearchResultSelect(result: OrgSearchResult): void {
-    console.log('Search result selected:', result);
     this.showDropdown = false;
     this.searchTerm = result.orgName;
     this.fetchOrgDetails(result.orgNumber);
@@ -418,8 +406,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       fiscalYearEndDay: this.selectedFiscalDay ? Number.parseInt(this.selectedFiscalDay) : null
     };
     
-    console.log('Saving organization...', updatedOrgInfo);
-    
     this.isSaving = true;
     
     this.applicantInfoService.saveOrganizationInfo(
@@ -435,7 +421,6 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       )
       .subscribe({
         next: (response) => {
-          console.log('Organization saved successfully:', response);
           this.isEditMode = false;
           this.organizationInfo = updatedOrgInfo; // Update local state
           this.searchTerm = '';

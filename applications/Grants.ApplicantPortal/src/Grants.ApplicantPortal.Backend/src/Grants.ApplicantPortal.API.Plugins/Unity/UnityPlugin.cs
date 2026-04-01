@@ -12,8 +12,10 @@ public partial class UnityPlugin(
     ILogger<UnityPlugin> logger,
     IExternalServiceClient externalServiceClient,
     IPluginCacheService pluginCacheService,
-    IMessagePublisher? messagePublisher = null,
-    IProfileCacheInvalidationService? cacheInvalidationService = null) : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
+    IMessagePublisher? messagePublisher = null) : IProfilePlugin, 
+  IContactManagementPlugin, 
+  IAddressManagementPlugin, 
+  IOrganizationManagementPlugin
 {
   public string PluginId => "UNITY";
 

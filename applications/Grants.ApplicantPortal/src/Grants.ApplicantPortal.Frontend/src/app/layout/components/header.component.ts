@@ -130,7 +130,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   onLogout(event: Event): void {
     event.preventDefault();
-    console.log('Desktop logout clicked');
     this.authService.logout();
   }
 
@@ -152,7 +151,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   selectWorkspace(workspace: Plugin): void {
-    console.log('HeaderComponent - Workspace selected:', workspace);
     if (workspace.pluginId !== this.selectedWorkspace?.pluginId) {
       this.isChangingWorkspace = true;
       // Provider selection is handled by fetchProviders$ after the workspace state updates

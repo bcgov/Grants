@@ -92,45 +92,19 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    console.log('AddressesComponent ngOnInit - inputs:', {
-      pluginId: this.pluginId,
-      provider: this.provider,
-      hasPluginId: !!this.pluginId,
-      hasProvider: !!this.provider
-    });
-    
     if (this.pluginId && this.provider) {
-      console.log('AddressesComponent - Calling loadAddresses()');
       this.loadAddresses();
-    } else {
-      console.log('AddressesComponent - Missing pluginId or provider, not loading addresses');
     }
     this.loadApplicantInfo();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('AddressesComponent ngOnChanges called:', {
-      changes,
-      currentInputs: {
-        pluginId: this.pluginId,
-        provider: this.provider
-      }
-    });
-    
     // Reload data when pluginId or provider changes
     const pluginIdChanged = changes['pluginId'];
     const providerChanged = changes['provider'];
     
     if ((pluginIdChanged && !pluginIdChanged.firstChange) || (providerChanged && !providerChanged.firstChange)) {
       if (this.pluginId && this.provider) {
-        console.log('AddressesComponent - Input changed, reloading data:', {
-          pluginIdChanged: !!pluginIdChanged,
-          providerChanged: !!providerChanged,
-          oldPluginId: pluginIdChanged?.previousValue,
-          newPluginId: pluginIdChanged?.currentValue,
-          oldProvider: providerChanged?.previousValue,
-          newProvider: providerChanged?.currentValue
-        });
         this.loadAddresses();
       }
     }
@@ -156,15 +130,9 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private loadAddresses(): void {
-    console.log('AddressesComponent loadAddresses() called with:', {
-      pluginId: this.pluginId,
-      provider: this.provider
-    });
-    
     this.isLoading = true;
     this.error = null;
 
-    console.log('Making API call to getAddressesInfo...');
     this.applicantInfoService
       .getAddressesInfo(
         this.pluginId,
@@ -176,7 +144,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           this.isLoading = false;
           this.addresses = this.processAddressesData(result.addressesData || []);
           this.primaryAddress = this.addresses.find(addr => addr.isPrimary) || null;
-          console.log('Addresses data loaded:', this.addresses);
         },
         error: (error) => {
           this.isLoading = false;
@@ -214,7 +181,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
   // Datatable event handlers
   onAddressRowClick(event: DatatableRowClickEvent): void {
-    console.log('Clicked address:', event.row);
     // TODO: Navigate to address detail view
   }
 
@@ -222,7 +188,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     const address = event.row as AddressDisplay;
 
     if ((event.action === 'edit' || event.action === 'setAsPrimary') && !address.isEditable) {
-      console.log('Action not allowed: Address cannot be edited');
       return;
     }
 
@@ -234,12 +199,11 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         this.onEditAddress(address);
         break;
       default:
-        console.log('Unknown action:', event.action);
+        break;
     }
   }
 
   onEditAddress(address: AddressDisplay): void {
-    console.log('Editing address...', address);
     this.editingAddressId = address.id;
     this.saveAddressError = null;
     this.editAddress = {
@@ -283,7 +247,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       payload
     ).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        console.log('Address updated successfully:', response);
         this.isSavingAddress = false;
         this.showEditAddressModal = false;
 
@@ -330,8 +293,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onSetAsPrimary(address: AddressDisplay): void {
-    console.log('Setting as primary address...', address);
-
     this.applicantInfoService.setAddressAsPrimary(
       address.id,
       this.pluginId,
@@ -340,8 +301,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     .pipe(takeUntil(this.destroy$))
     .subscribe({
       next: (response) => {
-        console.log('Address set as primary successfully:', response);
-        
         const primaryAddressId = response?.primaryAddressId ?? address.id;
 
         // Update local state using primaryAddressId from response
@@ -351,7 +310,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         }));
         
         this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
-        console.log('Primary address updated locally:', this.primaryAddress);
       },
       error: (error) => {
         console.error('Failed to set address as primary:', error);
@@ -360,7 +318,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onAddressSort(event: DatatableSortEvent): void {
-    console.log('Addresses sorted by:', event.column, event.direction);
     // The datatable component now handles all sorting internally
     // This event is emitted for any additional logic you might need
   }
