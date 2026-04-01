@@ -13,7 +13,7 @@ export class WorkspaceService {
   
   private readonly defaultOrgState = {
     hasMultipleOrgs: false,
-    applicantId: null as string | null,
+    applicantId: null,
     orgNumber: '',
     orgName: ''
   };
@@ -32,8 +32,8 @@ export class WorkspaceService {
   private workspaceProviderMemory = new Map<string, string>(); // workspace.pluginId -> last selected provider
 
   constructor(
-    private http: HttpClient,
-    private applicantInfoService: ApplicantInfoService
+    private readonly http: HttpClient,
+    private readonly applicantInfoService: ApplicantInfoService
   ) {
     this.setupOrgDataLoading();
   }
@@ -66,15 +66,16 @@ export class WorkspaceService {
    */
   private setupOrgDataLoading(): void {
     this.workspaceState$.pipe(
-      filter(state => state.isWorkspaceSelected && state.isProviderSelected
+      filter((state): state is WorkspaceState & { selectedWorkspace: Plugin; selectedProvider: string } =>
+        state.isWorkspaceSelected && state.isProviderSelected
         && !!state.selectedWorkspace && !!state.selectedProvider),
       distinctUntilChanged((prev, curr) =>
-        prev.selectedWorkspace?.pluginId === curr.selectedWorkspace?.pluginId
+        prev.selectedWorkspace.pluginId === curr.selectedWorkspace.pluginId
         && prev.selectedProvider === curr.selectedProvider),
       switchMap(state =>
         this.applicantInfoService.getOrganizationInfo(
-          state.selectedWorkspace!.pluginId,
-          state.selectedProvider!
+          state.selectedWorkspace.pluginId,
+          state.selectedProvider
         ).pipe(
           catchError(() => of({ organizationsData: [], organizationData: null }))
         )
