@@ -87,6 +87,7 @@ public partial class DemoPlugin
 
     public async Task<Result> SetAsPrimaryContactAsync(
         Guid contactId,
+        Guid applicantId,
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
@@ -127,6 +128,7 @@ public partial class DemoPlugin
 
     public async Task<Result> DeleteContactAsync(
         Guid contactId,
+        Guid applicantId,
         ProfileContext profileContext,
         CancellationToken cancellationToken = default)
     {
@@ -196,9 +198,9 @@ public partial class DemoPlugin
                 "CONTACTINFO",
                 jsonData);
 
-            // Store updated data in Redis
+            // Store updated data in Redis — must use _jsonOptions (camelCase) to match the read path in PopulateProfileAsync
             var cacheKey = $"{_cacheOptions.Value.CacheKeyPrefix}{profileId}:DEMO:{provider}:CONTACTINFO";
-            var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData);
+            var profileDataBytes = JsonSerializer.SerializeToUtf8Bytes(profileData, _jsonOptions);
             var cacheOptions = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(365)
@@ -253,5 +255,4 @@ public partial class DemoPlugin
             // Don't throw - deletion tracking failure shouldn't break the main operation
         }
     }
-
 }

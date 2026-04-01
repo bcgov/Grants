@@ -16,12 +16,14 @@ public interface IRabbitMQPublisher
     /// <param name="messageBody">Serialized message body</param>
     /// <param name="routingKey">Routing key for message routing (optional)</param>
     /// <param name="correlationId">Correlation ID for message tracking (optional)</param>
+    /// <param name="messageId">Stable message ID set as the AMQP MessageId property. When null a new GUID is generated.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     Task<Result> PublishAsync(
         string messageType, 
         string messageBody, 
         string? routingKey = null, 
         string? correlationId = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -104,6 +106,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
         string messageBody, 
         string? routingKey = null, 
         string? correlationId = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
     {
         if (_disposed || _channel == null)
@@ -123,7 +126,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
             // Prepare message properties
             var properties = _channel.CreateBasicProperties();
             properties.Persistent = true; // Make message durable
-            properties.MessageId = Guid.NewGuid().ToString();
+            properties.MessageId = (messageId ?? Guid.NewGuid()).ToString();
             properties.Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             properties.Type = messageType;
             properties.ContentType = "application/json";
@@ -187,7 +190,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
 
             foreach (var (messageType, messageBody, routingKey, correlationId) in messagesList)
             {
-                var result = await PublishAsync(messageType, messageBody, routingKey, correlationId, cancellationToken);
+                var result = await PublishAsync(messageType, messageBody, routingKey, correlationId, messageId: null, cancellationToken);
                 
                 if (!result.IsSuccess)
                 {

@@ -41,14 +41,17 @@ public class Delete(IMediator _mediator)
     DeleteContactRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new DeleteContactCommand(
       request.ContactId,
+      request.ApplicantId,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,      
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 
@@ -56,8 +59,9 @@ public class Delete(IMediator _mediator)
     {
       Response = new DeleteContactResponse
       {
-        ContactId = request.ContactId,
-        Message = "Contact deleted successfully"
+        ContactId = result.Value.ContactId,
+        Message = "Contact deleted successfully",
+        PrimaryContactId = result.Value.PrimaryContactId
       };
       return;
     }

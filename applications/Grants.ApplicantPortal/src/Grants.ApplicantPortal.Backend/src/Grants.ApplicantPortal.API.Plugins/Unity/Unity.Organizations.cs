@@ -1,4 +1,5 @@
-﻿using Ardalis.Result;
+﻿using System.Text.Json;
+using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 
@@ -19,11 +20,9 @@ public partial class UnityPlugin
 
     try
     {
-      // 🔥 EVENT-DRIVEN: Publish edit command to outbox for Unity to process
-      await FireOrganizationEditMessage(editRequest, profileContext, cancellationToken);
+      await UpdateOrganizationCacheOptimistically(editRequest, profileContext, cancellationToken);
 
-      // 🔥 Invalidate the ORGINFO cache when organization edit is queued
-      await InvalidateOrganizationCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
+      await FireOrganizationEditMessage(editRequest, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued organization edit - ID: {OrganizationId}, Name: {Name}, Type: {Type}",
           editRequest.OrganizationId, editRequest.Name, editRequest.OrganizationType);
@@ -38,9 +37,8 @@ public partial class UnityPlugin
     }
   }
 
-  /// <summary>
-  /// Helper method to fire organization edit command message
-  /// </summary>
+  // ── Fire messages ─────────────────────────────────────────────────────────
+
   private async Task FireOrganizationEditMessage(EditOrganizationRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
@@ -58,6 +56,7 @@ public partial class UnityPlugin
           editRequest.OrganizationId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             editRequest.Name,
@@ -78,28 +77,49 @@ public partial class UnityPlugin
         editRequest.OrganizationId, profileContext.ProfileId);
   }
 
+  // ── Optimistic cache update ───────────────────────────────────────────────
+
   /// <summary>
-  /// Invalidate the ORGINFO cache for this profile/provider combination
+  /// Optimistically patches the matching organization in the cached ORGINFO "organizations" array.
+  /// The org data is an array (like contacts/addresses), so we use RebuildWithArray.
   /// </summary>
-  private async Task InvalidateOrganizationCache(Guid profileId, string provider, CancellationToken cancellationToken)
+  private async Task UpdateOrganizationCacheOptimistically(EditOrganizationRequest editRequest,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
   {
-    if (cacheInvalidationService == null)
-    {
-      logger.LogDebug("Cache invalidation service not available - skipping organization cache invalidation");
-      return;
-    }
+    var editId = editRequest.OrganizationId.ToString();
 
-    try
-    {
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "ORGINFO", cancellationToken);
-
-      logger.LogDebug("Invalidated ORGINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
-          profileId, PluginId, provider);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex, "Failed to invalidate ORGINFO cache for ProfileId: {ProfileId}", profileId);
-      // Don't throw - cache invalidation failures shouldn't break the main operation
-    }
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "ORGINFO",
+        root => RebuildWithArray(root, "organizations", (writer, arr) =>
+        {
+          foreach (var existing in arr.EnumerateArray())
+          {
+            if (existing.TryGetProperty("id", out var idProp) &&
+                string.Equals(idProp.GetString(), editId, StringComparison.OrdinalIgnoreCase))
+            {
+              var updated = new
+              {
+                id = editId,
+                orgName = editRequest.Name,
+                organizationType = editRequest.OrganizationType,
+                orgNumber = editRequest.OrganizationNumber,
+                orgStatus = editRequest.Status.ToUpperInvariant(),
+                nonRegOrgName = editRequest.NonRegOrgName,
+                fiscalMonth = editRequest.FiscalMonth,
+                fiscalDay = editRequest.FiscalDay,
+                organizationSize = editRequest.OrganizationSize,
+                sector = existing.TryGetProperty("sector", out var sec) ? sec.GetString() : null,
+                subSector = existing.TryGetProperty("subSector", out var ss) ? ss.GetString() : null
+              };
+              JsonSerializer.Serialize(writer, updated, _camelCase);
+            }
+            else
+            {
+              existing.WriteTo(writer);
+            }
+          }
+        }),
+        cancellationToken);
   }
 }

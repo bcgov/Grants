@@ -1,4 +1,5 @@
-﻿using Ardalis.Result;
+﻿using System.Text.Json;
+using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 
@@ -72,6 +73,7 @@ public partial class UnityPlugin
 
   public async Task<Result> SetAsPrimaryContactAsync(
       Guid contactId,
+      Guid applicantId,
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
@@ -80,11 +82,9 @@ public partial class UnityPlugin
 
     try
     {
-      // 🔥 EVENT-DRIVEN: Publish set primary command to outbox for Unity to process
-      await FireContactSetPrimaryMessage(contactId, profileContext, cancellationToken);
+      await UpdateContactsPrimaryCacheOptimistically(contactId, profileContext, cancellationToken);
 
-      // 🔥 Invalidate the CONTACTS cache when primary contact change is queued
-      await InvalidateContactsCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
+      await FireContactSetPrimaryMessage(contactId, applicantId, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued set contact {ContactId} as primary for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
@@ -101,6 +101,7 @@ public partial class UnityPlugin
 
   public async Task<Result> DeleteContactAsync(
       Guid contactId,
+      Guid applicantId,
       ProfileContext profileContext,
       CancellationToken cancellationToken = default)
   {
@@ -109,11 +110,9 @@ public partial class UnityPlugin
 
     try
     {
-      // 🔥 EVENT-DRIVEN: Publish delete command to outbox for Unity to process
-      await FireContactDeleteMessage(contactId, profileContext, cancellationToken);
+      await DeleteContactFromCacheOptimistically(contactId, profileContext, cancellationToken);
 
-      // 🔥 Invalidate the CONTACTS cache when contact deletion is queued
-      await InvalidateContactsCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
+      await FireContactDeleteMessage(contactId, applicantId, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued contact deletion {ContactId} for ProfileId: {ProfileId}",
           contactId, profileContext.ProfileId);
@@ -148,6 +147,7 @@ public partial class UnityPlugin
           ContactId = contactId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             contactRequest.Name,
@@ -159,7 +159,8 @@ public partial class UnityPlugin
             contactRequest.WorkPhoneNumber,
             contactRequest.WorkPhoneExtension,
             contactRequest.Role,
-            contactRequest.IsPrimary
+            contactRequest.IsPrimary,
+            contactRequest.ApplicantId
           }
         },
         correlationId: $"profile-{profileContext.ProfileId}");
@@ -190,6 +191,7 @@ public partial class UnityPlugin
           editRequest.ContactId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             editRequest.Name,
@@ -201,7 +203,8 @@ public partial class UnityPlugin
             editRequest.WorkPhoneNumber,
             editRequest.WorkPhoneExtension,
             editRequest.Role,
-            editRequest.IsPrimary
+            editRequest.IsPrimary,
+            editRequest.ApplicantId
           }
         },
         correlationId: $"profile-{profileContext.ProfileId}");
@@ -215,7 +218,10 @@ public partial class UnityPlugin
   /// <summary>
   /// Helper method to fire contact set primary command message
   /// </summary>
-  private async Task FireContactSetPrimaryMessage(Guid contactId, ProfileContext profileContext, CancellationToken cancellationToken)
+  private async Task FireContactSetPrimaryMessage(Guid contactId,
+    Guid applicantId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
     {
@@ -231,7 +237,12 @@ public partial class UnityPlugin
           Action = "SetContactAsPrimary",
           ContactId = contactId,
           profileContext.ProfileId,
-          profileContext.Provider
+          profileContext.Provider,
+          profileContext.Subject,
+          Data = new
+          {
+            ApplicantId = applicantId
+          },
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
@@ -244,7 +255,9 @@ public partial class UnityPlugin
   /// <summary>
   /// Helper method to fire contact delete command message
   /// </summary>
-  private async Task FireContactDeleteMessage(Guid contactId, ProfileContext profileContext, CancellationToken cancellationToken)
+  private async Task FireContactDeleteMessage(Guid contactId,
+    Guid applicantId,
+    ProfileContext profileContext, CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
     {
@@ -260,7 +273,12 @@ public partial class UnityPlugin
           Action = "DeleteContact",
           ContactId = contactId,
           profileContext.ProfileId,
-          profileContext.Provider
+          profileContext.Provider,
+          profileContext.Subject,
+          Data = new
+          {
+            ApplicantId = applicantId
+          },
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
@@ -271,84 +289,241 @@ public partial class UnityPlugin
   }
 
   /// <summary>
-  /// Optimistically updates the contacts cache with a new contact
+  /// Optimistically appends the new contact to the cached contacts array.
   /// </summary>
   private async Task UpdateContactsCacheOptimistically(Guid contactId,
     CreateContactRequest contactRequest,
     ProfileContext profileContext,
     CancellationToken cancellationToken)
   {
-    if (cacheInvalidationService == null)
+    var newContact = new
     {
-      logger.LogDebug("Cache invalidation service not available - skipping optimistic contact cache update");
-      return;
-    }
+      contactId = contactId.ToString(),
+      contactRequest.Name,
+      contactRequest.Title,
+      contactRequest.Email,
+      contactRequest.HomePhoneNumber,
+      contactRequest.MobilePhoneNumber,
+      contactRequest.WorkPhoneNumber,
+      contactRequest.WorkPhoneExtension,
+      contactRequest.ContactType,
+      contactRequest.Role,
+      contactRequest.IsPrimary,
+      isEditable = true,
+      applicationId = (string?)null,
+      creationTime = DateTimeOffset.UtcNow
+    };
 
-    try
-    {
-      // For now, we'll just invalidate the cache so it gets refreshed with the new data
-      // In a more sophisticated implementation, we could actually update the cached data directly
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTINFO", cancellationToken);
-
-      logger.LogDebug("Optimistically invalidated CONTACTINFO cache for new contact {ContactId} in ProfileId: {ProfileId}",
-          contactId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex, "Failed to optimistically update CONTACTINFO cache for new contact {ContactId}", contactId);
-      // Don't throw - optimistic cache updates are not critical to the main operation
-    }
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "CONTACTINFO",
+        root => RebuildWithArray(root, "contacts", (writer, arr) =>
+        {
+          foreach (var existing in arr.EnumerateArray())
+          {
+            // If the new contact is primary, clear isPrimary on all existing contacts
+            if (contactRequest.IsPrimary && existing.TryGetProperty("isPrimary", out _))
+            {
+              writer.WriteStartObject();
+              foreach (var prop in existing.EnumerateObject())
+              {
+                if (prop.NameEquals("isPrimary"))
+                  writer.WriteBoolean("isPrimary", false);
+                else
+                  prop.WriteTo(writer);
+              }
+              writer.WriteEndObject();
+            }
+            else
+            {
+              existing.WriteTo(writer);
+            }
+          }
+          JsonSerializer.Serialize(writer, newContact, _camelCase);
+        }),
+        cancellationToken);
   }
 
   /// <summary>
-  /// Optimistically updates the contacts cache with edited contact data
+  /// Optimistically replaces the edited contact in the cached contacts array.
   /// </summary>
-  private async Task UpdateContactsCacheOptimistically(EditContactRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
+  private async Task UpdateContactsCacheOptimistically(EditContactRequest editRequest,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
   {
-    if (cacheInvalidationService == null)
-    {
-      logger.LogDebug("Cache invalidation service not available - skipping optimistic contact cache update");
-      return;
-    }
+    var editId = editRequest.ContactId.ToString();
 
-    try
-    {
-      // For now, we'll just invalidate the cache so it gets refreshed with the updated data
-      // In a more sophisticated implementation, we could actually update the cached data directly
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileContext.ProfileId, PluginId, profileContext.Provider, "CONTACTINFO", cancellationToken);
-
-      logger.LogDebug("Optimistically invalidated CONTACTINFO cache for edited contact {ContactId} in ProfileId: {ProfileId}",
-          editRequest.ContactId, profileContext.ProfileId);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex, "Failed to optimistically update CONTACTINFO cache for edited contact {ContactId}", editRequest.ContactId);
-      // Don't throw - optimistic cache updates are not critical to the main operation
-    }
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "CONTACTINFO",
+        root => RebuildWithArray(root, "contacts", (writer, arr) =>
+        {
+          foreach (var existing in arr.EnumerateArray())
+          {
+            if (existing.TryGetProperty("contactId", out var idProp) &&
+                string.Equals(idProp.GetString(), editId, StringComparison.OrdinalIgnoreCase))
+            {
+              var updated = new
+              {
+                contactId = editId,
+                editRequest.Name,
+                editRequest.Title,
+                editRequest.Email,
+                editRequest.HomePhoneNumber,
+                editRequest.MobilePhoneNumber,
+                editRequest.WorkPhoneNumber,
+                editRequest.WorkPhoneExtension,
+                editRequest.ContactType,
+                editRequest.Role,
+                editRequest.IsPrimary,
+                isEditable = existing.TryGetProperty("isEditable", out var ed) && ed.GetBoolean(),
+                applicationId = existing.TryGetProperty("applicationId", out var aid) ? aid.GetString() : null,
+                creationTime = existing.TryGetProperty("creationTime", out var ct) ? ct.GetString() : null
+              };
+              JsonSerializer.Serialize(writer, updated, _camelCase);
+            }
+            else if (editRequest.IsPrimary)
+            {
+              // Clear isPrimary on all other contacts when edited contact becomes primary
+              writer.WriteStartObject();
+              foreach (var prop in existing.EnumerateObject())
+              {
+                if (prop.NameEquals("isPrimary"))
+                  writer.WriteBoolean("isPrimary", false);
+                else
+                  prop.WriteTo(writer);
+              }
+              writer.WriteEndObject();
+            }
+            else
+            {
+              existing.WriteTo(writer);
+            }
+          }
+        }),
+        cancellationToken);
   }
 
   /// <summary>
-  /// Invalidate the CONTACTS cache for this profile/provider combination
+  /// Optimistically toggles isPrimary flags in the cached contacts array.
   /// </summary>
-  private async Task InvalidateContactsCache(Guid profileId, string provider, CancellationToken cancellationToken)
+  private async Task UpdateContactsPrimaryCacheOptimistically(Guid contactId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
   {
-    if (cacheInvalidationService == null)
-    {
-      logger.LogDebug("Cache invalidation service not available - skipping contacts cache invalidation");
-      return;
-    }
+    var targetId = contactId.ToString();
 
-    try
-    {
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId, PluginId, provider, "CONTACTINFO", cancellationToken);
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "CONTACTINFO",
+        root => RebuildWithArray(root, "contacts", (writer, arr) =>
+        {
+          foreach (var existing in arr.EnumerateArray())
+          {
+            var isTarget = existing.TryGetProperty("contactId", out var idProp) &&
+                           string.Equals(idProp.GetString(), targetId, StringComparison.OrdinalIgnoreCase);
 
-      logger.LogDebug("Invalidated CONTACTINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
-          profileId, PluginId, provider);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex, "Failed to invalidate CONTACTS cache for ProfileId: {ProfileId}", profileId);
-      // Don't throw - cache invalidation failures shouldn't break the main operation
-    }
+            // Rewrite the contact with isPrimary toggled
+            writer.WriteStartObject();
+            foreach (var prop in existing.EnumerateObject())
+            {
+              if (prop.NameEquals("isPrimary"))
+              {
+                writer.WriteBoolean("isPrimary", isTarget);
+              }
+              else
+              {
+                prop.WriteTo(writer);
+              }
+            }
+            writer.WriteEndObject();
+          }
+        }),
+        cancellationToken);
+  }
+
+  /// <summary>
+  /// Optimistically removes the contact from the cached contacts array.
+  /// If the deleted contact was primary, auto-promotes the most recent remaining contact.
+  /// </summary>
+  private async Task DeleteContactFromCacheOptimistically(Guid contactId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
+  {
+    var targetId = contactId.ToString();
+
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "CONTACTINFO",
+        root => RebuildWithArray(root, "contacts", (writer, arr) =>
+        {
+          // First pass: determine if the deleted contact was primary
+          var deletedWasPrimary = false;
+          foreach (var c in arr.EnumerateArray())
+          {
+            if (c.TryGetProperty("contactId", out var id) &&
+                string.Equals(id.GetString(), targetId, StringComparison.OrdinalIgnoreCase) &&
+                c.TryGetProperty("isPrimary", out var ip) && ip.GetBoolean())
+            {
+              deletedWasPrimary = true;
+              break;
+            }
+          }
+
+          // Collect remaining contacts (excluding the deleted one)
+          var remaining = new List<JsonElement>();
+          foreach (var c in arr.EnumerateArray())
+          {
+            if (c.TryGetProperty("contactId", out var id) &&
+                string.Equals(id.GetString(), targetId, StringComparison.OrdinalIgnoreCase))
+              continue;
+            remaining.Add(c.Clone());
+          }
+
+          // If the deleted contact was primary, promote the most recently created remaining contact
+          var promotedId = (string?)null;
+          if (deletedWasPrimary && remaining.Count > 0)
+          {
+            JsonElement? best = null;
+            DateTimeOffset bestTime = DateTimeOffset.MinValue;
+
+            foreach (var r in remaining)
+            {
+              if (r.TryGetProperty("creationTime", out var ctProp) &&
+                  DateTimeOffset.TryParse(ctProp.GetString(), out var ct) &&
+                  ct > bestTime)
+              {
+                bestTime = ct;
+                best = r;
+              }
+            }
+
+            // Fall back to the first remaining contact if none have a creationTime
+            var candidate = best ?? remaining[0];
+            if (candidate.TryGetProperty("contactId", out var cid))
+              promotedId = cid.GetString();
+          }
+
+          // Write remaining contacts, promoting one if needed
+          foreach (var c in remaining)
+          {
+            if (promotedId != null)
+            {
+              var isPromoted = c.TryGetProperty("contactId", out var cid) &&
+                               string.Equals(cid.GetString(), promotedId, StringComparison.OrdinalIgnoreCase);
+
+              writer.WriteStartObject();
+              foreach (var prop in c.EnumerateObject())
+              {
+                if (prop.NameEquals("isPrimary"))
+                  writer.WriteBoolean("isPrimary", isPromoted);
+                else
+                  prop.WriteTo(writer);
+              }
+              writer.WriteEndObject();
+            }
+            else
+            {
+              c.WriteTo(writer);
+            }
+          }
+        }),
+        cancellationToken);
   }
 }

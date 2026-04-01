@@ -1,5 +1,6 @@
 ﻿using Grants.ApplicantPortal.API.Core.Features.Profiles.ProfileAggregate;
 using Grants.ApplicantPortal.API.Core.Features.Security.SecurityLogAggregate;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
 
@@ -18,6 +19,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,
   // Messaging entities
   public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
   public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+
+  // Plugin events
+  public DbSet<PluginEvent> PluginEvents => Set<PluginEvent>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {

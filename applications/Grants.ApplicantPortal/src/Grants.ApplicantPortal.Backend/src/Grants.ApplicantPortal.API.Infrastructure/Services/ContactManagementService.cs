@@ -33,8 +33,8 @@ public class ContactManagementService(
       if (plugin is not IContactManagementPlugin contactPlugin)
       {
         logger.LogWarning("Plugin {PluginId} does not support contact management", profileContext.PluginId);
-        return Result<Guid>.Invalid(new ValidationError 
-        { 
+        return Result<Guid>.Invalid(new ValidationError
+        {
           Identifier = "PluginId",
           ErrorMessage = $"Plugin '{profileContext.PluginId}' does not support contact management"
         });
@@ -119,6 +119,7 @@ public class ContactManagementService(
 
   public async Task<Result> SetAsPrimaryContactAsync(
     Guid contactId,
+    Guid applicantId,
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
@@ -147,7 +148,7 @@ public class ContactManagementService(
       }
 
       // Call the plugin to set the contact as primary
-      var result = await contactPlugin.SetAsPrimaryContactAsync(contactId, profileContext, cancellationToken);
+      var result = await contactPlugin.SetAsPrimaryContactAsync(contactId, applicantId, profileContext, cancellationToken);
 
       if (result.IsSuccess)
       {
@@ -172,6 +173,7 @@ public class ContactManagementService(
 
   public async Task<Result> DeleteContactAsync(
     Guid contactId,
+    Guid applicantId,
     ProfileContext profileContext,
     CancellationToken cancellationToken = default)
   {
@@ -200,7 +202,7 @@ public class ContactManagementService(
       }
 
       // Call the plugin to delete the contact
-      var result = await contactPlugin.DeleteContactAsync(contactId, profileContext, cancellationToken);
+      var result = await contactPlugin.DeleteContactAsync(contactId, applicantId, profileContext, cancellationToken);
 
       if (result.IsSuccess)
       {

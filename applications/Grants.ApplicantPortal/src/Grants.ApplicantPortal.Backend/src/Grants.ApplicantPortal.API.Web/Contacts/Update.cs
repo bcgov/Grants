@@ -47,13 +47,15 @@ public class Update(IMediator _mediator)
     UpdateContactRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new EditContactCommand(
       request.ContactId,
+      request.ApplicantId,
       request.Name!,
-      "ApplicantProfile",
+      "Applicant",
       request.IsPrimary,
       request.Title,
       request.Email,
@@ -64,7 +66,8 @@ public class Update(IMediator _mediator)
       request.Role,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,      
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 
@@ -72,8 +75,9 @@ public class Update(IMediator _mediator)
     {
       Response = new UpdateContactResponse
       {
-        ContactId = request.ContactId,
-        Message = "Contact updated successfully"
+        ContactId = result.Value.ContactId,
+        Message = "Contact updated successfully",
+        PrimaryContactId = result.Value.PrimaryContactId
       };
       return;
     }

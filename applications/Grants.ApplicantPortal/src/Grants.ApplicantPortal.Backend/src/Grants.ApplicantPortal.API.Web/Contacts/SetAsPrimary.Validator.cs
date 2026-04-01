@@ -22,5 +22,8 @@ public class SetAsPrimaryContactValidator : Validator<SetAsPrimaryContactRequest
       .NotEmpty()
       .WithMessage("Provider is required.")
       .MaximumLength(50);
+
+    RuleFor(x => x.ApplicantId)
+      .NotEmpty();
   }
 }

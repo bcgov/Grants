@@ -7,4 +7,5 @@ public record SetAsPrimaryAddressCommand(
   Guid AddressId,
   Guid ProfileId,
   string PluginId,
-  string Provider) : ICommand<Result>;
+  string Provider,
+  string? Subject = null) : ICommand<Result<AddressMutationResult>>;

@@ -20,7 +20,6 @@ export class AuthService {
     // Monitor authentication state changes with error handling
     this.oidcSecurityService.isAuthenticated$.subscribe({
       next: (result) => {
-        console.log('AuthService - OIDC result updated:', result);
         this.authState$.next({ 
           isAuthenticated: result.isAuthenticated
         });
@@ -61,9 +60,6 @@ export class AuthService {
   get isAuthenticated$(): Observable<boolean> {
     return this.oidcSecurityService.isAuthenticated$.pipe(
       map((result) => {
-        console.log('AuthService - OIDC result:', result);
-        console.log('AuthService - isAuthenticated:', result.isAuthenticated);
-        
         return result.isAuthenticated;
       }),
       catchError((error) => {
@@ -90,12 +86,10 @@ export class AuthService {
   }
 
   login(): void {
-    console.log('AuthService - Initiating login');
     this.oidcSecurityService.authorize();
   }
 
   logout(): void {
-    console.log('AuthService - Initiating logout');
     // Navigate to logout route which will handle the cleanup and redirection
     this.router.navigate(['/logout']);
   }
@@ -113,12 +107,9 @@ export class AuthService {
    * Force refresh the session/tokens
    */
   refreshSession(): Observable<any> {
-    console.log('AuthService - Forcing session refresh');
     return this.oidcSecurityService.forceRefreshSession().pipe(
       tap((result) => {
-        if (result?.isAuthenticated) {
-          console.log('AuthService - Session refresh successful');
-        }
+        // Session refresh handled
       }),
       catchError((error) => {
         console.error('AuthService - refreshSession error:', error);
@@ -140,13 +131,6 @@ export class AuthService {
    */
   checkAuth(): Observable<any> {
     return this.oidcSecurityService.checkAuth().pipe(
-      tap((result) => {
-        console.log('AuthService - checkAuth result:', {
-          isAuthenticated: result.isAuthenticated,
-          hasUserData: !!result.userData,
-          hasAccessToken: !!result.accessToken
-        });
-      }),
       catchError((error) => {
         console.error('AuthService - checkAuth error:', error);
         

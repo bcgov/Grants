@@ -107,18 +107,31 @@ public class OutboxOptions
     /// <summary>
     /// How long to keep processed messages before cleanup (in days)
     /// </summary>
-    public int RetentionDays { get; set; } = 30;
+    public int RetentionDays { get; set; } = 7;
 
     /// <summary>
     /// How often to run cleanup job (in hours)
     /// </summary>
     public int CleanupIntervalHours { get; set; } = 24;
+
+    /// <summary>
+    /// Minutes after publishing before a message with no acknowledgment is considered timed out.
+    /// The timeout job will mark these messages as TimedOut, record a PluginEvent,
+    /// and invalidate the relevant cache segment.
+    /// Set to 0 to disable ack-timeout processing.
+    /// </summary>
+    public int AckTimeoutMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Polling interval (in seconds) for the ack-timeout background job.
+    /// </summary>
+    public int AckTimeoutPollingIntervalSeconds { get; set; } = 60;
 }
 
 /// <summary>
 /// Inbox processing configuration
 /// </summary>
-public class InboxOptions
+ public class InboxOptions
 {
     /// <summary>
     /// How often to poll for new messages (in seconds)
@@ -138,7 +151,7 @@ public class InboxOptions
     /// <summary>
     /// How long to keep processed messages before cleanup (in days)
     /// </summary>
-    public int RetentionDays { get; set; } = 30;
+    public int RetentionDays { get; set; } = 7;
 
     /// <summary>
     /// How often to run cleanup job (in hours)
@@ -189,4 +202,35 @@ public class BackgroundJobOptions
     /// Misfire threshold for Quartz jobs (in seconds)
     /// </summary>
     public int MisfireThresholdSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Base interval (in seconds) for the first backoff step when a job fails.
+    /// Subsequent failures increase the delay exponentially.
+    /// </summary>
+    public int BaseBackoffSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum backoff interval (in seconds) between retry attempts.
+    /// The exponential delay is capped at this value (default: 5 minutes).
+    /// </summary>
+    public int MaxBackoffSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Multiplier applied for each consecutive failure.
+    /// Delay = BaseBackoffSeconds * BackoffMultiplier^(failures-1).
+    /// </summary>
+    public double BackoffMultiplier { get; set; } = 2.0;
+
+    /// <summary>
+    /// During sustained failures, emit a full warning log every Nth failure
+    /// to provide periodic visibility without flooding logs.
+    /// </summary>
+    public int LogEveryNthFailure { get; set; } = 20;
+
+    /// <summary>
+    /// Delay (in seconds) before background jobs start executing after application boot.
+    /// Prevents cleanup and processing jobs from competing with startup tasks
+    /// (EF migrations, cache warm-up, broker connections, etc.).
+    /// </summary>
+    public int StartupDelaySeconds { get; set; } = 60;
 }

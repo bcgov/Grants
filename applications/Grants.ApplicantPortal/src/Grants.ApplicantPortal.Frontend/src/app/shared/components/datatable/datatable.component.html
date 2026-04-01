@@ -10,6 +10,33 @@
       </div>
     </div>
   } @else {
+    <!-- Search Input -->
+    @if (config.enableSearch) {
+      <div class="datatable-search">
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            class="form-control search-input"
+            [placeholder]="config.searchPlaceholder || 'Search...'"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchInput($event)"
+            aria-label="Search table"
+          />
+          <i class="fas fa-search search-icon" aria-hidden="true"
+             [class.d-none]="searchTerm.length > 0"></i>
+          <button
+             type="button"
+             class="search-icon search-clear"
+             [class.d-none]="searchTerm.length === 0"
+             (click)="clearSearch()"
+             aria-label="Clear search"
+           >
+             <i class="fas fa-times" aria-hidden="true"></i>
+           </button>
+        </div>
+      </div>
+    }
+
     <!-- Table Wrapper -->
     <div class="datatable-wrapper">
       <table 
@@ -59,10 +86,10 @@
                 <td [class]="column.cssClass || column.key + '-column'">
                   @if (column.type === 'badge' && config.badgeConfig) {
                     <span [class]="getBadgeClass(row)">
-                      {{ getBadgeDisplayValue(row, column) }}
+                      {{ getBadgeDisplayValue(row, column) || '—' }}
                     </span>
                   } @else if (column.type === 'date') {
-                    @if (getCellValue(row, column)) {
+                    @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) | date:'mediumDate' }}
                     } @else {
                       —
@@ -75,12 +102,22 @@
                     <span class="phone-number">{{ getCellValue(row, column) }}</span>
                   } @else if (column.type === 'boolean') {
                     <div class="text-center">
-                      @if (getCellValue(row, column)) {
-                        <i class="fas fa-check text-success" aria-label="Yes"></i>
+                      @if (getCellValue(row, column) != null) {
+                        @if (getCellValue(row, column)) {
+                          <i class="fas fa-check text-success" aria-label="Yes"></i>
+                        } @else if (!column.booleanFalseBlank) {
+                          <i class="fas fa-times text-danger" aria-label="No"></i>
+                        }
+                      } @else {
+                        —
                       }
                     </div>
                   } @else {
-                    {{ getCellValue(row, column) }}
+                    @if (getCellValue(row, column) != null) {
+                      {{ getCellValue(row, column) }}
+                    } @else {
+                      —
+                    }
                   }
                 </td>
               }
@@ -110,7 +147,17 @@
                       </button>
                     }
                   } @else if (config.actionsType === 'dropdown' && config.actionItems) {
-                    <div class="dropdown" [style.visibility]="shouldShowActions(row) ? 'visible' : 'hidden'">
+                    @if (!shouldShowActions(row)) {
+                      <!-- Hidden by visibility field -->
+                    } @else if (isActionsDisabled(row)) {
+                      <span
+                        class="d-inline-block text-muted"
+                        [title]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
+                      >
+                        <i class="fas fa-ellipsis-v"></i>
+                      </span>
+                    } @else {
+                    <div class="dropdown">
                       <button
                         #dropdownToggle
                         type="button"
@@ -118,9 +165,8 @@
                         data-bs-toggle="dropdown"
                         data-bs-auto-close="outside"
                         aria-expanded="false"
-                        (click)="onDropdownToggle(i, $event)"
+                        (click)="onDropdownToggle(dropdownToggle, $event)"
                         aria-label="Row actions"
-                        [disabled]="!shouldShowActions(row)"
                       >
                         <i class="fas fa-ellipsis-v"></i>
                       </button>
@@ -140,6 +186,7 @@
                         }
                       </ul>
                     </div>
+                    }
                   }
                 </td>
               }
@@ -148,6 +195,42 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pager -->
+    @if (showPager) {
+      <nav class="datatable-pager" aria-label="Table pagination">
+        <button
+          type="button"
+          class="pager-btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Previous page"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        @for (page of pagerPages; track page) {
+          <button
+            type="button"
+            class="pager-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+            [attr.aria-label]="'Page ' + page"
+            [attr.aria-current]="page === currentPage ? 'page' : null"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Next page"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </nav>
+    }
 
     <!-- No Data State -->
     @if (getDisplayData().length === 0) {

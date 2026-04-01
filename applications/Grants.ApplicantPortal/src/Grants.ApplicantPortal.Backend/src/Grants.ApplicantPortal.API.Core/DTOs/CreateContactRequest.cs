@@ -13,4 +13,5 @@ public record CreateContactRequest(
   string? MobilePhoneNumber = null,
   string? WorkPhoneNumber = null,
   string? WorkPhoneExtension = null,
-  string? Role = null);
+  string? Role = null,
+  Guid ApplicantId = default);

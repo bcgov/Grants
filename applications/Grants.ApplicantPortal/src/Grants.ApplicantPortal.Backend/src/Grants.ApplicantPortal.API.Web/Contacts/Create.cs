@@ -38,7 +38,7 @@ public class Create(IMediator _mediator)
         Provider = "PROGRAM1"
       };
     });
-    
+
     Tags("Contacts", "Contact Management");
   }
 
@@ -46,12 +46,12 @@ public class Create(IMediator _mediator)
     CreateContactRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
-    
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
+
     var command = new CreateContactCommand(
       request.Name!,
-      "ApplicantProfile",
+      "Applicant",
       request.IsPrimary,
       request.Title,
       request.Email,
@@ -62,7 +62,9 @@ public class Create(IMediator _mediator)
       request.Role,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,
+      request.ApplicantId,
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 
@@ -70,8 +72,9 @@ public class Create(IMediator _mediator)
     {
       Response = new CreateContactResponse
       {
-        ContactId = result.Value,
-        Name = request.Name!
+        ContactId = result.Value.ContactId,
+        Name = request.Name!,
+        PrimaryContactId = result.Value.PrimaryContactId
       };
       return;
     }
@@ -92,7 +95,6 @@ public class Create(IMediator _mediator)
       return;
     }
 
-    // Handle other error cases
     if (result.Errors.Any())
     {
       foreach (var error in result.Errors)

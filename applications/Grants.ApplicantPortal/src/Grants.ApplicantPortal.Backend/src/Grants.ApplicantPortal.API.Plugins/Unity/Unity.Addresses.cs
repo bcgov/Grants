@@ -1,4 +1,5 @@
-﻿using Ardalis.Result;
+﻿using System.Text.Json;
+using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 
@@ -19,11 +20,9 @@ public partial class UnityPlugin
 
     try
     {
-      // 🔥 EVENT-DRIVEN: Publish edit command to outbox for Unity to process
-      await FireAddressEditMessage(editRequest, profileContext, cancellationToken);
+      await UpdateAddressCacheOptimistically(editRequest, profileContext, cancellationToken);
 
-      // 🔥 Invalidate the ADDRESSES cache when address edit is queued
-      await InvalidateAddressesCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
+      await FireAddressEditMessage(editRequest, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued address edit - ID: {AddressId}, AddressType: {AddressType}, Street: {Street}",
           editRequest.AddressId, editRequest.AddressType, editRequest.Street);
@@ -49,11 +48,9 @@ public partial class UnityPlugin
 
     try
     {
-      // 🔥 EVENT-DRIVEN: Publish set primary command to outbox for Unity to process
-      await FireAddressSetPrimaryMessage(addressId, profileContext, cancellationToken);
+      await UpdateAddressPrimaryCacheOptimistically(addressId, profileContext, cancellationToken);
 
-      // 🔥 Invalidate the ADDRESSES cache when primary address change is queued
-      await InvalidateAddressesCache(profileContext.ProfileId, profileContext.Provider, cancellationToken);
+      await FireAddressSetPrimaryMessage(addressId, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin queued set address {AddressId} as primary for ProfileId: {ProfileId}",
           addressId, profileContext.ProfileId);
@@ -68,9 +65,8 @@ public partial class UnityPlugin
     }
   }
 
-  /// <summary>
-  /// Helper method to fire address edit command message
-  /// </summary>
+  // ── Fire messages ─────────────────────────────────────────────────────────
+
   private async Task FireAddressEditMessage(EditAddressRequest editRequest, ProfileContext profileContext, CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
@@ -88,6 +84,7 @@ public partial class UnityPlugin
           editRequest.AddressId,
           profileContext.ProfileId,
           profileContext.Provider,
+          profileContext.Subject,
           Data = new
           {
             editRequest.AddressType,
@@ -109,9 +106,6 @@ public partial class UnityPlugin
         editRequest.AddressId, profileContext.ProfileId);
   }
 
-  /// <summary>
-  /// Helper method to fire address set primary command message
-  /// </summary>
   private async Task FireAddressSetPrimaryMessage(Guid addressId, ProfileContext profileContext, CancellationToken cancellationToken)
   {
     if (messagePublisher == null)
@@ -128,7 +122,8 @@ public partial class UnityPlugin
           Action = "SetAddressAsPrimary",
           AddressId = addressId,
           profileContext.ProfileId,
-          profileContext.Provider
+          profileContext.Provider,
+          profileContext.Subject
         },
         correlationId: $"profile-{profileContext.ProfileId}");
 
@@ -138,32 +133,95 @@ public partial class UnityPlugin
         addressId, profileContext.ProfileId);
   }
 
+  // ── Optimistic cache updates ──────────────────────────────────────────────
+
   /// <summary>
-  /// Invalidate the ADDRESSES cache for this profile/provider combination
+  /// Optimistically replaces the edited address in the cached addresses array.
+  /// When the edited address has IsPrimary set to true, other addresses are toggled to not primary.
   /// </summary>
-  private async Task InvalidateAddressesCache(Guid profileId, string provider, CancellationToken cancellationToken)
+  private async Task UpdateAddressCacheOptimistically(EditAddressRequest editRequest,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
   {
-    if (cacheInvalidationService == null)
-    {
-      logger.LogDebug("Cache invalidation service not available - skipping addresses cache invalidation");
-      return;
-    }
+    var editId = editRequest.AddressId.ToString();
 
-    try
-    {
-      await cacheInvalidationService.InvalidateProfileDataCacheAsync(profileId,
-        PluginId,
-        provider,
-        "ADDRESSINFO",
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "ADDRESSINFO",
+        root => RebuildWithArray(root, "addresses", (writer, arr) =>
+        {
+          foreach (var existing in arr.EnumerateArray())
+          {
+            if (existing.TryGetProperty("id", out var idProp) &&
+                string.Equals(idProp.GetString(), editId, StringComparison.OrdinalIgnoreCase))
+            {
+              var updated = new
+              {
+                id = editId,
+                editRequest.AddressType,
+                editRequest.Street,
+                street2 = editRequest.Street2 ?? "",
+                unit = editRequest.Unit ?? "",
+                editRequest.City,
+                editRequest.Province,
+                editRequest.PostalCode,
+                country = editRequest.Country ?? "",
+                editRequest.IsPrimary,
+                isEditable = existing.TryGetProperty("isEditable", out var ed) && ed.GetBoolean(),
+                referenceNo = existing.TryGetProperty("referenceNo", out var rn) ? rn.GetString() : null
+              };
+              JsonSerializer.Serialize(writer, updated, _camelCase);
+            }
+            else if (editRequest.IsPrimary)
+            {
+              // Toggle other addresses to not primary when the edited address becomes primary
+              writer.WriteStartObject();
+              foreach (var prop in existing.EnumerateObject())
+              {
+                if (prop.NameEquals("isPrimary"))
+                  writer.WriteBoolean("isPrimary", false);
+                else
+                  prop.WriteTo(writer);
+              }
+              writer.WriteEndObject();
+            }
+            else
+            {
+              existing.WriteTo(writer);
+            }
+          }
+        }),
         cancellationToken);
+  }
 
-      logger.LogDebug("Invalidated ADDRESSINFO cache for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
-          profileId, PluginId, provider);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex, "Failed to invalidate ADDRESSINFO cache for ProfileId: {ProfileId}", profileId);
-      // Don't throw - cache invalidation failures shouldn't break the main operation
-    }
+  /// <summary>
+  /// Optimistically toggles isPrimary flags in the cached addresses array.
+  /// </summary>
+  private async Task UpdateAddressPrimaryCacheOptimistically(Guid addressId,
+    ProfileContext profileContext,
+    CancellationToken cancellationToken)
+  {
+    var targetId = addressId.ToString();
+
+    await PatchCachedProfileDataAsync(
+        profileContext.ProfileId, profileContext.Provider, "ADDRESSINFO",
+        root => RebuildWithArray(root, "addresses", (writer, arr) =>
+        {
+          foreach (var existing in arr.EnumerateArray())
+          {
+            var isTarget = existing.TryGetProperty("id", out var idProp) &&
+                           string.Equals(idProp.GetString(), targetId, StringComparison.OrdinalIgnoreCase);
+
+            writer.WriteStartObject();
+            foreach (var prop in existing.EnumerateObject())
+            {
+              if (prop.NameEquals("isPrimary"))
+                writer.WriteBoolean("isPrimary", isTarget);
+              else
+                prop.WriteTo(writer);
+            }
+            writer.WriteEndObject();
+          }
+        }),
+        cancellationToken);
   }
 }

@@ -40,7 +40,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     columns: [
       { key: 'referenceNo', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
       { key: 'submissionTime', label: 'Submitted', sortable: true, type: 'date', cssClass: 'submission-date-column' },
-      { key: 'projectName', label: 'Project Name', sortable: true, cssClass: 'project-name-column' },
+      { key: 'type', label: 'Submission Type', sortable: true, cssClass: 'submission-type-column' },
       { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' },
       { key: 'receivedTime', label: 'Received', sortable: true, type: 'date', cssClass: 'updated-on-column' }
     ],
@@ -70,26 +70,16 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('SubmissionsComponent ngOnInit called');
     if (this.pluginId && this.provider) {
       this.loadSubmissions();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('SubmissionsComponent ngOnChanges called:', changes);
-    
     const pluginIdChanged = changes['pluginId'] && !changes['pluginId'].firstChange;
     const providerChanged = changes['provider'] && !changes['provider'].firstChange;
     
     if (pluginIdChanged || providerChanged) {
-      console.log('SubmissionsComponent - Input changed, reloading submissions data:', {
-        pluginIdChanged,
-        providerChanged,
-        pluginId: this.pluginId,
-        provider: this.provider
-      });
-      
       if (this.pluginId && this.provider) {
         this.loadSubmissions();
       }
@@ -101,16 +91,10 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     this.error = null;
     this.submissionsData = [];
 
-    console.log('SubmissionsComponent - Loading submissions data for:', {
-      pluginId: this.pluginId,
-      provider: this.provider
-    });
-
     this.applicantInfoService.getSubmissionsInfo(this.pluginId, this.provider)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('SubmissionsComponent - Received submissions response:', response);
           this.linkSource = response.linkSource;
           // Set linkConfig on datatable so chevrons render as <a> tags
           if (this.linkSource) {
@@ -143,7 +127,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   onSubmissionClick(submission: SubmissionsData): void {
-    console.log('Clicked submission:', submission);
     if (this.linkSource && submission.linkId) {
       const url = `${this.linkSource}${submission.linkId}`;
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -165,7 +148,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
 
   sortSubmissions(column: string): void {
     // Implement sorting functionality
-    console.log('Sort by:', column);
     // Example sorting implementation:
     // this.submissions.sort((a, b) => {
     //   const aValue = a[column as keyof Submission];
@@ -176,7 +158,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
 
   // Datatable event handlers
   onSubmissionRowClick(event: DatatableRowClickEvent): void {
-    console.log('Clicked submission:', event.row);
     // TODO: Navigate to submission detail view
   }
 
@@ -187,7 +168,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   onSubmissionSort(event: DatatableSortEvent): void {
-    console.log('Submissions sorted by:', event.column, event.direction);
     // The datatable component now handles all sorting internally
     // This event is emitted for any additional logic you might need
   }

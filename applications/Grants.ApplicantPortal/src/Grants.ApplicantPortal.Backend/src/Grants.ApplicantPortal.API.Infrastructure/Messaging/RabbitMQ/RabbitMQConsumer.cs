@@ -64,11 +64,18 @@ public class RabbitMQConsumer : IDisposable
             // Declare queue if configured to do so
             if (_configuration.DeclareQueue)
             {
+                var queueArguments = new Dictionary<string, object>();
+                if (_configuration.UseQuorumQueues)
+                {
+                    queueArguments["x-queue-type"] = "quorum";
+                }
+
                 _channel.QueueDeclare(
                     queue: _configuration.DefaultQueue,
-                    durable: _configuration.QueueDurable,
+                    durable: _configuration.UseQuorumQueues || _configuration.QueueDurable,
                     exclusive: false,
-                    autoDelete: _configuration.QueueAutoDelete);
+                    autoDelete: _configuration.UseQuorumQueues ? false : _configuration.QueueAutoDelete,
+                    arguments: queueArguments);
 
                 // Bind queue to exchange with routing patterns
                 var routingKeys = new[] { "grants.*.#", "system.*.#" }; // Listen to all grants messages
