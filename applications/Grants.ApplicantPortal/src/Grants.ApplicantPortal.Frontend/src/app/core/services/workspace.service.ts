@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, of, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, of, map, filter, switchMap, distinctUntilChanged } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Plugin, PluginsResponse, Provider, ProvidersResponse, WorkspaceState } from '../../shared/models/workspace.interface';
+import { ApplicantInfoService } from './applicant-info.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,19 +11,32 @@ import { Plugin, PluginsResponse, Provider, ProvidersResponse, WorkspaceState } 
 export class WorkspaceService {
   private readonly apiUrl = environment.apiUrl;
   
+  private readonly defaultOrgState = {
+    hasMultipleOrgs: false,
+    applicantId: null as string | null,
+    orgNumber: '',
+    orgName: ''
+  };
+
   private workspaceState$ = new BehaviorSubject<WorkspaceState>({
     selectedWorkspace: null,
     selectedProvider: null,
     selectedProviderName: null,
     availableWorkspaces: [],
     isWorkspaceSelected: false,
-    isProviderSelected: false
+    isProviderSelected: false,
+    ...this.defaultOrgState
   });
 
   private changingWorkspace$ = new BehaviorSubject<boolean>(false);
   private workspaceProviderMemory = new Map<string, string>(); // workspace.pluginId -> last selected provider
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private applicantInfoService: ApplicantInfoService
+  ) {
+    this.setupOrgDataLoading();
+  }
 
   get currentWorkspaceState$(): Observable<WorkspaceState> {
     return this.workspaceState$.asObservable();
@@ -47,13 +61,59 @@ export class WorkspaceService {
   }
 
   /**
+   * Subscribe to workspace+provider changes and automatically load organization data.
+   * Stores hasMultipleOrgs, applicantId, orgNumber, orgName in the global state.
+   */
+  private setupOrgDataLoading(): void {
+    this.workspaceState$.pipe(
+      filter(state => state.isWorkspaceSelected && state.isProviderSelected
+        && !!state.selectedWorkspace && !!state.selectedProvider),
+      distinctUntilChanged((prev, curr) =>
+        prev.selectedWorkspace?.pluginId === curr.selectedWorkspace?.pluginId
+        && prev.selectedProvider === curr.selectedProvider),
+      switchMap(state =>
+        this.applicantInfoService.getOrganizationInfo(
+          state.selectedWorkspace!.pluginId,
+          state.selectedProvider!
+        ).pipe(
+          catchError(() => of({ organizationsData: [], organizationData: null }))
+        )
+      )
+    ).subscribe(result => {
+      const organizations = result.organizationsData ?? [];
+      const currentState = this.workspaceState$.value;
+
+      if (organizations.length > 1) {
+        this.workspaceState$.next({
+          ...currentState,
+          hasMultipleOrgs: true,
+          applicantId: null,
+          orgNumber: '',
+          orgName: ''
+        });
+      } else if (organizations.length === 1) {
+        const org = organizations[0];
+        this.workspaceState$.next({
+          ...currentState,
+          hasMultipleOrgs: false,
+          applicantId: org.id ?? null,
+          orgNumber: org.orgNumber ?? org.businessNumber ?? '',
+          orgName: org.orgName ?? org.legalName ?? ''
+        });
+      } else {
+        this.workspaceState$.next({
+          ...currentState,
+          ...this.defaultOrgState
+        });
+      }
+    });
+  }
+
+  /**
    * Fetch providers for a specific plugin from the API
    */
   getProviders(pluginId: string): Observable<ProvidersResponse> {
     return this.http.get<ProvidersResponse>(`${this.apiUrl}/Plugins/${pluginId}/providers`).pipe(
-      tap(response => {
-        console.log('WorkspaceService - Providers for', pluginId, ':', response);
-      }),
       catchError(error => {
         console.error('WorkspaceService - Error fetching providers for', pluginId, ':', error);
         return of({ pluginId, providers: [] });
@@ -67,8 +127,6 @@ export class WorkspaceService {
   getAvailableWorkspaces(): Observable<PluginsResponse> {
     return this.http.get<PluginsResponse>(`${this.apiUrl}/System/plugins`).pipe(
       tap(response => {
-        console.log('WorkspaceService - Available workspaces:', response);
-        
         const currentState = this.workspaceState$.value;
         this.workspaceState$.next({
           ...currentState,
@@ -89,8 +147,6 @@ export class WorkspaceService {
    * Select a workspace and optionally a provider
    */
   selectWorkspace(workspace: Plugin, provider?: string, providerName?: string): void {
-    console.log('WorkspaceService - Selecting workspace:', workspace.pluginId, 'provider:', provider, 'providerName:', providerName);
-    
     // Set loading state
     this.changingWorkspace$.next(true);
     
@@ -100,14 +156,12 @@ export class WorkspaceService {
       const rememberedProvider = this.workspaceProviderMemory.get(workspace.pluginId);
       if (rememberedProvider) {
         provider = rememberedProvider;
-        console.log('WorkspaceService - Using remembered provider:', provider);
       }
     }
     
     // Store the provider selection in memory for this workspace
     if (provider && workspace.pluginId) {
       this.workspaceProviderMemory.set(workspace.pluginId, provider);
-      console.log('WorkspaceService - Remembering provider selection:', { workspace: workspace.pluginId, provider });
     }
     
     const currentState = this.workspaceState$.value;
@@ -124,13 +178,11 @@ export class WorkspaceService {
       isProviderSelected: !!provider
     };
     
-    console.log('WorkspaceService - Updating state to:', newState);
     this.workspaceState$.next(newState);
 
     // Store in localStorage for persistence
     const selectionData = { workspace, provider, providerName: newState.selectedProviderName };
     localStorage.setItem('selectedWorkspace', JSON.stringify(selectionData));
-    console.log('WorkspaceService - Saved to localStorage:', selectionData);
 
     // Clear loading state after a short delay to allow components to refresh
     setTimeout(() => {
@@ -142,8 +194,6 @@ export class WorkspaceService {
    * Select a workspace with full provider details (id + name)
    */
   selectWorkspaceWithProviderDetails(workspace: Plugin, provider: Provider): void {
-    console.log('WorkspaceService - Selecting workspace with provider details:', workspace.pluginId, provider);
-    
     this.changingWorkspace$.next(true);
     
     if (provider && workspace.pluginId) {
@@ -164,7 +214,6 @@ export class WorkspaceService {
 
     const selectionData = { workspace, provider: provider.id, providerName: provider.name };
     localStorage.setItem('selectedWorkspace', JSON.stringify(selectionData));
-    console.log('WorkspaceService - Saved to localStorage:', selectionData);
 
     setTimeout(() => {
       this.changingWorkspace$.next(false);
@@ -175,8 +224,6 @@ export class WorkspaceService {
    * Clear workspace selection (for logout)
    */
   clearWorkspace(): void {
-    console.log('WorkspaceService - Clearing workspace selection');
-    
     this.changingWorkspace$.next(false);
     this.workspaceState$.next({
       selectedWorkspace: null,
@@ -184,7 +231,8 @@ export class WorkspaceService {
       selectedProviderName: null,
       availableWorkspaces: [],
       isWorkspaceSelected: false,
-      isProviderSelected: false
+      isProviderSelected: false,
+      ...this.defaultOrgState
     });
 
     localStorage.removeItem('selectedWorkspace');
@@ -194,8 +242,6 @@ export class WorkspaceService {
    * Clear only the workspace/provider selection but keep available workspaces (for switching)
    */
   clearSelection(): void {
-    console.log('WorkspaceService - Clearing workspace selection (keeping available workspaces)');
-    
     this.changingWorkspace$.next(false);
     const currentState = this.workspaceState$.value;
     this.workspaceState$.next({
@@ -204,7 +250,8 @@ export class WorkspaceService {
       selectedProviderName: null,
       availableWorkspaces: currentState.availableWorkspaces,
       isWorkspaceSelected: false,
-      isProviderSelected: false
+      isProviderSelected: false,
+      ...this.defaultOrgState
     });
 
     localStorage.removeItem('selectedWorkspace');
@@ -223,12 +270,10 @@ export class WorkspaceService {
         const provider = parsed.provider;
         
         const providerName = parsed.providerName;
-        console.log('WorkspaceService - Restored workspace from storage:', workspace?.pluginId, 'provider:', provider, 'providerName:', providerName);
         
         // Restore provider memory if available
         if (workspace?.pluginId && provider) {
           this.workspaceProviderMemory.set(workspace.pluginId, provider);
-          console.log('WorkspaceService - Restored provider memory:', { workspace: workspace.pluginId, provider });
         }
         
         const currentState = this.workspaceState$.value;
@@ -291,15 +336,12 @@ export class WorkspaceService {
           // because provider lists are now fetched from the API.
           if (provider) {
             const providerName = parsed.providerName;
-            console.log('WorkspaceService - Restored saved workspace and provider, providerName:', providerName);
             this.selectWorkspace(matchingWorkspace, provider, providerName);
           } else {
-            console.log('WorkspaceService - Restored workspace without provider');
             this.selectWorkspace(matchingWorkspace);
           }
           return;
         } else {
-          console.log('WorkspaceService - Saved workspace no longer available');
           localStorage.removeItem('selectedWorkspace');
         }
       } catch (error) {
@@ -312,7 +354,7 @@ export class WorkspaceService {
     // Provider counts are no longer available on the Plugin object;
     // components fetch providers from the API and handle selection.
     if (plugins.length === 1) {
-      console.log('WorkspaceService - Single workspace available; component will handle provider selection');
+      // Single workspace available; component will handle provider selection
     }
   }
 

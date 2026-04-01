@@ -564,7 +564,6 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   private handleWorkspaceState(state: WorkspaceState): void {
     // If workspace and provider already selected, navigate away
     if (state.isWorkspaceSelected && state.isProviderSelected && state.selectedWorkspace) {
-      console.log('Workspace and provider already selected, navigating to app');
       this.router.navigate(['/applicant-info']);
       return;
     }
@@ -596,17 +595,11 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     
     this.showSelectedWorkspace = isWorkspaceSelected && isProviderSelected;
     this.showProviderSelection = isWorkspaceSelected && !isProviderSelected && !!this.selectedWorkspaceForProvider;
-    
-    console.log('Show workspace selection:', this.showWorkspaceSelection);
-    console.log('Show selected workspace:', this.showSelectedWorkspace);
-    console.log('Show provider selection:', this.showProviderSelection);
   }
 
   private autoSelectSingleWorkspace(workspace: Plugin): void {
     this.isAutoSelecting = true;
     this.autoSelectingWorkspace = workspace;
-    
-    console.log('Auto-selecting single workspace:', workspace);
     
     // Fetch providers from API then decide
     timer(800).pipe(
@@ -638,8 +631,6 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     this.isAutoSelecting = true;
     this.autoSelectingWorkspace = workspace;
     
-    console.log('Auto-selecting single workspace, fetching providers from API:', workspace);
-    
     timer(800).pipe(
       takeUntil(this.destroy$),
       switchMap(() => this.workspaceService.getProviders(workspace.pluginId))
@@ -667,8 +658,6 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   }
 
   onWorkspaceClick(workspace: Plugin): void {
-    console.log('Workspace clicked:', workspace);
-    
     // Fetch providers from the API
     this.selectedWorkspaceForProvider = workspace;
     this.showWorkspaceSelection = false;
@@ -702,7 +691,6 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   }
 
   selectWorkspace(workspace: Plugin): void {
-    console.log('WorkspaceSelectorComponent - Workspace selected:', workspace);
     this.workspaceService.selectWorkspace(workspace);
     
     // Navigate to the main application
@@ -710,7 +698,6 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   }
 
   selectWorkspaceWithProvider(workspace: Plugin, provider: string): void {
-    console.log('Selecting workspace with provider:', workspace, provider);
     this.workspaceService.selectWorkspace(workspace, provider);
     
     // Navigate to the main application
@@ -732,7 +719,6 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   }
 
   selectWorkspaceWithProviderDetails(workspace: Plugin, provider: Provider): void {
-    console.log('Selecting workspace with provider details:', workspace, provider);
     this.workspaceService.selectWorkspaceWithProviderDetails(workspace, provider);
     this.router.navigate(['/applicant-info']);
   }

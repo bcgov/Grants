@@ -30,10 +30,11 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   pluginId: string = '';
   provider: string = '';
   
-  // Organization header info
+  // Organization header info (driven by global workspace state)
   orgNumber: string = '';
   orgName: string = '';
   hasMultipleOrgs: boolean = false;
+  applicantId: string | null = null;
 
   // Cleanup subject
   private readonly destroy$ = new Subject<void>();
@@ -57,6 +58,12 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
         if (state.selectedWorkspace && state.selectedProvider) {
           this.pluginId = state.selectedWorkspace.pluginId;
           this.provider = state.selectedProvider;
+
+          // Read org state from centralized workspace state
+          this.hasMultipleOrgs = state.hasMultipleOrgs;
+          this.applicantId = state.applicantId;
+          this.orgNumber = state.orgNumber;
+          this.orgName = state.orgName;
         }
       });
   }
@@ -66,9 +73,15 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /** Still accept org events from the organization child for backward compat / initial load */
   onOrganizationLoaded(info: { orgNumber: string; orgName: string } | null): void {
-    this.orgNumber = info?.orgNumber ?? '';
-    this.orgName = info?.orgName ?? '';
+    if (info) {
+      this.orgNumber = info.orgNumber;
+      this.orgName = info.orgName;
+    } else {
+      this.orgNumber = '';
+      this.orgName = '';
+    }
   }
 
   onMultipleOrganizationsDetected(hasMultiple: boolean): void {

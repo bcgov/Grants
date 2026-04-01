@@ -20,7 +20,6 @@ export class UserDropdownComponent {
 
   onLogout(event: Event): void {
     event.preventDefault();
-    console.log('User dropdown logout clicked');
     this.logoutEvent.emit(event);
   }
 }

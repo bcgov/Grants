@@ -45,6 +45,9 @@ public class CreateContactValidator : Validator<CreateContactRequest>
       .MaximumLength(200)
       .When(x => !string.IsNullOrEmpty(x.Title));
 
+    RuleFor(x => x.ApplicantId)
+      .NotEmpty();      
+
     RuleFor(x => x.PluginId)
       .NotEmpty()
       .WithMessage("PluginId is required.")

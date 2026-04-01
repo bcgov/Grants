@@ -94,12 +94,9 @@ export class AuthInterceptor implements HttpInterceptor {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
 
-      console.log('401 error detected, attempting token refresh');
-      
       return this.oidcSecurityService.forceRefreshSession().pipe(
         switchMap((result) => {
           this.isRefreshing = false;
-          console.log('Token refresh result:', result);
           
           if (result.isAuthenticated && result.accessToken) {
             this.refreshTokenSubject.next(result.accessToken);
@@ -118,7 +115,6 @@ export class AuthInterceptor implements HttpInterceptor {
             );
           } else {
             // Refresh failed, redirect to login
-            console.log('Token refresh failed, redirecting to login');
             this.safeRedirectToLogin();
             return throwError(() => new Error('Token refresh failed'));
           }

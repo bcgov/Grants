@@ -8,8 +8,10 @@ public class SetAsPrimaryContactRequest
             .Replace("{PluginId}", pluginId)
             .Replace("{Provider}", provider);
 
+  public Guid ApplicantId { get; set; }
+
   // Route parameters
   public Guid ContactId { get; set; }
   public string PluginId { get; set; } = string.Empty;
-  public string Provider { get; set; } = string.Empty;
+  public string Provider { get; set; } = string.Empty;  
 }

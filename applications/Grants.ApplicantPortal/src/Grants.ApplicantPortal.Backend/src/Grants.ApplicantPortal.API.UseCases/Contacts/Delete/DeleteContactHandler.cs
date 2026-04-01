@@ -24,6 +24,7 @@ public class DeleteContactHandler(
 
       var result = await contactManagementService.DeleteContactAsync(
         request.ContactId,
+        request.ApplicantId,
         profileContext,
         cancellationToken);
 

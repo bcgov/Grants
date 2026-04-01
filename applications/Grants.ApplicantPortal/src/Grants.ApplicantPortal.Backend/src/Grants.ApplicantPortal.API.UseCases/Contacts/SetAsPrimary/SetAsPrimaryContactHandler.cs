@@ -24,6 +24,7 @@ public class SetAsPrimaryContactHandler(
 
       var result = await contactManagementService.SetAsPrimaryContactAsync(
         request.ContactId,
+        request.ApplicantId,
         profileContext,
         cancellationToken);
 

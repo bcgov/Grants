@@ -204,7 +204,7 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
       "name": "Andre Goncalves",
       "email": "andre@example.com",
       "title": "Program Director",
-      "contactType": "ApplicantProfile",
+      "contactType": "Applicant",
       "homePhoneNumber": null,
       "mobilePhoneNumber": "555 987-6543",
       "workPhoneNumber": "555 864-2100",
@@ -238,7 +238,7 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
       "name": "Alex Johnson Updated",
       "email": "alex.johnson.updated@unity.gov",
       "title": "Senior Program Director",
-      "contactType": "ApplicantProfile",
+      "contactType": "Applicant",
       "homePhoneNumber": "555 123-4567",
       "mobilePhoneNumber": "555 987-6543",
       "workPhoneNumber": "555 864-2100",
@@ -688,7 +688,7 @@ The UNITY plugin uses an **optimistic cache update** pattern for all write opera
 | **Contact Create** | Appends new contact to `contacts` array | If `isPrimary: true`, clears `isPrimary` on all existing contacts |
 | **Contact Edit** | Replaces matching contact in `contacts` array | If `isPrimary: true`, clears `isPrimary` on all other contacts |
 | **Contact SetPrimary** | Toggles `isPrimary` on all contacts | Target gets `true`, all others get `false` |
-| **Contact Delete** | Removes contact from `contacts` array | If deleted contact was primary, auto-promotes first remaining contact |
+| **Contact Delete** | Removes contact from `contacts` array | If deleted contact was primary, auto-promotes the most recently created remaining contact (by `creationTime`; falls back to first remaining if none have a `creationTime`) |
 | **Address Edit** | Replaces matching address in `addresses` array | If `isPrimary: true`, clears `isPrimary` on all other addresses |
 | **Address SetPrimary** | Toggles `isPrimary` on all addresses | Target gets `true`, all others get `false` |
 | **Organization Edit** | Patches `OrganizationInfo` object | — |

@@ -152,7 +152,7 @@
                     } @else if (isActionsDisabled(row)) {
                       <span
                         class="d-inline-block text-muted"
-                        [title]="config.disabledActionsTooltip ?? ''"
+                        [title]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
                       >
                         <i class="fas fa-ellipsis-v"></i>
                       </span>

@@ -77,7 +77,6 @@ export class LogoutComponent implements OnInit {
       try {
         localStorage.clear();
         sessionStorage.clear();
-        console.log('Storage cleared during logout');
       } catch (error) {
         console.warn('Error clearing storage during logout:', error);
       }

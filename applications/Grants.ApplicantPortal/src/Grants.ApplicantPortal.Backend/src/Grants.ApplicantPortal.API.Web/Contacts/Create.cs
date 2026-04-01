@@ -51,7 +51,7 @@ public class Create(IMediator _mediator)
 
     var command = new CreateContactCommand(
       request.Name!,
-      "ApplicantProfile",
+      "Applicant",
       request.IsPrimary,
       request.Title,
       request.Email,
@@ -63,6 +63,7 @@ public class Create(IMediator _mediator)
       profileId,
       request.PluginId,
       request.Provider,
+      request.ApplicantId,
       profile.Subject);
 
     var result = await _mediator.Send(command, ct);

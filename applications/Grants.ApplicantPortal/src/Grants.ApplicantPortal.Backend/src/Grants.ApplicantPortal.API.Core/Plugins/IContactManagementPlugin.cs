@@ -36,11 +36,13 @@ public interface IContactManagementPlugin
   /// Sets a contact as the primary contact in the external system
   /// </summary>
   /// <param name="contactId">Contact ID to set as primary</param>
+  /// <param name="applicantId">Applicant ID associated with the contact</param>
   /// <param name="profileContext">Profile context information</param>
   /// <param name="cancellationToken">Cancellation token</param>
   /// <returns>Result indicating success or failure</returns>
   Task<Result> SetAsPrimaryContactAsync(
     Guid contactId,
+    Guid applicantId,
     ProfileContext profileContext,
     CancellationToken cancellationToken = default);
 
@@ -48,11 +50,13 @@ public interface IContactManagementPlugin
   /// Deletes a contact from the external system
   /// </summary>
   /// <param name="contactId">Contact ID to delete</param>
+  /// <param name="applicantId">Applicant ID associated with the contact</param>
   /// <param name="profileContext">Profile context information</param>
   /// <param name="cancellationToken">Cancellation token</param>
   /// <returns>Result indicating success or failure</returns>
   Task<Result> DeleteContactAsync(
     Guid contactId,
+    Guid applicantId,
     ProfileContext profileContext,
     CancellationToken cancellationToken = default);
 }
