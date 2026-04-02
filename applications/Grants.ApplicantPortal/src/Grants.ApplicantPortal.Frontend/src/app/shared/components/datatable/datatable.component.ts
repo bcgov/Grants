@@ -231,7 +231,17 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Use displayField for text, or fall back to the column's field
     const displayField = this.config.badgeConfig.displayField || column.key;
-    return this.getNestedProperty(row, displayField) || '';
+    const value = this.getNestedProperty(row, displayField) || '';
+    return this.toPascalCase(value);
+  }
+
+  private toPascalCase(value: string): string {
+    if (!value) return value;
+    return value
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/[\s_-]+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
 
   closeDropdown(dropdownToggle: any): void {
