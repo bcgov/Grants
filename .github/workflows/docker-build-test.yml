@@ -159,12 +159,12 @@ jobs:
         echo "$JFROG_PASSWORD" | docker login -u "$JFROG_USERNAME" --password-stdin $JFROG_SERVICE
     - name: Push application images to Artifactory container registry
       run: |
-        docker tag grants-applicant-portal-backend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend
-        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend
-        docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend
-        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend
-        docker tag test-applicantportal-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/test-applicantportal-dbmigrator
-        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/test-applicantportal-dbmigrator
+        docker tag grants-applicant-portal-backend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend:latest
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend:latest
+        docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend:latest
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend:latest
+        docker tag test-applicantportal-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/test-applicantportal-dbmigrator:latest
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/test-applicantportal-dbmigrator:latest
     - name: Disconnect docker from JFrog Artifactory
       run: |
         docker logout
