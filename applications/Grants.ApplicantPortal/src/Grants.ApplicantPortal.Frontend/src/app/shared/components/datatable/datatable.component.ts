@@ -244,8 +244,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   private toDisplayLabel(value: string): string {
     if (!value) return value;
     return value
-      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .replaceAll(/(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/g, ' ')
       .split(/[\s_-]+/)
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
