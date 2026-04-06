@@ -232,6 +232,12 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     // Use displayField for text, or fall back to the column's field
     const displayField = this.config.badgeConfig.displayField || column.key;
     const value = this.getNestedProperty(row, displayField) || '';
+
+    // Check for display label override
+    if (this.config.badgeConfig.displayLabels?.[value]) {
+      return this.config.badgeConfig.displayLabels[value];
+    }
+
     return this.toPascalCase(value);
   }
 
