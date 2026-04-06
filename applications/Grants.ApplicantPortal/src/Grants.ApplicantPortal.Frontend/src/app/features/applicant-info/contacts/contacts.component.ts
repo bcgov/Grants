@@ -50,6 +50,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   @Input() provider!: string;
   @Input() key!: string;
   @Input() hasMultipleOrgs: boolean = false;
+  @Input() isSingleOrg: boolean = false;
   @Input() applicantId: string | null = null;
 
   private readonly destroy$ = new Subject<void>();
