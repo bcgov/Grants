@@ -174,7 +174,7 @@
     color: #ffffff;
 
     // Status variations - using CSS custom properties for efficiency
-    &.status-submitted, &.status-unknown { background-color: #013366; }
+    &.status-submitted { background-color: #013366; }
     &.status-assigned, &.status-approved { background-color: #42814A; }
     &.status-under-initial-review { background-color: #013366; }
     &.status-initial-review-completed, &.status-assessment-completed { background-color: #42814A; }

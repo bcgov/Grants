@@ -238,15 +238,16 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       return this.config.badgeConfig.displayLabels[value];
     }
 
-    return this.toPascalCase(value);
+    return this.toDisplayLabel(value);
   }
 
-  private toPascalCase(value: string): string {
+  private toDisplayLabel(value: string): string {
     if (!value) return value;
     return value
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
       .split(/[\s_-]+/)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
 
