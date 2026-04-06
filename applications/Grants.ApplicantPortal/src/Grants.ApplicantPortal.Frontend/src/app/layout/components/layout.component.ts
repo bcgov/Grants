@@ -24,6 +24,7 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
 export class LayoutComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
+  sidebarCollapsed = false;
 
   constructor(
     private readonly applicantService: ApplicantService,

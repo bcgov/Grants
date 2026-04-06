@@ -6,7 +6,8 @@
     data-bs-toggle="dropdown"
     aria-expanded="false"
   >
-    <i [ngClass]="iconClass"></i>
+    <img *ngIf="iconSrc" [src]="iconSrc" alt="Profile" class="profile-icon" />
+    <i *ngIf="!iconSrc" [ngClass]="iconClass"></i>
   </button>
   <ul
     class="dropdown-menu"

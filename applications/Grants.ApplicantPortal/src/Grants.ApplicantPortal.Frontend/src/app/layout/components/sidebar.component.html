@@ -18,30 +18,38 @@
       routerLink="/app/applicant-info"
       routerLinkActive="active"
       class="nav-item"
+      [attr.title]="collapsed ? 'Applicant Info' : null"
       (click)="onMenuItemClick()"
     >
-      <i class="fa-regular fa-file-lines nav-icon"></i>
-      Applicant Info
+      <img src="images/icons/proicons_document.svg" alt="" class="nav-icon" />
+      <span class="nav-label">Applicant Info</span>
     </a>
     <a
       id="nav-payments"
       routerLink="/app/payments"
       routerLinkActive="active"
       class="nav-item"
+      [attr.title]="collapsed ? 'Payments' : null"
       (click)="onMenuItemClick()"
     >
-      <i class="fa-regular fa-credit-card nav-icon"></i>
-      Payments
+      <img src="images/icons/fluent_payment-32-regular.svg" alt="" class="nav-icon" />
+      <span class="nav-label">Payments</span>
     </a>
   </nav>
-  <div class="sidebar-footer">
-    <div class="funding-info">
-      <i class="fa-regular fa-file info-icon"></i>
-      <div>
-        <div class="funding-title">Economic Development</div>
-        <div class="funding-subtitle">Funding & Grants</div>
-      </div>
+  <a class="funding-info" href="https://www2.gov.bc.ca/gov/content/employment-business/economic-development/funding-and-grants" target="_blank" rel="noopener noreferrer"
+    [attr.title]="collapsed ? 'Economic Development funding & grants' : null">
+    <img src="images/icons/material-symbols_info-outline.svg" alt="" class="info-icon" />
+    <div class="nav-label">
+      <div>Economic Development</div>
+      <div>funding & grants</div>
     </div>
-    <div class="version">v1.0</div>
+  </a>
+  <div class="sidebar-footer">
+    <div class="version">
+      <span class="nav-label">v1.0</span>
+      <button class="collapse-btn d-none d-lg-flex" (click)="toggleCollapse()" [attr.title]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+        <img src="images/icons/uiw_d-arrow-left.svg" alt="" class="collapse-arrow" [class.rotated]="collapsed" />
+      </button>
+    </div>
   </div>
 </aside>

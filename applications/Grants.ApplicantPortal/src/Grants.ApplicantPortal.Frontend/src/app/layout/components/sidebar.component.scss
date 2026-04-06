@@ -6,6 +6,8 @@
   height: 75px;
   border-bottom: 1px solid var(--bc-blue-80);
   padding: 1rem;
+  transition: padding 0.3s ease;
+  overflow: hidden;
 
   // Hide logo section on mobile devices
   @media (max-width: 912px) {
@@ -61,8 +63,8 @@ aside {
 }
 
 .nav-menu {
-  flex: 1;
   padding: 1rem 0;
+  border-bottom: 1px solid var(--bc-blue-80);
 }
 
 .nav-item {
@@ -72,18 +74,18 @@ aside {
   padding: 0.5rem 1.5rem;
   color: var(--bc-white);
   text-decoration: none;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, padding 0.3s ease, gap 0.3s ease;
 }
 
 .nav-item .nav-icon {
-  font-size: var(--bc-font-size-20);
   width: 20px;
-  text-align: center;
+  height: 20px;
 }
 
 .info-icon {
-  font-size: var(--bc-font-size-16);
-  margin-right: 0.5rem;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .nav-item:hover {
@@ -95,37 +97,32 @@ aside {
 }
 
 .sidebar-footer {
-  padding: 1rem;
-  border-top: 1px solid var(--bc-blue-80);
+  padding: 0 1rem 0.5rem;
+  border-top: none;
   color: var(--bc-white);
-  margin-top: auto; // Push footer to the bottom
+  margin-top: auto;
 }
 
 .funding-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-}
-
-.funding-info i {
-  font-size: var(--bc-font-size-16);
-  color: var(--bc-gold);
-}
-
-.funding-title {
-  font-size: var(--bc-font-size-14);
-  font-weight: 600;
+  padding: 0.75rem 1.5rem;
   color: var(--bc-white);
-  margin-bottom: 0.25rem;
-}
-
-.funding-subtitle {
+  text-decoration: none;
   font-size: var(--bc-font-size-14);
-  color: var(--bc-white);
+  cursor: pointer;
+  transition: padding 0.3s ease, gap 0.3s ease;
+
+  &:hover {
+    color: var(--bc-white);
+    text-decoration: none;
+  }
+
+  i {
+    font-size: var(--bc-font-size-16);
+    color: var(--bc-white);
+  }
 }
 
 .version {
@@ -133,6 +130,82 @@ aside {
   color: var(--bc-gray);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
   padding: 0.5rem 0;
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.collapse-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+
+  &.rotated {
+    transform: rotate(180deg);
+  }
+}
+
+// Text labels - hidden when collapsed
+.nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+// Collapsed state
+:host.collapsed {
+  .logo-section {
+    justify-content: center;
+    padding: 1rem 0.5rem;
+
+    .system-title {
+      display: none;
+    }
+  }
+
+  .bc-logo {
+    max-width: 40px;
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding: 0.75rem;
+    gap: 0;
+  }
+
+  .funding-info {
+    justify-content: center;
+    padding: 0.75rem;
+    gap: 0;
+  }
+
+  .nav-label {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-footer {
+    padding: 0 0.5rem 0.5rem;
+  }
+
+  .version {
+    justify-content: center;
+  }
 }
