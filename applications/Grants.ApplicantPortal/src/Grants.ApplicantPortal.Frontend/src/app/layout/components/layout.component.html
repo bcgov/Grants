@@ -32,7 +32,7 @@
           dropdownId="mobileUserDropdown"
           buttonClass="btn btn-outline-light dropdown-toggle"
           dropdownClass="mobile-dropdown"
-          iconClass="fa-regular fa-circle-user fa-xl"
+          iconSrc="images/icons/gg_profile.svg"
           (logoutEvent)="onMobileLogout($event)"
         >
         </app-user-dropdown>
@@ -49,7 +49,8 @@
 
     <!-- Sidebar Column -->
     <div
-      class="col-lg-2 sidebar-column"
+      class="sidebar-column"
+      [class.sidebar-collapsed]="sidebarCollapsed"
       [class.mobile-open]="sidebarOpen"
       [class.d-none]="!sidebarOpen"
       [class.d-lg-block]="true"
@@ -59,12 +60,12 @@
         <button id="mobile-close-btn" class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
           <i class="fa-solid fa-times"></i>
         </button>
-        <app-sidebar (menuItemClicked)="closeSidebar()"></app-sidebar>
+        <app-sidebar [collapsed]="sidebarCollapsed" (collapsedChange)="sidebarCollapsed = $event" (menuItemClicked)="closeSidebar()"></app-sidebar>
       </div>
     </div>
 
     <!-- Main Content Column -->
-    <div class="col-lg-10 main-content-column">
+    <div class="main-content-column" [class.sidebar-collapsed]="sidebarCollapsed">
       <div class="main-content-container">
         <!-- Header Section -->
         <header class="main-header">

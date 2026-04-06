@@ -14,6 +14,8 @@ export class UserDropdownComponent {
   @Input() dropdownClass: string = '';
   @Input() menuClass: string = 'dropdown-menu-end';
   @Input() iconClass: string = 'fa-regular fa-circle-user fa-2xl';
+  @Input() iconSrc: string = '';
+  @Input() ariaLabel: string = 'User menu';
   @Input() showLogout: boolean = true;
 
   @Output() logoutEvent = new EventEmitter<Event>();
