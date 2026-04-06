@@ -47,7 +47,7 @@
   <div class="sidebar-footer">
     <div class="version">
       <span class="nav-label">v1.0</span>
-      <button class="collapse-btn d-none d-lg-flex" (click)="toggleCollapse()" [attr.title]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+      <button type="button" class="collapse-btn d-none d-lg-flex" (click)="toggleCollapse()" [attr.aria-label]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
         <img src="images/icons/uiw_d-arrow-left.svg" alt="" class="collapse-arrow" [class.rotated]="collapsed" />
       </button>
     </div>
