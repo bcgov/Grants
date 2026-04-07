@@ -13,6 +13,7 @@ export interface DatatableBadgeConfig {
   displayField?: string; // Optional field used for display text (defaults to field)
   badgeClassPrefix: string;
   badgeClasses: { [key: string]: string };
+  displayLabels?: { [key: string]: string }; // Optional display text overrides per value
   fallbackClass?: string; // Optional fallback class for unknown badge values
 }
 
