@@ -48,7 +48,7 @@ public partial class UnityPlugin(
     /// <summary>
     /// Represents a tenant returned by the Unity tenants API.
     /// </summary>
-    private record UnityTenantDto(string TenantId, string TenantName);
+    private record UnityTenantDto(string TenantId, string TenantName, Dictionary<string, string> Metadata);
 
     /// <summary>
     /// Fetches available providers (tenants) from the Unity external API.
@@ -87,7 +87,7 @@ public partial class UnityPlugin(
                 }
 
                 return response.Data?
-                    .Select(t => new ProviderInfo(t.TenantId, t.TenantName))
+                    .Select(t => new ProviderInfo(t.TenantId, t.TenantName, t.Metadata))
                     .ToList() ?? [];
             },
             shouldCache: providers => providers.Count > 0,

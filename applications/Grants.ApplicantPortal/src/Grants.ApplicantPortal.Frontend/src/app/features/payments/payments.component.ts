@@ -29,6 +29,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   orgNumber: string = '';
   orgName: string = '';
   hasMultipleOrgs: boolean = false;
+  tenantEmail: string | null = null;
 
   paymentsTableConfig: DatatableConfig = {
     tableId: 'payments-table',
@@ -81,6 +82,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         this.hasMultipleOrgs = state.hasMultipleOrgs;
         this.orgNumber = state.orgNumber;
         this.orgName = state.orgName;
+        this.tenantEmail = state.tenantEmail;
 
         if (state.selectedWorkspace && state.selectedProvider) {
           const pluginId = state.selectedWorkspace.pluginId;

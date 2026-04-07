@@ -28,7 +28,7 @@ Complete reference for all REST endpoints in the Grants Applicant Portal API. Al
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/Plugins/{PluginId}/providers` | ✅ | Returns available providers for a plugin. For UNITY this calls the upstream tenants API; for DEMO it returns hardcoded programs. |
+| GET | `/Plugins/{PluginId}/providers` | ✅ | Returns available providers for a plugin. For UNITY this calls the upstream tenants API; for DEMO it returns hardcoded programs. Each provider includes an `id`, `name`, and optional `metaData` dictionary. |
 
 ---
 

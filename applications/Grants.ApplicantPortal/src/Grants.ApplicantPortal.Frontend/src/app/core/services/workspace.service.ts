@@ -15,7 +15,8 @@ export class WorkspaceService {
     hasMultipleOrgs: false,
     applicantId: null,
     orgNumber: '',
-    orgName: ''
+    orgName: '',
+    tenantEmail: null
   };
 
   private workspaceState$ = new BehaviorSubject<WorkspaceState>({
@@ -107,6 +108,17 @@ export class WorkspaceService {
           ...this.defaultOrgState
         });
       }
+    });
+  }
+
+  /**
+   * Update the tenant email address from provider metadata
+   */
+  setTenantEmail(email: string | null): void {
+    const currentState = this.workspaceState$.value;
+    this.workspaceState$.next({
+      ...currentState,
+      tenantEmail: email
     });
   }
 

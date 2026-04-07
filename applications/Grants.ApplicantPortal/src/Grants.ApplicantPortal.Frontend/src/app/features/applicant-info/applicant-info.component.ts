@@ -36,6 +36,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   hasMultipleOrgs: boolean = false;
   isSingleOrg: boolean = false;
   applicantId: string | null = null;
+  tenantEmail: string | null = null;
 
   // Cleanup subject
   private readonly destroy$ = new Subject<void>();
@@ -66,6 +67,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
           this.applicantId = state.applicantId;
           this.orgNumber = state.orgNumber;
           this.orgName = state.orgName;
+          this.tenantEmail = state.tenantEmail;
         }
       });
   }

@@ -1,6 +1,7 @@
 export interface Provider {
   id: string;
   name: string;
+  metaData?: Record<string, string> | null;
 }
 
 export interface ProvidersResponse {
@@ -35,4 +36,5 @@ export interface WorkspaceState {
   applicantId: string | null;
   orgNumber: string;
   orgName: string;
+  tenantEmail: string | null;
 }

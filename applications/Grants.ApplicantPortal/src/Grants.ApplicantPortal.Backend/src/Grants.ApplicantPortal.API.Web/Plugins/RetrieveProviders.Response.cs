@@ -7,5 +7,6 @@ public record RetrieveProvidersResponse(
 
 public record ProviderDto(
     string Id,
-    string Name
+    string Name,
+    Dictionary<string, string> metaData
 );

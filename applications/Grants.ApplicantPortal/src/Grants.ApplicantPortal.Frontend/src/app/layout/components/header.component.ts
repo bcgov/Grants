@@ -80,6 +80,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.currentProviders = response.providers;
           this.isLoadingProviders = false;
+          this.updateTenantEmail();
         },
         error: () => {
           this.currentProviders = [];
@@ -137,6 +138,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.selectedWorkspace && provider.id !== this.selectedProvider) {
       this.isChangingWorkspace = true;
       this.workspaceService.selectWorkspaceWithProviderDetails(this.selectedWorkspace, provider);
+      this.workspaceService.setTenantEmail(provider.metaData?.['DefaultFromAddress'] ?? null);
       
       setTimeout(() => {
         this.isChangingWorkspace = false;
@@ -160,6 +162,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isChangingWorkspace = false;
       }, 500);
     }
+  }
+
+  private updateTenantEmail(): void {
+    const currentProvider = this.currentProviders.find(p => p.id === this.selectedProvider);
+    this.workspaceService.setTenantEmail(currentProvider?.metaData?.['DefaultFromAddress'] ?? null);
   }
 
   private clearSession(): void {
