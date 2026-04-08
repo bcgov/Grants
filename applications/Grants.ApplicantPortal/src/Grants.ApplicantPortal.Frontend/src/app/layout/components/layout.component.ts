@@ -27,7 +27,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
 
   private readonly lgBreakpoint = 992;
-  private resizeListener = () => this.onResize();
 
   constructor(
     private readonly applicantService: ApplicantService,
@@ -36,7 +35,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    window.addEventListener('resize', this.resizeListener);
     this.applicantService
       .getApplicantInfo()
       .subscribe((data: ApplicantInfo) => {
@@ -44,11 +42,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    window.removeEventListener('resize', this.resizeListener);
-  }
+  ngOnDestroy(): void {}
 
-  private onResize(): void {
+  @HostListener('window:resize')
+  onResize(): void {
     if (window.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
       this.sidebarCollapsed = false;
     }
