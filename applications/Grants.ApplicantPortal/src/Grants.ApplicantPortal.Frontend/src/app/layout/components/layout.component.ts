@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
@@ -21,7 +21,7 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss'],
 })
-export class LayoutComponent implements OnInit, OnDestroy {
+export class LayoutComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
   sidebarCollapsed = false;
@@ -41,8 +41,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
         this.applicantInfo = data;
       });
   }
-
-  ngOnDestroy(): void {}
 
   @HostListener('window:resize')
   onResize(): void {
