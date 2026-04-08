@@ -12,4 +12,5 @@ export class OrgHeaderComponent {
   @Input() orgNumber: string = '';
   @Input() orgName: string = '';
   @Input() hasMultipleOrgs: boolean = false;
+  @Input() tenantEmail: string | null = null;
 }

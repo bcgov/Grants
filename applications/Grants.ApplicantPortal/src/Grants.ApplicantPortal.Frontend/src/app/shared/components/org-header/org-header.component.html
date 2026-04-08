@@ -1,8 +1,12 @@
 <div class="app-info">
   @if (hasMultipleOrgs) {
-    <span class="app-warning">
-      <i class="fas fa-exclamation-triangle me-1" aria-hidden="true"></i>
-      Multiple organization records found — please contact support to consolidate.
+    <span class="alert-block alert-warning">
+      <img src="images/icons/warning.svg" class="alert-icon" alt="" aria-hidden="true">
+      @if (tenantEmail) {
+        This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator at {{ tenantEmail }}.
+      } @else {
+        This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator.
+      }
     </span>
   } @else if (orgNumber || orgName) {
     <span id="applicant-id" class="app-id">{{ orgNumber }}</span>

@@ -184,6 +184,44 @@ h3 {
   }
 }
 
+/* ===================================
+   Alert / Notification Pattern
+   Reusable for inline warning blocks,
+   toasts, and any status messaging.
+   =================================== */
+.alert-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: var(--bc-font-size-14);
+  line-height: 1.5;
+  color: var(--bc-primary);
+
+  .alert-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.alert-warning {
+    border-color: var(--bc-bg-warning);
+    background-color: var(--bc-surface-warning);
+  }
+
+  &.alert-error {
+    border-color: var(--bc-bg-error);
+    background-color: var(--bc-surface-error);
+  }
+
+  &.alert-success {
+    border-color: var(--bc-bg-success);
+    background-color: var(--bc-surface-success);
+  }
+}
+
 /* Badge Base Pattern */
 .base-badge {
   display: inline-block;
