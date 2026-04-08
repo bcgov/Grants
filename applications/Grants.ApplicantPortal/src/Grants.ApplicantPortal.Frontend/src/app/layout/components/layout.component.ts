@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
@@ -21,13 +21,12 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss'],
 })
-export class LayoutComponent implements OnInit, OnDestroy {
+export class LayoutComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
   sidebarCollapsed = false;
 
   private readonly lgBreakpoint = 992;
-  private resizeListener = () => this.onResize();
 
   constructor(
     private readonly applicantService: ApplicantService,
@@ -36,7 +35,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    window.addEventListener('resize', this.resizeListener);
     this.applicantService
       .getApplicantInfo()
       .subscribe((data: ApplicantInfo) => {
@@ -44,11 +42,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    window.removeEventListener('resize', this.resizeListener);
-  }
-
-  private onResize(): void {
+  @HostListener('window:resize')
+  onResize(): void {
     if (window.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
       this.sidebarCollapsed = false;
     }

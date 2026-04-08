@@ -36,6 +36,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   hasMultipleOrgs: boolean = false;
   isSingleOrg: boolean = false;
   applicantId: string | null = null;
+  tenantEmail: string | null = null;
 
   // Cleanup subject
   private readonly destroy$ = new Subject<void>();
@@ -62,10 +63,11 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
 
           // Read org state from centralized workspace state
           this.hasMultipleOrgs = state.hasMultipleOrgs;
-          this.isSingleOrg = false;
+          this.isSingleOrg = !state.hasMultipleOrgs && !!state.applicantId;
           this.applicantId = state.applicantId;
           this.orgNumber = state.orgNumber;
           this.orgName = state.orgName;
+          this.tenantEmail = state.tenantEmail;
         }
       });
   }

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Toast, ToastService } from '../../services/toast.service';
+import { Toast, ToastType, ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-toast-container',
@@ -16,7 +16,29 @@ export class ToastComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
 
+  private readonly iconMap: Record<ToastType, string> = {
+    warning: 'images/icons/warning.svg',
+    error: 'images/icons/error.svg',
+    success: 'images/icons/success.svg',
+    info: 'images/icons/warning.svg',
+  };
+
+  private readonly titleMap: Record<ToastType, string> = {
+    success: 'Success',
+    error: 'Error',
+    warning: 'Warning',
+    info: 'Info',
+  };
+
   constructor(private readonly toastService: ToastService) {}
+
+  getIconSrc(type: ToastType): string {
+    return this.iconMap[type];
+  }
+
+  getTitle(type: ToastType): string {
+    return this.titleMap[type];
+  }
 
   ngOnInit(): void {
     this.toastService.toast$

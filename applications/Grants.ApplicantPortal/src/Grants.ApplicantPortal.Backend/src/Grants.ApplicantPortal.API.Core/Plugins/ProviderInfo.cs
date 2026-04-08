@@ -5,5 +5,9 @@
 /// </summary>
 public record ProviderInfo(
     string Id,
-    string Name
-);
+    string Name,
+    Dictionary<string, string> Metadata = null!
+)
+{
+    public Dictionary<string, string> Metadata { get; init; } = Metadata ?? [];
+};
