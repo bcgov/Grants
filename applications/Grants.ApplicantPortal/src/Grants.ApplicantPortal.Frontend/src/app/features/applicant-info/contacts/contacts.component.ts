@@ -6,6 +6,7 @@ import { take, takeUntil } from 'rxjs/operators';
 
 import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
 import { Contact } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
@@ -50,6 +51,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
   @Input() provider!: string;
   @Input() key!: string;
   @Input() hasMultipleOrgs: boolean = false;
+  @Input() isSingleOrg: boolean = false;
   @Input() applicantId: string | null = null;
 
   private readonly destroy$ = new Subject<void>();
@@ -121,7 +123,8 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   constructor(
     private readonly applicantService: ApplicantService,
-    private readonly applicantInfoService: ApplicantInfoService
+    private readonly applicantInfoService: ApplicantInfoService,
+    private readonly toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -342,6 +345,12 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
         // Let the server-returned primaryContactId drive which contact is primary
         this.applyPrimaryFromResponse(response?.primaryContactId);
 
+        this.toastService.success(
+          this.isEditMode
+            ? `Contact "${contactPayload.name}" has been updated.`
+            : `Contact "${contactPayload.name}" has been added.`
+        );
+
         this.resetNewContactForm();
         this.formSubmitted = false;
       },
@@ -499,6 +508,8 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
         // Let the server-returned primaryContactId drive which contact is primary
         this.applyPrimaryFromResponse(response?.primaryContactId);
+
+        this.toastService.success('Contact has been deleted.');
       },
       error: (error) => {
         console.error('Failed to delete contact:', error);
@@ -533,6 +544,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       next: (response: any) => {
         // Let the server-returned primaryContactId drive which contact is primary
         this.applyPrimaryFromResponse(response?.primaryContactId);
+        this.toastService.success(`"${contact.name}" has been set as the primary contact.`);
       },
       error: (error: any) => {
         console.error('Failed to set contact as primary:', error);

@@ -29,6 +29,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   orgNumber: string = '';
   orgName: string = '';
   hasMultipleOrgs: boolean = false;
+  tenantEmail: string | null = null;
 
   paymentsTableConfig: DatatableConfig = {
     tableId: 'payments-table',
@@ -50,18 +51,10 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       displayField: 'paymentStatus',
       badgeClassPrefix: 'status-badge',
       badgeClasses: {
-        'L1Pending': 'status-pending',
-        'L1Declined': 'status-declined',
-        'L2Pending': 'status-pending',
-        'L2Declined': 'status-declined',
-        'L3Pending': 'status-pending',
-        'L3Declined': 'status-declined',
-        'Submitted': 'status-submitted',
-        'Validated': 'status-grant-approved',
-        'NotValidated': 'status-not-validated',
-        'Paid': 'status-paid',
-        'Failed': 'status-failed',
-        'FSB': 'status-fsb',
+        'Fully Paid': 'status-grant-approved',
+      },
+      displayLabels: {
+        'Fully Paid': 'Paid',
       },
       fallbackClass: 'status-inactive',
     },
@@ -89,6 +82,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         this.hasMultipleOrgs = state.hasMultipleOrgs;
         this.orgNumber = state.orgNumber;
         this.orgName = state.orgName;
+        this.tenantEmail = state.tenantEmail;
 
         if (state.selectedWorkspace && state.selectedProvider) {
           const pluginId = state.selectedWorkspace.pluginId;

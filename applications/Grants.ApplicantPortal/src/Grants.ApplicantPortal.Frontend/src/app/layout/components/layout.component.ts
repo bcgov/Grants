@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
@@ -24,6 +24,9 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
 export class LayoutComponent implements OnInit {
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
+  sidebarCollapsed = false;
+
+  private readonly lgBreakpoint = 992;
 
   constructor(
     private readonly applicantService: ApplicantService,
@@ -37,6 +40,16 @@ export class LayoutComponent implements OnInit {
       .subscribe((data: ApplicantInfo) => {
         this.applicantInfo = data;
       });
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
+      this.sidebarCollapsed = false;
+    }
+    if (window.innerWidth >= this.lgBreakpoint && this.sidebarOpen) {
+      this.sidebarOpen = false;
+    }
   }
 
   toggleSidebar(): void {

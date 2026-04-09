@@ -34,7 +34,9 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   orgNumber: string = '';
   orgName: string = '';
   hasMultipleOrgs: boolean = false;
+  isSingleOrg: boolean = false;
   applicantId: string | null = null;
+  tenantEmail: string | null = null;
 
   // Cleanup subject
   private readonly destroy$ = new Subject<void>();
@@ -61,9 +63,11 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
 
           // Read org state from centralized workspace state
           this.hasMultipleOrgs = state.hasMultipleOrgs;
+          this.isSingleOrg = !state.hasMultipleOrgs && !!state.applicantId;
           this.applicantId = state.applicantId;
           this.orgNumber = state.orgNumber;
           this.orgName = state.orgName;
+          this.tenantEmail = state.tenantEmail;
         }
       });
   }
@@ -78,13 +82,18 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
     if (info) {
       this.orgNumber = info.orgNumber;
       this.orgName = info.orgName;
+      this.isSingleOrg = true;
     } else {
       this.orgNumber = '';
       this.orgName = '';
+      this.isSingleOrg = false;
     }
   }
 
   onMultipleOrganizationsDetected(hasMultiple: boolean): void {
     this.hasMultipleOrgs = hasMultiple;
+    if (hasMultiple) {
+      this.isSingleOrg = false;
+    }
   }
 }

@@ -13,6 +13,11 @@
       box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
     }
   }
+
+  .profile-icon {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 .dropdown-menu {
@@ -33,6 +38,10 @@
       border-color: rgba(255, 255, 255, 0.5);
       color: var(--bc-white);
     }
+  }
+
+  .profile-icon {
+    filter: brightness(0) invert(1);
   }
 }
 

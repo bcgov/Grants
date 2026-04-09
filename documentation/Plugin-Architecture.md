@@ -16,7 +16,7 @@ A plugin is a class that implements one or more plugin interfaces. Each plugin h
 
 ### Provider
 
-A provider represents a data source or program within a plugin. For UNITY, providers map to **tenants** (grant programs). For DEMO, providers are hardcoded test programs (`PROGRAM1`, `PROGRAM2`). Providers are fetched at runtime via the `/Plugins/{PluginId}/providers` endpoint.
+A provider represents a data source or program within a plugin. For UNITY, providers map to **tenants** (grant programs). For DEMO, providers are hardcoded test programs (`PROGRAM1`, `PROGRAM2`). Providers are fetched at runtime via the `/Plugins/{PluginId}/providers` endpoint. Each provider can include an optional `Metadata` dictionary (`Dictionary<string, string>`) for plugin-specific key-value data.
 
 ### Features
 
@@ -43,7 +43,7 @@ Base interface every plugin must implement.
 PluginId: string
 CanHandle(metadata): bool
 GetSupportedFeatures(): IReadOnlyList<string>
-GetProvidersAsync(profileId, subject, ct): IReadOnlyList<ProviderInfo>
+GetProvidersAsync(profileId, subject, ct): IReadOnlyList<ProviderInfo>  // ProviderInfo includes Id, Name, Metadata
 GetContactRoles(): IReadOnlyList<ContactRoleOption>
 ```
 
