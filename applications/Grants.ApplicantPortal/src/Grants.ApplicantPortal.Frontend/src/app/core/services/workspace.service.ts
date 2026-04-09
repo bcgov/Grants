@@ -135,7 +135,9 @@ export class WorkspaceService {
   }
 
   /**
-   * Fetch available workspaces/plugins from the API
+   * Fetch available workspaces/plugins from the API.
+   * Errors are NOT caught here — callers must handle failures
+   * (e.g. with retry logic or their own catchError).
    */
   getAvailableWorkspaces(): Observable<PluginsResponse> {
     return this.http.get<PluginsResponse>(`${this.apiUrl}/System/plugins`).pipe(
@@ -148,10 +150,6 @@ export class WorkspaceService {
 
         // Check if we can auto-select workspace and provider
         this.handleAutoSelection(response.plugins, currentState);
-      }),
-      catchError(error => {
-        console.error('WorkspaceService - Error fetching workspaces:', error);
-        return of({ plugins: [] });
       })
     );
   }

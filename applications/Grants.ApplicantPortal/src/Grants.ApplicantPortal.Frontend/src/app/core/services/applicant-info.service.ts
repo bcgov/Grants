@@ -407,6 +407,69 @@ export class ApplicantInfoService {
   }
 
   /**
+   * Fetches available address types for a workspace
+   */
+  getAddressTypes(pluginId: string): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${pluginId}/types`;
+    return this.http.get<any>(url).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to fetch address types:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Creates a new address
+   */
+  createAddress(
+    pluginId: string,
+    provider: string,
+    addressData: {
+      applicantId?: string;
+      addressType: string;
+      street: string;
+      city: string;
+      province: string;
+      postalCode: string;
+      isPrimary: boolean;
+      street2?: string;
+      unit?: string;
+      country?: string;
+    }
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${pluginId}/${provider}`;
+    return this.http.post<any>(url, addressData).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to create address:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Deletes an address
+   */
+  deleteAddress(
+    addressId: string,
+    pluginId: string,
+    provider: string,
+    applicantId?: string
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}`;
+    const options = applicantId ? { body: { applicantId } } : {};
+    return this.http.delete<any>(url, options).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to delete address:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
    * Updates an existing address
    */
   updateAddress(

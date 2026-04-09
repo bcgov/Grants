@@ -1,8 +1,5 @@
-﻿using Grants.ApplicantPortal.API.Core.Plugins;
-using Grants.ApplicantPortal.API.Core.Services;
-using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
+﻿using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
-using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Handlers;
 
@@ -12,20 +9,11 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Handlers;
 /// </summary>
 public class UnityPluginMessageHandler : IPluginMessageHandler
 {
-    private readonly IPluginEventService _pluginEventService;
-    private readonly IPluginCommandMetadataRegistry _metadataRegistry;
-    private readonly IOutboxRepository _outboxRepository;
     private readonly ILogger<UnityPluginMessageHandler> _logger;
 
     public UnityPluginMessageHandler(
-        IPluginEventService pluginEventService,
-        IPluginCommandMetadataRegistry metadataRegistry,
-        IOutboxRepository outboxRepository,
         ILogger<UnityPluginMessageHandler> logger)
     {
-        _pluginEventService = pluginEventService;
-        _metadataRegistry = metadataRegistry;
-        _outboxRepository = outboxRepository;
         _logger = logger;
     }
 
@@ -121,56 +109,15 @@ public class UnityPluginMessageHandler : IPluginMessageHandler
         return Task.CompletedTask;
     }
 
-    private async Task HandleFailedAcknowledgment(MessageAcknowledgment acknowledgment, MessageContext context)
+    private Task HandleFailedAcknowledgment(MessageAcknowledgment acknowledgment, MessageContext context)
     {
         _logger.LogWarning(
             "Unity: External system failed to process message {OriginalMessageId}. Details: {Details}",
             acknowledgment.OriginalMessageId, acknowledgment.Details);
 
-        // Look up the original outbox message and parse via the registry
-        var originalMessage = await _outboxRepository.GetByMessageIdAsync(
-            acknowledgment.OriginalMessageId, context.CancellationToken);
-
-        CommandPayloadMetadata? metadata = null;
-        if (originalMessage != null)
-        {
-            metadata = _metadataRegistry.ParsePayload(PluginId, originalMessage.Payload);
-        }
-
-        var profileId = metadata?.ProfileId ?? Guid.Empty;
-
-        // Fallback: extract profileId from CorrelationId if not found in payload
-        if (profileId == Guid.Empty && acknowledgment.CorrelationId != null &&
-            acknowledgment.CorrelationId.StartsWith("profile-", StringComparison.OrdinalIgnoreCase))
-        {
-            Guid.TryParse(acknowledgment.CorrelationId["profile-".Length..], out profileId);
-        }
-
-        if (profileId == Guid.Empty)
-        {
-            _logger.LogWarning(
-                "Could not determine profileId for failed ack {OriginalMessageId} — skipping event recording",
-                acknowledgment.OriginalMessageId);
-            return;
-        }
-
-        var dataType = metadata?.DataType ?? "UNKNOWN";
-        var friendlyAction = _metadataRegistry.GetFriendlyActionName(PluginId, dataType);
-
-        var failureContext = new PluginEventContext(
-            profileId,
-            PluginId,
-            metadata?.Provider ?? "UNKNOWN",
-            dataType,
-            metadata?.EntityId,
-            PluginEventSeverity.Error,
-            PluginEventSource.InboxRejection,
-            $"The external system rejected your {friendlyAction}: {acknowledgment.Details ?? "no details provided"}. Your data may revert on next refresh.",
-            $"External system FAILED ack for message {acknowledgment.OriginalMessageId}. Details: {acknowledgment.Details}",
-            acknowledgment.OriginalMessageId,
-            acknowledgment.CorrelationId);
-
-        await _pluginEventService.RecordFailureAsync(failureContext, context.CancellationToken);
+        // PluginEvent recording is handled centrally by InboxProcessorJob.RecordAckFailureEventAsync
+        // to avoid duplicate events. Add any Unity-specific remediation logic here (e.g. cache rollback).
+        return Task.CompletedTask;
     }
 
     private Task HandleProcessingAcknowledgment(MessageAcknowledgment acknowledgment, MessageContext context)

@@ -12,6 +12,39 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 /// </summary>
 public partial class DemoPlugin
 {
+    public async Task<Result<Guid>> CreateAddressAsync(
+        CreateAddressRequest addressRequest,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Demo plugin creating address for ProfileId: {ProfileId}, Type: {AddressType}",
+            profileContext.ProfileId, addressRequest.AddressType);
+
+        try
+        {
+            // Simulate some processing time
+            await Task.Delay(100, cancellationToken);
+
+            // Add the address to our in-memory store
+            var newAddressId = AddressesData.AddAddress(profileContext.Provider, profileContext.ProfileId, addressRequest);
+
+            // PERSIST TO REDIS: Update the cached addresses data
+            await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
+            // Log the address creation details
+            logger.LogInformation("Demo plugin created address - ID: {AddressId}, Type: {AddressType}, Street: {Street}, City: {City}",
+                newAddressId, addressRequest.AddressType, addressRequest.Street, addressRequest.City);
+
+            return Result<Guid>.Success(Guid.Parse(newAddressId));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Demo plugin failed to create address for ProfileId: {ProfileId}, Type: {AddressType}",
+                profileContext.ProfileId, addressRequest.AddressType);
+            return Result<Guid>.Error("Failed to create address in demo system");
+        }
+    }
+
     public async Task<Result> EditAddressAsync(
         EditAddressRequest editRequest,
         ProfileContext profileContext,
@@ -89,6 +122,47 @@ public partial class DemoPlugin
             logger.LogError(ex, "Demo plugin failed to set address {AddressId} as primary for ProfileId: {ProfileId}",
                 addressId, profileContext.ProfileId);
             return Result.Error("Failed to set address as primary in demo system");
+        }
+    }
+
+    public async Task<Result> DeleteAddressAsync(
+        Guid addressId,
+        Guid applicantId,
+        ProfileContext profileContext,
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Demo plugin deleting address {AddressId} for ProfileId: {ProfileId}",
+            addressId, profileContext.ProfileId);
+
+        try
+        {
+            // Simulate some processing time
+            await Task.Delay(90, cancellationToken);
+
+            // Delete the address from our in-memory store
+            var success = AddressesData.DeleteAddress(profileContext.Provider, profileContext.ProfileId, addressId);
+
+            if (!success)
+            {
+                logger.LogWarning("Address {AddressId} not found for ProfileId: {ProfileId}",
+                    addressId, profileContext.ProfileId);
+                return Result.NotFound();
+            }
+
+            // PERSIST TO REDIS: Update the cached addresses data
+            await PersistAddressesDataToRedis(profileContext.Provider, profileContext.ProfileId, cancellationToken);
+
+            // Log the address deletion
+            logger.LogInformation("Demo plugin deleted address {AddressId} for ProfileId: {ProfileId}",
+                addressId, profileContext.ProfileId);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Demo plugin failed to delete address {AddressId} for ProfileId: {ProfileId}",
+                addressId, profileContext.ProfileId);
+            return Result.Error("Failed to delete address in demo system");
         }
     }
 

@@ -48,17 +48,16 @@ export class CallbackComponent implements OnInit {
             
             // Fetch available workspaces
             this.workspaceService.getAvailableWorkspaces().subscribe({
-              next: (workspacesResponse) => {
+              next: () => {
                 const currentState = this.workspaceService.currentWorkspaceState$;
-                currentState.pipe(take(1)).subscribe(state => {
+                currentState.pipe(take(1)).subscribe(() => {
                   // Always go to workspace selector - let it handle auto-selection with proper UX
                   this.router.navigate(['/workspace-selector']);
                 });
               },
-              error: (workspaceError) => {
-                console.error('Error fetching workspaces:', workspaceError);
-                // Continue to app even if workspace fetch fails
-                this.router.navigate(['/app']);
+              error: () => {
+                // Workspace fetch failed — navigate to selector and let it handle retry
+                this.router.navigate(['/workspace-selector']);
               }
             });
           } else {

@@ -1,4 +1,4 @@
-# API Endpoints Reference
+﻿# API Endpoints Reference
 
 Complete reference for all REST endpoints in the Grants Applicant Portal API. All endpoints use [FastEndpoints](https://fast-endpoints.com/) and JWT Bearer authentication via Keycloak unless otherwise noted.
 
@@ -47,7 +47,7 @@ Complete reference for all REST endpoints in the Grants Applicant Portal API. Al
 
 Returns cached contact data. If the cache is empty, automatically hydrates from the plugin and returns the result. Includes cache stampede protection.
 
-**Response codes:** `200` success, `400` invalid request, `401` unauthorized, `404` not found
+**Response codes:** `200` success, `400` invalid request, `401` unauthorized, `403` forbidden (ownership validation failure), `404` not found
 
 ### Create Contact
 
@@ -106,20 +106,42 @@ Returns the list of available role options (key/label pairs) defined by the plug
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/Addresses/{PluginId}/{Provider}` | ✅ | Retrieve addresses with automatic cache hydration |
+| POST | `/Addresses/{PluginId}/{Provider}` | ✅ | Create a new address |
 | PUT | `/Addresses/{AddressId}/{PluginId}/{Provider}` | ✅ | Update an existing address |
+| DELETE | `/Addresses/{AddressId}/{PluginId}/{Provider}` | ✅ | Delete an existing address |
 | PATCH | `/Addresses/{AddressId}/{PluginId}/{Provider}/set-primary` | ✅ | Set an address as primary |
+
+### Create Address
+
+Creates a new address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
+
+For UNITY, an `ADDRESS_CREATE_COMMAND` message is published to RabbitMQ after the local cache is updated.
+
+**Response:** `{ addressId, primaryAddressId }`
 
 ### Update Address
 
-Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`.
+Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
 
 For UNITY, an `ADDRESS_EDIT_COMMAND` message is published.
+
+**Response:** `{ addressId, message, primaryAddressId }`
+
+### Delete Address
+
+Deletes an address by `AddressId`. This endpoint expects a **JSON request body** containing `applicantId` (required, Guid).
+
+For UNITY, an `ADDRESS_DELETE_COMMAND` message is published.
+
+**Response:** `{ addressId, message, primaryAddressId }`
 
 ### Set Address as Primary
 
 Sets an address as the primary address for the profile.
 
 For UNITY, an `ADDRESS_SET_PRIMARY_COMMAND` message is published.
+
+**Response:** `{ addressId, message, primaryAddressId }`
 
 ---
 
@@ -191,6 +213,15 @@ Plugin events track messaging failures and other asynchronous issues that the us
 
 All data endpoints use `{PluginId}` and `{Provider}` to scope requests to a specific plugin and provider (program). The `ProfileId` is **never** in the route — it is resolved automatically from the authenticated user's JWT via the `ProfileResolutionMiddleware`.
 
+### Authorization & Resource Ownership
+
+All write operations (create, edit, delete, set-primary) enforce **server-side resource ownership validation** in addition to JWT authentication. Client-supplied IDs (`applicantId`, `contactId`, `addressId`, `organizationId`) are cross-referenced against the authenticated user's cached profile data before the operation is allowed to proceed.
+
+- **`403 Forbidden`** — The resource does not belong to the authenticated user (IDOR prevention)
+- **`400 Bad Request`** — The resource is not editable (e.g., linked to a submitted application)
+
+This validation is fail-closed: if the user's cached profile data cannot be loaded, the request is rejected. See [Resource Ownership Validation](Resource-Ownership-Validation.md) for implementation details.
+
 ### Cache Hydration
 
 All `Retrieve*` (GET) endpoints follow the same pattern:
@@ -215,5 +246,6 @@ See [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) 
 
 - [Authentication](Authentication.md) — JWT/Keycloak configuration
 - [Plugin Architecture](Plugin-Architecture.md) — Plugin system design
+- [Resource Ownership Validation](Resource-Ownership-Validation.md) — IDOR prevention and ownership enforcement
 - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) — RabbitMQ outbox/inbox pattern
 - [API Access Patterns](API-Access-Patterns.md) — Frontend and direct API usage

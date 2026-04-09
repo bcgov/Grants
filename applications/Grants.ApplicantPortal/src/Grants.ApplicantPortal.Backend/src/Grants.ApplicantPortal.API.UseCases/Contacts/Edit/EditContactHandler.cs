@@ -58,6 +58,9 @@ public class EditContactHandler(
       if (result.Status == ResultStatus.NotFound)
         return Result<ContactMutationResult>.NotFound();
 
+      if (result.Status == ResultStatus.Forbidden)
+        return Result<ContactMutationResult>.Forbidden();
+
       return Result<ContactMutationResult>.Invalid(result.ValidationErrors);
     }
     catch (Exception ex)

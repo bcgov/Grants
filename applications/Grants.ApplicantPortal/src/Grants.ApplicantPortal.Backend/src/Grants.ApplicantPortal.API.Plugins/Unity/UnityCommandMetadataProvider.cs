@@ -17,8 +17,10 @@ public class UnityCommandMetadataProvider : IPluginCommandMetadataProvider
     ["CONTACT_EDIT_COMMAND"] = "CONTACTINFO",
     ["CONTACT_SET_PRIMARY_COMMAND"] = "CONTACTINFO",
     ["CONTACT_DELETE_COMMAND"] = "CONTACTINFO",
+    ["ADDRESS_CREATE_COMMAND"] = "ADDRESSINFO",
     ["ADDRESS_EDIT_COMMAND"] = "ADDRESSINFO",
     ["ADDRESS_SET_PRIMARY_COMMAND"] = "ADDRESSINFO",
+    ["ADDRESS_DELETE_COMMAND"] = "ADDRESSINFO",
     ["ORGANIZATION_EDIT_COMMAND"] = "ORGINFO",
   };
 
@@ -28,8 +30,10 @@ public class UnityCommandMetadataProvider : IPluginCommandMetadataProvider
     ["CONTACT_EDIT_COMMAND"] = "contact update",
     ["CONTACT_SET_PRIMARY_COMMAND"] = "primary contact change",
     ["CONTACT_DELETE_COMMAND"] = "contact deletion",
+    ["ADDRESS_CREATE_COMMAND"] = "address creation",
     ["ADDRESS_EDIT_COMMAND"] = "address update",
     ["ADDRESS_SET_PRIMARY_COMMAND"] = "primary address change",
+    ["ADDRESS_DELETE_COMMAND"] = "address deletion",
     ["ORGANIZATION_EDIT_COMMAND"] = "organization update",
   };
 

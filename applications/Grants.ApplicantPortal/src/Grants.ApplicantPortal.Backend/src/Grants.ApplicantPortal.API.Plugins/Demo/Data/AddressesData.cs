@@ -137,6 +137,56 @@ public static class AddressesData
   }
 
   /// <summary>
+  /// Adds a new address to the in-memory store
+  /// </summary>
+  public static string AddAddress(string provider, Guid profileId, CreateAddressRequest addressRequest)
+  {
+    lock (_lock)
+    {
+      var key = $"{provider}-{profileId}";
+
+      if (!_addressesByProviderProfile.ContainsKey(key))
+      {
+        _addressesByProviderProfile[key] = new List<AddressInfo>();
+      }
+
+      var addresses = _addressesByProviderProfile[key];
+
+      // If this is being set as primary, update existing stored addresses to not be primary
+      if (addressRequest.IsPrimary)
+      {
+        for (var i = 0; i < addresses.Count; i++)
+        {
+          addresses[i] = addresses[i] with { IsPrimary = false };
+        }
+      }
+
+      // Generate a new address ID
+      var newAddressId = Guid.NewGuid();
+
+      var newAddress = new AddressInfo
+      {
+        Id = newAddressId.ToString(),
+        AddressType = addressRequest.AddressType,
+        Street = addressRequest.Street,
+        Street2 = addressRequest.Street2 ?? "",
+        Unit = addressRequest.Unit ?? "",
+        City = addressRequest.City,
+        Province = addressRequest.Province,
+        PostalCode = addressRequest.PostalCode,
+        Country = addressRequest.Country ?? "",
+        IsPrimary = addressRequest.IsPrimary,
+        IsEditable = true,
+        ReferenceNo = ""
+      };
+
+      addresses.Add(newAddress);
+
+      return newAddressId.ToString();
+    }
+  }
+
+  /// <summary>
   /// Ensures an address is materialized into stored addresses if it's a default address
   /// This is needed when someone tries to manage a default address
   /// </summary>
@@ -284,6 +334,45 @@ public static class AddressesData
         { 
           IsPrimary = i == addressIndex
         };
+      }
+
+      return true;
+    }
+  }
+
+  /// <summary>
+  /// Deletes an address from the in-memory store
+  /// </summary>
+  public static bool DeleteAddress(string provider, Guid profileId, Guid addressId)
+  {
+    lock (_lock)
+    {
+      var key = $"{provider}-{profileId}";
+      var addressIdStr = addressId.ToString();
+
+      // Ensure the address is materialized if it's a default address
+      MaterializeDefaultAddressIfNeeded(provider, profileId, addressIdStr);
+
+      if (!_addressesByProviderProfile.ContainsKey(key))
+      {
+        return false;
+      }
+
+      var addresses = _addressesByProviderProfile[key];
+      var addressIndex = addresses.FindIndex(a => string.Equals(a.Id, addressIdStr, StringComparison.OrdinalIgnoreCase));
+
+      if (addressIndex == -1)
+      {
+        return false;
+      }
+
+      var wasPrimary = addresses[addressIndex].IsPrimary;
+      addresses.RemoveAt(addressIndex);
+
+      // If we deleted a primary address, promote the first remaining address
+      if (wasPrimary && addresses.Count > 0)
+      {
+        addresses[0] = addresses[0] with { IsPrimary = true };
       }
 
       return true;

@@ -159,7 +159,7 @@ The Unity system normalizes OIDC subject identifiers by:
 
 ## Write Operations (Contact, Address, Organization Management)
 
-The Applicant Portal supports full CRUD operations for contacts, address editing, and organization editing against Unity. These operations go through the following flow:
+The Applicant Portal supports full CRUD operations for contacts and addresses, as well as organization editing against Unity. These operations go through the following flow:
 
 1. **API endpoint** receives the request (e.g., `POST /Contacts/UNITY/{Provider}`)
 2. **Use case handler** calls the Unity plugin
@@ -174,7 +174,9 @@ The Applicant Portal supports full CRUD operations for contacts, address editing
 | Edit Contact | `PUT /Contacts/{ContactId}/UNITY/{Provider}` | CONTACT_EDIT_COMMAND |
 | Delete Contact | `DELETE /Contacts/{ContactId}/UNITY/{Provider}` | CONTACT_DELETE_COMMAND |
 | Set Primary Contact | `PATCH /Contacts/{ContactId}/UNITY/{Provider}/set-primary` | CONTACT_SET_PRIMARY_COMMAND |
+| Create Address | `POST /Addresses/UNITY/{Provider}` | ADDRESS_CREATE_COMMAND |
 | Edit Address | `PUT /Addresses/{AddressId}/UNITY/{Provider}` | ADDRESS_EDIT_COMMAND |
+| Delete Address | `DELETE /Addresses/{AddressId}/UNITY/{Provider}` | ADDRESS_DELETE_COMMAND |
 | Set Primary Address | `PATCH /Addresses/{AddressId}/UNITY/{Provider}/set-primary` | ADDRESS_SET_PRIMARY_COMMAND |
 | Edit Organization | `PUT /Organizations/{OrgId}/UNITY/{Provider}` | ORGANIZATION_EDIT_COMMAND |
 
