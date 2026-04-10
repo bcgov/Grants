@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, switchMap, takeUntil, timer } from 'rxjs';
+import { Subject, switchMap, takeUntil, timer, retry, catchError, EMPTY } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
@@ -39,10 +39,27 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
             </div>
 
             <!-- Loading State -->
-            <div *ngIf="isLoading || isAutoSelecting" class="selector-loading">
+            <div *ngIf="(isLoading || isAutoSelecting) && !hasError" class="selector-loading">
               <div class="spinner"></div>
               <p class="loading-text" *ngIf="isLoading">Setting up your workspace...</p>
               <p class="loading-text" *ngIf="isAutoSelecting">Accessing {{ autoSelectingWorkspace?.description }}...</p>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="hasError" class="selector-error">
+              <div class="error-icon">
+                <i class="fa fa-exclamation-triangle"></i>
+              </div>
+              <p class="error-text">Something went wrong &mdash; please try again later.</p>
+              <button
+                type="button"
+                class="btn btn-primary selector-btn"
+                [disabled]="isRetrying"
+                (click)="retryFetch()"
+              >
+                <span *ngIf="!isRetrying">Try Again</span>
+                <span *ngIf="isRetrying">Retrying...</span>
+              </button>
             </div>
 
             <!-- Workspace Selection -->
@@ -265,6 +282,28 @@ import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.
       color: var(--bc-primary);
       font-size: var(--bc-font-size-14);
       margin: 0;
+    }
+
+    /* ===== Error State ===== */
+    .selector-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 0;
+    }
+
+    .error-icon {
+      font-size: 2.5rem;
+      color: var(--bc-danger, #d8292f);
+      margin-bottom: 1rem;
+    }
+
+    .error-text {
+      color: var(--bc-primary);
+      font-size: var(--bc-font-size-14);
+      margin: 0 0 1.5rem 0;
+      text-align: center;
+      line-height: 1.5;
     }
 
     /* ===== Dropdown ===== */
@@ -521,6 +560,8 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   isLoadingProviders = false;
   isAutoSelecting = false;
   autoSelectingWorkspace: Plugin | null = null;
+  hasError = false;
+  isRetrying = false;
   showWorkspaceSelection = false;
   showSelectedWorkspace = false;
   showProviderSelection = false;
@@ -546,9 +587,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         // Fetch workspaces if none are loaded (e.g. navigated back via "Change Workspace")
         if (state.availableWorkspaces.length === 0 && this.isLoading && !this.hasFetchedWorkspaces) {
           this.hasFetchedWorkspaces = true;
-          this.workspaceService.getAvailableWorkspaces()
-            .pipe(takeUntil(this.destroy$))
-            .subscribe();
+          this.fetchWorkspacesWithRetry();
           return;
         }
 
@@ -559,6 +598,50 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private fetchWorkspacesWithRetry(): void {
+    this.hasError = false;
+    this.isLoading = true;
+
+    this.workspaceService.getAvailableWorkspaces().pipe(
+      retry({
+        count: 3,
+        delay: (_error, retryCount) => timer(retryCount * 3000) // 3s, 6s, 9s
+      }),
+      takeUntil(this.destroy$),
+      catchError(error => {
+        console.error('Failed to fetch workspaces after retries:', error);
+        this.isLoading = false;
+        this.hasError = true;
+        return EMPTY;
+      })
+    ).subscribe();
+  }
+
+  retryFetch(): void {
+    this.isRetrying = true;
+    this.hasError = false;
+    this.isLoading = true;
+
+    this.workspaceService.getAvailableWorkspaces().pipe(
+      retry({
+        count: 2,
+        delay: (_error, retryCount) => timer(retryCount * 3000)
+      }),
+      takeUntil(this.destroy$),
+      catchError(error => {
+        console.error('Retry failed:', error);
+        this.isLoading = false;
+        this.hasError = true;
+        this.isRetrying = false;
+        return EMPTY;
+      })
+    ).subscribe({
+      next: () => {
+        this.isRetrying = false;
+      }
+    });
   }
 
   private handleWorkspaceState(state: WorkspaceState): void {

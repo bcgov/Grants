@@ -36,6 +36,7 @@ public static class PrimaryContactResolver
           contacts.ValueKind != JsonValueKind.Array)
         return null;
 
+      // First pass: look for a contact explicitly marked as primary
       foreach (var contact in contacts.EnumerateArray())
       {
         if (contact.TryGetProperty("isPrimary", out var isPrimary) && isPrimary.GetBoolean() &&
@@ -46,7 +47,31 @@ public static class PrimaryContactResolver
         }
       }
 
-      return null;
+      // Fallback: no contact is marked as primary — pick the one with the latest creationTime
+      Guid? fallbackId = null;
+      DateTimeOffset latestTime = DateTimeOffset.MinValue;
+
+      foreach (var contact in contacts.EnumerateArray())
+      {
+        if (!contact.TryGetProperty("contactId", out var idProp) ||
+            !Guid.TryParse(idProp.GetString(), out var contactId))
+          continue;
+
+        if (contact.TryGetProperty("creationTime", out var ctProp) &&
+            DateTimeOffset.TryParse(ctProp.GetString(), out var ct) &&
+            ct > latestTime)
+        {
+          latestTime = ct;
+          fallbackId = contactId;
+        }
+        else if (fallbackId == null)
+        {
+          // If no creationTime, use the first contact as ultimate fallback
+          fallbackId = contactId;
+        }
+      }
+
+      return fallbackId;
     }
     catch
     {

@@ -1,0 +1,246 @@
+﻿using System.Text.Json;
+using FluentAssertions;
+using Grants.ApplicantPortal.API.Core.DTOs;
+using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Core.Services;
+using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.UseCases.Security;
+using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
+
+namespace Grants.ApplicantPortal.API.UnitTests.UseCases.Security;
+
+/// <summary>
+/// Tests for <see cref="ResourceOwnershipValidator"/>. Validates that ownership
+/// checks correctly parse cached profile data and enforce fail-closed behavior.
+/// </summary>
+public class ResourceOwnershipValidatorTests
+{
+    private readonly IPluginCacheService _cacheService;
+    private readonly IProfilePluginFactory _pluginFactory;
+    private readonly ResourceOwnershipValidator _sut;
+
+    private static readonly Guid ProfileId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly ProfileContext DefaultContext = new(ProfileId, "UNITY", "PROV1", "test-subject");
+
+    public ResourceOwnershipValidatorTests()
+    {
+        _cacheService = Substitute.For<IPluginCacheService>();
+        _pluginFactory = Substitute.For<IProfilePluginFactory>();
+
+        _sut = new ResourceOwnershipValidator(
+            _cacheService,
+            _pluginFactory,
+            NullLogger<ResourceOwnershipValidator>.Instance);
+    }
+
+    #region Contact Ownership
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsSuccess_WhenContactFoundInCache()
+    {
+        var contactId = Guid.NewGuid();
+        var data = new { contacts = new[] { new { contactId = contactId.ToString(), isEditable = true } } };
+        SetupCachedData("PROV1:CONTACTINFO", data);
+
+        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+        result.IsEditable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsNotEditable_WhenContactIsNotEditable()
+    {
+        var contactId = Guid.NewGuid();
+        var data = new { contacts = new[] { new { contactId = contactId.ToString(), isEditable = false } } };
+        SetupCachedData("PROV1:CONTACTINFO", data);
+
+        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+        result.IsEditable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsNotOwned_WhenContactNotInCache()
+    {
+        var data = new { contacts = new[] { new { contactId = Guid.NewGuid().ToString(), isEditable = true } } };
+        SetupCachedData("PROV1:CONTACTINFO", data);
+
+        var result = await _sut.ValidateContactOwnershipAsync(Guid.NewGuid(), DefaultContext);
+
+        result.IsOwned.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsNotOwned_WhenNoCachedDataAndHydrationFails()
+    {
+        SetupNoCachedData("PROV1:CONTACTINFO");
+        _pluginFactory.GetPlugin("UNITY").Returns((IProfilePlugin?)null);
+
+        var result = await _sut.ValidateContactOwnershipAsync(Guid.NewGuid(), DefaultContext);
+
+        result.IsOwned.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("not available");
+    }
+
+    #endregion
+
+    #region Address Ownership
+
+    [Fact]
+    public async Task ValidateAddressOwnership_ReturnsSuccess_WhenAddressFoundInCache()
+    {
+        var addressId = Guid.NewGuid();
+        var data = new { addresses = new[] { new { id = addressId.ToString(), isEditable = true } } };
+        SetupCachedData("PROV1:ADDRESSINFO", data);
+
+        var result = await _sut.ValidateAddressOwnershipAsync(addressId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+        result.IsEditable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateAddressOwnership_ReturnsNotOwned_WhenAddressNotInCache()
+    {
+        var data = new { addresses = new[] { new { id = Guid.NewGuid().ToString(), isEditable = true } } };
+        SetupCachedData("PROV1:ADDRESSINFO", data);
+
+        var result = await _sut.ValidateAddressOwnershipAsync(Guid.NewGuid(), DefaultContext);
+
+        result.IsOwned.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Organization Ownership
+
+    [Fact]
+    public async Task ValidateOrganizationOwnership_ReturnsSuccess_WhenOrgFoundInOrgsArray()
+    {
+        var orgId = Guid.NewGuid();
+        var data = new { organizations = new[] { new { id = orgId.ToString() } } };
+        SetupCachedData("PROV1:ORGINFO", data);
+
+        var result = await _sut.ValidateOrganizationOwnershipAsync(orgId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateOrganizationOwnership_ReturnsSuccess_WhenMultipleOrgsInArray()
+    {
+        var orgId = Guid.NewGuid();
+        var data = new { organizations = new[] { new { id = Guid.NewGuid().ToString() }, new { id = orgId.ToString() } } };
+        SetupCachedData("PROV1:ORGINFO", data);
+
+        var result = await _sut.ValidateOrganizationOwnershipAsync(orgId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateOrganizationOwnership_ReturnsNotOwned_WhenOrgNotInCache()
+    {
+        var data = new { organizations = new[] { new { id = Guid.NewGuid().ToString() } } };
+        SetupCachedData("PROV1:ORGINFO", data);
+
+        var result = await _sut.ValidateOrganizationOwnershipAsync(Guid.NewGuid(), DefaultContext);
+
+        result.IsOwned.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Applicant Ownership
+
+    [Fact]
+    public async Task ValidateApplicantOwnership_ReturnsNotOwned_WhenApplicantIdIsEmpty()
+    {
+        var result = await _sut.ValidateApplicantOwnershipAsync(Guid.Empty, DefaultContext);
+
+        result.IsOwned.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("required");
+    }
+
+    [Fact]
+    public async Task ValidateApplicantOwnership_ReturnsSuccess_WhenApplicantIdMatchesOrgId()
+    {
+        var applicantId = Guid.NewGuid();
+        var data = new { organizations = new[] { new { id = applicantId.ToString() } } };
+        SetupCachedData("PROV1:ORGINFO", data);
+
+        var result = await _sut.ValidateApplicantOwnershipAsync(applicantId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateApplicantOwnership_ReturnsSuccess_WhenApplicantIdFoundAmongMultipleOrgs()
+    {
+        var applicantId = Guid.NewGuid();
+        var data = new { organizations = new[] { new { id = Guid.NewGuid().ToString() }, new { id = applicantId.ToString() } } };
+        SetupCachedData("PROV1:ORGINFO", data);
+
+        var result = await _sut.ValidateApplicantOwnershipAsync(applicantId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateApplicantOwnership_ReturnsNotOwned_WhenApplicantIdNotInOrgs()
+    {
+        var data = new { organizations = new[] { new { id = Guid.NewGuid().ToString() } } };
+        SetupCachedData("PROV1:ORGINFO", data);
+
+        var result = await _sut.ValidateApplicantOwnershipAsync(Guid.NewGuid(), DefaultContext);
+
+        result.IsOwned.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Hydration Fallback
+
+    [Fact]
+    public async Task ValidateContactOwnership_HydratesFromPlugin_WhenCacheEmpty()
+    {
+        var contactId = Guid.NewGuid();
+        SetupNoCachedData("PROV1:CONTACTINFO");
+
+        // Setup plugin to return hydrated data
+        var plugin = Substitute.For<IProfilePlugin>();
+        var hydratedData = new ProfileData(
+            ProfileId, "UNITY", "PROV1", "CONTACTINFO",
+            new { contacts = new[] { new { contactId = contactId.ToString(), isEditable = true } } });
+        plugin.PopulateProfileAsync(Arg.Any<ProfilePopulationMetadata>(), Arg.Any<CancellationToken>())
+            .Returns(hydratedData);
+        _pluginFactory.GetPlugin("UNITY").Returns(plugin);
+
+        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+        result.IsEditable.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private void SetupCachedData(string cacheSegment, object data)
+    {
+        var profileData = new ProfileData(ProfileId, "UNITY", "PROV1", cacheSegment, JsonSerializer.SerializeToElement(data));
+        _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", cacheSegment, Arg.Any<CancellationToken>())
+            .Returns(profileData);
+    }
+
+    private void SetupNoCachedData(string cacheSegment)
+    {
+        _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", cacheSegment, Arg.Any<CancellationToken>())
+            .Returns((ProfileData?)null);
+    }
+
+    #endregion
+}

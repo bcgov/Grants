@@ -55,6 +55,12 @@ public class CreateContactHandler(
       logger.LogWarning("Failed to create contact for ProfileId: {ProfileId}. Status: {Status}",
         request.ProfileId, result.Status);
 
+      if (result.Status == ResultStatus.NotFound)
+        return Result<ContactMutationResult>.NotFound(result.Errors.ToArray());
+
+      if (result.Status == ResultStatus.Forbidden)
+        return Result<ContactMutationResult>.Forbidden();
+
       return Result<ContactMutationResult>.Invalid(result.ValidationErrors);
     }
     catch (Exception ex)

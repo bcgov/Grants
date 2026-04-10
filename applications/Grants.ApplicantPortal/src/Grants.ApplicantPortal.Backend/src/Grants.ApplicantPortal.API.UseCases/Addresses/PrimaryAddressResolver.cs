@@ -36,6 +36,7 @@ public static class PrimaryAddressResolver
           addresses.ValueKind != JsonValueKind.Array)
         return null;
 
+      // First pass: look for an address explicitly marked as primary
       foreach (var address in addresses.EnumerateArray())
       {
         if (address.TryGetProperty("isPrimary", out var isPrimary) && isPrimary.GetBoolean() &&
@@ -46,7 +47,31 @@ public static class PrimaryAddressResolver
         }
       }
 
-      return null;
+      // Fallback: no address is marked as primary — pick the one with the latest creationTime
+      Guid? fallbackId = null;
+      DateTimeOffset latestTime = DateTimeOffset.MinValue;
+
+      foreach (var address in addresses.EnumerateArray())
+      {
+        if (!address.TryGetProperty("id", out var idProp) ||
+            !Guid.TryParse(idProp.GetString(), out var addressId))
+          continue;
+
+        if (address.TryGetProperty("creationTime", out var ctProp) &&
+            DateTimeOffset.TryParse(ctProp.GetString(), out var ct) &&
+            ct > latestTime)
+        {
+          latestTime = ct;
+          fallbackId = addressId;
+        }
+        else if (fallbackId == null)
+        {
+          // If no creationTime, use the first address as ultimate fallback
+          fallbackId = addressId;
+        }
+      }
+
+      return fallbackId;
     }
     catch
     {

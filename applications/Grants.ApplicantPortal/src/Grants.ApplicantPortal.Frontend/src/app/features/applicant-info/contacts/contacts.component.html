@@ -247,9 +247,9 @@
           [disabled]="isSavingContact">
           @if (isSavingContact) {
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            {{ isEditMode ? 'Updating...' : 'Saving...' }}
+            {{ isEditMode ? 'Updating...' : 'Creating...' }}
           } @else {
-            {{ isEditMode ? 'Update Contact' : 'Save Contact' }}
+            {{ isEditMode ? 'Update' : 'Create' }}
           }
         </button>
       </div>

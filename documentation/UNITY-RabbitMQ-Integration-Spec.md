@@ -100,7 +100,8 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
       "workPhoneNumber": "string | null",
       "workPhoneExtension": "string | null",
       "role": "string | null",
-      "isPrimary": false
+      "isPrimary": false,
+      "applicantId": "guid"
     }
   }
 }
@@ -127,7 +128,8 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
       "workPhoneNumber": "string | null",
       "workPhoneExtension": "string | null",
       "role": "string | null",
-      "isPrimary": false
+      "isPrimary": false,
+      "applicantId": "guid"
     }
   }
 }
@@ -143,7 +145,10 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "contactId": "guid",
     "profileId": "guid",
     "provider": "string",
-    "subject": "string (OIDC subject)"
+    "subject": "string (OIDC subject)",
+    "data": {
+      "applicantId": "guid"
+    }
   }
 }
 ```
@@ -158,12 +163,42 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
     "contactId": "guid",
     "profileId": "guid",
     "provider": "string",
-    "subject": "string (OIDC subject)"
+    "subject": "string (OIDC subject)",
+    "data": {
+      "applicantId": "guid"
+    }
   }
 }
 ```
 
-### 2e. `ADDRESS_EDIT_COMMAND`
+### 2e. `ADDRESS_CREATE_COMMAND`
+
+```json
+{
+  "dataType": "ADDRESS_CREATE_COMMAND",
+  "data": {
+    "action": "CreateAddress",
+    "addressId": "guid",
+    "profileId": "guid",
+    "provider": "string (e.g. PROGRAM1)",
+    "subject": "string (OIDC subject, e.g. Abad@idir)",
+    "data": {
+      "addressType": "string (e.g. MAILING, PHYSICAL)",
+      "street": "string",
+      "street2": "string | null",
+      "unit": "string | null",
+      "city": "string",
+      "province": "string",
+      "postalCode": "string",
+      "country": "string | null",
+      "isPrimary": false,
+      "applicantId": "guid"
+    }
+  }
+}
+```
+
+### 2f. `ADDRESS_EDIT_COMMAND`
 
 ```json
 {
@@ -183,13 +218,14 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
       "province": "string",
       "postalCode": "string",
       "country": "string | null",
-      "isPrimary": false
+      "isPrimary": false,
+      "applicantId": "guid"
     }
   }
 }
 ```
 
-### 2f. `ADDRESS_SET_PRIMARY_COMMAND`
+### 2g. `ADDRESS_SET_PRIMARY_COMMAND`
 
 ```json
 {
@@ -204,7 +240,25 @@ Every inbound command arrives as a `PluginDataMessage`. The routing key will be 
 }
 ```
 
-### 2g. `ORGANIZATION_EDIT_COMMAND`
+### 2h. `ADDRESS_DELETE_COMMAND`
+
+```json
+{
+  "dataType": "ADDRESS_DELETE_COMMAND",
+  "data": {
+    "action": "DeleteAddress",
+    "addressId": "guid",
+    "profileId": "guid",
+    "provider": "string",
+    "subject": "string (OIDC subject)",
+    "data": {
+      "applicantId": "guid"
+    }
+  }
+}
+```
+
+### 2i. `ORGANIZATION_EDIT_COMMAND`
 
 ```json
 {
@@ -340,8 +394,10 @@ on message received(delivery):
       "CONTACT_EDIT_COMMAND"        → update contact
       "CONTACT_SET_PRIMARY_COMMAND" → set primary flag
       "CONTACT_DELETE_COMMAND"      → delete/deactivate contact
+      "ADDRESS_CREATE_COMMAND"      → create address
       "ADDRESS_EDIT_COMMAND"        → update address
       "ADDRESS_SET_PRIMARY_COMMAND" → set primary flag
+      "ADDRESS_DELETE_COMMAND"      → delete/deactivate address
       "ORGANIZATION_EDIT_COMMAND"   → update organization
       default                       → log unknown command type
 

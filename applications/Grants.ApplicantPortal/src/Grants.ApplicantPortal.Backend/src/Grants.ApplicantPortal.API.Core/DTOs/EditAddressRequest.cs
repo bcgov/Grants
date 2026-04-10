@@ -14,4 +14,5 @@ public record EditAddressRequest(
   bool IsPrimary,
   string? Street2 = null,
   string? Unit = null,
-  string? Country = null);
+  string? Country = null,
+  Guid ApplicantId = default);

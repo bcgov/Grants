@@ -33,6 +33,8 @@ public class UpdateAddressRequest
 
   public bool IsPrimary { get; set; }
 
+  public Guid ApplicantId { get; set; }
+
   // Route parameters
   public Guid AddressId { get; set; }
   public string PluginId { get; set; } = string.Empty;

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Grants.ApplicantPortal.API.Core.Services;
+using Grants.ApplicantPortal.API.UseCases.Security;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Grants.ApplicantPortal.API.UseCases;
 
@@ -12,6 +14,9 @@ public static class UseCasesServiceExtensions
     services.AddScoped<IProfileDataRetrievalService, ProfileDataRetrievalService>();
     services.AddScoped<IProfileCacheInvalidationService, ProfileCacheInvalidationService>();
     services.AddScoped<IPluginCacheService, PluginCacheService>();
+
+    // Register security services
+    services.AddScoped<IResourceOwnershipValidator, ResourceOwnershipValidator>();
 
     logger.LogInformation("{Project} services registered", "UseCases");
 
