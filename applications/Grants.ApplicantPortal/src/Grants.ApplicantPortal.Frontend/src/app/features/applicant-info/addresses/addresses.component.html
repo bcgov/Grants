@@ -55,6 +55,7 @@
 
       <!-- Addresses Table -->
       <app-datatable
+        idSuffix="addresses"
         [config]="addressesTableConfig"
         [data]="getAddressesForTable()"
         [loading]="isLoading"
@@ -67,11 +68,11 @@
 </div>
 
 <!-- Add/Edit Address Modal -->
-<div id="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addAddressModalLabel" [attr.aria-hidden]="!showAddAddressModal">
+<div id="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-address-modal-label" [attr.aria-hidden]="!showAddAddressModal">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addAddressModalLabel">
+        <h5 class="modal-title" id="add-address-modal-label">
           {{ isEditMode ? 'Edit Address' : 'Add New Address' }}
         </h5>
         <button type="button" id="address-modal-close-btn" class="btn-close" (click)="onCancelAddAddress()" aria-label="Close"></button>
@@ -90,11 +91,11 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressType" class="form-label">Address Type <span class="text-danger">*</span></label>
+                <label for="address-type" class="form-label">Address Type <span class="text-danger">*</span></label>
                 <select
                   class="form-select"
                   [class.is-invalid]="formSubmitted && addrType.invalid"
-                  id="addressType"
+                  id="address-type"
                   [(ngModel)]="newAddress.addressType"
                   name="addressType"
                   #addrType="ngModel"
@@ -122,11 +123,11 @@
                 <input
                   type="checkbox"
                   class="form-check-input"
-                  id="addressIsPrimary"
+                  id="address-is-primary"
                   [(ngModel)]="newAddress.isPrimary"
                   name="isPrimary"
                   [disabled]="isSavingAddress">
-                <label for="addressIsPrimary" class="form-check-label">
+                <label for="address-is-primary" class="form-check-label">
                   Set as Primary Address
                 </label>
               </div>
@@ -137,12 +138,12 @@
           <div class="row">
             <div class="col-md-8">
               <div class="mb-3">
-                <label for="addressStreet" class="form-label">Street <span class="text-danger">*</span></label>
+                <label for="address-street" class="form-label">Street <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrStreet.invalid"
-                  id="addressStreet"
+                  id="address-street"
                   [(ngModel)]="newAddress.street"
                   name="street"
                   #addrStreet="ngModel"
@@ -158,11 +159,11 @@
             </div>
             <div class="col-md-4">
               <div class="mb-3">
-                <label for="addressUnit" class="form-label">Unit</label>
+                <label for="address-unit" class="form-label">Unit</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressUnit"
+                  id="address-unit"
                   [(ngModel)]="newAddress.unit"
                   name="unit"
                   maxlength="50"
@@ -175,11 +176,11 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressStreet2" class="form-label">Street 2</label>
+                <label for="address-street-2" class="form-label">Street 2</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressStreet2"
+                  id="address-street-2"
                   [(ngModel)]="newAddress.street2"
                   name="street2"
                   maxlength="200"
@@ -188,12 +189,12 @@
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressCity" class="form-label">City <span class="text-danger">*</span></label>
+                <label for="address-city" class="form-label">City <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrCity.invalid"
-                  id="addressCity"
+                  id="address-city"
                   [(ngModel)]="newAddress.city"
                   name="city"
                   #addrCity="ngModel"
@@ -213,12 +214,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressProvince" class="form-label">Province <span class="text-danger">*</span></label>
+                <label for="address-province" class="form-label">Province <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrProvince.invalid"
-                  id="addressProvince"
+                  id="address-province"
                   [(ngModel)]="newAddress.province"
                   name="province"
                   #addrProvince="ngModel"
@@ -234,12 +235,12 @@
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressPostalCode" class="form-label">Postal Code <span class="text-danger">*</span></label>
+                <label for="address-postal-code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrPostalCode.invalid"
-                  id="addressPostalCode"
+                  id="address-postal-code"
                   [(ngModel)]="newAddress.postalCode"
                   name="postalCode"
                   #addrPostalCode="ngModel"
@@ -287,11 +288,11 @@
 <div class="modal-backdrop fade" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" *ngIf="showAddAddressModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div id="address-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteAddressModalLabel" [attr.aria-hidden]="!showDeleteConfirmModal">
+<div id="address-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">
-        <h5 class="modal-title delete-modal-title" id="deleteAddressModalLabel">
+        <h5 class="modal-title delete-modal-title" id="delete-address-modal-label">
           Remove Address
         </h5>
         <button type="button" class="btn-close delete-modal-close" (click)="onCancelDeleteAddress()" aria-label="Close" [disabled]="isDeletingAddress"></button>

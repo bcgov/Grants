@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 })
 export class UserDropdownComponent {
   @Input() userInfo: any;
-  @Input() dropdownId: string = 'userDropdown';
+  @Input() dropdownId: string = 'header-user-dropdown';
   @Input() buttonClass: string = 'btn btn-link dropdown-toggle';
   @Input() dropdownClass: string = '';
   @Input() menuClass: string = 'dropdown-menu-end';

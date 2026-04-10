@@ -1,4 +1,4 @@
-<div [class]="config.containerClass || 'datatable-container'">
+<div [id]="'datatable-' + idSuffix" [class]="config.containerClass || 'datatable-container'">
   <!-- Loading State -->
   @if (loading || config.loading) {
     <div class="loading-spinner-container d-flex justify-content-center align-items-center" style="min-height: 300px">
@@ -16,6 +16,7 @@
         <div class="search-input-wrapper">
           <input
             type="text"
+            [id]="'datatable-search-' + idSuffix"
             class="form-control search-input"
             [placeholder]="config.searchPlaceholder || 'Search...'"
             [(ngModel)]="searchTerm"
@@ -73,9 +74,10 @@
         </thead>
 
         <!-- Table Body -->
-        <tbody>
+        <tbody [id]="'datatable-body-' + idSuffix">
           @for (row of getDisplayData(); track trackByFn($index, row); let i = $index) {
             <tr 
+              [id]="'datatable-body-' + idSuffix + '-' + i"
               [class]="config.tableClass ? config.tableClass + '-row' : 'datatable-row'"
               [tabindex]="config.rowClickable ? 0 : -1"
               (click)="onRowClick(row, i, $event)"
