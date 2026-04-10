@@ -72,6 +72,7 @@
         <div class="col-md-12">
           <h5>Associated Organizations</h5>
           <app-datatable
+            idSuffix="organizations"
             [config]="orgbookDataTableConfig"
             [data]="multipleOrganizations"
             [loading]="false">
@@ -86,11 +87,11 @@
     <div class="row">
       <div class="col-md-12">
         <div class="field">
-          <label for="orgSearch">Organization Book Search</label>
+          <label for="org-search">Organization Book Search</label>
           <div class="search-container">
             <div class="input-group">
                 <input
-                  id="orgSearch"
+                  id="org-search"
                   name="orgSearch"
                   type="text"
                   [(ngModel)]="searchTerm"
@@ -147,9 +148,9 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="orgName">Registered Organization Name</label>
+          <label for="org-name">Registered Organization Name</label>
           <input
-            id="orgName"
+            id="org-name"
             type="text"
             [value]="organizationInfo?.orgName"
             disabled
@@ -159,9 +160,9 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="regNumber">Registered Organization Number</label>
+          <label for="reg-number">Registered Organization Number</label>
           <input
-            id="regNumber"
+            id="reg-number"
             type="text"
             [value]="organizationInfo?.orgNumber"
             disabled
@@ -174,9 +175,9 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="orgStatus">Organization Book Status</label>
+          <label for="org-status">Organization Book Status</label>
           <input
-            id="orgStatus"
+            id="org-status"
             [value]="organizationInfo?.orgStatus"
             disabled
             class="form-control"
@@ -185,9 +186,9 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="orgType">Organization Type</label>
+          <label for="org-type">Organization Type</label>
           <input
-            id="orgType"
+            id="org-type"
             type="text"
             [value]="
               organizationInfo?.organizationType
@@ -204,9 +205,9 @@
     <div class="row">
       <div class="col-md-8">
         <div class="field">
-          <label for="nonRegOrgName">Non-Registered Organization Name</label>
+          <label for="non-reg-org-name">Non-Registered Organization Name</label>
           <input
-            id="nonRegOrgName"
+            id="non-reg-org-name"
             name="nonRegOrgName"
             type="text"
             [ngModel]="organizationInfo?.nonRegOrgName || ''"
@@ -224,9 +225,9 @@
       </div>
       <div class="col-md-4">
         <div class="field">
-          <label for="orgSize">Organization Size</label>
+          <label for="org-size">Organization Size</label>
           <input
-            id="orgSize"
+            id="org-size"
             name="orgSize"
             type="number"
             [ngModel]="organizationInfo?.orgSize || ''"
@@ -251,10 +252,10 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="fiscalMonth">Fiscal Year End Month</label>
+          <label for="fiscal-month">Fiscal Year End Month</label>
           <select
             class="form-select"
-            id="fiscalMonth"
+            id="fiscal-month"
             name="fiscalMonth"
             [(ngModel)]="selectedFiscalMonth"
             (change)="onFiscalMonthChange($event)"
@@ -278,10 +279,10 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="fiscalDay">Fiscal Year End Day</label>
+          <label for="fiscal-day">Fiscal Year End Day</label>
           <select
             class="form-select"
-            id="fiscalDay"
+            id="fiscal-day"
             name="fiscalDay"
             [(ngModel)]="selectedFiscalDay"
             (change)="onFiscalDayChange($event)"

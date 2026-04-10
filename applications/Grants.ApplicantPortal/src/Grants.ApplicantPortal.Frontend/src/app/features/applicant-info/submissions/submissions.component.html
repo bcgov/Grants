@@ -6,6 +6,7 @@
   </div>
   <div class="card-body">
     <app-datatable
+      idSuffix="submissions"
       [config]="submissionsTableConfig"
       [data]="submissionsData || []"
       [loading]="isLoading"

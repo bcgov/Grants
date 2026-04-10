@@ -21,6 +21,7 @@ import { TableSortService, SortState, TableSortConfig } from '../../services/tab
   encapsulation: ViewEncapsulation.None
 })
 export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
+  @Input({ required: true }) idSuffix!: string;
   @Input() config!: DatatableConfig;
   @Input() data: any[] = [];
   @Input() loading = false;
