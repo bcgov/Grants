@@ -49,9 +49,9 @@ Request → ProfileResolutionMiddleware (JWT → ProfileId)
 
 ### `ValidateApplicantOwnershipAsync(applicantId, profileContext)`
 
-Used on **create** operations. Checks that the supplied `applicantId` exists in the user's cached contact data:
-- Checks the top-level `applicantId` property
-- Searches the `contacts[]` array for any contact with a matching `applicantId`
+Used on **create** operations. Checks that the supplied `applicantId` exists in the user's cached organization data (`ORGINFO` segment):
+- Searches the `organizations[]` array for any organization whose `id` matches the supplied `applicantId` (case-insensitive)
+- Rejects `Guid.Empty` early without a cache lookup
 
 ### `ValidateContactOwnershipAsync(contactId, profileContext)`
 
@@ -59,13 +59,11 @@ Used on **edit, delete, set-primary** operations. Searches the cached `contacts[
 
 ### `ValidateAddressOwnershipAsync(addressId, profileContext)`
 
-Used on **edit, delete, set-primary** operations. Searches the cached `addresses[]` array for an address with the matching `addressId`. Returns both ownership status and `isEditable` flag.
+Used on **edit, delete, set-primary** operations. Searches the cached `addresses[]` array for an address with a matching `id`. Returns both ownership status and `isEditable` flag.
 
 ### `ValidateOrganizationOwnershipAsync(organizationId, profileContext)`
 
-Used on **edit** operations. Checks the cached organization data:
-- Checks the `organizationInfo` object for a matching `organizationId`
-- Searches the `organizations[]` array if present
+Used on **edit** operations. Searches the cached `organizations[]` array for an organization whose `id` matches the supplied `organizationId` (case-insensitive).
 
 ---
 
@@ -75,9 +73,9 @@ The validator reads from these cache segments (scoped to `{profileId}:{pluginId}
 
 | Segment | Used By | Data Structure |
 |---------|---------|---------------|
-| `{provider}:CONTACTINFO` | Contact + Applicant validation | `{ applicantId, contacts: [{ contactId, isEditable, applicantId }] }` |
-| `{provider}:ADDRESSINFO` | Address validation | `{ addresses: [{ addressId, isEditable }] }` |
-| `{provider}:ORGINFO` | Organization validation | `{ organizationInfo: { organizationId } }` or `{ organizations: [{ organizationId }] }` |
+| `{provider}:CONTACTINFO` | Contact validation | `{ applicantId, contacts: [{ contactId, isEditable, applicantId }] }` |
+| `{provider}:ADDRESSINFO` | Address validation | `{ addresses: [{ id, isEditable }] }` |
+| `{provider}:ORGINFO` | Organization + Applicant validation | `{ organizations: [{ id }] }` |
 
 ---
 

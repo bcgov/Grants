@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, switchMap, takeUntil, timer, retry, catchError, throwError } from 'rxjs';
+import { Subject, switchMap, takeUntil, timer, retry, catchError, EMPTY } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
@@ -614,7 +614,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         console.error('Failed to fetch workspaces after retries:', error);
         this.isLoading = false;
         this.hasError = true;
-        return throwError(() => error);
+        return EMPTY;
       })
     ).subscribe();
   }
@@ -635,7 +635,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.hasError = true;
         this.isRetrying = false;
-        return throwError(() => error);
+        return EMPTY;
       })
     ).subscribe({
       next: () => {

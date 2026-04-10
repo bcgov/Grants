@@ -1,4 +1,4 @@
-﻿# API Endpoints Reference
+# API Endpoints Reference
 
 Complete reference for all REST endpoints in the Grants Applicant Portal API. All endpoints use [FastEndpoints](https://fast-endpoints.com/) and JWT Bearer authentication via Keycloak unless otherwise noted.
 

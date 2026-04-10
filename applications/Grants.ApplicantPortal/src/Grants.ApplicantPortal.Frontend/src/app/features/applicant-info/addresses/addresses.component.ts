@@ -329,6 +329,8 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         const street2 = payload.street2;
         const unit = payload.unit;
 
+        const effectiveIsEditable = response?.isEditable ?? true;
+
         const savedAddress: AddressDisplay = {
           id: addressId,
           addressType: payload.addressType,
@@ -340,8 +342,8 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           postalCode: payload.postalCode,
           country: payload.country,
           isPrimary: addressId.toLowerCase() === response?.primaryAddressId?.toLowerCase(),
-          isEditable: response?.isEditable ?? true,
-          disabledTooltip: this.getDisabledTooltip(response ?? {}),
+          isEditable: effectiveIsEditable,
+          disabledTooltip: this.getDisabledTooltip({ ...response, isEditable: effectiveIsEditable }),
           referenceNo: response?.referenceNo ?? '',
           fullAddress: [street, street2, unit].filter(Boolean).join(', ')
         };

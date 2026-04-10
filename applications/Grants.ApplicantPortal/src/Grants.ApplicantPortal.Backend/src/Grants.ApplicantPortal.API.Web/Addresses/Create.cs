@@ -38,6 +38,7 @@ public class Create(IMediator _mediator)
         PostalCode = "V8W1A1",
         Country = "",
         IsPrimary = false,
+        ApplicantId = Guid.Parse("d3b07384-d9a0-4e9b-8a1f-1c2d3e4f5a6b"),
         PluginId = "DEMO",
         Provider = "PROGRAM1"
       };

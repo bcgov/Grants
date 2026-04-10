@@ -214,7 +214,7 @@ export class ApplicantInfoService {
       map(response => this.parseOrganizationResponse(response)),
       catchError((error) => {
         console.error('Failed to load organization info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -269,7 +269,7 @@ export class ApplicantInfoService {
       map((response) => this.parseSubmissionsResponse(response)),
       catchError((error) => {
         console.error('Failed to load submissions info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -287,7 +287,7 @@ export class ApplicantInfoService {
       map(response => this.parseContactsResponse(response)),
       catchError((error) => {
         console.error('Failed to load contacts info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -305,7 +305,7 @@ export class ApplicantInfoService {
       map(response => this.parseAddressesResponse(response)),
       catchError((error) => {
         console.error('Failed to load addresses info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -323,7 +323,7 @@ export class ApplicantInfoService {
       map(response => this.parsePaymentsResponse(response)),
       catchError((error) => {
         console.error('Failed to load payments info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -337,7 +337,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to fetch contact roles:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -363,7 +363,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to create contact:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -383,7 +383,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to set contact as primary:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -401,7 +401,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to set address as primary:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -415,7 +415,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to fetch address types:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -444,7 +444,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to create address:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -464,7 +464,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to delete address:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -493,7 +493,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to update address:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -520,7 +520,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to update contact:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -540,7 +540,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to delete contact:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
