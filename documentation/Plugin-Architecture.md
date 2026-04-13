@@ -26,7 +26,7 @@ Each plugin declares its supported features as a string list. The system and UI 
 |---------|-------------|
 | `ProfilePopulation` | Can populate profile data (contacts, addresses, orgs, submissions, payments) |
 | `ContactManagement` | Supports contact create/edit/delete/set-primary |
-| `AddressManagement` | Supports address edit/set-primary |
+| `AddressManagement` | Supports address create/edit/delete/set-primary |
 | `OrganizationManagement` | Supports organization edit |
 
 ---
@@ -65,7 +65,9 @@ SetPrimaryContactAsync(...)
 ### `IAddressManagementPlugin`
 
 ```
+CreateAddressAsync(...)
 EditAddressAsync(...)
+DeleteAddressAsync(...)
 SetPrimaryAddressAsync(...)
 ```
 
@@ -198,7 +200,9 @@ Request → ProfileResolutionMiddleware
         → FastEndpoint (Create)
         → MediatR Command (CreateContactCommand)
         → Use Case Handler
-            → Call plugin.CreateContactAsync()
+            → Management Service
+                → IResourceOwnershipValidator (validates IDs against cached data)
+                → If valid: Call plugin.CreateContactAsync()
                 → Update local cache
                 → Publish PluginDataMessage to outbox (UNITY only)
             → Return result
@@ -226,5 +230,6 @@ Request → ProfileResolutionMiddleware
 
 - [API Endpoints](API-Endpoints.md) — Complete endpoint reference
 - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) — Outbox/inbox messaging pattern
+- [Resource Ownership Validation](Resource-Ownership-Validation.md) — IDOR prevention and ownership enforcement
 - [Unity Integration](Unity-Integration.md) — Unity-specific integration details
 - [UNITY RabbitMQ Integration Spec](UNITY-RabbitMQ-Integration-Spec.md) — External system consumer contract

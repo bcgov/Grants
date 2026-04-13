@@ -23,6 +23,7 @@ public class RabbitMQPublisherMessageIdTests
         _capturedProperties = new BasicProperties();
 
         _channel = Substitute.For<IModel>();
+        _channel.IsOpen.Returns(true);
         _channel.CreateBasicProperties().Returns(_capturedProperties);
         _channel.WaitForConfirms(Arg.Any<TimeSpan>()).Returns(true);
 
@@ -37,7 +38,7 @@ public class RabbitMQPublisherMessageIdTests
             PublisherConfirmTimeout = TimeSpan.FromSeconds(5)
         };
 
-        // Use the internal test constructor that accepts a pre-built channel
+        // Constructor no longer connects — inject the mock channel via reflection
         _sut = CreatePublisherWithChannel(_channel, config);
     }
 
@@ -71,28 +72,17 @@ public class RabbitMQPublisherMessageIdTests
     }
 
     /// <summary>
-    /// Creates a <see cref="RabbitMQPublisher"/> with an injected channel,
-    /// bypassing the real RabbitMQ connection for unit testing.
+    /// Creates a <see cref="RabbitMQPublisher"/> with an injected channel.
+    /// The constructor no longer connects to RabbitMQ, so we can construct
+    /// normally and inject the mock channel via reflection.
     /// </summary>
     private static RabbitMQPublisher CreatePublisherWithChannel(IModel channel, RabbitMQConfiguration config)
     {
-        // RabbitMQPublisher creates the connection in its constructor.
-        // For unit tests we need to inject the mock channel via reflection
-        // since the constructor connects to a real broker.
-#pragma warning disable SYSLIB0050 // FormatterServices is obsolete but is the only way to skip the constructor
-        var publisher = (RabbitMQPublisher)System.Runtime.Serialization.FormatterServices
-            .GetUninitializedObject(typeof(RabbitMQPublisher));
-#pragma warning restore SYSLIB0050
+        var publisher = new RabbitMQPublisher(config, NullLogger<RabbitMQPublisher>.Instance);
 
         var type = typeof(RabbitMQPublisher);
-        type.GetField("_configuration", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .SetValue(publisher, config);
-        type.GetField("_logger", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .SetValue(publisher, NullLogger<RabbitMQPublisher>.Instance);
         type.GetField("_channel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .SetValue(publisher, channel);
-        type.GetField("_disposed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .SetValue(publisher, false);
 
         return publisher;
     }

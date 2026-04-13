@@ -5,10 +5,12 @@ using Grants.ApplicantPortal.API.Core.Services;
 namespace Grants.ApplicantPortal.API.Infrastructure.Services;
 
 /// <summary>
-/// Contact management service that resolves to the appropriate plugin for contact operations
+/// Contact management service that resolves to the appropriate plugin for contact operations.
+/// Validates resource ownership before delegating to the plugin to prevent IDOR attacks.
 /// </summary>
 public class ContactManagementService(
   IProfilePluginFactory pluginFactory,
+  IResourceOwnershipValidator ownershipValidator,
   ILogger<ContactManagementService> logger) : IContactManagementService
 {
   public async Task<Result<Guid>> CreateContactAsync(
@@ -38,6 +40,19 @@ public class ContactManagementService(
           Identifier = "PluginId",
           ErrorMessage = $"Plugin '{profileContext.PluginId}' does not support contact management"
         });
+      }
+
+      // Validate applicantId ownership
+      if (contactRequest.ApplicantId != Guid.Empty)
+      {
+        var ownership = await ownershipValidator.ValidateApplicantOwnershipAsync(
+          contactRequest.ApplicantId, profileContext, cancellationToken);
+        if (!ownership.IsOwned)
+        {
+          logger.LogWarning("Ownership validation failed for contact create. ApplicantId: {ApplicantId}, ProfileId: {ProfileId}",
+            contactRequest.ApplicantId, profileContext.ProfileId);
+          return Result<Guid>.Forbidden();
+        }
       }
 
       // Call the plugin to create the contact
@@ -90,6 +105,26 @@ public class ContactManagementService(
         {
           Identifier = "PluginId",
           ErrorMessage = $"Plugin '{profileContext.PluginId}' does not support contact management"
+        });
+      }
+
+      // Validate contact ownership and editability
+      var ownership = await ownershipValidator.ValidateContactOwnershipAsync(
+        editRequest.ContactId, profileContext, cancellationToken);
+      if (!ownership.IsOwned)
+      {
+        logger.LogWarning("Ownership validation failed for contact edit. ContactId: {ContactId}, ProfileId: {ProfileId}",
+          editRequest.ContactId, profileContext.ProfileId);
+        return Result.Forbidden();
+      }
+      if (!ownership.IsEditable)
+      {
+        logger.LogWarning("Contact {ContactId} is not editable for ProfileId: {ProfileId}",
+          editRequest.ContactId, profileContext.ProfileId);
+        return Result.Invalid(new ValidationError
+        {
+          Identifier = "ContactId",
+          ErrorMessage = "This contact is linked to a submission and cannot be modified"
         });
       }
 
@@ -147,6 +182,16 @@ public class ContactManagementService(
         });
       }
 
+      // Validate contact ownership
+      var ownership = await ownershipValidator.ValidateContactOwnershipAsync(
+        contactId, profileContext, cancellationToken);
+      if (!ownership.IsOwned)
+      {
+        logger.LogWarning("Ownership validation failed for set-primary contact. ContactId: {ContactId}, ProfileId: {ProfileId}",
+          contactId, profileContext.ProfileId);
+        return Result.Forbidden();
+      }
+
       // Call the plugin to set the contact as primary
       var result = await contactPlugin.SetAsPrimaryContactAsync(contactId, applicantId, profileContext, cancellationToken);
 
@@ -198,6 +243,26 @@ public class ContactManagementService(
         {
           Identifier = "PluginId",
           ErrorMessage = $"Plugin '{profileContext.PluginId}' does not support contact management"
+        });
+      }
+
+      // Validate contact ownership and editability
+      var ownership = await ownershipValidator.ValidateContactOwnershipAsync(
+        contactId, profileContext, cancellationToken);
+      if (!ownership.IsOwned)
+      {
+        logger.LogWarning("Ownership validation failed for contact delete. ContactId: {ContactId}, ProfileId: {ProfileId}",
+          contactId, profileContext.ProfileId);
+        return Result.Forbidden();
+      }
+      if (!ownership.IsEditable)
+      {
+        logger.LogWarning("Contact {ContactId} is not editable (delete blocked) for ProfileId: {ProfileId}",
+          contactId, profileContext.ProfileId);
+        return Result.Invalid(new ValidationError
+        {
+          Identifier = "ContactId",
+          ErrorMessage = "This contact is linked to a submission and cannot be deleted"
         });
       }
 

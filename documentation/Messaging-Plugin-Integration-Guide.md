@@ -177,8 +177,10 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
 | `CONTACT_EDIT_COMMAND` | Edit an existing contact | `Unity.Contacts.cs` |
 | `CONTACT_SET_PRIMARY_COMMAND` | Set a contact as primary | `Unity.Contacts.cs` |
 | `CONTACT_DELETE_COMMAND` | Delete a contact | `Unity.Contacts.cs` |
+| `ADDRESS_CREATE_COMMAND` | Create a new address | `Unity.Addresses.cs` |
 | `ADDRESS_EDIT_COMMAND` | Edit an address | `Unity.Addresses.cs` |
 | `ADDRESS_SET_PRIMARY_COMMAND` | Set an address as primary | `Unity.Addresses.cs` |
+| `ADDRESS_DELETE_COMMAND` | Delete an address | `Unity.Addresses.cs` |
 | `ORGANIZATION_EDIT_COMMAND` | Edit an organization | `Unity.Organizations.cs` |
 
 ### Full Command Payload Examples
@@ -210,7 +212,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
       "workPhoneNumber": "555 864-2100",
       "workPhoneExtension": "101",
       "role": "Executive",
-      "isPrimary": true
+      "isPrimary": true,
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
     }
   }
 }
@@ -244,7 +247,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
       "workPhoneNumber": "555 864-2100",
       "workPhoneExtension": "102",
       "role": "Executive",
-      "isPrimary": true
+      "isPrimary": true,
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
     }
   }
 }
@@ -267,7 +271,10 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "contactId": "a437675a-d642-455c-b3e0-388d75e6203f",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
-    "subject": "Abad@idir"
+    "subject": "Abad@idir",
+    "data": {
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
+    }
   }
 }
 ```
@@ -289,7 +296,44 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "contactId": "b5a01793-e247-48c7-8257-25b0ed239883",
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
-    "subject": "Abad@idir"
+    "subject": "Abad@idir",
+    "data": {
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>ADDRESS_CREATE_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "d5e6f7a8-b9c0-1234-abcd-ef0123456789",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:13:30Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "ADDRESS_CREATE_COMMAND",
+  "data": {
+    "action": "CreateAddress",
+    "addressId": "CCD12E34-6789-0ABC-DEF1-234567890ABC",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "subject": "Abad@idir",
+    "data": {
+      "addressType": "Mailing",
+      "street": "789 New Boulevard",
+      "street2": "",
+      "unit": "Unit 5",
+      "city": "Vancouver",
+      "province": "BC",
+      "postalCode": "V6B2K8",
+      "country": "",
+      "isPrimary": false,
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
+    }
   }
 }
 ```
@@ -321,7 +365,8 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
       "province": "BC",
       "postalCode": "V8W1A4",
       "country": "",
-      "isPrimary": true
+      "isPrimary": true,
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
     }
   }
 }
@@ -345,6 +390,31 @@ All plugin write operations (contact create/edit/delete, address edit, org edit,
     "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
     "provider": "DGP",
     "subject": "Abad@idir"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>ADDRESS_DELETE_COMMAND</b></summary>
+
+```json
+{
+  "messageId": "a8b9c0d1-e2f3-4567-8901-abcdef012345",
+  "messageType": "PluginDataMessage",
+  "createdAt": "2026-03-04T20:15:30Z",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "ADDRESS_DELETE_COMMAND",
+  "data": {
+    "action": "DeleteAddress",
+    "addressId": "BBD12E34-6789-0ABC-DEF1-234567890ABC",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "subject": "Abad@idir",
+    "data": {
+      "applicantId": "3a186f5b-505c-9e2f-18e1-033541752785"
+    }
   }
 }
 ```

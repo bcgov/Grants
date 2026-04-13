@@ -40,6 +40,14 @@ public partial class UnityPlugin(
 
     public IReadOnlyList<ContactRoleOption> GetContactRoles() => _contactRoles;
 
+    private static readonly IReadOnlyList<AddressTypeOption> _addressTypes =
+    [
+        new("Physical", "Physical"),
+        new("Mailing", "Mailing")
+    ];
+
+    public IReadOnlyList<AddressTypeOption> GetAddressTypes() => _addressTypes;
+
     public bool CanHandle(ProfilePopulationMetadata metadata)
     {
         return metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);
