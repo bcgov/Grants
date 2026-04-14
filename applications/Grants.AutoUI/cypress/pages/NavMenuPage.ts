@@ -93,10 +93,10 @@ class NavMenuPage {
     this.providersHeader.should("contain.text", "Providers");
     this.activeProviderItem
       .should("be.visible")
-      .and("have.attr", "data-cy", `provider-item-${providerName}`);
+      .and("contain.text", providerName);
     this.changeWorkspaceButton
       .should("be.visible")
-      .and("have.attr", "data-cy", "change-workspace-btn");
+      .and("contain.text", "Change Workspace");
   }
 
   clickPayments(): void {
