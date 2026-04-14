@@ -1,7 +1,7 @@
 <header class="header">
   <div class="header-left">
     <div class="page-title">
-      <h3 id="header-page-title" class="m-0">{{ pageTitle }}</h3>
+      <h3 id="header-page-title" data-cy="header-page-title" class="m-0">{{ pageTitle }}</h3>
     </div>
   </div>
   <div class="header-right">
@@ -12,6 +12,7 @@
           class="btn btn-outline-primary dropdown-toggle workspace-btn"
           type="button"
           id="workspace-dropdown"
+          data-cy="workspace-dropdown"
           data-bs-toggle="dropdown"
           aria-expanded="false"
           [attr.aria-label]="'Current workspace: ' + displayText"
@@ -42,6 +43,7 @@
               <button 
                 class="dropdown-item provider-item"
                 [attr.id]="'provider-item-' + provider.id"
+                [attr.data-cy]="'provider-item-' + provider.id"
                 [class.active]="provider.id === selectedProvider"
                 (click)="selectProviderById(provider)"
                 type="button"
@@ -62,6 +64,7 @@
             <li>
               <button 
                 id="change-workspace-btn"
+                data-cy="change-workspace-btn"
                 class="dropdown-item change-workspace-item"
                 (click)="changeWorkspace()"
                 type="button"
