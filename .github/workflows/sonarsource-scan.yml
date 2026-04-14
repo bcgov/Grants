@@ -87,18 +87,20 @@ jobs:
         working-directory: ./applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
         run: npm run build:dev
 
-      - name: Restore .NET dependencies
-        working-directory: ./applications
-        run: dotnet restore Grants.sln
+      - name: Restore .NET dependencies  
+        working-directory: ./applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
+        run: dotnet restore Grants.ApplicantPortal.API.sln
 
       - name: Build .NET solution
-        working-directory: ./applications
-        run: dotnet build Grants.sln --no-restore
+        working-directory: ./applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend  
+        run: dotnet build Grants.ApplicantPortal.API.sln --no-restore
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v7
         with:
           projectBaseDir: applications/Grants.ApplicantPortal
+          args: >
+            -Dsonar.verbose=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
