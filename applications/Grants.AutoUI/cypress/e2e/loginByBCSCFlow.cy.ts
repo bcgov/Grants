@@ -144,9 +144,14 @@ describe(
         landingPage.contactsCard
           .find("h3")
           .should("contain.text", "Contact Information");
-        landingPage.addContactButton
-          .should("be.visible")
-          .and("contain.text", "Add");
+        // Add button only renders when account has a single org (isSingleOrg flag)
+        cy.get("body").then(($body) => {
+          if ($body.find('[data-cy="contact-add-btn"]').length > 0) {
+            landingPage.addContactButton
+              .should("be.visible")
+              .and("contain.text", "Add");
+          }
+        });
         landingPage.primaryContactInfo.should("be.visible");
       });
 

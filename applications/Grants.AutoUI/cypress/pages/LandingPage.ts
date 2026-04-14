@@ -1,43 +1,43 @@
 class LandingPage {
   // Cards
   get orgInfoCard() {
-    return cy.get("#card-organization");
+    return cy.get('[data-cy="card-organization"]');
   }
 
   get submissionsCard() {
-    return cy.get("#card-submissions");
+    return cy.get('[data-cy="card-submissions"]');
   }
 
   get contactsCard() {
-    return cy.get("#card-contacts");
+    return cy.get('[data-cy="card-contacts"]');
   }
 
   get addressesCard() {
-    return cy.get("#card-addresses");
+    return cy.get('[data-cy="card-addresses"]');
   }
 
   // Organization Information
   get orgTable() {
-    return cy.get("#card-organization .orgbook-table");
+    return cy.get('[data-cy="card-organization"] .orgbook-table');
   }
 
   // Submissions
   get submissionsTable() {
-    return cy.get("#card-submissions .datatable");
+    return cy.get('[data-cy="datatable-submissions"]');
   }
 
   // Contacts
   get addContactButton() {
-    return cy.get("#contact-add-btn");
+    return cy.get('[data-cy="contact-add-btn"]');
   }
 
   get primaryContactInfo() {
-    return cy.get("#primary-contact-info");
+    return cy.get('[data-cy="primary-contact-info"]');
   }
 
   // Addresses
   get primaryAddressInfo() {
-    return cy.get("#primary-address-info");
+    return cy.get('[data-cy="primary-address-info"]');
   }
 
   verifyPageLoaded(): void {

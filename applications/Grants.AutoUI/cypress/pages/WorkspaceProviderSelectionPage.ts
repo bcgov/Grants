@@ -1,24 +1,24 @@
 export class WorkspaceProviderSelectionPage {
   // Workspace screen
   get workspaceSelect() {
-    return cy.get("#workspaceSelect");
+    return cy.get('[data-cy="workspace-select"]');
   }
 
   get workspaceContinueButton() {
-    return cy.get("#workspace-continue-btn");
+    return cy.get('[data-cy="workspace-continue-btn"]');
   }
 
   // Provider screen
   get providerLabel() {
-    return cy.get('label[for="providerSelect"]');
+    return cy.get('label[for="provider-select"]');
   }
 
   get providerSelect() {
-    return cy.get("#providerSelect");
+    return cy.get('[data-cy="provider-select"]');
   }
 
   get providerContinueButton() {
-    return cy.get("#provider-continue-btn");
+    return cy.get('[data-cy="provider-continue-btn"]');
   }
 
   // Actions

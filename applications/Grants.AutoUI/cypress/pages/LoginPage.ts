@@ -1,10 +1,10 @@
 export class LoginPage {
   // ── Selectors ───────────────────────────────────────────────────────────────
   get loginCard() {
-    return cy.get("#login-card");
+    return cy.get('[data-cy="login-card"]');
   }
   get loginButton() {
-    return cy.get("#login-btn");
+    return cy.get('[data-cy="login-btn"]');
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

@@ -1,26 +1,26 @@
 class PaymentsPage {
   get pageInner() {
-    return cy.get(".page-inner");
+    return cy.get('[data-cy="payments-page-inner"]');
   }
 
   get paymentsCard() {
-    return this.pageInner.find(".card");
+    return cy.get('[data-cy="payments-card"]');
   }
 
   get pageHeader() {
-    return this.paymentsCard.find(".card-header h3");
+    return cy.get('[data-cy="payments-header"]');
   }
 
   get paymentsTable() {
-    return this.paymentsCard.find(".datatable");
+    return cy.get('[data-cy="datatable-payments"]').find('table');
   }
 
   get searchInput() {
-    return this.paymentsCard.find("input.search-input");
+    return cy.get('[data-cy="datatable-search-payments"]');
   }
 
   get tableRows() {
-    return this.paymentsTable.find("tbody .datatable-row");
+    return cy.get('[data-cy="datatable-body-payments"]').find('tr');
   }
 
   verifyPageLoaded(): void {

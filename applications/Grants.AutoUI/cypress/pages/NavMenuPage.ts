@@ -4,19 +4,19 @@ class NavMenuPage {
   }
 
   get applicantInfoLink() {
-    return cy.get("#nav-applicant-info");
+    return cy.get('[data-cy="nav-applicant-info"]');
   }
 
   get paymentsLink() {
-    return cy.get("#nav-payments");
+    return cy.get('[data-cy="nav-payments"]');
   }
 
   get workspaceDropdown() {
-    return cy.get("#workspaceDropdown");
+    return cy.get('[data-cy="workspace-dropdown"]');
   }
 
   get workspaceDropdownMenu() {
-    return cy.get("ul[aria-labelledby='workspaceDropdown']");
+    return cy.get("ul[aria-labelledby='workspace-dropdown']");
   }
 
   get workspaceDropdownHeader() {
@@ -32,23 +32,23 @@ class NavMenuPage {
   }
 
   providerItem(providerId: string) {
-    return this.workspaceDropdownMenu.find(`#provider-item-${providerId}`);
+    return cy.get(`[data-cy="provider-item-${providerId}"]`);
   }
 
   get changeWorkspaceButton() {
-    return cy.get("#change-workspace-btn");
+    return cy.get('[data-cy="change-workspace-btn"]');
   }
 
   get userDropdownButton() {
-    return cy.get("#headerUserDropdown");
+    return cy.get('[data-cy="header-user-dropdown"]');
   }
 
   get userDropdownMenu() {
-    return cy.get("ul[aria-labelledby='headerUserDropdown']");
+    return cy.get("ul[aria-labelledby='header-user-dropdown']");
   }
 
   get logoutButton() {
-    return cy.get("#headerUserDropdown-logout");
+    return cy.get('[data-cy="header-user-dropdown-logout"]');
   }
 
   openUserDropdown(): void {
@@ -93,10 +93,10 @@ class NavMenuPage {
     this.providersHeader.should("contain.text", "Providers");
     this.activeProviderItem
       .should("be.visible")
-      .and("have.id", `provider-item-${providerName}`);
+      .and("have.attr", "data-cy", `provider-item-${providerName}`);
     this.changeWorkspaceButton
       .should("be.visible")
-      .and("have.id", "change-workspace-btn");
+      .and("have.attr", "data-cy", "change-workspace-btn");
   }
 
   clickPayments(): void {
