@@ -1,4 +1,4 @@
-<div [id]="'datatable-' + idSuffix" [class]="config.containerClass || 'datatable-container'">
+<div [id]="'datatable-' + idSuffix" [attr.data-cy]="'datatable-' + idSuffix" [class]="config.containerClass || 'datatable-container'">
   <!-- Loading State -->
   @if (loading || config.loading) {
     <div class="loading-spinner-container d-flex justify-content-center align-items-center" style="min-height: 300px">
@@ -17,6 +17,7 @@
           <input
             type="text"
             [id]="'datatable-search-' + idSuffix"
+            [attr.data-cy]="'datatable-search-' + idSuffix"
             class="form-control search-input"
             [placeholder]="config.searchPlaceholder || 'Search...'"
             [(ngModel)]="searchTerm"
@@ -30,6 +31,7 @@
              class="search-icon search-clear"
              [class.d-none]="searchTerm.length === 0"
              (click)="clearSearch()"
+             [attr.data-cy]="'datatable-search-clear-' + idSuffix"
              aria-label="Clear search"
            >
              <i class="fas fa-times" aria-hidden="true"></i>
@@ -52,6 +54,7 @@
             @for (column of config.columns; track column.key) {
               <th 
                 [class]="(column.sortable ? 'sortable ' : '') + (column.cssClass || '') + (isColumnSorted(column.key) ? ' sorted' : '')"
+                [attr.data-cy]="'datatable-header-' + idSuffix + '-' + column.key"
                 [style.width]="column.width"
                 [tabindex]="column.sortable ? 0 : -1"
                 [attr.aria-label]="column.sortable ? getSortAriaLabel(column.key) : column.label"
@@ -74,10 +77,11 @@
         </thead>
 
         <!-- Table Body -->
-        <tbody [id]="'datatable-body-' + idSuffix">
+        <tbody [id]="'datatable-body-' + idSuffix" [attr.data-cy]="'datatable-body-' + idSuffix">
           @for (row of getDisplayData(); track trackByFn($index, row); let i = $index) {
             <tr 
               [id]="'datatable-body-' + idSuffix + '-' + i"
+              [attr.data-cy]="'datatable-row-' + idSuffix + '-' + i"
               [class]="config.tableClass ? config.tableClass + '-row' : 'datatable-row'"
               [tabindex]="config.rowClickable ? 0 : -1"
               (click)="onRowClick(row, i, $event)"
@@ -133,6 +137,7 @@
                         [href]="getRowLink(row)"
                         target="_blank"
                         class="btn btn-link p-0 border-0"
+                        [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i"
                         (click)="$event.stopPropagation()"
                         aria-label="Open submission"
                       >
@@ -142,6 +147,7 @@
                       <button
                         type="button"
                         class="btn btn-link p-0 border-0"
+                        [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i"
                         (click)="onActionClick('view', row, i, $event)"
                         aria-label="View details"
                       >
@@ -164,6 +170,7 @@
                         #dropdownToggle
                         type="button"
                         class="btn btn-link p-0 border-0"
+                        [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i"
                         data-bs-toggle="dropdown"
                         data-bs-auto-close="outside"
                         aria-expanded="false"
@@ -179,6 +186,7 @@
                               class="dropdown-item"
                               type="button"
                               [class]="action.cssClass"
+                              [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i + '-' + action.action"
                               (click)="onActionClick(action.action, row, i, $event); closeDropdown(dropdownToggle)"
                             >
                               <i class="fas {{ action.icon }} me-2"></i>
@@ -204,6 +212,7 @@
         <button
           type="button"
           class="pager-btn"
+          [attr.data-cy]="'datatable-pager-prev-' + idSuffix"
           [disabled]="currentPage === 1"
           (click)="goToPage(currentPage - 1)"
           aria-label="Previous page"
@@ -215,6 +224,7 @@
             type="button"
             class="pager-btn"
             [class.active]="page === currentPage"
+            [attr.data-cy]="'datatable-pager-' + idSuffix + '-' + page"
             (click)="goToPage(page)"
             [attr.aria-label]="'Page ' + page"
             [attr.aria-current]="page === currentPage ? 'page' : null"
@@ -225,6 +235,7 @@
         <button
           type="button"
           class="pager-btn"
+          [attr.data-cy]="'datatable-pager-next-' + idSuffix"
           [disabled]="currentPage === totalPages"
           (click)="goToPage(currentPage + 1)"
           aria-label="Next page"

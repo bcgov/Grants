@@ -7,6 +7,7 @@
       @if (isSingleOrg) {
         <button
           id="address-add-btn"
+          data-cy="address-add-btn"
           type="button"
           class="btn btn-primary btn-sm"
           (click)="onAddAddress()"
@@ -30,7 +31,7 @@
         </div>
       </div>
       } @else if (primaryAddress) {
-      <div id="primary-address-info" class="primary-address-info">
+      <div id="primary-address-info" data-cy="primary-address-info" class="primary-address-info">
         <h6 class="mb-2">PRIMARY ADDRESS</h6>
         <div class="row">
           <div class="col-md-10 col-sm-12">
@@ -48,7 +49,7 @@
         </div>
       </div>
       } @else {
-      <div id="no-addresses-message" class="no-primary-address text-center text-muted">
+      <div id="no-addresses-message" data-cy="no-addresses-message" class="no-primary-address text-center text-muted">
         <p>No addresses found.{{ isSingleOrg ? ' Click "Add" to create your first address.' : '' }}</p>
       </div>
       }
@@ -68,14 +69,14 @@
 </div>
 
 <!-- Add/Edit Address Modal -->
-<div id="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-address-modal-label" [attr.aria-hidden]="!showAddAddressModal">
+<div id="address-modal" data-cy="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-address-modal-label" [attr.aria-hidden]="!showAddAddressModal">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="add-address-modal-label">
+        <h5 class="modal-title" id="add-address-modal-label" data-cy="add-address-modal-label">
           {{ isEditMode ? 'Edit Address' : 'Add New Address' }}
         </h5>
-        <button type="button" id="address-modal-close-btn" class="btn-close" (click)="onCancelAddAddress()" aria-label="Close"></button>
+        <button type="button" id="address-modal-close-btn" data-cy="address-modal-close-btn" class="btn-close" (click)="onCancelAddAddress()" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <!-- Error Display -->
@@ -96,6 +97,7 @@
                   class="form-select"
                   [class.is-invalid]="formSubmitted && addrType.invalid"
                   id="address-type"
+                  data-cy="address-type"
                   [(ngModel)]="newAddress.addressType"
                   name="addressType"
                   #addrType="ngModel"
@@ -124,6 +126,7 @@
                   type="checkbox"
                   class="form-check-input"
                   id="address-is-primary"
+                  data-cy="address-is-primary"
                   [(ngModel)]="newAddress.isPrimary"
                   name="isPrimary"
                   [disabled]="isSavingAddress">
@@ -144,6 +147,7 @@
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrStreet.invalid"
                   id="address-street"
+                  data-cy="address-street"
                   [(ngModel)]="newAddress.street"
                   name="street"
                   #addrStreet="ngModel"
@@ -164,6 +168,7 @@
                   type="text"
                   class="form-control"
                   id="address-unit"
+                  data-cy="address-unit"
                   [(ngModel)]="newAddress.unit"
                   name="unit"
                   maxlength="50"
@@ -181,6 +186,7 @@
                   type="text"
                   class="form-control"
                   id="address-street-2"
+                  data-cy="address-street-2"
                   [(ngModel)]="newAddress.street2"
                   name="street2"
                   maxlength="200"
@@ -195,6 +201,7 @@
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrCity.invalid"
                   id="address-city"
+                  data-cy="address-city"
                   [(ngModel)]="newAddress.city"
                   name="city"
                   #addrCity="ngModel"
@@ -220,6 +227,7 @@
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrProvince.invalid"
                   id="address-province"
+                  data-cy="address-province"
                   [(ngModel)]="newAddress.province"
                   name="province"
                   #addrProvince="ngModel"
@@ -241,6 +249,7 @@
                   class="form-control"
                   [class.is-invalid]="formSubmitted && addrPostalCode.invalid"
                   id="address-postal-code"
+                  data-cy="address-postal-code"
                   [(ngModel)]="newAddress.postalCode"
                   name="postalCode"
                   #addrPostalCode="ngModel"
@@ -261,6 +270,7 @@
         <button
           type="button"
           id="address-modal-cancel-btn"
+          data-cy="address-modal-cancel-btn"
           class="btn btn-secondary"
           (click)="onCancelAddAddress()"
           [disabled]="isSavingAddress">
@@ -269,6 +279,7 @@
         <button
           type="button"
           id="address-modal-save-btn"
+          data-cy="address-modal-save-btn"
           class="btn btn-primary"
           (click)="onSaveNewAddress()"
           [disabled]="isSavingAddress">
@@ -288,11 +299,11 @@
 <div class="modal-backdrop fade" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" *ngIf="showAddAddressModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div id="address-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
+<div id="address-delete-modal" data-cy="address-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">
-        <h5 class="modal-title delete-modal-title" id="delete-address-modal-label">
+        <h5 class="modal-title delete-modal-title" id="delete-address-modal-label" data-cy="delete-address-modal-label">
           Remove Address
         </h5>
         <button type="button" class="btn-close delete-modal-close" (click)="onCancelDeleteAddress()" aria-label="Close" [disabled]="isDeletingAddress"></button>
@@ -330,6 +341,7 @@
         <button
           type="button"
           id="address-delete-cancel-btn"
+          data-cy="address-delete-cancel-btn"
           class="btn delete-modal-cancel"
           (click)="onCancelDeleteAddress()"
           [disabled]="isDeletingAddress">
@@ -338,6 +350,7 @@
         <button
           type="button"
           id="address-delete-confirm-btn"
+          data-cy="address-delete-confirm-btn"
           class="btn delete-modal-confirm"
           (click)="onConfirmDeleteAddress()"
           [disabled]="isDeletingAddress">
