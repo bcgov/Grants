@@ -1,0 +1,104 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - dev
+      - test
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'main' || github.ref_name == 'test' && 'test' || 'dev' }}
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: 'zulu'
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/package-lock.json
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v5
+        with:
+          path: ./.sonar/scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarCloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+
+      - name: Set version for SonarCloud
+        run: |
+          VERSION="${{ vars.GRANTS_BUILD_VERSION }}"
+          echo "Debug: GRANTS_BUILD_VERSION variable value: '$VERSION'"
+          if [ -z "$VERSION" ]; then
+            echo "BUILD_VERSION=1.0.0" >> $GITHUB_ENV
+            echo "Using fallback version: 1.0.0 (GRANTS_BUILD_VERSION variable not set)"
+          else
+            echo "BUILD_VERSION=$VERSION" >> $GITHUB_ENV
+            echo "Using project version: $VERSION"
+          fi
+
+      - name: Clear npm cache
+        run: npm cache clean --force
+
+      - name: Install Node.js dependencies
+        working-directory: ./applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+        run: npm ci --no-audit --prefer-offline
+
+      - name: Build Angular frontend
+        working-directory: ./applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+        run: npm run build:dev
+
+      - name: Restore .NET dependencies
+        working-directory: ./applications
+        run: dotnet restore Grants.sln
+
+      - name: Build .NET solution
+        working-directory: ./applications
+        run: dotnet build Grants.sln --no-restore
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        with:
+          projectBaseDir: applications/Grants.ApplicantPortal
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
