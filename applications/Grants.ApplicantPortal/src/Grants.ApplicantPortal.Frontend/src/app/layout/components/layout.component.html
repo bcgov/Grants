@@ -5,6 +5,7 @@
       <div class="mobile-header-content">
         <button
           id="mobile-hamburger-btn"
+          data-cy="mobile-hamburger-btn"
           class="hamburger-btn"
           (click)="toggleSidebar()"
           [class.active]="sidebarOpen"
@@ -57,7 +58,7 @@
     >
       <div class="sidebar-container">
         <!-- Close button for mobile -->
-        <button id="mobile-close-btn" class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
+        <button id="mobile-close-btn" data-cy="mobile-close-btn" class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
           <i class="fa-solid fa-times"></i>
         </button>
         <app-sidebar [collapsed]="sidebarCollapsed" (collapsedChange)="sidebarCollapsed = $event" (menuItemClicked)="closeSidebar()"></app-sidebar>

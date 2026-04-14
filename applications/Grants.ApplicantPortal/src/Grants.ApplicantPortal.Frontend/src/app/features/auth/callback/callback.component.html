@@ -24,7 +24,7 @@
         </div>
 
         <!-- Processing state -->
-        <div *ngIf="isProcessing" id="callback-processing" class="processing-state">
+        <div *ngIf="isProcessing" id="callback-processing" data-cy="callback-processing" class="processing-state">
           <div class="spinner-container">
             <div class="spinner"></div>
           </div>
@@ -32,8 +32,8 @@
         </div>
 
         <!-- Error state -->
-        <div *ngIf="errorMessage && !isProcessing" id="callback-error" class="error-state">
-          <div id="callback-error-message" class="error-alert">
+        <div *ngIf="errorMessage && !isProcessing" id="callback-error" data-cy="callback-error" class="error-state">
+          <div id="callback-error-message" data-cy="callback-error-message" class="error-alert">
             <i class="fa fa-exclamation-triangle"></i>
             {{ errorMessage }}
           </div>

@@ -9,6 +9,7 @@
   <div class="content-grid">
     <app-organization-info
       id="card-organization"
+      data-cy="card-organization"
       [pluginId]="pluginId"
       [provider]="provider"
       (organizationLoaded)="onOrganizationLoaded($event)"
@@ -17,12 +18,14 @@
 
     <app-applicant-info-submissions
       id="card-submissions"
+      data-cy="card-submissions"
       [pluginId]="pluginId"
       [provider]="provider"
     ></app-applicant-info-submissions>
 
     <app-contacts
       id="card-contacts"
+      data-cy="card-contacts"
       [pluginId]="pluginId"
       [provider]="provider"
       [hasMultipleOrgs]="hasMultipleOrgs"
@@ -32,6 +35,7 @@
 
     <app-addresses
       id="card-addresses"
+      data-cy="card-addresses"
       [pluginId]="pluginId"
       [provider]="provider"
       [hasMultipleOrgs]="hasMultipleOrgs"
