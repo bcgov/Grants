@@ -9,18 +9,19 @@ import { CommonModule } from '@angular/common';
 })
 export class UserDropdownComponent {
   @Input() userInfo: any;
-  @Input() dropdownId: string = 'userDropdown';
+  @Input() dropdownId: string = 'header-user-dropdown';
   @Input() buttonClass: string = 'btn btn-link dropdown-toggle';
   @Input() dropdownClass: string = '';
   @Input() menuClass: string = 'dropdown-menu-end';
   @Input() iconClass: string = 'fa-regular fa-circle-user fa-2xl';
+  @Input() iconSrc: string = '';
+  @Input() ariaLabel: string = 'User menu';
   @Input() showLogout: boolean = true;
 
   @Output() logoutEvent = new EventEmitter<Event>();
 
   onLogout(event: Event): void {
     event.preventDefault();
-    console.log('User dropdown logout clicked');
     this.logoutEvent.emit(event);
   }
 }

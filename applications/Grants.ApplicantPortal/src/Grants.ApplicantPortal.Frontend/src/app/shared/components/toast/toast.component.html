@@ -1,0 +1,14 @@
+<div class="toast-container">
+  @for (toast of toasts; track toast.id) {
+    <div class="toast-item alert-block" [ngClass]="'alert-' + toast.type" role="alert">
+      <img [src]="getIconSrc(toast.type)" class="alert-icon" alt="" aria-hidden="true">
+      <div class="toast-content">
+        <div class="toast-title">{{ getTitle(toast.type) }}</div>
+        <div class="toast-message">{{ toast.message }}</div>
+      </div>
+      <button class="toast-close" (click)="remove(toast.id)" type="button" aria-label="Dismiss">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  }
+</div>

@@ -17,4 +17,6 @@ public record EditAddressCommand(
   string? Country,
   Guid ProfileId,
   string PluginId,
-  string Provider) : ICommand<Result>;
+  string Provider,
+  Guid ApplicantId,
+  string? Subject = null) : ICommand<Result<AddressMutationResult>>;

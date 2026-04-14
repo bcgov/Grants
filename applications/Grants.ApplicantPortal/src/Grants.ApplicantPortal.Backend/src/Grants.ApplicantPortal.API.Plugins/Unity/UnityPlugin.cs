@@ -12,8 +12,10 @@ public partial class UnityPlugin(
     ILogger<UnityPlugin> logger,
     IExternalServiceClient externalServiceClient,
     IPluginCacheService pluginCacheService,
-    IMessagePublisher? messagePublisher = null,
-    IProfileCacheInvalidationService? cacheInvalidationService = null) : IProfilePlugin, IContactManagementPlugin, IAddressManagementPlugin, IOrganizationManagementPlugin
+    IMessagePublisher? messagePublisher = null) : IProfilePlugin, 
+  IContactManagementPlugin, 
+  IAddressManagementPlugin, 
+  IOrganizationManagementPlugin
 {
   public string PluginId => "UNITY";
 
@@ -38,6 +40,14 @@ public partial class UnityPlugin(
 
     public IReadOnlyList<ContactRoleOption> GetContactRoles() => _contactRoles;
 
+    private static readonly IReadOnlyList<AddressTypeOption> _addressTypes =
+    [
+        new("Physical", "Physical"),
+        new("Mailing", "Mailing")
+    ];
+
+    public IReadOnlyList<AddressTypeOption> GetAddressTypes() => _addressTypes;
+
     public bool CanHandle(ProfilePopulationMetadata metadata)
     {
         return metadata.PluginId.Equals(PluginId, StringComparison.OrdinalIgnoreCase);
@@ -46,7 +56,7 @@ public partial class UnityPlugin(
     /// <summary>
     /// Represents a tenant returned by the Unity tenants API.
     /// </summary>
-    private record UnityTenantDto(string TenantId, string TenantName);
+    private record UnityTenantDto(string TenantId, string TenantName, Dictionary<string, string> Metadata);
 
     /// <summary>
     /// Fetches available providers (tenants) from the Unity external API.
@@ -85,7 +95,7 @@ public partial class UnityPlugin(
                 }
 
                 return response.Data?
-                    .Select(t => new ProviderInfo(t.TenantId, t.TenantName))
+                    .Select(t => new ProviderInfo(t.TenantId, t.TenantName, t.Metadata))
                     .ToList() ?? [];
             },
             shouldCache: providers => providers.Count > 0,

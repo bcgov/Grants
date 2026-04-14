@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { take, takeUntil } from 'rxjs/operators';
 
 import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
@@ -27,6 +28,7 @@ interface AddressDisplay {
   country: string;
   isPrimary: boolean;
   isEditable: boolean;
+  disabledTooltip: string;
   referenceNo: string;
   fullAddress: string;
 }
@@ -43,9 +45,13 @@ interface AddressDisplay {
   styleUrls: ['./addresses.component.scss'],
 })
 export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
+  @ViewChild('addressForm') addressForm!: NgForm;
   @Input() pluginId!: string;
   @Input() provider!: string;
   @Input() key!: string;
+  @Input() hasMultipleOrgs: boolean = false;
+  @Input() isSingleOrg: boolean = false;
+  @Input() applicantId: string | null = null;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -53,9 +59,39 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   addresses: AddressDisplay[] = [];
   primaryAddress: AddressDisplay | null = null;
 
+  // Modal properties
+  showAddAddressModal = false;
+  isSavingAddress = false;
+  saveAddressError: string | null = null;
+  formSubmitted = false;
+
+  // Delete confirmation properties
+  showDeleteConfirmModal = false;
+  isDeletingAddress = false;
+  deleteAddressError: string | null = null;
+  addressToDelete: AddressDisplay | null = null;
+
+  // Edit mode properties
+  isEditMode = false;
+  editingAddressId: string | null = null;
+
+  newAddress: Partial<AddressDisplay> = {
+    addressType: 'Physical',
+    street: '',
+    street2: '',
+    unit: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    country: '',
+    isPrimary: false,
+    isEditable: true
+  };
+
   isLoading = true;
   isHydratingAddresses = false;
   error: string | null = null;
+  addressTypes: { key: string; label: string }[] = [];
 
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
@@ -63,78 +99,45 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     defaultSortField: 'addressType',
     enableSortPersistence: true,
     columns: [
-      { key: 'addressType', label: 'Type', sortable: true, type: 'badge', cssClass: 'type-column' },
+      { key: 'addressType', label: 'Type', sortable: true, cssClass: 'type-column' },
       { key: 'fullAddress', label: 'Address', sortable: true, cssClass: 'address-column' },
       { key: 'city', label: 'City', sortable: true, cssClass: 'city-column' },
       { key: 'province', label: 'Province', sortable: true, cssClass: 'province-column' },
-      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' },
-      { key: 'isPrimary', label: 'Primary', sortable: true, type: 'boolean', cssClass: 'primary-column' }
+      { key: 'postalCode', label: 'Postal Code', sortable: true, cssClass: 'postal-code-column' }
     ],
     actionsType: 'dropdown',
     actionItems: [
       { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
-    ],
-    badgeConfig: {
-      field: 'addressType',
-      badgeClassPrefix: 'address-type-badge',
-      badgeClasses: {
-        'Physical': 'address-type-physical',
-        'Mailing': 'address-type-mailing',
-        'Primary': 'address-type-primary',
-        'Billing': 'address-type-billing',
-        'Office': 'address-type-office'
-      },
-      fallbackClass: 'address-type-other'
-    },
-    noDataMessage: 'No addresses found.',
+      { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
+      { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
+    ],    
+    disabledActionsField: 'isEditable',
+    disabledActionsTooltip: 'This address is linked to a submission. Contact the grant program administrator to update it',
+    disabledActionsTooltipField: 'disabledTooltip',
+    noDataMessage: 'No addresses found. Click "Add" to create your first address.',
     loadingMessage: 'Loading your addresses...'
   };
 
   constructor(
     private readonly applicantService: ApplicantService,
-    private readonly applicantInfoService: ApplicantInfoService
+    private readonly applicantInfoService: ApplicantInfoService,
+    private readonly toastService: ToastService
   ) {}
 
   ngOnInit(): void {
-    console.log('AddressesComponent ngOnInit - inputs:', {
-      pluginId: this.pluginId,
-      provider: this.provider,
-      hasPluginId: !!this.pluginId,
-      hasProvider: !!this.provider
-    });
-    
     if (this.pluginId && this.provider) {
-      console.log('AddressesComponent - Calling loadAddresses()');
       this.loadAddresses();
-    } else {
-      console.log('AddressesComponent - Missing pluginId or provider, not loading addresses');
+      this.loadAddressTypes();
     }
     this.loadApplicantInfo();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('AddressesComponent ngOnChanges called:', {
-      changes,
-      currentInputs: {
-        pluginId: this.pluginId,
-        provider: this.provider
-      }
-    });
-    
-    // Reload data when pluginId or provider changes
     const pluginIdChanged = changes['pluginId'];
     const providerChanged = changes['provider'];
     
     if ((pluginIdChanged && !pluginIdChanged.firstChange) || (providerChanged && !providerChanged.firstChange)) {
       if (this.pluginId && this.provider) {
-        console.log('AddressesComponent - Input changed, reloading data:', {
-          pluginIdChanged: !!pluginIdChanged,
-          providerChanged: !!providerChanged,
-          oldPluginId: pluginIdChanged?.previousValue,
-          newPluginId: pluginIdChanged?.currentValue,
-          oldProvider: providerChanged?.previousValue,
-          newProvider: providerChanged?.currentValue
-        });
         this.loadAddresses();
       }
     }
@@ -159,16 +162,28 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private loadAddresses(): void {
-    console.log('AddressesComponent loadAddresses() called with:', {
-      pluginId: this.pluginId,
-      provider: this.provider
+  private loadAddressTypes(): void {
+    this.applicantInfoService.getAddressTypes(this.pluginId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response: any) => {
+        this.addressTypes = response?.types ?? [];
+      },
+      error: (error) => {
+        console.error('Failed to load address types:', error);
+        // Fallback to hardcoded types if API not available
+        this.addressTypes = [
+          { key: 'Physical', label: 'Physical' },
+          { key: 'Mailing', label: 'Mailing' }
+        ];
+      }
     });
-    
+  }
+
+  private loadAddresses(): void {
     this.isLoading = true;
     this.error = null;
 
-    console.log('Making API call to getAddressesInfo...');
     this.applicantInfoService
       .getAddressesInfo(
         this.pluginId,
@@ -180,7 +195,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           this.isLoading = false;
           this.addresses = this.processAddressesData(result.addressesData || []);
           this.primaryAddress = this.addresses.find(addr => addr.isPrimary) || null;
-          console.log('Addresses data loaded:', this.addresses);
         },
         error: (error) => {
           this.isLoading = false;
@@ -210,30 +224,303 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         country: addr.country ?? '',
         isPrimary: addr.isPrimary ?? false,
         isEditable: addr.isEditable ?? false,
+        disabledTooltip: this.getDisabledTooltip(addr),
         referenceNo: addr.referenceNo ?? '',
         fullAddress: addressParts
       };
     });
   }
 
+  private getDisabledTooltip(address: any): string {
+    if (address.isEditable) {
+      return '';
+    }
+    if (this.hasMultipleOrgs) {
+      return 'Multiple organization records found — please contact support to consolidate before editing addresses';
+    }
+    return 'This address is linked to a submission. Contact the grant program administrator to update it';
+  }
+
+  /**
+   * Uses the server-returned primaryAddressId to set the primary flag
+   * on all addresses and update the primaryAddress reference.
+   */
+  private applyPrimaryFromResponse(primaryAddressId: string | null | undefined): void {
+    if (primaryAddressId == null) {
+      return;
+    }
+
+    const normalizedPrimaryId = primaryAddressId.toLowerCase();
+
+    this.addresses = this.addresses.map(a => ({
+      ...a,
+      isPrimary: a.id.toLowerCase() === normalizedPrimaryId
+    }));
+    this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
+  }
+
+  // Event handlers
+  onAddAddress(): void {
+    this.isEditMode = false;
+    this.editingAddressId = null;
+    this.formSubmitted = false;
+    this.resetNewAddressForm();
+    this.showAddAddressModal = true;
+  }
+
+  onSaveNewAddress(): void {
+    this.formSubmitted = true;
+
+    if (!this.applicantId) {
+      this.saveAddressError = 'Unable to save address: applicant information is missing. Please refresh and try again.';
+      return;
+    }
+
+    if (this.addressForm?.invalid || !this.isValidAddress()) {
+      return;
+    }
+
+    this.isSavingAddress = true;
+    this.saveAddressError = null;
+
+    const payload: any = {
+      ...(this.isEditMode && this.editingAddressId ? { addressId: this.editingAddressId } : {}),
+      applicantId: this.applicantId,
+      addressType: this.newAddress.addressType ?? 'Physical',
+      street: this.newAddress.street ?? '',
+      street2: this.newAddress.street2 ?? '',
+      unit: this.newAddress.unit ?? '',
+      city: this.newAddress.city ?? '',
+      province: this.newAddress.province ?? '',
+      postalCode: this.newAddress.postalCode ?? '',
+      country: this.newAddress.country ?? '',
+      isPrimary: this.newAddress.isPrimary ?? false
+    };
+
+    const apiCall = this.isEditMode
+      ? this.applicantInfoService.updateAddress(
+          this.editingAddressId!,
+          this.pluginId,
+          this.provider,
+          payload
+        )
+      : this.applicantInfoService.createAddress(
+          this.pluginId,
+          this.provider,
+          payload
+        );
+
+    apiCall.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.isSavingAddress = false;
+        this.showAddAddressModal = false;
+
+        const responseId = response?.addressId ?? response?.id;
+
+        if (!this.isEditMode && !responseId) {
+          this.saveAddressError = 'Address was saved but the server did not return a valid address ID. Please refresh and try again.';
+          return;
+        }
+
+        const addressId = this.isEditMode ? this.editingAddressId! : responseId;
+        const street = payload.street;
+        const street2 = payload.street2;
+        const unit = payload.unit;
+
+        const effectiveIsEditable = response?.isEditable ?? true;
+
+        const savedAddress: AddressDisplay = {
+          id: addressId,
+          addressType: payload.addressType,
+          street,
+          street2,
+          unit,
+          city: payload.city,
+          province: payload.province,
+          postalCode: payload.postalCode,
+          country: payload.country,
+          isPrimary: addressId.toLowerCase() === response?.primaryAddressId?.toLowerCase(),
+          isEditable: effectiveIsEditable,
+          disabledTooltip: this.getDisabledTooltip({ ...response, isEditable: effectiveIsEditable }),
+          referenceNo: response?.referenceNo ?? '',
+          fullAddress: [street, street2, unit].filter(Boolean).join(', ')
+        };
+
+        if (this.isEditMode && this.editingAddressId) {
+          this.addresses = this.addresses.map(a =>
+            a.id === this.editingAddressId ? savedAddress : a
+          );
+        } else {
+          this.addresses = [...this.addresses, savedAddress];
+        }
+
+        this.applyPrimaryFromResponse(response?.primaryAddressId);
+
+        const addressLabel = [payload.street, payload.city].filter(Boolean).join(', ');
+        this.toastService.success(
+          this.isEditMode
+            ? `Address "${addressLabel}" has been updated.`
+            : `Address "${addressLabel}" has been added.`
+        );
+
+        this.resetNewAddressForm();
+        this.formSubmitted = false;
+      },
+      error: (error) => {
+        console.error(`Failed to ${this.isEditMode ? 'update' : 'create'} address:`, error);
+        this.isSavingAddress = false;
+        this.saveAddressError = error?.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} address. Please try again.`;
+      }
+    });
+  }
+
+  onCancelAddAddress(): void {
+    this.showAddAddressModal = false;
+    this.isSavingAddress = false;
+    this.saveAddressError = null;
+    this.isEditMode = false;
+    this.editingAddressId = null;
+    this.formSubmitted = false;
+    this.resetNewAddressForm();
+  }
+
+  private resetNewAddressForm(): void {
+    this.saveAddressError = null;
+
+    if (!this.isEditMode) {
+      this.newAddress = {
+        addressType: 'Physical',
+        street: '',
+        street2: '',
+        unit: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        country: '',
+        isPrimary: false,
+        isEditable: true
+      };
+    }
+  }
+
+  isValidAddress(): boolean {
+    return !!(this.newAddress.addressType && this.newAddress.addressType.trim().length > 0
+      && this.newAddress.street && this.newAddress.street.trim().length > 0
+      && this.newAddress.city && this.newAddress.city.trim().length > 0
+      && this.newAddress.province && this.newAddress.province.trim().length > 0
+      && this.newAddress.postalCode && this.newAddress.postalCode.trim().length > 0);
+  }
+
   // Datatable event handlers
   onAddressRowClick(event: DatatableRowClickEvent): void {
-    console.log('Clicked address:', event.row);
     // TODO: Navigate to address detail view
   }
 
   onAddressAction(event: DatatableActionEvent): void {
+    const address = event.row as AddressDisplay;
+
+    if ((event.action === 'edit' || event.action === 'setAsPrimary' || event.action === 'delete') && !address.isEditable) {
+      return;
+    }
+
     switch (event.action) {
       case 'setAsPrimary':
-        this.onSetAsPrimary(event.row);
+        this.onSetAsPrimary(address);
+        break;
+      case 'edit':
+        this.onEditAddress(address);
+        break;
+      case 'delete':
+        this.onDeleteAddress(address);
         break;
       default:
-        console.log('Unknown action:', event.action);
+        break;
     }
   }
 
+  onEditAddress(address: AddressDisplay): void {
+    this.isEditMode = true;
+    this.editingAddressId = address.id;
+    this.formSubmitted = false;
+    this.resetNewAddressForm();
+
+    this.newAddress = {
+      addressType: address.addressType,
+      street: address.street,
+      street2: address.street2,
+      unit: address.unit,
+      city: address.city,
+      province: address.province,
+      postalCode: address.postalCode,
+      country: address.country,
+      isPrimary: address.isPrimary,
+      isEditable: address.isEditable
+    };
+
+    this.showAddAddressModal = true;
+  }
+
+  onDeleteAddress(address: AddressDisplay): void {
+    this.addressToDelete = address;
+    this.deleteAddressError = null;
+    this.showDeleteConfirmModal = true;
+  }
+
+  onConfirmDeleteAddress(): void {
+    if (!this.addressToDelete) {
+      return;
+    }
+
+    if (!this.applicantId) {
+      this.deleteAddressError = 'Unable to delete address: applicant information is missing. Please refresh and try again.';
+      return;
+    }
+
+    this.isDeletingAddress = true;
+    this.deleteAddressError = null;
+
+    this.applicantInfoService.deleteAddress(
+      this.addressToDelete.id,
+      this.pluginId,
+      this.provider,
+      this.applicantId
+    ).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response: any) => {
+        const deletedId = this.addressToDelete!.id;
+        this.isDeletingAddress = false;
+        this.showDeleteConfirmModal = false;
+        this.addressToDelete = null;
+
+        this.addresses = this.addresses.filter(a => a.id !== deletedId);
+
+        this.applyPrimaryFromResponse(response?.primaryAddressId);
+
+        this.toastService.success('Address has been deleted.');
+      },
+      error: (error) => {
+        console.error('Failed to delete address:', error);
+        this.isDeletingAddress = false;
+        this.deleteAddressError = error?.error?.message ?? 'Failed to delete address. Please try again.';
+      }
+    });
+  }
+
+  onCancelDeleteAddress(): void {
+    this.showDeleteConfirmModal = false;
+    this.isDeletingAddress = false;
+    this.deleteAddressError = null;
+    this.addressToDelete = null;
+  }
+
   onSetAsPrimary(address: AddressDisplay): void {
-    console.log('Setting as primary address...', address);
+    if (!this.applicantId) {
+      console.error('Cannot set primary address: applicantId is missing.');
+      return;
+    }
 
     this.applicantInfoService.setAddressAsPrimary(
       address.id,
@@ -242,26 +529,18 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     )
     .pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: (response) => {
-        console.log('Address set as primary successfully:', response);
-        
-        // Update local state after successful API call
-        this.addresses = this.addresses.map(addr => ({
-          ...addr,
-          isPrimary: addr.id === address.id
-        }));
-        
-        this.primaryAddress = { ...address, isPrimary: true };
-        console.log('Primary address updated locally:', this.primaryAddress);
+      next: (response: any) => {
+        this.applyPrimaryFromResponse(response?.primaryAddressId);
+        const addressLabel = [address.street, address.city].filter(Boolean).join(', ');
+        this.toastService.success(`"${addressLabel}" has been set as the primary address.`);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to set address as primary:', error);
       }
     });
   }
 
   onAddressSort(event: DatatableSortEvent): void {
-    console.log('Addresses sorted by:', event.column, event.direction);
     // The datatable component now handles all sorting internally
     // This event is emitted for any additional logic you might need
   }
@@ -271,7 +550,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     return parts.join(', ') || address.fullAddress || '';
   }
 
-  // Helper method to format primary address display
   getPrimaryFullAddress(): string {
     if (!this.primaryAddress) return '';
     return this.formatFullAddress(this.primaryAddress);

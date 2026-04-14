@@ -10,8 +10,8 @@ on:
       - '.gitignore'
       - 'database/**'
       - 'documentation/**'
-      - 'openshift/**'
-      - 'tests/**'
+      - '**/docs/**'
+      - '**/README*'
       - 'CODE_OF_CONDUCT.md'
       - 'COMPLIANCE.yaml'
       - 'CONTRIBUTING.md'
@@ -63,7 +63,7 @@ jobs:
     environment: dev
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Get short commitId
@@ -93,7 +93,7 @@ jobs:
       actions: write
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Set repository version variables
@@ -112,22 +112,26 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Build Docker images
       run: |
         echo "buildArgs GRANTS_BUILD_VERSION: ${{env.GRANTS_BUILD_VERSION}}, GRANTS_BUILD_REVISION: ${{env.GRANTS_BUILD_REVISION}}"
         docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-backend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
         docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} --build-arg BUILD_CONFIG=deploy -t grants-applicant-portal-frontend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+        echo "Building Docker image for database migrator..."
+        docker build -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Migrations/Dockerfile -t dev-applicantportal-dbmigrator applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
       working-directory: ./
     - name: Connect to JFrog Artifactory non-interactive login using --password-stdin
       run: |
         echo "$JFROG_PASSWORD" | docker login -u "$JFROG_USERNAME" --password-stdin $JFROG_SERVICE
     - name: Push application images to Artifactory container registry
       run: |
-        docker tag grants-applicant-portal-backend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend
-        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend
-        docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend
-        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend
+        docker tag grants-applicant-portal-backend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend:latest
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend:latest
+        docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend:latest
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend:latest
+        docker tag dev-applicantportal-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/dev-applicantportal-dbmigrator:latest
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/dev-applicantportal-dbmigrator:latest
     - name: Disconnect docker from JFrog Artifactory
       run: |
         docker logout
@@ -149,9 +153,18 @@ jobs:
         docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-backend
         docker tag grants-applicant-portal-frontend $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend
         docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend
+        echo "Tagging and pushing database migrator image..."
+        docker tag dev-applicantportal-dbmigrator $OC_REGISTRY/$OC_TARGET_PROJECT/dev-applicantportal-dbmigrator:latest
+        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/dev-applicantportal-dbmigrator:latest
     - name: Disconnect docker from OpenShift container registry
       run: |
         docker logout
+    - name: Clean and Run dbmigrator job from project template and params file
+      run: |
+        echo "Running migration job..." 
+        oc delete jobs dev-applicantportal-dbmigrator -n $OC_TARGET_PROJECT --ignore-not-found=true
+        oc process unity-applicantportal-dbmigrator-job -n $OC_TARGET_PROJECT -p APPLICATION_GROUP=dev-unity-applicant-portal -p DATABASE_SERVICE_NAME=dev-unity-applicant-portal -p APPLICATION_NAME=dev-applicantportal-dbmigrator -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT -p IMAGESTREAM_NAME=dev-applicantportal-dbmigrator -p IMAGESTREAM_TAG=latest | oc create -f -
+        oc wait jobs/dev-applicantportal-dbmigrator --for condition=complete --timeout=120s -n $OC_TARGET_PROJECT
     - name: Trigger OpenShift deployment restart
       run: |
         oc rollout restart statefulset dev-grants-web

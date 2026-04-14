@@ -54,6 +54,19 @@ public interface IOutboxRepository
     /// Releases expired locks on messages
     /// </summary>
     Task<int> ReleaseExpiredLocksAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets messages in Published status that were published before the specified cutoff time.
+    /// Used by the ack-timeout job to find messages that never received an acknowledgment.
+    /// </summary>
+    Task<List<OutboxMessage>> GetPublishedMessagesOlderThanAsync(DateTime cutoff, int batchSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the current status of a message directly from the database, bypassing the
+    /// EF change tracker. Used to guard against race conditions where a tracked entity
+    /// may have been updated by another scope (e.g. ack processed while timeout job is running).
+    /// </summary>
+    Task<OutboxMessageStatus?> GetCurrentStatusAsync(long id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -65,6 +78,8 @@ public class OutboxStatistics
     public int ProcessingCount { get; set; }
     public int PublishedCount { get; set; }
     public int FailedCount { get; set; }
+    public int TimedOutCount { get; set; }
+    public int AcknowledgedCount { get; set; }
     public DateTime? OldestPendingMessage { get; set; }
     public DateTime? LatestProcessedMessage { get; set; }
 }

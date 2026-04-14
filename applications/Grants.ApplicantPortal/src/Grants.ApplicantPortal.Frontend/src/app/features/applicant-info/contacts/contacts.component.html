@@ -1,14 +1,34 @@
-<div class="contacts-container">
-      @if (isLoading) {      
-      <div
-        class="loading-spinner-container d-flex justify-content-center align-items-center"
-        style="min-height: 150px"
-      >
-        <div class="text-center">
-          <div class="spinner-border">
-            <span class="sr-only">Loading contacts...</span>
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+      <h3 class="mb-0 ap-pad-10">Contact Information</h3>
+    </div>
+    <div>
+      @if (isSingleOrg) {
+        <button
+          id="contact-add-btn"
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="onAddContact()"
+        >
+          Add
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="contacts-container">
+      @if (isLoading) {
+      <div class="primary-loading-state">
+        <div class="visually-hidden" aria-live="polite">Loading contacts...</div>
+        <div class="loading-skeleton">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
           </div>
-          <p class="loading-text mt-3">Loading your contacts...</p>
         </div>
       </div>
       } @else if (primaryContact) {
@@ -41,6 +61,7 @@
 
       <!-- Contacts Table -->
       <app-datatable
+        idSuffix="contacts"
         [config]="contactsTableConfig"
         [data]="getContactsForTable()"
         [loading]="isLoading"
@@ -51,11 +72,11 @@
 </div>
 
 <!-- Add Contact Modal -->
-<div id="contact-modal" class="modal fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" [attr.aria-hidden]="!showAddContactModal">
+<div id="contact-modal" class="modal fade ap-edit-modal" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-contact-modal-label" [attr.aria-hidden]="!showAddContactModal">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addContactModalLabel">
+        <h5 class="modal-title" id="add-contact-modal-label">
           {{ isEditMode ? 'Edit Contact' : 'Add New Contact' }}
         </h5>
         <button type="button" id="contact-modal-close-btn" class="btn-close" (click)="onCancelAddContact()" aria-label="Close"></button>
@@ -69,21 +90,30 @@
           </div>
         }
         
-        <form>
+        <form #contactForm="ngForm">
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="role" class="form-label">Role</label>
+                <label for="contact-role" class="form-label">Role <span class="text-danger">*</span></label>
                 <select 
                   class="form-select" 
-                  id="role" 
+                  [class.is-invalid]="formSubmitted && contactRole.invalid"
+                  id="contact-role" 
                   [(ngModel)]="newContact.role" 
                   name="role"
+                  #contactRole="ngModel"
+                  required
                   [disabled]="isSavingContact">                                    
+                  <option value="" disabled>Select a role</option>
                   @for (role of contactRoles; track role.key) {
                     <option [value]="role.key">{{ role.label }}</option>
                   }
                 </select>
+                @if (formSubmitted && contactRole.invalid) {
+                  <div class="invalid-feedback">
+                    Role is required
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-6">
@@ -91,11 +121,11 @@
                 <input 
                   class="form-check-input" 
                   type="checkbox" 
-                  id="isPrimary" 
+                  id="contact-is-primary" 
                   [(ngModel)]="newContact.isPrimary" 
                   name="isPrimary"
                   [disabled]="isSavingContact">
-                <label class="form-check-label" for="isPrimary">
+                <label class="form-check-label" for="contact-is-primary">
                   Set as Primary Contact
                 </label>
               </div>
@@ -105,19 +135,30 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="fullName" class="form-label">Name <span class="text-danger">*</span></label>
+                <label for="contact-full-name" class="form-label">Name <span class="text-danger">*</span></label>
                 <input 
                   type="text" 
                   class="form-control" 
-                  [class.is-invalid]="nameValidationError"
-                  id="fullName" 
+                  [class.is-invalid]="(formSubmitted && contactName.invalid) || nameValidationError"
+                  id="contact-full-name" 
                   [(ngModel)]="newContact.name" 
                   (input)="onNameChange()"
                   name="fullName"
+                  #contactName="ngModel"
                   placeholder="First and Last Name"
                   [disabled]="isSavingContact"
-                  required>
-                @if (nameValidationError) {
+                  required
+                  minlength="2"
+                  maxlength="250">
+                @if (formSubmitted && contactName.errors?.['required']) {
+                  <div class="invalid-feedback">
+                    Contact name is required.
+                  </div>
+                } @else if (formSubmitted && contactName.errors?.['minlength']) {
+                  <div class="invalid-feedback">
+                    Name must be at least 2 characters.
+                  </div>
+                } @else if (nameValidationError) {
                   <div class="invalid-feedback">
                     {{ nameValidationError }}
                   </div>
@@ -126,13 +167,16 @@
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="title" class="form-label">Title</label>
+                <label for="contact-title" class="form-label">Title</label>
                 <input 
                   type="text" 
                   class="form-control" 
-                  id="title" 
+                  [class.is-invalid]="formSubmitted && contactTitle.invalid"
+                  id="contact-title" 
                   [(ngModel)]="newContact.title" 
                   name="title"
+                  #contactTitle="ngModel"
+                  maxlength="200"
                   [disabled]="isSavingContact">
               </div>
             </div>
@@ -141,17 +185,23 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
+                <label for="contact-email" class="form-label">Email</label>
                 <input 
                   type="email" 
                   class="form-control" 
-                  [class.is-invalid]="emailValidationError"
-                  id="email" 
+                  [class.is-invalid]="(formSubmitted && contactEmail.invalid) || emailValidationError"
+                  id="contact-email" 
                   [(ngModel)]="newContact.email" 
                   (input)="onEmailChange()"
                   name="email"
+                  #contactEmail="ngModel"
+                  email
                   [disabled]="isSavingContact">
-                @if (emailValidationError) {
+                @if (formSubmitted && contactEmail.errors?.['email']) {
+                  <div class="invalid-feedback">
+                    Please enter a valid email address
+                  </div>
+                } @else if (emailValidationError) {
                   <div class="invalid-feedback">
                     {{ emailValidationError }}
                   </div>
@@ -160,14 +210,22 @@
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="phone" class="form-label">Phone</label>
+                <label for="contact-phone" class="form-label">Phone</label>
                 <input 
                   type="tel" 
                   class="form-control" 
-                  id="phone" 
+                  [class.is-invalid]="formSubmitted && contactPhone.invalid"
+                  id="contact-phone" 
                   [(ngModel)]="newContact.workPhoneNumber" 
                   name="phone"
+                  #contactPhone="ngModel"
+                  pattern="^[+]?[0-9\-\.\(\)\s]*$"
                   [disabled]="isSavingContact">
+                @if (formSubmitted && contactPhone.errors?.['pattern']) {
+                  <div class="invalid-feedback">
+                    Phone number format is invalid.
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -187,12 +245,12 @@
           id="contact-modal-save-btn"
           class="btn btn-primary" 
           (click)="onSaveNewContact()"
-          [disabled]="!isValidContact(newContact) || isSavingContact">
+          [disabled]="isSavingContact">
           @if (isSavingContact) {
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            {{ isEditMode ? 'Updating...' : 'Saving...' }}
+            {{ isEditMode ? 'Updating...' : 'Creating...' }}
           } @else {
-            {{ isEditMode ? 'Update Contact' : 'Save Contact' }}
+            {{ isEditMode ? 'Update' : 'Create' }}
           }
         </button>
       </div>
@@ -204,11 +262,11 @@
 <div class="modal-backdrop fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" *ngIf="showAddContactModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div id="contact-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteContactModalLabel" [attr.aria-hidden]="!showDeleteConfirmModal">
+<div id="contact-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-contact-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">
-        <h5 class="modal-title delete-modal-title" id="deleteContactModalLabel">
+        <h5 class="modal-title delete-modal-title" id="delete-contact-modal-label">
           Remove Contact
         </h5>
         <button type="button" class="btn-close delete-modal-close" (click)="onCancelDeleteContact()" aria-label="Close" [disabled]="isDeletingContact"></button>
@@ -265,6 +323,8 @@
           }
         </button>
       </div>
+    </div>
+  </div>
     </div>
   </div>
 </div>

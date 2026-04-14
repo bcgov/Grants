@@ -23,6 +23,7 @@ public class CreateContactRequest
   public string? WorkPhoneNumber { get; set; }
   public string? WorkPhoneExtension { get; set; }
   public bool IsPrimary { get; set; }
+  public Guid ApplicantId { get; set; }
   
   // Route parameters  
   public string PluginId { get; set; } = string.Empty;

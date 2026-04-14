@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
+import { NotificationsDropdownComponent } from '../../shared/components/notifications-dropdown/notifications-dropdown.component';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
@@ -12,7 +13,7 @@ import { Subject } from 'rxjs';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, UserDropdownComponent],
+  imports: [CommonModule, UserDropdownComponent, NotificationsDropdownComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
 })
@@ -79,6 +80,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.currentProviders = response.providers;
           this.isLoadingProviders = false;
+          this.updateTenantEmail();
         },
         error: () => {
           this.currentProviders = [];
@@ -129,7 +131,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   onLogout(event: Event): void {
     event.preventDefault();
-    console.log('Desktop logout clicked');
     this.authService.logout();
   }
 
@@ -137,6 +138,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.selectedWorkspace && provider.id !== this.selectedProvider) {
       this.isChangingWorkspace = true;
       this.workspaceService.selectWorkspaceWithProviderDetails(this.selectedWorkspace, provider);
+      this.workspaceService.setTenantEmail(provider.metaData?.['DefaultFromAddress'] ?? null);
       
       setTimeout(() => {
         this.isChangingWorkspace = false;
@@ -151,7 +153,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   selectWorkspace(workspace: Plugin): void {
-    console.log('HeaderComponent - Workspace selected:', workspace);
     if (workspace.pluginId !== this.selectedWorkspace?.pluginId) {
       this.isChangingWorkspace = true;
       // Provider selection is handled by fetchProviders$ after the workspace state updates
@@ -161,6 +162,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isChangingWorkspace = false;
       }, 500);
     }
+  }
+
+  private updateTenantEmail(): void {
+    const currentProvider = this.currentProviders.find(p => p.id === this.selectedProvider);
+    this.workspaceService.setTenantEmail(currentProvider?.metaData?.['DefaultFromAddress'] ?? null);
   }
 
   private clearSession(): void {

@@ -30,6 +30,7 @@ public static class ContactsData
     public bool IsEditable { get; init; } = true;
     public Guid? ApplicationId { get; init; }
     public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
+    public Guid ApplicantId { get; init; }
   }
 
   /// <summary>
@@ -65,7 +66,7 @@ public static class ContactsData
       var newContact = new ContactInfo
       {
         ContactId = newContactId.ToString(),
-        ContactType = "ApplicantProfile",
+        ContactType = "Applicant",
         Name = contactRequest.Name ?? "",
         Email = contactRequest.Email ?? "",
         HomePhoneNumber = contactRequest.HomePhoneNumber,
@@ -77,7 +78,8 @@ public static class ContactsData
         IsPrimary = contactRequest.IsPrimary,
         IsEditable = true,
         ApplicationId = null,
-        LastUpdated = DateTime.UtcNow
+        LastUpdated = DateTime.UtcNow,
+        ApplicantId = contactRequest.ApplicantId
       };
 
       contacts.Add(newContact);
@@ -383,7 +385,7 @@ public static class ContactsData
         new ContactInfo
         {
           ContactId = "437675A8-D642-455C-B3E0-388D75E6203F",
-          ContactType = "ApplicantProfile",
+          ContactType = "Applicant",
           Name = "John Doe",
           Email = "john.doe@example.com",
           HomePhoneNumber = "(555) 123-4567",
@@ -420,7 +422,7 @@ public static class ContactsData
         new ContactInfo
         {
           ContactId = "127675A8-D653-455C-B3E0-388D75E6203F",
-          ContactType = "ApplicantProfile",
+          ContactType = "Applicant",
           Name = "Dr. Maria Rodriguez",
           Email = "maria.rodriguez@detc.edu",
           HomePhoneNumber = null,

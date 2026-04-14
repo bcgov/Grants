@@ -24,6 +24,7 @@ public class SetAsPrimary(IMediator _mediator)
       s.Responses[200] = "Address set as primary successfully";
       s.Responses[400] = "Bad request - validation errors";
       s.Responses[401] = "Unauthorized - authentication required";
+      s.Responses[403] = "Forbidden - resource ownership validation failed";
       s.Responses[404] = "Address, plugin, or provider not found";
       s.Responses[422] = "Unprocessable entity - invalid data";
       s.ExampleRequest = new SetAsPrimaryAddressRequest 
@@ -41,14 +42,16 @@ public class SetAsPrimary(IMediator _mediator)
     SetAsPrimaryAddressRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new SetAsPrimaryAddressCommand(
       request.AddressId,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 
@@ -56,9 +59,16 @@ public class SetAsPrimary(IMediator _mediator)
     {
       Response = new SetAsPrimaryAddressResponse
       {
-        AddressId = request.AddressId,
-        Message = "Address set as primary successfully"
+        AddressId = result.Value.AddressId,
+        Message = "Address set as primary successfully",
+        PrimaryAddressId = result.Value.PrimaryAddressId
       };
+      return;
+    }
+
+    if (result.Status == ResultStatus.Forbidden)
+    {
+      await SendForbiddenAsync(ct);
       return;
     }
 

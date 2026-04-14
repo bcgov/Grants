@@ -1,10 +1,8 @@
 ﻿using Grants.ApplicantPortal.API.Core.Plugins;
-using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Grants.ApplicantPortal.API.UseCases;
 using Grants.ApplicantPortal.API.Plugins.Demo.Data;
-using StackExchange.Redis;
 using System.Text.Json;
 
 namespace Grants.ApplicantPortal.API.Plugins.Demo;
@@ -15,8 +13,7 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 public partial class DemoPlugin(
     ILogger<DemoPlugin> logger,
     IDistributedCache distributedCache,
-    IOptions<ProfileCacheOptions> cacheOptions,
-    IMessagePublisher? messagePublisher = null) : IProfilePlugin, 
+    IOptions<ProfileCacheOptions> cacheOptions) : IProfilePlugin, 
   IContactManagementPlugin, 
   IAddressManagementPlugin, 
   IOrganizationManagementPlugin
@@ -51,6 +48,14 @@ public partial class DemoPlugin(
 
     public IReadOnlyList<ContactRoleOption> GetContactRoles() => _contactRoles;
 
+    private static readonly IReadOnlyList<AddressTypeOption> _addressTypes =
+    [
+        new("Physical", "Physical"),
+        new("Mailing", "Mailing")
+    ];
+
+    public IReadOnlyList<AddressTypeOption> GetAddressTypes() => _addressTypes;
+
     public Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(Guid profileId, string subject, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<ProviderInfo> providers =
@@ -79,6 +84,7 @@ public partial class DemoPlugin(
         new("PROGRAM1", "ADDRESSINFO"),
         new("PROGRAM2", "SUBMISSIONINFO"),
         new("PROGRAM2", "ORGINFO"),
+        new("PROGRAM2", "PAYMENTINFO"),
         new("PROGRAM2", "CONTACTINFO"),
         new("PROGRAM2", "ADDRESSINFO")
     ];
@@ -323,11 +329,12 @@ public partial class DemoPlugin(
             // Use dedicated data classes for each type - they now return clean data directly
             ("PROGRAM1", "SUBMISSIONINFO") => SubmissionsData.GenerateProgram1Submissions(baseData),
             ("PROGRAM1", "ORGINFO") => OrganizationsData.GenerateProgram1OrgInfo(baseData),
-            ("PROGRAM1", "PAYMENTINFO") => OrganizationsData.GenerateProgram1Payments(baseData),
+            ("PROGRAM1", "PAYMENTINFO") => PaymentsData.GenerateProgram1Payments(baseData),
             ("PROGRAM1", "CONTACTINFO") => ContactsData.GenerateProgram1Contacts(baseData),
             ("PROGRAM1", "ADDRESSINFO") => AddressesData.GenerateProgram1Addresses(baseData),
             ("PROGRAM2", "SUBMISSIONINFO") => SubmissionsData.GenerateProgram2Submissions(baseData),
             ("PROGRAM2", "ORGINFO") => OrganizationsData.GenerateProgram2OrgInfo(baseData),
+            ("PROGRAM2", "PAYMENTINFO") => PaymentsData.GenerateProgram2Payments(baseData),
             ("PROGRAM2", "CONTACTINFO") => ContactsData.GenerateProgram2Contacts(baseData),
             ("PROGRAM2", "ADDRESSINFO") => AddressesData.GenerateProgram2Addresses(baseData),
             _ => throw new NotImplementedException($"No mock data generator for {metadata.Provider}:{metadata.Key}")

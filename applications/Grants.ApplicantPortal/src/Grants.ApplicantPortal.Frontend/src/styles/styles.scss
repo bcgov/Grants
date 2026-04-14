@@ -63,6 +63,11 @@ h3 {
    Component Styles
    =================================== */
 
+/* Page inner content wrapper */
+.page-inner {
+  padding: 0.8rem 1rem 1rem 1rem;
+}
+
 /* Cards */
 .card {
   background: white;
@@ -179,6 +184,44 @@ h3 {
   }
 }
 
+/* ===================================
+   Alert / Notification Pattern
+   Reusable for inline warning blocks,
+   toasts, and any status messaging.
+   =================================== */
+.alert-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: var(--bc-font-size-14);
+  line-height: 1.5;
+  color: var(--bc-primary);
+
+  .alert-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.alert-warning {
+    border-color: var(--bc-bg-warning);
+    background-color: var(--bc-surface-warning);
+  }
+
+  &.alert-error {
+    border-color: var(--bc-bg-error);
+    background-color: var(--bc-surface-error);
+  }
+
+  &.alert-success {
+    border-color: var(--bc-bg-success);
+    background-color: var(--bc-surface-success);
+  }
+}
+
 /* Badge Base Pattern */
 .base-badge {
   display: inline-block;
@@ -234,6 +277,75 @@ h3 {
     display: flex;
     gap: 0.75rem;
     justify-content: flex-end;
+  }
+}
+
+/* Edit Modal Pattern - shared by address/contact/etc edit modals */
+.ap-edit-modal {
+  .modal-content {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+  }
+
+  .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    border-radius: 6px 6px 0 0;
+
+    .modal-title {
+      color: var(--bc-primary);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .btn-close {
+      color: var(--bc-blue);
+      opacity: 0.7;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+    background-color: #ffffff;
+
+    .form-label {
+      font-weight: 600;
+      font-size: var(--bc-font-size-13);
+      color: var(--bc-gray-80);
+    }
+
+    .form-control,
+    .form-select {
+      font-size: var(--bc-font-size-14);
+      border-color: #ced4da;
+
+      &:focus {
+        border-color: var(--bc-blue-80);
+        box-shadow: 0 0 0 0.2rem rgba(1, 51, 102, 0.15);
+      }
+
+      &:disabled {
+        background-color: #e9ecef;
+      }
+    }
+
+    .form-check-label {
+      font-size: var(--bc-font-size-14);
+      color: var(--bc-primary);
+    }
+  }
+
+  .modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    border-radius: 0 0 6px 6px;
   }
 }
 

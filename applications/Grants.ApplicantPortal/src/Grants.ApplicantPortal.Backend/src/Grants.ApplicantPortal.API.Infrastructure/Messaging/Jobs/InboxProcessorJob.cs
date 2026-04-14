@@ -1,7 +1,11 @@
 ﻿using System.Text.Json;
+using Grants.ApplicantPortal.API.Core.Plugins;
+using Grants.ApplicantPortal.API.Core.Services;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Abstractions;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.BackgroundJobs;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Outbox;
 using Quartz;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
@@ -9,14 +13,19 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Jobs;
 /// <summary>
 /// Background job that processes inbox messages and routes them to appropriate handlers
 /// </summary>
+[DisallowConcurrentExecution]
 public class InboxProcessorJob : IJob
 {
     private readonly IInboxRepository _inboxRepository;
+    private readonly IOutboxRepository _outboxRepository;
     private readonly IDistributedLock _distributedLock;
     private readonly IMessageHandlerResolver? _messageHandlerResolver;
     private readonly IPluginMessageRouter? _pluginMessageRouter;
+    private readonly IPluginEventService _pluginEventService;
+    private readonly IPluginCommandMetadataRegistry _metadataRegistry;
+    private readonly JobCircuitBreaker _circuitBreaker;
     private readonly ILogger<InboxProcessorJob> _logger;
-    
+
     // Configuration - these could come from appsettings
     private readonly string _lockKey = "inbox-processor";
     private readonly TimeSpan _lockDuration = TimeSpan.FromMinutes(5);
@@ -26,13 +35,21 @@ public class InboxProcessorJob : IJob
 
     public InboxProcessorJob(
         IInboxRepository inboxRepository,
+        IOutboxRepository outboxRepository,
         IDistributedLock distributedLock,
+        IPluginEventService pluginEventService,
+        IPluginCommandMetadataRegistry metadataRegistry,
+        JobCircuitBreaker circuitBreaker,
         ILogger<InboxProcessorJob> logger,
         IMessageHandlerResolver? messageHandlerResolver = null,
         IPluginMessageRouter? pluginMessageRouter = null)
     {
         _inboxRepository = inboxRepository;
+        _outboxRepository = outboxRepository;
         _distributedLock = distributedLock;
+        _pluginEventService = pluginEventService;
+        _metadataRegistry = metadataRegistry;
+        _circuitBreaker = circuitBreaker;
         _messageHandlerResolver = messageHandlerResolver;
         _pluginMessageRouter = pluginMessageRouter;
         _logger = logger;
@@ -46,69 +63,79 @@ public class InboxProcessorJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var cancellationToken = context.CancellationToken;
-        
-        _logger.LogDebug("Inbox processor job starting");
 
-        // First, release any expired locks
-        await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
-
-        // Acquire distributed lock to ensure only one instance processes messages
-        var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
-        
-        if (!lockResult.IsSuccess)
+        if (!_circuitBreaker.ShouldExecute(_lockKey))
         {
-            _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", string.Join(", ", lockResult.Errors));
             return;
         }
 
-        var lockToken = lockResult.Value;
-        
+        _logger.LogDebug("Inbox processor job starting");
+
         try
         {
-            var processed = 0;
-            var startTime = DateTime.UtcNow;
-            
-            // Process messages in batches
-            while (!cancellationToken.IsCancellationRequested)
+            // First, release any expired locks
+            await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
+
+            // Acquire distributed lock to ensure only one instance processes messages
+            var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
+
+            if (!lockResult.IsSuccess)
             {
-                var messages = await _inboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
-                
-                if (!messages.Any())
-                {
-                    break; // No more messages to process
-                }
-
-                foreach (var message in messages)
-                {
-                    await ProcessMessage(message, cancellationToken);
-                    processed++;
-                }
-
-                // Renew lock if we're still processing
-                if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
-                {
-                    await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
-                    startTime = DateTime.UtcNow;
-                }
+                _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", string.Join(", ", lockResult.Errors));
+                return;
             }
 
-            if (processed > 0)
+            var lockToken = lockResult.Value;
+
+            try
             {
-                _logger.LogInformation("Inbox processor job completed. Processed {Count} messages", processed);
+                var processed = 0;
+                var startTime = DateTime.UtcNow;
+
+                // Process messages in batches
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var messages = await _inboxRepository.GetPendingMessagesAsync(_batchSize, cancellationToken);
+
+                    if (!messages.Any())
+                    {
+                        break; // No more messages to process
+                    }
+
+                    foreach (var message in messages)
+                    {
+                        await ProcessMessage(message, cancellationToken);
+                        processed++;
+                    }
+
+                    // Renew lock if we're still processing
+                    if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
+                    {
+                        await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        startTime = DateTime.UtcNow;
+                    }
+                }
+
+                if (processed > 0)
+                {
+                    _logger.LogInformation("Inbox processor job completed. Processed {Count} messages", processed);
+                }
+                else
+                {
+                    _logger.LogDebug("Inbox processor job completed. No messages to process");
+                }
             }
-            else
+            finally
             {
-                _logger.LogDebug("Inbox processor job completed. No messages to process");
+                // Release the lock
+                await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
             }
+
+            _circuitBreaker.RecordSuccess(_lockKey);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during inbox processing");
-        }
-        finally
-        {
-            // Release the lock
-            await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+            _circuitBreaker.RecordFailure(_lockKey, ex);
         }
     }
 
@@ -147,6 +174,9 @@ public class InboxProcessorJob : IJob
             // Mark as successfully processed
             message.MarkAsProcessed();
             await _inboxRepository.UpdateAsync(message, cancellationToken);
+
+            // Close the outbox loop: if this was an acknowledgment, mark the original outbox message
+            await TryAcknowledgeOutboxMessageAsync(message, cancellationToken);
 
             _logger.LogDebug("Successfully processed inbox message {MessageId}", message.MessageId);
         }
@@ -335,8 +365,114 @@ public class InboxProcessorJob : IJob
     {
         // Simulate some processing time
         await Task.Delay(100, cancellationToken);
-        
+
         _logger.LogWarning("Simulating message processing for {MessageId} - message handlers not configured", 
             message.MessageId);
+    }
+
+    /// <summary>
+    /// If the inbox message is a <see cref="MessageAcknowledgment"/>, looks up the original
+    /// outbox message by <c>OriginalMessageId</c> and marks it as <see cref="OutboxMessageStatus.Acknowledged"/>.
+    /// This closes the outbox→ack loop so the timeout job won't flag acknowledged messages.
+    /// Works for both normal acks (Published → Acknowledged) and late acks (TimedOut → Acknowledged).
+    /// For FAILED acks, also records a PluginEvent (which triggers cache invalidation) so the
+    /// user is notified and stale optimistic data is evicted.
+    /// </summary>
+    private async Task TryAcknowledgeOutboxMessageAsync(InboxMessage inboxMessage, CancellationToken cancellationToken)
+    {
+        if (inboxMessage.MessageType != nameof(MessageAcknowledgment))
+        {
+            return;
+        }
+
+        try
+        {
+            var ack = JsonSerializer.Deserialize<MessageAcknowledgment>(inboxMessage.Payload, _jsonOptions);
+            if (ack == null || ack.OriginalMessageId == Guid.Empty)
+            {
+                return;
+            }
+
+            var outboxMessage = await _outboxRepository.GetByMessageIdAsync(ack.OriginalMessageId, cancellationToken);
+            if (outboxMessage == null)
+            {
+                _logger.LogDebug("No outbox message found for ack OriginalMessageId {OriginalMessageId} — may have been cleaned up",
+                    ack.OriginalMessageId);
+                return;
+            }
+
+            // Record a PluginEvent for FAILED acks so the user is notified and cache is invalidated
+            if (ack.Status.Equals("FAILED", StringComparison.OrdinalIgnoreCase))
+            {
+                await RecordAckFailureEventAsync(outboxMessage, ack, cancellationToken);
+            }
+
+            if (outboxMessage.Status == OutboxMessageStatus.Acknowledged)
+            {
+                _logger.LogDebug("Outbox message {MessageId} already acknowledged — skipping duplicate ack",
+                    outboxMessage.MessageId);
+                return;
+            }
+
+            var previousStatus = outboxMessage.Status;
+            outboxMessage.MarkAsAcknowledged();
+            await _outboxRepository.UpdateAsync(outboxMessage, cancellationToken);
+
+            _logger.LogInformation(
+                "Closed outbox loop: message {MessageId} transitioned {PreviousStatus} → Acknowledged (ack status: {AckStatus})",
+                outboxMessage.MessageId, previousStatus, ack.Status);
+        }
+        catch (Exception ex)
+        {
+            // Don't let outbox bookkeeping failures break inbox processing
+            _logger.LogWarning(ex, "Failed to acknowledge outbox message for inbox message {MessageId} — non-fatal",
+                inboxMessage.MessageId);
+        }
+    }
+
+    /// <summary>
+    /// Parses the original outbox message payload via the plugin's metadata provider
+    /// and records a PluginEvent so the user is notified and the cache is invalidated.
+    /// </summary>
+    private async Task RecordAckFailureEventAsync(OutboxMessage outboxMessage, MessageAcknowledgment ack, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pluginId = outboxMessage.PluginId ?? ack.PluginId ?? "UNKNOWN";
+            var metadata = _metadataRegistry.ParsePayload(pluginId, outboxMessage.Payload);
+
+            if (metadata == null || metadata.ProfileId == Guid.Empty)
+            {
+                _logger.LogWarning("Could not extract context from outbox message {MessageId} for failed ack",
+                    outboxMessage.MessageId);
+                return;
+            }
+
+            var friendlyAction = _metadataRegistry.GetFriendlyActionName(pluginId, metadata.DataType);
+
+            var failureContext = new PluginEventContext(
+                metadata.ProfileId,
+                pluginId,
+                metadata.Provider,
+                metadata.DataType,
+                metadata.EntityId,
+                PluginEventSeverity.Error,
+                PluginEventSource.InboxRejection,
+                $"Your {friendlyAction} was rejected by the external system: {ack.Details ?? "no details provided"}. Please try again or contact support.",
+                $"FAILED ack received for MessageId: {outboxMessage.MessageId}, Details: {ack.Details}",
+                outboxMessage.MessageId,
+                outboxMessage.CorrelationId);
+
+            await _pluginEventService.RecordFailureAsync(failureContext, cancellationToken);
+
+            _logger.LogWarning(
+                "Recorded failure event for FAILED ack on outbox message {MessageId} (plugin: {PluginId}, dataType: {DataType})",
+                outboxMessage.MessageId, pluginId, metadata.DataType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to record ack failure event for outbox message {MessageId}",
+                outboxMessage.MessageId);
+        }
     }
 }

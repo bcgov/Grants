@@ -47,6 +47,47 @@
   padding: 0;
 }
 
+/* Skeleton Loading Styles */
+.primary-loading-state {
+  padding: 16px 0;
+}
+
+.loading-skeleton {
+  .skeleton-header {
+    height: 16px;
+    width: 140px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .skeleton-content {
+    .skeleton-line {
+      height: 14px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      
+      &.short {
+        width: 60%;
+      }
+    }
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 // Address type badges - using base badge styles
 .address-type-badge {
   display: inline-block;
@@ -89,5 +130,167 @@
   &.address-type-other {
     background-color: #606060; // Neutral gray
     color: #ffffff;
+  }
+}
+
+// Delete Modal - using BC modal pattern with specific styling
+.delete-modal {
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+
+  .delete-modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #003366;
+    padding: 1.25rem 1.5rem;
+    border-radius: 6px 6px 0 0;
+
+    .delete-modal-title {
+      color: #003366;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .delete-modal-close {
+      color: #003366;
+      opacity: 0.7;
+      
+      &:hover {
+        opacity: 1;
+        color: #002244;
+      }
+    }
+  }
+
+  .delete-modal-body {
+    padding: 1.5rem;
+    background-color: #ffffff;
+
+    .delete-modal-question {
+      color: #333;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .delete-modal-warning {
+      color: #6c757d;
+      font-size: 0.875rem;
+      margin-bottom: 1.25rem;
+      font-style: italic;
+    }
+
+    .delete-modal-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .delete-modal-details {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 1rem;
+
+      .details-header {
+        color: #003366;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .details-row {
+        display: flex;
+        margin-bottom: 0.5rem;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .details-label {
+          color: #6c757d;
+          font-weight: 500;
+          font-size: 0.875rem;
+          min-width: 80px;
+          margin-right: 0.75rem;
+        }
+
+        .details-value {
+          color: #333;
+          font-size: 0.875rem;
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  .delete-modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    border-radius: 0 0 6px 6px;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+
+    .delete-modal-cancel {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+      font-weight: 500;
+      padding: 0.5rem 1.25rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background-color: #5a6268;
+        border-color: #545b62;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+    }
+
+    .delete-modal-confirm {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #ffffff;
+      font-weight: 500;
+      padding: 0.5rem 1.25rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background-color: #c82333;
+        border-color: #bd2130;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+
+      .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
   }
 }

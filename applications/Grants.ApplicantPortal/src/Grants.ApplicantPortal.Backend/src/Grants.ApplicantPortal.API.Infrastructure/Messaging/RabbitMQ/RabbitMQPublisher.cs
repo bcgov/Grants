@@ -16,12 +16,14 @@ public interface IRabbitMQPublisher
     /// <param name="messageBody">Serialized message body</param>
     /// <param name="routingKey">Routing key for message routing (optional)</param>
     /// <param name="correlationId">Correlation ID for message tracking (optional)</param>
+    /// <param name="messageId">Stable message ID set as the AMQP MessageId property. When null a new GUID is generated.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     Task<Result> PublishAsync(
         string messageType, 
         string messageBody, 
         string? routingKey = null, 
         string? correlationId = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -35,68 +37,104 @@ public interface IRabbitMQPublisher
 }
 
 /// <summary>
-/// RabbitMQ message publisher implementation
+/// RabbitMQ message publisher implementation.
+/// Connection is deferred until the first publish attempt so the application
+/// can start even when RabbitMQ is unavailable.
 /// </summary>
 public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
 {
     private readonly RabbitMQConfiguration _configuration;
     private readonly ILogger<RabbitMQPublisher> _logger;
-    private readonly IConnection? _connection;
-    private readonly IModel? _channel;
+    private readonly object _connectionLock = new();
+    private IConnection? _connection;
+    private IModel? _channel;
     private bool _disposed = false;
 
     public RabbitMQPublisher(RabbitMQConfiguration configuration, ILogger<RabbitMQPublisher> logger)
     {
         _configuration = configuration;
         _logger = logger;
+    }
 
-        try
+    /// <summary>
+    /// Lazily establishes the RabbitMQ connection and channel on first use.
+    /// Returns false if the connection cannot be established.
+    /// </summary>
+    private bool EnsureConnected()
+    {
+        if (_disposed) return false;
+        if (_channel is { IsOpen: true }) return true;
+
+        lock (_connectionLock)
         {
-            // Create connection factory
-            var factory = new ConnectionFactory
-            {
-                HostName = _configuration.HostName,
-                Port = _configuration.Port,
-                UserName = _configuration.UserName,
-                Password = _configuration.Password,
-                VirtualHost = _configuration.VirtualHost,
-                RequestedConnectionTimeout = TimeSpan.FromSeconds(_configuration.ConnectionTimeoutSeconds)
-            };
+            // Double-check after acquiring the lock
+            if (_disposed) return false;
+            if (_channel is { IsOpen: true }) return true;
 
-            if (_configuration.UseSsl)
+            // Clean up any previous broken connection
+            CleanupConnection();
+
+            try
             {
-                factory.Ssl.Enabled = true;
+                var factory = new ConnectionFactory
+                {
+                    HostName = _configuration.HostName,
+                    Port = _configuration.Port,
+                    UserName = _configuration.UserName,
+                    Password = _configuration.Password,
+                    VirtualHost = _configuration.VirtualHost,
+                    RequestedConnectionTimeout = TimeSpan.FromSeconds(_configuration.ConnectionTimeoutSeconds)
+                };
+
+                if (_configuration.UseSsl)
+                {
+                    factory.Ssl.Enabled = true;
+                }
+
+                _connection = factory.CreateConnection("Grants-ApplicantPortal-Publisher");
+                _channel = _connection.CreateModel();
+
+                // Configure publisher confirms for reliability
+                _channel.ConfirmSelect();
+
+                // Declare exchange if configured to do so
+                if (_configuration.DeclareExchange)
+                {
+                    _channel.ExchangeDeclare(
+                        exchange: _configuration.DefaultExchange,
+                        type: _configuration.ExchangeType,
+                        durable: _configuration.ExchangeDurable,
+                        autoDelete: false);
+
+                    _logger.LogDebug("Declared exchange {Exchange} of type {Type}",
+                        _configuration.DefaultExchange, _configuration.ExchangeType);
+                }
+
+                _logger.LogInformation("RabbitMQ publisher connected to {Host}:{Port}",
+                    _configuration.HostName, _configuration.Port);
+
+                return true;
             }
-
-            // Create connection and channel
-            _connection = factory.CreateConnection("Grants-ApplicantPortal-Publisher");
-            _channel = _connection.CreateModel();
-
-            // Configure publisher confirms for reliability
-            _channel.ConfirmSelect();
-
-            // Declare exchange if configured to do so
-            if (_configuration.DeclareExchange)
+            catch (Exception ex)
             {
-                _channel.ExchangeDeclare(
-                    exchange: _configuration.DefaultExchange,
-                    type: _configuration.ExchangeType,
-                    durable: _configuration.ExchangeDurable,
-                    autoDelete: false);
+                _logger.LogWarning(ex, "RabbitMQ publisher could not connect to {Host}:{Port}. Publishing will be unavailable until RabbitMQ is reachable",
+                    _configuration.HostName, _configuration.Port);
 
-                _logger.LogDebug("Declared exchange {Exchange} of type {Type}", 
-                    _configuration.DefaultExchange, _configuration.ExchangeType);
+                CleanupConnection();
+                return false;
             }
+        }
+    }
 
-            _logger.LogInformation("RabbitMQ publisher connected to {Host}:{Port}", 
-                _configuration.HostName, _configuration.Port);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to initialize RabbitMQ publisher");
-            Dispose();
-            throw;
-        }
+    private void CleanupConnection()
+    {
+        try { _channel?.Close(); } catch { /* best-effort */ }
+        try { _channel?.Dispose(); } catch { /* best-effort */ }
+        _channel = null;
+
+        try { _connection?.Close(); } catch { /* best-effort */ }
+        try { _connection?.Dispose(); } catch { /* best-effort */ }
+        _connection = null;
     }
 
     public async Task<Result> PublishAsync(
@@ -104,11 +142,12 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
         string messageBody, 
         string? routingKey = null, 
         string? correlationId = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
     {
-        if (_disposed || _channel == null)
+        if (!EnsureConnected())
         {
-            return Result.Error("RabbitMQ publisher is not available");
+            return Result.Error("RabbitMQ publisher is not available - broker may be unreachable");
         }
 
         try
@@ -123,7 +162,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
             // Prepare message properties
             var properties = _channel.CreateBasicProperties();
             properties.Persistent = true; // Make message durable
-            properties.MessageId = Guid.NewGuid().ToString();
+            properties.MessageId = (messageId ?? Guid.NewGuid()).ToString();
             properties.Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             properties.Type = messageType;
             properties.ContentType = "application/json";
@@ -170,9 +209,9 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
         IEnumerable<(string MessageType, string MessageBody, string? RoutingKey, string? CorrelationId)> messages,
         CancellationToken cancellationToken = default)
     {
-        if (_disposed || _channel == null)
+        if (!EnsureConnected())
         {
-            return Result.Error("RabbitMQ publisher is not available");
+            return Result.Error("RabbitMQ publisher is not available - broker may be unreachable");
         }
 
         var messagesList = messages.ToList();
@@ -187,7 +226,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
 
             foreach (var (messageType, messageBody, routingKey, correlationId) in messagesList)
             {
-                var result = await PublishAsync(messageType, messageBody, routingKey, correlationId, cancellationToken);
+                var result = await PublishAsync(messageType, messageBody, routingKey, correlationId, messageId: null, cancellationToken);
                 
                 if (!result.IsSuccess)
                 {
@@ -213,27 +252,13 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
     {
         if (_disposed) return;
 
-        try
+        lock (_connectionLock)
         {
-            _channel?.Close();
-            _channel?.Dispose();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error closing RabbitMQ channel");
+            if (_disposed) return;
+            _disposed = true;
+            CleanupConnection();
         }
 
-        try
-        {
-            _connection?.Close();
-            _connection?.Dispose();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error closing RabbitMQ connection");
-        }
-
-        _disposed = true;
         _logger.LogDebug("RabbitMQ publisher disposed");
     }
 }

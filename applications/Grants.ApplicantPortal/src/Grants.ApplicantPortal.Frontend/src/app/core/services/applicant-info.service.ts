@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
-  OrganizationResponse,
   SubmissionsResponse,
+  PaymentsResponse,
+  PluginEventDto,
+  PluginEventsResponse,
 } from '../../shared/models/applicant-info.interface';
 import { environment } from '../../../environments/environment';
 
@@ -66,18 +68,27 @@ export class ApplicantInfoService {
   }
 
   /**
+   * Gets payments information using the new endpoint structure
+   */
+  private getPaymentsData(
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<BackendResponse> {
+    const url = `${this.baseUrl}/Payments/${pluginId}/${provider}`;
+    return this.http.get<BackendResponse>(url, { params: parameters });
+  }
+
+  /**
    * Parses addresses backend response and extracts addresses data
    */
   private parseAddressesResponse(
     response: any
   ): { addressesData: any[] } {
     try {
-      console.log('Parsing addresses response:', response);
       const jsonData = response.data ?? response.jsonData;
-      console.log('Raw addresses JSON data:', jsonData);
 
       const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      console.log('Parsed addresses data:', parsedData);
 
       return {
         addressesData: parsedData.addresses ?? []
@@ -95,12 +106,9 @@ export class ApplicantInfoService {
     response: any
   ): { contactsData: any[] } {
     try {
-      console.log('Parsing contacts response:', response);
       const jsonData = response.data ?? response.jsonData;
-      console.log('Raw contacts JSON data:', jsonData);
 
       const parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      console.log('Parsed contacts data:', parsedData);
 
       return {
         contactsData: parsedData.contacts ?? []
@@ -112,39 +120,41 @@ export class ApplicantInfoService {
   }
 
   /**
-   * Parses backend response and extracts organization data
+   * Parses organization backend response and extracts organizations array + saved organizationInfo
    */
   private parseOrganizationResponse(
     response: any
-  ): OrganizationResponse {
+  ): { organizationsData: any[]; organizationData: any } {
     try {
-      // Handle both new format (data) and old format (jsonData)
       const jsonData = response.data ?? response.jsonData;
-      console.log('Parsing organization response:', jsonData);
+
+      if (!jsonData) {
+        return { organizationsData: [], organizationData: null };
+      }
 
       let parsedData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
 
       // Check if the parsed data is still a string (double-encoded)
       if (typeof parsedData === 'string') {
-        console.log('Data was double-encoded, parsing again...');
         parsedData = JSON.parse(parsedData);
       }
-      
-      console.log('Final parsed organization data:', parsedData);
-      console.log('Organization info from parsed data:', parsedData.organizationInfo);
 
-      const result = {
-        metadata: {
-          pluginId: response.pluginId,
-          provider: response.provider,
-          key: response.key,
-          populatedAt: response.populatedAt,
-        },
-        organizationData: parsedData.organizationInfo,
-      };
-      
-      console.log('Returning organization response:', result);
-      return result;
+      // Extract organizations array
+      let organizationsData: any[] = [];
+      if (Array.isArray(parsedData)) {
+        organizationsData = parsedData;
+      } else if (parsedData && Array.isArray(parsedData.organizations)) {
+        organizationsData = parsedData.organizations;
+      } else if (parsedData?.organizationInfo) {
+        organizationsData = Array.isArray(parsedData.organizationInfo)
+          ? parsedData.organizationInfo
+          : [parsedData.organizationInfo];
+      }
+
+      // Extract saved organization data
+      const organizationData = parsedData?.organizationInfo ?? null;
+
+      return { organizationsData, organizationData };
     } catch (error) {
       console.error('Error parsing organization data:', error, response);
       throw new Error('Failed to parse organization data');
@@ -157,9 +167,7 @@ export class ApplicantInfoService {
     try {
       // Handle both old 'jsonData' format and new 'data' format
       const dataString = (response as any).data ?? response.jsonData;
-      console.log('Parsing submissions response:', dataString);
       const parsedData = typeof dataString === 'string' ? JSON.parse(dataString) : dataString;
-      console.log('Parsed submissions data:', parsedData);
 
       return {
         metadata: {
@@ -177,20 +185,36 @@ export class ApplicantInfoService {
     }
   }
 
+  private parsePaymentsResponse(
+    response: BackendResponse
+  ): PaymentsResponse {
+    try {
+      const dataString = (response as any).data ?? response.jsonData;
+      const parsedData = typeof dataString === 'string' ? JSON.parse(dataString) : dataString;
+
+      return {
+        paymentsData: parsedData.payments ?? [],
+      };
+    } catch (error) {
+      console.error('Error parsing payments data:', error, (response as any).data ?? response.jsonData);
+      throw new Error('Failed to parse payments data');
+    }
+  }
+
   /**
-   * Main method: Gets formatted organization information
+   * Gets organization information
    */
   getOrganizationInfo(
     pluginId: string,
     provider: string,
     parameters?: any
-  ): Observable<OrganizationResponse> {
+  ): Observable<any> {
     return this.getOrganizationData(pluginId, provider, parameters).pipe(
       retry({ count: 2, delay: 1000 }),
-      map((response) => this.parseOrganizationResponse(response)),
+      map(response => this.parseOrganizationResponse(response)),
       catchError((error) => {
         console.error('Failed to load organization info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -200,8 +224,6 @@ export class ApplicantInfoService {
     pluginId: string, 
     provider: string
   ): Observable<any> {
-    console.log('ApplicantInfoService - Saving organization info:', orgInfo);
-    
     // Get the required parameters for the API endpoint
     const addressId = orgInfo.organizationId ?? orgInfo.orgNumber;
     
@@ -212,7 +234,7 @@ export class ApplicantInfoService {
       OrganizationNumber: orgInfo.orgNumber,
       Status: orgInfo.orgStatus,
       NonRegOrgName: orgInfo.nonRegOrgName,
-      OrganizationSize: orgInfo.orgSize ? parseInt(orgInfo.orgSize) : null,
+      OrganizationSize: orgInfo.orgSize,
       FiscalMonth: orgInfo.fiscalMonth,
       FiscalDay: orgInfo.fiscalDay
     };
@@ -231,11 +253,7 @@ export class ApplicantInfoService {
       })),
       catchError(error => {
         console.error('Error saving organization:', error);
-        return throwError(() => ({
-          error: 'Failed to save organization information',
-          message: error.error?.message ?? 'Please try again later',
-          details: error
-        }));
+        return throwError(() => error);
       })
     );
   }
@@ -251,7 +269,7 @@ export class ApplicantInfoService {
       map((response) => this.parseSubmissionsResponse(response)),
       catchError((error) => {
         console.error('Failed to load submissions info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -269,7 +287,7 @@ export class ApplicantInfoService {
       map(response => this.parseContactsResponse(response)),
       catchError((error) => {
         console.error('Failed to load contacts info after retries:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -287,7 +305,25 @@ export class ApplicantInfoService {
       map(response => this.parseAddressesResponse(response)),
       catchError((error) => {
         console.error('Failed to load addresses info after retries:', error);
-        throw error;
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Gets payments information
+   */
+  getPaymentsInfo(
+    pluginId: string,
+    provider: string,
+    parameters?: any
+  ): Observable<PaymentsResponse> {
+    return this.getPaymentsData(pluginId, provider, parameters).pipe(
+      retry({ count: 2, delay: 1000 }),
+      map(response => this.parsePaymentsResponse(response)),
+      catchError((error) => {
+        console.error('Failed to load payments info after retries:', error);
+        return throwError(() => error);
       })
     );
   }
@@ -301,7 +337,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to fetch contact roles:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -313,6 +349,7 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     contactData: {
+      applicantId?: string;
       name: string;
       email: string;
       title?: string;
@@ -326,7 +363,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to create contact:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -337,14 +374,16 @@ export class ApplicantInfoService {
   setContactAsPrimary(
     contactId: string,
     pluginId: string,
-    provider: string
+    provider: string,
+    applicantId?: string
   ): Observable<any> {
     const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}/set-primary`;
-    return this.http.patch<any>(url, {}).pipe(
+    const body = applicantId ? { applicantId } : {};
+    return this.http.patch<any>(url, body).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to set contact as primary:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -362,7 +401,70 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to set address as primary:', error);
-        throw error;
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Fetches available address types for a workspace
+   */
+  getAddressTypes(pluginId: string): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${pluginId}/types`;
+    return this.http.get<any>(url).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to fetch address types:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Creates a new address
+   */
+  createAddress(
+    pluginId: string,
+    provider: string,
+    addressData: {
+      applicantId?: string;
+      addressType: string;
+      street: string;
+      city: string;
+      province: string;
+      postalCode: string;
+      isPrimary: boolean;
+      street2?: string;
+      unit?: string;
+      country?: string;
+    }
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${pluginId}/${provider}`;
+    return this.http.post<any>(url, addressData).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to create address:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Deletes an address
+   */
+  deleteAddress(
+    addressId: string,
+    pluginId: string,
+    provider: string,
+    applicantId?: string
+  ): Observable<any> {
+    const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}`;
+    const options = applicantId ? { body: { applicantId } } : {};
+    return this.http.delete<any>(url, options).pipe(
+      retry({ count: 1, delay: 1000 }),
+      catchError((error) => {
+        console.error('Failed to delete address:', error);
+        return throwError(() => error);
       })
     );
   }
@@ -375,14 +477,15 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     addressData: {
-      addressLine1?: string;
-      addressLine2?: string;
+      addressType: string;
+      street: string;
       city: string;
       province: string;
       postalCode: string;
-      country?: string;
-      type: string;
       isPrimary: boolean;
+      street2?: string;
+      unit?: string;
+      country?: string;
     }
   ): Observable<any> {
     const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}`;
@@ -390,7 +493,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to update address:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -403,6 +506,7 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     contactData: {
+      applicantId?: string;
       name: string;
       email: string;
       title?: string;
@@ -416,7 +520,7 @@ export class ApplicantInfoService {
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to update contact:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -427,15 +531,50 @@ export class ApplicantInfoService {
   deleteContact(
     contactId: string,
     pluginId: string,
-    provider: string
+    provider: string,
+    applicantId?: string
   ): Observable<any> {
     const url = `${this.baseUrl}/Contacts/${contactId}/${pluginId}/${provider}`;
-    return this.http.delete<any>(url).pipe(
+    const options = applicantId ? { body: { applicantId } } : {};
+    return this.http.delete<any>(url, options).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to delete contact:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
+  }
+
+  // ── Plugin Events ──────────────────────────────────────────────
+
+  /**
+   * Gets unacknowledged events for the current workspace/provider.
+   * Fails silently — events are non-blocking.
+   */
+  getEvents(pluginId: string, provider: string): Observable<PluginEventDto[]> {
+    const url = `${this.baseUrl}/Events/${pluginId}/${provider}`;
+    return this.http.get<PluginEventsResponse>(url).pipe(
+      map(response => response.events),
+      catchError(error => {
+        console.error('Failed to load plugin events:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Acknowledges (dismisses) a single event.
+   */
+  acknowledgeEvent(eventId: string): Observable<any> {
+    const url = `${this.baseUrl}/Events/${eventId}/acknowledge`;
+    return this.http.patch(url, {});
+  }
+
+  /**
+   * Acknowledges (dismisses) all events for a workspace/provider.
+   */
+  acknowledgeAllEvents(pluginId: string, provider: string): Observable<any> {
+    const url = `${this.baseUrl}/Events/${pluginId}/${provider}/acknowledge-all`;
+    return this.http.patch(url, {});
   }
 }

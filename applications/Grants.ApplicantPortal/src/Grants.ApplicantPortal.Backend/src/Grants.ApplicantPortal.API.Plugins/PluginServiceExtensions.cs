@@ -35,6 +35,10 @@ public static class PluginServiceExtensions
     services.AddScoped<IProfilePlugin, DemoPlugin>();
     services.AddScoped<IProfilePluginFactory, ProfilePluginFactory>();
 
+    // Register command metadata providers (one per plugin that uses messaging)
+    services.AddSingleton<IPluginCommandMetadataProvider, UnityCommandMetadataProvider>();
+    services.AddSingleton<IPluginCommandMetadataRegistry, PluginCommandMetadataRegistry>();
+
     // NOTE: Plugin data seeding service has been removed - plugins now use on-demand seeding per user profile
 
     // Register contact management service

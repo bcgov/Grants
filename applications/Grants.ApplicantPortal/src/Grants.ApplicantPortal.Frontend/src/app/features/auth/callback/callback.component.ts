@@ -23,10 +23,6 @@ export class CallbackComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('CallbackComponent initialized');
-    console.log('Initial state - isProcessing:', this.isProcessing, 'errorMessage:', this.errorMessage);
-    console.log('Current URL:', window.location.href);
-
     // Add a timeout to prevent indefinite waiting
     this.handleAuthCallback();
   }
@@ -45,45 +41,32 @@ export class CallbackComponent implements OnInit {
       .subscribe({
         next: (result) => {
           this.isProcessing = false;
-          console.log('Auth check completed - isProcessing set to false');
           
-          console.log('Auth check result:', {
-            isAuthenticated: result.isAuthenticated,
-            userData: result.userData ? 'Present' : 'Missing',
-            accessToken: result.accessToken ? 'Present' : 'Missing',
-          });
-
           if (result.isAuthenticated && result.accessToken) {
-            console.log('Authentication successful, fetching workspaces');
-            
             // Restore any previously selected workspace
             this.workspaceService.restoreWorkspaceFromStorage();
             
             // Fetch available workspaces
             this.workspaceService.getAvailableWorkspaces().subscribe({
-              next: (workspacesResponse) => {
+              next: () => {
                 const currentState = this.workspaceService.currentWorkspaceState$;
-                currentState.pipe(take(1)).subscribe(state => {
+                currentState.pipe(take(1)).subscribe(() => {
                   // Always go to workspace selector - let it handle auto-selection with proper UX
-                  console.log('Redirecting to workspace selector for proper UX handling');
                   this.router.navigate(['/workspace-selector']);
                 });
               },
-              error: (workspaceError) => {
-                console.error('Error fetching workspaces:', workspaceError);
-                // Continue to app even if workspace fetch fails
-                this.router.navigate(['/app']);
+              error: () => {
+                // Workspace fetch failed — navigate to selector and let it handle retry
+                this.router.navigate(['/workspace-selector']);
               }
             });
           } else {
-            console.log('Authentication failed - no valid token received');
             this.errorMessage = 'Authentication failed. Please try logging in again.';
             this.redirectToLoginAfterDelay();
           }
         },
         error: (error) => {
           this.isProcessing = false;
-          console.log('Auth check error - isProcessing set to false');
           console.error('Auth check error:', error);
           
           // Handle specific error types
@@ -128,7 +111,6 @@ export class CallbackComponent implements OnInit {
     try {
       localStorage.clear();
       sessionStorage.clear();
-      console.log('All storage cleared due to auth state error');
     } catch (error) {
       console.warn('Error clearing all storage:', error);
     }

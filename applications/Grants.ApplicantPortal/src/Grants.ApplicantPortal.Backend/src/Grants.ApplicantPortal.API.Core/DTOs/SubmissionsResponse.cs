@@ -20,6 +20,6 @@ public record SubmissionResponse(
     DateTime ReceivedTime,
     DateTime SubmissionTime,
     string ReferenceNo,
-    string ProjectName,
+    string Type,
     string Status
 );

@@ -5,10 +5,12 @@ using Grants.ApplicantPortal.API.Core.Services;
 namespace Grants.ApplicantPortal.API.Infrastructure.Services;
 
 /// <summary>
-/// Organization management service that resolves to the appropriate plugin for organization operations
+/// Organization management service that resolves to the appropriate plugin for organization operations.
+/// Validates resource ownership before delegating to the plugin to prevent IDOR attacks.
 /// </summary>
 public class OrganizationManagementService(
   IProfilePluginFactory pluginFactory,
+  IResourceOwnershipValidator ownershipValidator,
   ILogger<OrganizationManagementService> logger) : IOrganizationManagementService
 {
   public async Task<Result> EditOrganizationAsync(
@@ -38,6 +40,16 @@ public class OrganizationManagementService(
           Identifier = "PluginId",
           ErrorMessage = $"Plugin '{profileContext.PluginId}' does not support organization management"
         });
+      }
+
+      // Validate organization ownership before allowing edit
+      var ownership = await ownershipValidator.ValidateOrganizationOwnershipAsync(
+        editRequest.OrganizationId, profileContext, cancellationToken);
+      if (!ownership.IsOwned)
+      {
+        logger.LogWarning("Organization ownership validation failed for OrganizationId: {OrganizationId}, ProfileId: {ProfileId}",
+          editRequest.OrganizationId, profileContext.ProfileId);
+        return Result.Forbidden();
       }
 
       // Call the plugin to edit the organization

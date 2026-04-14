@@ -1,27 +1,47 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Subject, Observable, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil, finalize, map, catchError } from 'rxjs/operators';
 import {
   OrganizationData,
   OrgSearchResult,
+  OrgbookResponse,
+  OrgbookOrganization,
 } from '../../../shared/models/applicant-info.interface';
+import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { environment } from '../../../../environments/environment';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
+import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
+import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
 
 @Component({
   selector: 'app-organization-info',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingOverlayComponent],
+  imports: [CommonModule, FormsModule, LoadingOverlayComponent, DatatableComponent],
   templateUrl: './organization.component.html',
   styleUrls: ['./organization.component.scss'],
 })
-export class OrganizationInfoComponent implements OnChanges {
-  @Input() organizationInfo: OrganizationData | null = null;
-  @Input() isLoading = false;
-  @Input() isSaving = false;
-  @Output() saveOrganization = new EventEmitter<OrganizationData>();
-  @Output() searchResultSelected = new EventEmitter<OrgSearchResult>();
+export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
+  @ViewChild('orgForm') orgForm!: NgForm;
+  @Input() pluginId: string = '';
+  @Input() provider: string = '';
+  @Output() organizationLoaded = new EventEmitter<{ orgNumber: string; orgName: string } | null>();
+  @Output() multipleOrganizationsDetected = new EventEmitter<boolean>();
+  
+  // Internal state
+  organizationInfo: OrganizationData | null = null;
+  orgbookResponse: OrgbookResponse | null = null; // Keep to store the response
+  isLoading = false;
+  isSaving = false;
+
+  // Multiple organizations handling
+  multipleOrganizations: OrgbookOrganization[] = [];
+  showMultipleOrgsTable = false;
+  showSingleOrgForm = false;
+  orgbookDataTableConfig!: DatatableConfig;
 
   // Search properties
   searchTerm = '';
@@ -33,49 +53,197 @@ export class OrganizationInfoComponent implements OnChanges {
   selectedFiscalMonth = '';
   selectedFiscalDay = '';
 
+  // Form submitted flag for showing validation
+  formSubmitted = false;
+
   // Edit mode properties
   isEditMode = false;
   private backupOrganizationInfo: OrganizationData | null = null;
   private backupFiscalMonth = '';
   private backupFiscalDay = '';
+  private backupSearchTerm = '';
 
   // Constants
   readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
+  private readonly monthAbbreviations = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  private readonly orgbookBaseApi = environment.orgbookApiUrl;
   private readonly searchSubject = new Subject<string>();
+  private readonly destroy$ = new Subject<void>();
 
-  constructor() {
+  constructor(
+    private readonly cdr: ChangeDetectorRef,
+    private readonly http: HttpClient,
+    private readonly applicantInfoService: ApplicantInfoService,
+    private readonly toastService: ToastService
+  ) {
     this.setupSearch();
+    this.initializeDataTableConfig();
   }
 
   ngOnInit(): void {
     this.updateFiscalFieldsFromOrganizationInfo();
+    // Data loading will be handled by ngOnChanges when pluginId/provider are set
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('OrganizationComponent ngOnChanges called:', changes);
-    if (changes['organizationInfo']) {
-      console.log('organizationInfo changed:', {
-        previousValue: changes['organizationInfo'].previousValue,
-        currentValue: changes['organizationInfo'].currentValue,
-        firstChange: changes['organizationInfo'].firstChange
-      });
+    // If pluginId or provider changed, reload data
+    if (changes['pluginId'] || changes['provider']) {
+      const hasPluginId = this.pluginId && this.pluginId.trim() !== '';
+      const hasProvider = this.provider && this.provider.trim() !== '';
       
-      if (changes['organizationInfo'].currentValue) {
-        console.log('OrganizationComponent - organizationInfo received, updating fields');
-        this.updateFiscalFieldsFromOrganizationInfo();
-      } else {
-        console.log('OrganizationComponent - organizationInfo is null/undefined');
+      if (hasPluginId && hasProvider) {
+        this.loadOrganizationData();
       }
     }
   }
 
+  private loadOrganizationData(): void {
+    if (!this.pluginId || !this.provider) {
+      this.showMultipleOrgsTable = false;
+      this.showSingleOrgForm = false;
+      this.multipleOrganizations = [];
+      this.organizationInfo = null;
+      return;
+    }
+
+    this.isLoading = true;
+    
+    this.applicantInfoService.getOrganizationInfo(this.pluginId, this.provider)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.handleOrganizationResponse(result);
+        },
+        error: (error) => {
+          console.error('Failed to load organization data:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  private handleOrganizationResponse(result: any): void {
+    const organizations = result.organizationsData ?? [];
+    
+    if (organizations.length > 1) {
+      this.showMultipleOrgsTable = true;
+      this.showSingleOrgForm = false;
+      this.multipleOrganizations = organizations;
+      this.organizationInfo = null;
+      this.isLoading = false;
+      this.multipleOrganizationsDetected.emit(true);
+      this.organizationLoaded.emit(null);
+    } else if (organizations.length === 1) {
+      this.showMultipleOrgsTable = false;
+      this.showSingleOrgForm = true;
+      this.convertOrgbookToOrganizationData(organizations[0]);
+
+      // Merge saved data on top of the orgbook data
+      if (result.organizationData) {
+        this.organizationInfo = {
+          ...this.organizationInfo,
+          ...result.organizationData
+        };
+        this.updateFiscalFieldsFromOrganizationInfo();
+      }
+
+      this.isLoading = false;
+      this.multipleOrganizationsDetected.emit(false);
+      this.organizationLoaded.emit({
+        orgNumber: this.organizationInfo?.orgNumber ?? '',
+        orgName: this.organizationInfo?.orgName ?? ''
+      });
+    } else {
+      this.showMultipleOrgsTable = false;
+      this.showSingleOrgForm = false;
+      this.multipleOrganizations = [];
+      this.organizationInfo = null;
+      this.isLoading = false;
+      this.multipleOrganizationsDetected.emit(false);
+      this.organizationLoaded.emit(null);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  private initializeDataTableConfig(): void {
+    this.orgbookDataTableConfig = {
+      columns: [
+        { key: 'orgName', label: 'Organization Name', sortable: true, type: 'text' },
+        { key: 'organizationType', label: 'Type', sortable: true, type: 'text' },
+        { key: 'orgNumber', label: 'Registration Number', sortable: true, type: 'text' },
+        { key: 'orgStatus', label: 'Status', sortable: true, type: 'badge' },
+        { key: 'organizationSize', label: 'Organization Size', sortable: true, type: 'text' },
+        { key: 'sector', label: 'Sector', sortable: true, type: 'text' },
+        { key: 'subSector', label: 'Sub Sector', sortable: true, type: 'text' }
+      ],
+      badgeConfig: {
+        field: 'orgStatus',
+        badgeClassPrefix: 'status-badge',
+        badgeClasses: {
+          'ACTIVE': 'status-active',
+          'INACTIVE': 'status-inactive',
+          'SUSPENDED': 'status-suspended'
+        },
+        fallbackClass: 'status-unknown'
+      },
+      actionsType: 'none',
+      rowClickable: false,
+      tableId: 'orgbook-organizations',      
+      noDataMessage: 'No organizations found.',
+      tableClass: 'orgbook-table'
+    };
+  }
+
+  private convertOrgbookToOrganizationData(orgbookOrg: OrgbookOrganization): void {
+    // Convert OrgbookOrganization to OrganizationData format
+    const rawSize = orgbookOrg.organizationSize;
+    const parsedSize = rawSize == null ? null : Number(rawSize);
+    const orgSize = parsedSize != null && Number.isFinite(parsedSize) ? parsedSize : null;
+    
+    this.organizationInfo = {
+      orgName: orgbookOrg.orgName ?? '',
+      orgNumber: orgbookOrg.orgNumber ?? '',
+      orgStatus: orgbookOrg.orgStatus ?? '',
+      organizationType: orgbookOrg.organizationType ?? '',
+      nonRegOrgName: orgbookOrg.nonRegOrgName ?? '',
+      orgSize: orgSize,
+      fiscalMonth: orgbookOrg.fiscalMonth ?? '',
+      fiscalDay: orgbookOrg.fiscalDay ?? 0,
+      organizationId: orgbookOrg.id,
+      // Set default/empty values for required OrganizationData fields not in orgbook
+      legalName: orgbookOrg.orgName ?? orgbookOrg.nonRegOrgName ?? '',
+      doingBusinessAs: '',
+      ein: '',
+      founded: 0,
+      address: {} as any, // You may need to handle this based on your requirements
+      contactInfo: {} as any, // You may need to handle this based on your requirements
+      mission: '',
+      servicesAreas: [],
+      certifications: [],
+      allowEdit: true
+    };
+    
+    this.updateFiscalFieldsFromOrganizationInfo();
+  }
+
   private updateFiscalFieldsFromOrganizationInfo(): void {
     if (this.organizationInfo) {
-      this.selectedFiscalMonth = this.organizationInfo.fiscalMonth || '';
-      this.selectedFiscalDay =
-        this.organizationInfo.fiscalDay != null
-          ? String(this.organizationInfo.fiscalDay)
-          : '';
+      if (this.organizationInfo.fiscalYearEndMonth == null) {
+        this.selectedFiscalMonth = this.organizationInfo.fiscalMonth ?? '';
+      } else {
+        this.selectedFiscalMonth = this.monthAbbreviations[this.organizationInfo.fiscalYearEndMonth] ?? '';
+      }
+
+      if (this.organizationInfo.fiscalYearEndDay == null) {
+        this.selectedFiscalDay = this.organizationInfo.fiscalDay == null ? '' : String(this.organizationInfo.fiscalDay);
+      } else {
+        this.selectedFiscalDay = String(this.organizationInfo.fiscalYearEndDay);
+      }
     }
   }
 
@@ -95,44 +263,30 @@ export class OrganizationInfoComponent implements OnChanges {
 
   private performSearch(term: string): Observable<OrgSearchResult[]> {
     if (term.length < 3) return of([]);
-    return of(this.getMockSearchResults(term));
+    const url = `${this.orgbookBaseApi}/v3/search/autocomplete?q=${encodeURIComponent(term)}&revoked=false&inactive=`;
+    return this.http.get<any>(url).pipe(
+      map((response) => this.mapAutocompleteResults(response)),
+      catchError(() => of([]))
+    );
   }
 
-  private getMockSearchResults(term: string): OrgSearchResult[] {
-    const mockOrgs: OrgSearchResult[] = [
-      {
-        id: '1',
-        orgName: 'ABC Technology Corp',
-        orgNumber: 'BC1234567',
-        orgStatus: 'Active',
-        organizationType: 'Corporation',
-      },
-      {
-        id: '2',
-        orgName: 'ABC Solutions Ltd',
-        orgNumber: 'BC2345678',
-        orgStatus: 'Active',
-        organizationType: 'Limited Company',
-      },
-      {
-        id: '3',
-        orgName: 'Advanced Business Consulting',
-        orgNumber: 'BC3456789',
-        orgStatus: 'Active',
-        organizationType: 'Partnership',
-      },
-      {
-        id: '4',
-        orgName: 'Alpha Beta Communications',
-        orgNumber: 'BC4567890',
-        orgStatus: 'Inactive',
-        organizationType: 'Corporation',
-      },
-    ];
-
-    return mockOrgs.filter((org) =>
-      org.orgName.toLowerCase().includes(term.toLowerCase())
-    );
+  private mapAutocompleteResults(response: any): OrgSearchResult[] {
+    if (!response?.results) return [];
+    const seen = new Set<string>();
+    return response.results
+      .filter((r: any) => {
+        const id = r.topic_source_id;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((r: any) => ({
+        id: r.topic_source_id ?? '',
+        orgName: r.value ?? '',
+        orgNumber: r.topic_source_id ?? '',
+        orgStatus: '',
+        organizationType: r.topic_type ?? '',
+      }));
   }
 
   // Event Handlers
@@ -160,9 +314,52 @@ export class OrganizationInfoComponent implements OnChanges {
   }
 
   onSearchResultSelect(result: OrgSearchResult): void {
-    this.searchTerm = result.orgName;
     this.showDropdown = false;
-    this.searchResultSelected.emit(result);
+    this.searchTerm = result.orgName;
+    this.fetchOrgDetails(result.orgNumber);
+  }
+
+  private fetchOrgDetails(orgBookId: string): void {
+    if (!orgBookId) return;
+    const queryParams = `q=${encodeURIComponent(orgBookId)}&inactive=any&latest=any&revoked=any&ordering=-score`;
+    const url = `${this.orgbookBaseApi}/v4/search/topic?${queryParams}`;
+    this.isLoading = true;
+    this.http.get<any>(url).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: (response) => {
+        const firstResult = response?.results?.[0];
+        if (firstResult) {
+          this.populateFromOrgbookTopic(firstResult);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to fetch OrgBook details:', err);
+      }
+    });
+  }
+
+  private populateFromOrgbookTopic(topic: any): void {
+    const orgName = topic.names?.[0]?.text ?? '';
+    const orgNumber = topic.source_id ?? '';
+    const inactive = topic.inactive ?? false;
+    const entityType = topic.attributes?.find((a: any) => a.type === 'entity_type')?.value ?? '';
+
+    const base = this.organizationInfo ?? {} as OrganizationData;
+    this.organizationInfo = {
+      ...base,
+      orgName,
+      orgNumber,
+      orgStatus: inactive ? 'Inactive' : 'Active',
+      organizationType: entityType,
+      legalName: orgName,
+    };
+    this.searchTerm = orgName;
+    this.cdr.detectChanges();
   }
 
   onFiscalMonthChange(event: Event): void {
@@ -187,20 +384,56 @@ export class OrganizationInfoComponent implements OnChanges {
     this.backupOrganizationInfo = this.organizationInfo ? { ...this.organizationInfo } : null;
     this.backupFiscalMonth = this.selectedFiscalMonth;
     this.backupFiscalDay = this.selectedFiscalDay;
+    this.backupSearchTerm = this.searchTerm;
   }
 
   onSave(): void {
     if (this.isSaving || !this.organizationInfo) return;
+
+    this.formSubmitted = true;
+    if (this.orgForm?.invalid) return;
     
-    // Update organization info with fiscal year data
+    // Update organization info with fiscal year data — send null when the placeholder option is selected
+    const fiscalMonthIndex = this.monthAbbreviations.includes(this.selectedFiscalMonth)
+      ? this.monthAbbreviations.indexOf(this.selectedFiscalMonth)
+      : null;
+
     const updatedOrgInfo: OrganizationData = {
       ...this.organizationInfo,
-      fiscalYearEndMonth: this.selectedFiscalMonth ? parseInt(this.selectedFiscalMonth) : this.organizationInfo.fiscalYearEndMonth,
-      fiscalYearEndDay: this.selectedFiscalDay ? parseInt(this.selectedFiscalDay) : this.organizationInfo.fiscalYearEndDay
+      fiscalMonth: this.selectedFiscalMonth || null,
+      fiscalDay: this.selectedFiscalDay ? Number(this.selectedFiscalDay) : null,
+      fiscalYearEndMonth: fiscalMonthIndex,
+      fiscalYearEndDay: this.selectedFiscalDay ? Number.parseInt(this.selectedFiscalDay) : null
     };
     
-    this.isEditMode = false;
-    this.saveOrganization.emit(updatedOrgInfo);
+    this.isSaving = true;
+    
+    this.applicantInfoService.saveOrganizationInfo(
+      updatedOrgInfo,
+      this.pluginId,
+      this.provider
+    )
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isSaving = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.isEditMode = false;
+          this.organizationInfo = updatedOrgInfo; // Update local state
+          this.searchTerm = '';
+          this.resetSearch();
+          this.formSubmitted = false;
+          this.toastService.success('Organization information saved successfully.');
+        },
+        error: (error) => {
+          console.error('Failed to save organization:', error);
+          const message = this.extractErrorMessage(error);
+          this.toastService.error(message);
+        }
+      });
   }
 
   onCancel(): void {
@@ -213,12 +446,30 @@ export class OrganizationInfoComponent implements OnChanges {
     }
     this.selectedFiscalMonth = this.backupFiscalMonth;
     this.selectedFiscalDay = this.backupFiscalDay;
-    this.updateFiscalFieldsFromOrganizationInfo();
+    this.searchTerm = this.backupSearchTerm;
+    this.resetSearch();
+    this.formSubmitted = false;
   }
 
   private resetSearch(): void {
     this.searchResults = [];
     this.showDropdown = false;
     this.isSearching = false;
+  }
+
+  private extractErrorMessage(error: any): string {
+    const body = error?.error;
+    if (body?.errors) {
+      const messages = Object.values(body.errors)
+        .flat()
+        .filter((m): m is string => typeof m === 'string');
+      if (messages.length > 0) {
+        return messages.join(' ');
+      }
+    }
+    if (body?.message) {
+      return body.message;
+    }
+    return 'An unexpected error occurred while saving. Please try again.';
   }
 }

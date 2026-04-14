@@ -5,11 +5,11 @@ namespace Grants.ApplicantPortal.API.UseCases.Addresses.Edit;
 
 public class EditAddressHandler(
   IAddressManagementService addressManagementService,
-  IProfileCacheInvalidationService cacheInvalidationService,
+  IPluginCacheService pluginCacheService,
   ILogger<EditAddressHandler> logger)
-  : ICommandHandler<EditAddressCommand, Result>
+  : ICommandHandler<EditAddressCommand, Result<AddressMutationResult>>
 {
-  public async Task<Result> Handle(EditAddressCommand request, CancellationToken cancellationToken)
+  public async Task<Result<AddressMutationResult>> Handle(EditAddressCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation("Editing address {AddressId} for ProfileId: {ProfileId} using Plugin: {PluginId}",
       request.AddressId, request.ProfileId, request.PluginId);
@@ -26,12 +26,14 @@ public class EditAddressHandler(
         request.IsPrimary,
         request.Street2,
         request.Unit,
-        request.Country);
+        request.Country,
+        request.ApplicantId);
 
       var profileContext = new ProfileContext(
         request.ProfileId,
         request.PluginId,
-        request.Provider);
+        request.Provider,
+        request.Subject);
 
       var result = await addressManagementService.EditAddressAsync(
         editRequest,
@@ -42,31 +44,29 @@ public class EditAddressHandler(
       {
         logger.LogInformation("Successfully edited address {AddressId} for ProfileId: {ProfileId}",
           request.AddressId, request.ProfileId);
-          
-        // Invalidate addresses cache so the updated address appears immediately
-        await cacheInvalidationService.InvalidateProfileDataCacheAsync(
-          request.ProfileId,
-          request.PluginId,
-          request.Provider,
-          "ADDRESSINFO",
-          cancellationToken);
-          
-        logger.LogDebug("Invalidated addresses cache for ProfileId: {ProfileId} after address edit", 
-          request.ProfileId);
-      }
-      else
-      {
-        logger.LogWarning("Failed to edit address {AddressId} for ProfileId: {ProfileId}. Status: {Status}",
-          request.AddressId, request.ProfileId, result.Status);
+
+        var primaryId = await PrimaryAddressResolver.GetPrimaryAddressIdAsync(
+            pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
+
+        return new AddressMutationResult(request.AddressId, primaryId);
       }
 
-      return result;
+      logger.LogWarning("Failed to edit address {AddressId} for ProfileId: {ProfileId}. Status: {Status}",
+        request.AddressId, request.ProfileId, result.Status);
+
+      if (result.Status == ResultStatus.NotFound)
+        return Result<AddressMutationResult>.NotFound();
+
+      if (result.Status == ResultStatus.Forbidden)
+        return Result<AddressMutationResult>.Forbidden();
+
+      return Result<AddressMutationResult>.Invalid(result.ValidationErrors);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error editing address {AddressId} for ProfileId: {ProfileId}",
         request.AddressId, request.ProfileId);
-      return Result.Error("An unexpected error occurred while editing the address");
+      return Result<AddressMutationResult>.Error("An unexpected error occurred while editing the address");
     }
   }
 }

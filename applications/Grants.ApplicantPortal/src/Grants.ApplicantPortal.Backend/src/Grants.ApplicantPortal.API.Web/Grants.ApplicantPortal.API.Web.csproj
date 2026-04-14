@@ -145,6 +145,17 @@
       <DependentUpon>RetrieveAddresses.cs</DependentUpon>
     </Compile>
 
+    <!-- Nest CreateAddress-related files under Create.cs -->
+    <Compile Update="Addresses\Create.Request.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\Create.Response.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\Create.Validator.cs">
+      <DependentUpon>Create.cs</DependentUpon>
+    </Compile>
+
     <!-- Nest Addresses-related files under SetAsPrimary.cs -->
     <Compile Update="Addresses\SetAsPrimary.Request.cs">
       <DependentUpon>SetAsPrimary.cs</DependentUpon>
@@ -210,7 +221,43 @@
     <Compile Update="Contacts\RetrieveContactRoles.Validator.cs">
       <DependentUpon>RetrieveContactRoles.cs</DependentUpon>
     </Compile>
+
+    <!-- Nest Address Types files under RetrieveAddressTypes.cs -->
+    <Compile Update="Addresses\RetrieveAddressTypes.Request.cs">
+      <DependentUpon>RetrieveAddressTypes.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\RetrieveAddressTypes.Response.cs">
+      <DependentUpon>RetrieveAddressTypes.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\RetrieveAddressTypes.Validator.cs">
+      <DependentUpon>RetrieveAddressTypes.cs</DependentUpon>
+    </Compile>
+
+    <!-- Nest Payments files under RetrievePayments.cs -->
+    <Compile Update="Payments\RetrievePayments.Request.cs">
+      <DependentUpon>RetrievePayments.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Payments\RetrievePayments.Response.cs">
+      <DependentUpon>RetrievePayments.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Payments\RetrievePayments.Validator.cs">
+      <DependentUpon>RetrievePayments.cs</DependentUpon>
+    </Compile>
+
+
+    <!-- Nest Address-related files under Delete.cs -->
+    <Compile Update="Addresses\Delete.Request.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\Delete.Response.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Addresses\Delete.Validator.cs">
+      <DependentUpon>Delete.cs</DependentUpon>
+    </Compile>
+
   </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Ardalis.ListStartupServices" />

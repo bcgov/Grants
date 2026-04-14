@@ -22,8 +22,6 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('LoginComponent initialized');
-
     // Check if we arrived here due to a 401 API error redirect.
     // If so, the user's OIDC session is still valid but the API is rejecting
     // requests, so auto-redirecting back to /app would recreate the loop.
@@ -39,12 +37,8 @@ export class LoginComponent implements OnInit {
     this.oidcSecurityService.checkAuth().pipe(take(1)).subscribe({
       next: (result) => {
         this.isChecking = false;
-        console.log('Login page auth check:', { 
-          isAuthenticated: result.isAuthenticated 
-        });
         
         if (result.isAuthenticated) {
-          console.log('User already authenticated, redirecting to app');
           this.router.navigate(['/app']);
         }
       },
@@ -59,8 +53,6 @@ export class LoginComponent implements OnInit {
   }
 
   loginRequest(): void { 
-    console.log('Initiating login authentication...');
-
     // Clear any existing authentication state that might cause conflicts
     this.clearAuthStorage();
 
@@ -85,8 +77,6 @@ export class LoginComponent implements OnInit {
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
       });
-      
-      console.log('Cleared existing auth storage before login');
     } catch (error) {
       console.warn('Error clearing auth storage:', error);
     }

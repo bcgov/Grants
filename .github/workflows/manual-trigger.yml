@@ -1,6 +1,4 @@
-# This is a basic workflow that is manually triggered
-
-name: Workflow - Run manual trigger
+name: Manual - Build & Push docker images
 permissions:
   contents: read
 
@@ -13,11 +11,18 @@ on:
         # Friendly description to be shown in the UI instead of 'name'
         description: 'Environment'
         # Default value if no value is explicitly provided
-        default: 'dev'
+        default: 'dev2'
         # Input has to be provided for the workflow to run
         required: true
         # The data type of the input
         type: string
+
+        # type: choice
+        # options:
+        #   - dev
+        #   - test
+        #   - main
+
 env:
   TARGET_ENV: ${{ inputs.name }}
   GH_TOKEN: ${{secrets.GH_API_TOKEN}}
@@ -29,11 +34,11 @@ env:
   JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
   JFROG_REPO_PATH: ${{ vars.ARTIFACTORY_REPO }}
   JFROG_SERVICE:  ${{ vars.ARTIFACTORY_SERVICE }}
-  UGM_BUILD_VERSION: ${{vars.UGM_BUILD_VERSION}}
-  UGM_BUILD_REVISION: ${{vars.UGM_BUILD_REVISION}}
+  GRANTS_BUILD_VERSION: ${{vars.GRANTS_BUILD_VERSION}}
+  GRANTS_BUILD_REVISION: ${{vars.GRANTS_BUILD_REVISION}}
 
-  UGM_RELEASE_PREFIX: Unity_Grant_Manager_v
-  UGM_RELEASE_MESSAGE: "Manual deployment"
+  GRANTS_RELEASE_PREFIX: Grants_Applicant_Portal_v
+  GRANTS_RELEASE_MESSAGE: "Manual deployment"
 
 jobs:
   Setup:
@@ -50,7 +55,8 @@ jobs:
         env | sort
     - name: Get current date
       id: date_selector
-      run: echo "DATE=$(date +'%B %e, %Y')" >> $GITHUB_OUTPUT
+      run: |
+        echo "DATE=$(date +'%B %e, %Y')" >> $GITHUB_OUTPUT
     outputs:
       DATE: ${{steps.date_selector.outputs.DATE}}
   Branch:
@@ -59,20 +65,21 @@ jobs:
     environment: ${{ inputs.name }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Get short commitId
       id: get_commit
-      run:  |
+      run: |
         echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     - name: List merged branch
       id: get_branch
       run: |
-        MERGED_BRANCH=$(git log --merges --pretty=format:"%s" -1 | grep -oE 'from bcgov/[^ ]+' | sed 's/from bcgov\///')
+        git log -1
+        MERGED_BRANCH=$(git log -1 | grep -oE 'from bcgov/[^ ]+' | sed 's/from bcgov\///')
         if [ -z "$MERGED_BRANCH" ]; then
-          echo "Direct push no pull request from bcgov/branch"
-          echo "MERGED_BRANCH=push" >> $GITHUB_OUTPUT
+          echo "Manual trigger from --env ${{env.TARGET_ENV}}"
+          echo "MERGED_BRANCH=manual" >> $GITHUB_OUTPUT
         else
           echo "Merged branch: $MERGED_BRANCH"
           echo "MERGED_BRANCH=$MERGED_BRANCH" >> $GITHUB_OUTPUT
@@ -88,43 +95,50 @@ jobs:
       actions: write
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
           fetch-depth: '1'
     - name: Set repository version variables
       id: set_version
       run: |
-        # gh variable set UGM_BUILD_REVISION --env ${{env.TARGET_ENV}} --body "${{needs.Branch.outputs.SHA_SHORT}}"
-        echo "UGM_BUILD_REVISION=${{needs.Branch.outputs.SHA_SHORT}}" >> $GITHUB_ENV
+        gh variable set GRANTS_BUILD_REVISION --env ${{env.TARGET_ENV}} --body "${{needs.Branch.outputs.SHA_SHORT}}"
+        echo "GRANTS_BUILD_REVISION=${{needs.Branch.outputs.SHA_SHORT}}" >> $GITHUB_ENV
     - name: Get repository version variables
       id: get_version
       run: |
         gh variable list --env ${{env.TARGET_ENV}}
         echo "..."
-        echo "buildArgs --env ${{env.TARGET_ENV}} UNITY_BUILD_VERSION: ${{env.UGM_BUILD_VERSION}}, UNITY_BUILD_REVISION: ${{env.UGM_BUILD_REVISION}}, Merged Branch: ${{needs.Branch.outputs.MERGED_BRANCH}}"
+        echo "buildArgs --env ${{env.TARGET_ENV}} GRANTS_BUILD_VERSION: ${{env.GRANTS_BUILD_VERSION}}, GRANTS_BUILD_REVISION: ${{env.GRANTS_BUILD_REVISION}}, Merged Branch: ${{needs.Branch.outputs.MERGED_BRANCH}}"
   Build:
     needs: [Setup,Branch,PushVariables]
     runs-on: ubuntu-latest
     environment: ${{ inputs.name }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Build Docker images
       run: |
-        rm -f ./docker-compose.override.yml
-        echo "buildArgs UNITY_BUILD_VERSION: ${{env.UGM_BUILD_VERSION}}, UNITY_BUILD_REVISION: ${{env.UGM_BUILD_REVISION}}"
-        # docker compose build --build-arg UNITY_BUILD_VERSION=${{env.UGM_BUILD_VERSION}} --build-arg UNITY_BUILD_REVISION=${{env.UGM_BUILD_REVISION}}
-        docker build --build-arg UNITY_BUILD_VERSION=${{env.UGM_BUILD_VERSION}} --build-arg UNITY_BUILD_REVISION=${{env.UGM_BUILD_REVISION}} -t unity-grantmanager-web -f src/Unity.GrantManager.Web/Dockerfile .
-        docker build -t unity-grantmanager-dbmigrator -f src/Unity.GrantManager.DbMigrator/Dockerfile .
-      working-directory: ./applications/Unity.GrantManager
+        echo "buildArgs GRANTS_BUILD_VERSION: ${{env.GRANTS_BUILD_VERSION}}, GRANTS_BUILD_REVISION: ${{env.GRANTS_BUILD_REVISION}}"
+        docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} -t grants-applicant-portal-backend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
+        docker build --build-arg GRANTS_BUILD_VERSION=${{env.GRANTS_BUILD_VERSION}} --build-arg GRANTS_BUILD_REVISION=${{env.GRANTS_BUILD_REVISION}} --build-arg BUILD_CONFIG=deploy -t grants-applicant-portal-frontend -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/Dockerfile applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+        echo "Building Docker image for database migrator..."
+        docker build -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Migrations/Dockerfile -t ${{env.TARGET_ENV}}-applicantportal-dbmigrator applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
+      working-directory: ./
     - name: Connect to JFrog Artifactory non-interactive login using --password-stdin
       run: |
         echo "$JFROG_PASSWORD" | docker login -u "$JFROG_USERNAME" --password-stdin $JFROG_SERVICE
     - name: Push application images to Artifactory container registry
       run: |
-        docker tag unity-grantmanager-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/unity-grantmanager-dbmigrator
-        # docker push $JFROG_SERVICE/$JFROG_REPO_PATH/unity-grantmanager-dbmigrator
-        docker tag unity-grantmanager-web $JFROG_SERVICE/$JFROG_REPO_PATH/unity-grantmanager-web
-        # docker push $JFROG_SERVICE/$JFROG_REPO_PATH/unity-grantmanager-web
+        if [[ "${{env.TARGET_ENV}}" == "main" ]]; then
+          TAG_SUFFIX=":stable"
+        else
+          TAG_SUFFIX=""
+        fi
+        docker tag grants-applicant-portal-backend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend$TAG_SUFFIX
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend$TAG_SUFFIX
+        docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend$TAG_SUFFIX
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend$TAG_SUFFIX
+        docker tag ${{env.TARGET_ENV}}-applicantportal-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/${{env.TARGET_ENV}}-applicantportal-dbmigrator$TAG_SUFFIX
+        docker push $JFROG_SERVICE/$JFROG_REPO_PATH/${{env.TARGET_ENV}}-applicantportal-dbmigrator$TAG_SUFFIX
     - name: Disconnect docker from JFrog Artifactory
       run: |
         docker logout
@@ -142,10 +156,42 @@ jobs:
         docker login -u unused -p $(oc whoami -t) $OC_REGISTRY
     - name: Push application images to OpenShift container registry
       run: |
-        docker tag unity-grantmanager-dbmigrator $OC_REGISTRY/$OC_TARGET_PROJECT/unity-grantmanager-dbmigrator
-        # docker push $OC_REGISTRY/$OC_TARGET_PROJECT/unity-grantmanager-dbmigrator
-        docker tag unity-grantmanager-web $OC_REGISTRY/$OC_TARGET_PROJECT/unity-grantmanager-web
-        # docker push $OC_REGISTRY/$OC_TARGET_PROJECT/unity-grantmanager-web
+        if [[ "${{env.TARGET_ENV}}" == "main" ]]; then
+          TAG_SUFFIX=":stable"
+          ENV_PREFIX="uat"
+        else
+          TAG_SUFFIX=":latest"
+          ENV_PREFIX="${{env.TARGET_ENV}}"
+        fi
+        docker tag grants-applicant-portal-backend $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-backend$TAG_SUFFIX
+        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-backend$TAG_SUFFIX
+        docker tag grants-applicant-portal-frontend $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend$TAG_SUFFIX
+        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend$TAG_SUFFIX
+        echo "Tagging and pushing database migrator image..."
+        docker tag ${{env.TARGET_ENV}}-applicantportal-dbmigrator $OC_REGISTRY/$OC_TARGET_PROJECT/${{env.TARGET_ENV}}-applicantportal-dbmigrator$TAG_SUFFIX
+        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/${{env.TARGET_ENV}}-applicantportal-dbmigrator$TAG_SUFFIX
     - name: Disconnect docker from OpenShift container registry
       run: |
         docker logout
+    - name: Clean and Run dbmigrator job from project template and params file
+      run: |
+        if [[ "${{env.TARGET_ENV}}" == "main" ]]; then
+          ENV_PREFIX="uat"
+          TAG_SUFFIX="stable"
+        else
+          ENV_PREFIX="${{env.TARGET_ENV}}"
+          TAG_SUFFIX="latest"
+        fi
+        echo "Running migration job for $ENV_PREFIX environment..."
+        oc delete jobs ${{env.TARGET_ENV}}-applicantportal-dbmigrator -n $OC_TARGET_PROJECT --ignore-not-found=true
+        oc process unity-applicantportal-dbmigrator-job -n $OC_TARGET_PROJECT -p APPLICATION_GROUP=$ENV_PREFIX-unity-applicant-portal -p DATABASE_SERVICE_NAME=$ENV_PREFIX-unity-applicant-portal -p APPLICATION_NAME=${{env.TARGET_ENV}}-applicantportal-dbmigrator -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT -p IMAGESTREAM_NAME=${{env.TARGET_ENV}}-applicantportal-dbmigrator -p IMAGESTREAM_TAG=$TAG_SUFFIX | oc create -f -
+        oc wait jobs/${{env.TARGET_ENV}}-applicantportal-dbmigrator --for condition=complete --timeout=120s -n $OC_TARGET_PROJECT
+    - name: Trigger OpenShift deployment restart
+      run: |
+        if [[ "${{env.TARGET_ENV}}" == "main" ]]; then
+          ENV_PREFIX="uat"
+        else
+          ENV_PREFIX="${{env.TARGET_ENV}}"
+        fi
+        oc rollout restart statefulset $ENV_PREFIX-grants-web
+        oc rollout restart statefulset $ENV_PREFIX-grants-api

@@ -3,10 +3,12 @@
     [ngClass]="buttonClass"
     type="button"
     [id]="dropdownId"
+    [attr.aria-label]="ariaLabel"
     data-bs-toggle="dropdown"
     aria-expanded="false"
   >
-    <i [ngClass]="iconClass"></i>
+    <img *ngIf="iconSrc" [src]="iconSrc" alt="" class="profile-icon" aria-hidden="true" />
+    <i *ngIf="!iconSrc" [ngClass]="iconClass" aria-hidden="true"></i>
   </button>
   <ul
     class="dropdown-menu"

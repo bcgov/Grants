@@ -24,6 +24,7 @@ public class Update(IMediator _mediator)
       s.Responses[200] = "Organization updated successfully";
       s.Responses[400] = "Bad request - validation errors";
       s.Responses[401] = "Unauthorized - authentication required";
+      s.Responses[403] = "Forbidden - resource ownership validation failed";
       s.Responses[404] = "Organization, plugin, or provider not found";
       s.Responses[422] = "Unprocessable entity - invalid data";
       s.ExampleRequest = new UpdateOrganizationRequest 
@@ -49,8 +50,9 @@ public class Update(IMediator _mediator)
     UpdateOrganizationRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new EditOrganizationCommand(
       request.OrganizationId,
@@ -64,8 +66,9 @@ public class Update(IMediator _mediator)
       request.OrganizationSize,
       profileId,
       request.PluginId,
-      request.Provider);
-
+      request.Provider,
+      profile.Subject);
+    
     var result = await _mediator.Send(command, ct);
 
     if (result.IsSuccess)
@@ -75,6 +78,12 @@ public class Update(IMediator _mediator)
         OrganizationId = request.OrganizationId,
         Message = "Organization updated successfully"
       };
+      return;
+    }
+
+    if (result.Status == ResultStatus.Forbidden)
+    {
+      await SendForbiddenAsync(ct);
       return;
     }
 

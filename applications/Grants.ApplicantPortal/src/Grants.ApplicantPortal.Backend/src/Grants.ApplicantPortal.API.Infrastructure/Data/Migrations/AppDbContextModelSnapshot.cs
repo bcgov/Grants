@@ -144,6 +144,83 @@ namespace Grants.ApplicantPortal.API.Infrastructure.Data.Migrations
                     b.ToTable("SecurityLogs");
                 });
 
+            modelBuilder.Entity("Grants.ApplicantPortal.API.Core.Plugins.PluginEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsAcknowledged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("OriginalMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PluginId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TechnicalDetails")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("UserMessage")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
+
+                    b.HasIndex("ProfileId", "PluginId", "Provider", "IsAcknowledged")
+                        .HasDatabaseName("IX_PluginEvents_Profile_Active");
+
+                    b.ToTable("PluginEvents", "public");
+                });
+
             modelBuilder.Entity("Grants.ApplicantPortal.API.Infrastructure.Messaging.Inbox.InboxMessage", b =>
                 {
                     b.Property<long>("Id")

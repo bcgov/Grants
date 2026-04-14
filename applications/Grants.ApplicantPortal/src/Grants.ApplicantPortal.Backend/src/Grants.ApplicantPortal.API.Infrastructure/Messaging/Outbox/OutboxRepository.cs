@@ -158,7 +158,7 @@ public class OutboxRepository : IOutboxRepository
         try
         {
             var deletedCount = await _context.OutboxMessages
-                .Where(m => (m.Status == OutboxMessageStatus.Published || m.Status == OutboxMessageStatus.Failed) &&
+                .Where(m => (m.Status == OutboxMessageStatus.Published || m.Status == OutboxMessageStatus.Failed || m.Status == OutboxMessageStatus.TimedOut || m.Status == OutboxMessageStatus.Acknowledged) &&
                            m.ProcessedAt < olderThan)
                 .ExecuteDeleteAsync(cancellationToken);
 
@@ -186,9 +186,11 @@ public class OutboxRepository : IOutboxRepository
                     ProcessingCount = g.Count(m => m.Status == OutboxMessageStatus.Processing),
                     PublishedCount = g.Count(m => m.Status == OutboxMessageStatus.Published),
                     FailedCount = g.Count(m => m.Status == OutboxMessageStatus.Failed),
+                    TimedOutCount = g.Count(m => m.Status == OutboxMessageStatus.TimedOut),
+                    AcknowledgedCount = g.Count(m => m.Status == OutboxMessageStatus.Acknowledged),
                     OldestPendingMessage = g.Where(m => m.Status == OutboxMessageStatus.Pending)
                                            .Min(m => (DateTime?)m.CreatedAt),
-                    LatestProcessedMessage = g.Where(m => m.Status == OutboxMessageStatus.Published)
+                    LatestProcessedMessage = g.Where(m => m.Status == OutboxMessageStatus.Published || m.Status == OutboxMessageStatus.Acknowledged)
                                             .Max(m => (DateTime?)m.ProcessedAt)
                 })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -202,12 +204,50 @@ public class OutboxRepository : IOutboxRepository
         }
     }
 
+    public async Task<List<OutboxMessage>> GetPublishedMessagesOlderThanAsync(DateTime cutoff, int batchSize, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var messages = await _context.OutboxMessages
+                .Where(m => m.Status == OutboxMessageStatus.Published && m.ProcessedAt < cutoff)
+                .OrderBy(m => m.ProcessedAt)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken);
+
+            _logger.LogDebug("Retrieved {Count} published outbox messages older than {Cutoff}", messages.Count, cutoff);
+
+            return messages;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get published outbox messages older than {Cutoff}", cutoff);
+            return new List<OutboxMessage>();
+        }
+    }
+
+    public async Task<OutboxMessageStatus?> GetCurrentStatusAsync(long id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _context.OutboxMessages
+                .AsNoTracking()
+                .Where(m => m.Id == id)
+                .Select(m => (OutboxMessageStatus?)m.Status)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get current status for outbox message {Id}", id);
+            return null;
+        }
+    }
+
     public async Task<int> ReleaseExpiredLocksAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var currentTime = DateTime.UtcNow;
-            
+
             var expiredMessages = await _context.OutboxMessages
                 .Where(m => m.Status == OutboxMessageStatus.Processing && m.LockExpiry < currentTime)
                 .ToListAsync(cancellationToken);

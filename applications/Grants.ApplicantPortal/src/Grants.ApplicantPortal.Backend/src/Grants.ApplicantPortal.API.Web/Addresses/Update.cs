@@ -24,6 +24,7 @@ public class Update(IMediator _mediator)
       s.Responses[200] = "Address updated successfully";
       s.Responses[400] = "Bad request - validation errors";
       s.Responses[401] = "Unauthorized - authentication required";
+      s.Responses[403] = "Forbidden - resource ownership validation failed";
       s.Responses[404] = "Address, plugin, or provider not found";
       s.Responses[422] = "Unprocessable entity - invalid data";
       s.ExampleRequest = new UpdateAddressRequest 
@@ -50,8 +51,9 @@ public class Update(IMediator _mediator)
     UpdateAddressRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
+    // Get the current user's profile from the HTTP context
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
 
     var command = new EditAddressCommand(
       request.AddressId,
@@ -66,7 +68,9 @@ public class Update(IMediator _mediator)
       request.Country,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,
+      request.ApplicantId,
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 
@@ -74,9 +78,16 @@ public class Update(IMediator _mediator)
     {
       Response = new UpdateAddressResponse
       {
-        AddressId = request.AddressId,
-        Message = "Address updated successfully"
+        AddressId = result.Value.AddressId,
+        Message = "Address updated successfully",
+        PrimaryAddressId = result.Value.PrimaryAddressId
       };
+      return;
+    }
+
+    if (result.Status == ResultStatus.Forbidden)
+    {
+      await SendForbiddenAsync(ct);
       return;
     }
 

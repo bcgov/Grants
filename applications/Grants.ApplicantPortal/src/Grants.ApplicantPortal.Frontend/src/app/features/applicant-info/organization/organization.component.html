@@ -1,4 +1,51 @@
-<div class="organization-container position-relative">
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+      <h3 class="mb-0 ap-pad-10">Organization Information</h3>
+    </div>
+    <!-- Action Buttons - only show for single organization -->
+    @if (showSingleOrgForm) {
+    <div class="d-flex">
+      <button
+        id="org-edit-btn"
+        *ngIf="!isEditMode"
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="onEdit()"
+      >
+        Edit
+      </button>
+      <div *ngIf="isEditMode" class="btn-group">
+        <button
+          id="org-save-btn"
+          type="button"
+          class="btn btn-primary btn-sm"
+          [disabled]="isSaving"
+          (click)="onSave()"
+        >
+          @if (isSaving) {
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+              <span class="sr-only">Saving...</span>
+            </div>
+          }
+          {{ isSaving ? 'Saving...' : 'Save' }}
+        </button>
+        <button
+          id="org-cancel-btn"
+          type="button"
+          class="btn btn-secondary btn-sm"
+          [disabled]="isSaving"
+          (click)="onCancel()"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+  <div class="card-body">
+    <div class="organization-container position-relative">
+
   <app-loading-overlay
     [isVisible]="isSaving"
     message="Saving organization information..."
@@ -19,14 +66,33 @@
   </div>
   } @else {
   <div class="container-fluid form-section">
+    <!-- Multiple Organizations Table -->
+    @if (showMultipleOrgsTable) {
+      <div class="row">
+        <div class="col-md-12">
+          <h5>Associated Organizations</h5>
+          <app-datatable
+            idSuffix="organizations"
+            [config]="orgbookDataTableConfig"
+            [data]="multipleOrganizations"
+            [loading]="false">
+          </app-datatable>
+        </div>
+      </div>
+    }
+
+    <!-- Single Organization Form -->
+    @if (showSingleOrgForm) {
+    <form #orgForm="ngForm" novalidate>
     <div class="row">
       <div class="col-md-12">
         <div class="field">
-          <label for="orgSearch">Organization Book Search</label>
+          <label for="org-search">Organization Book Search</label>
           <div class="search-container">
             <div class="input-group">
                 <input
-                  id="orgSearch"
+                  id="org-search"
+                  name="orgSearch"
                   type="text"
                   [(ngModel)]="searchTerm"
                   (input)="onSearchInput($event)"
@@ -82,9 +148,9 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="orgName">Registered Organization Name</label>
+          <label for="org-name">Registered Organization Name</label>
           <input
-            id="orgName"
+            id="org-name"
             type="text"
             [value]="organizationInfo?.orgName"
             disabled
@@ -94,9 +160,9 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="regNumber">Registered Organization Number</label>
+          <label for="reg-number">Registered Organization Number</label>
           <input
-            id="regNumber"
+            id="reg-number"
             type="text"
             [value]="organizationInfo?.orgNumber"
             disabled
@@ -109,9 +175,9 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="orgStatus">Organization Book Status</label>
+          <label for="org-status">Organization Book Status</label>
           <input
-            id="orgStatus"
+            id="org-status"
             [value]="organizationInfo?.orgStatus"
             disabled
             class="form-control"
@@ -120,9 +186,9 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="orgType">Organization Type</label>
+          <label for="org-type">Organization Type</label>
           <input
-            id="orgType"
+            id="org-type"
             type="text"
             [value]="
               organizationInfo?.organizationType
@@ -139,28 +205,46 @@
     <div class="row">
       <div class="col-md-8">
         <div class="field">
-          <label for="nonRegOrgName">Non-Registered Organization Name</label>
+          <label for="non-reg-org-name">Non-Registered Organization Name</label>
           <input
-            id="nonRegOrgName"
+            id="non-reg-org-name"
+            name="nonRegOrgName"
             type="text"
             [ngModel]="organizationInfo?.nonRegOrgName || ''"
             (ngModelChange)="organizationInfo && (organizationInfo.nonRegOrgName = $event)"
             [disabled]="!isEditMode"
             class="form-control"
+            maxlength="200"
+            #nonRegOrgNameCtrl="ngModel"
+            [class.is-invalid]="nonRegOrgNameCtrl.invalid && (nonRegOrgNameCtrl.dirty || formSubmitted)"
           />
+          @if (nonRegOrgNameCtrl.errors?.['maxlength'] && (nonRegOrgNameCtrl.dirty || formSubmitted)) {
+            <div class="validation-error">Non-registered organization name must not exceed 200 characters</div>
+          }
         </div>
       </div>
       <div class="col-md-4">
         <div class="field">
-          <label for="orgSize">Organization Size</label>
+          <label for="org-size">Organization Size</label>
           <input
-            id="orgSize"
-            type="text"
+            id="org-size"
+            name="orgSize"
+            type="number"
             [ngModel]="organizationInfo?.orgSize || ''"
             (ngModelChange)="organizationInfo && (organizationInfo.orgSize = $event)"
             [disabled]="!isEditMode"
             class="form-control"
+            [max]="999999999"
+            [min]="0"
+            #orgSizeCtrl="ngModel"
+            [class.is-invalid]="orgSizeCtrl.invalid && (orgSizeCtrl.dirty || formSubmitted)"
           />
+          @if (orgSizeCtrl.errors?.['max'] && (orgSizeCtrl.dirty || formSubmitted)) {
+            <div class="validation-error">Organization size must be max of 999,999,999</div>
+          }
+          @if (orgSizeCtrl.errors?.['min'] && (orgSizeCtrl.dirty || formSubmitted)) {
+            <div class="validation-error">Organization size must not be negative</div>
+          }
         </div>
       </div>
     </div>
@@ -168,15 +252,16 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="fiscalMonth">Fiscal Year End Month</label>
+          <label for="fiscal-month">Fiscal Year End Month</label>
           <select
             class="form-select"
-            id="fiscalMonth"
+            id="fiscal-month"
+            name="fiscalMonth"
             [(ngModel)]="selectedFiscalMonth"
             (change)="onFiscalMonthChange($event)"
             [disabled]="!isEditMode"
           >
-            <option selected>Select Month</option>
+            <option value="" selected>Select Month</option>
             <option value="Jan">January</option>
             <option value="Feb">February</option>
             <option value="Mar">March</option>
@@ -194,15 +279,16 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="fiscalDay">Fiscal Year End Day</label>
+          <label for="fiscal-day">Fiscal Year End Day</label>
           <select
             class="form-select"
-            id="fiscalDay"
+            id="fiscal-day"
+            name="fiscalDay"
             [(ngModel)]="selectedFiscalDay"
             (change)="onFiscalDayChange($event)"
             [disabled]="!isEditMode"
           >
-            <option selected>Select Day</option>
+            <option value="" selected>Select Day</option>
             @for (day of daysArray; track day) {
             <option [value]="day">
               {{ day }}
@@ -212,6 +298,10 @@
         </div>
       </div>
     </div>
+    </form>
+    } <!-- End conditional sections -->
   </div>
   }
+    </div>
+  </div>
 </div>

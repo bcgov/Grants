@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Router, RouterOutlet } from '@angular/router';
 import { ErrorHandlerService } from './core/services/error-handler.service';
+import { ToastComponent } from './shared/components/toast/toast.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -21,21 +22,16 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('App component initializing...');
-    console.log('Current URL:', window.location.href);
-    
     // Prevent multiple simultaneous auth checks
     if (this.authCheckInProgress) {
-      console.log('Auth check already in progress, skipping');
       return;
     }
     
     // Don't check auth on callback, login, or logout pages
-    const currentPath = window.location.pathname;
+    const currentPath = globalThis.location.pathname;
     const authPaths = ['/auth/callback', '/login', '/logout'];
     
     if (authPaths.some(path => currentPath.includes(path))) {
-      console.log('Skipping auth check for auth-related page:', currentPath);
       return;
     }
 
@@ -47,22 +43,11 @@ export class AppComponent implements OnInit {
       next: (result) => {
         this.authCheckInProgress = false;
         
-        console.log('App startup auth check:', {
-          isAuthenticated: result.isAuthenticated,
-          userData: result.userData ? 'Present' : 'Missing',
-          accessToken: result.accessToken ? 'Present' : 'Missing',
-          currentPath
-        });
-
         if (!result.isAuthenticated) {
-          console.log('User not authenticated on startup, redirecting to login');
           this.router.navigate(['/login']);
-        } else {
-          console.log('User authenticated on startup');
+        } else if (currentPath === '/' || currentPath === '') {
           // If user is on root path, redirect to app
-          if (currentPath === '/' || currentPath === '') {
-            this.router.navigate(['/app']);
-          }
+          this.router.navigate(['/app']);
         }
       },
       error: (error) => {
@@ -72,7 +57,6 @@ export class AppComponent implements OnInit {
         
         // Use enhanced error handler for authentication errors
         if (this.errorHandler.isAuthStateCorrupted(error)) {
-          console.log('Authentication state appears corrupted, using error handler');
           this.errorHandler.handleAuthError(error).subscribe({
             error: () => {
               // Error handler manages the flow, just ensure we end up at login
@@ -94,7 +78,6 @@ export class AppComponent implements OnInit {
               localStorage.removeItem(key);
               sessionStorage.removeItem(key);
             });
-            console.log('Cleared potentially corrupted auth state');
           } catch (clearError) {
             console.warn('Error clearing auth state:', clearError);
           }

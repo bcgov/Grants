@@ -73,3 +73,76 @@
     height: 1.3rem;
   }
 }
+
+/* Multiple Organizations Styles */
+.alert {
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid transparent;
+
+  &.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+    color: #664d03;
+    
+    i {
+      color: #f57c00;
+    }
+  }
+}
+
+/* Orgbook table customization */
+.orgbook-table {
+  &.table {
+    .orgName-column {
+      font-weight: 600;
+    }
+    
+    .orgNumber-column {
+      font-family: monospace;
+    }
+  }
+}
+
+/* Validation */
+.validation-error {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.is-invalid {
+  border-color: #dc3545 !important;
+
+  &:focus {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+  }
+}
+
+/* Form Actions */
+.form-actions {
+  padding: 16px 0;
+  border-top: 1px solid var(--bc-gray-50);
+  text-align: left;
+
+  .btn {
+    min-width: 140px;
+    
+    &:not(:disabled) {
+      &.btn-primary:hover {
+        filter: brightness(0.9);
+      }
+      
+      &.btn-success:hover {
+        filter: brightness(0.9);
+      }
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}

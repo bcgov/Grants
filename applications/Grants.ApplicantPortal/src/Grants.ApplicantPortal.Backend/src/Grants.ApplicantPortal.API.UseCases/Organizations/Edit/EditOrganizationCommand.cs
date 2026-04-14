@@ -15,4 +15,5 @@ public record EditOrganizationCommand(
   uint? OrganizationSize,
   Guid ProfileId,
   string PluginId,
-  string Provider) : ICommand<Result>;
+  string Provider,
+  string? Subject = null) : ICommand<Result>;

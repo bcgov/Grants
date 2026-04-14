@@ -24,6 +24,7 @@ public class Create(IMediator _mediator)
       s.Responses[201] = "Contact created successfully";
       s.Responses[400] = "Bad request - validation errors";
       s.Responses[401] = "Unauthorized - authentication required";
+      s.Responses[403] = "Forbidden - resource ownership validation failed";
       s.Responses[404] = "Plugin or provider not found";
       s.Responses[422] = "Unprocessable entity - invalid data";
       s.ExampleRequest = new CreateContactRequest 
@@ -38,7 +39,7 @@ public class Create(IMediator _mediator)
         Provider = "PROGRAM1"
       };
     });
-    
+
     Tags("Contacts", "Contact Management");
   }
 
@@ -46,12 +47,12 @@ public class Create(IMediator _mediator)
     CreateContactRequest request,
     CancellationToken ct)
   {
-    // Get the current user's profile ID from the HTTP context
-    var profileId = HttpContext.GetRequiredProfileId();
-    
+    var profile = HttpContext.GetRequiredProfile();
+    var profileId = profile.Id;
+
     var command = new CreateContactCommand(
       request.Name!,
-      "ApplicantProfile",
+      "Applicant",
       request.IsPrimary,
       request.Title,
       request.Email,
@@ -62,7 +63,9 @@ public class Create(IMediator _mediator)
       request.Role,
       profileId,
       request.PluginId,
-      request.Provider);
+      request.Provider,
+      request.ApplicantId,
+      profile.Subject);
 
     var result = await _mediator.Send(command, ct);
 
@@ -70,9 +73,16 @@ public class Create(IMediator _mediator)
     {
       Response = new CreateContactResponse
       {
-        ContactId = result.Value,
-        Name = request.Name!
+        ContactId = result.Value.ContactId,
+        Name = request.Name!,
+        PrimaryContactId = result.Value.PrimaryContactId
       };
+      return;
+    }
+
+    if (result.Status == ResultStatus.Forbidden)
+    {
+      await SendForbiddenAsync(ct);
       return;
     }
 
@@ -92,7 +102,6 @@ public class Create(IMediator _mediator)
       return;
     }
 
-    // Handle other error cases
     if (result.Errors.Any())
     {
       foreach (var error in result.Errors)

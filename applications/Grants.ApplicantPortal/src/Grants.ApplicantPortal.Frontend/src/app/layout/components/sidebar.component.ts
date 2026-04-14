@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, Input, HostBinding } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -10,12 +10,21 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent {
+  @Input() collapsed = false;
   @Output() menuItemClicked = new EventEmitter<void>();
+  @Output() collapsedChange = new EventEmitter<boolean>();
+
+  @HostBinding('class.collapsed') get isCollapsed() {
+    return this.collapsed;
+  }
 
   onMenuItemClick(): void {
-    console.log('Menu item clicked');
     if (window.innerWidth < 768) {
       this.menuItemClicked.emit();
     }
+  }
+
+  toggleCollapse(): void {
+    this.collapsedChange.emit(!this.collapsed);
   }
 }
