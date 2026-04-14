@@ -10,7 +10,7 @@
 
     <!-- Login Card -->
     <div class="login-card-container">
-      <div id="login-card" class="login-card">
+      <div id="login-card" data-cy="login-card" class="login-card">
         <div class="login-header">
           <h1>Enterprise Grant</h1>
           <h2>Management System Portal</h2>
@@ -30,6 +30,7 @@
 
         <button
           id="login-btn"
+          data-cy="login-btn"
           type="button"
           class="btn btn-primary login-btn"
           (click)="loginRequest()"

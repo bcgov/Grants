@@ -8,6 +8,7 @@
     <div class="d-flex">
       <button
         id="org-edit-btn"
+        data-cy="org-edit-btn"
         *ngIf="!isEditMode"
         type="button"
         class="btn btn-primary btn-sm"
@@ -18,6 +19,7 @@
       <div *ngIf="isEditMode" class="btn-group">
         <button
           id="org-save-btn"
+          data-cy="org-save-btn"
           type="button"
           class="btn btn-primary btn-sm"
           [disabled]="isSaving"
@@ -32,6 +34,7 @@
         </button>
         <button
           id="org-cancel-btn"
+          data-cy="org-cancel-btn"
           type="button"
           class="btn btn-secondary btn-sm"
           [disabled]="isSaving"
@@ -92,6 +95,7 @@
             <div class="input-group">
                 <input
                   id="org-search"
+                  data-cy="org-search"
                   name="orgSearch"
                   type="text"
                   [(ngModel)]="searchTerm"
@@ -113,7 +117,7 @@
 
             <!-- Search Results Dropdown -->
             @if (showDropdown && searchResults.length > 0) {
-            <div id="org-search-results" class="search-dropdown">
+            <div id="org-search-results" data-cy="org-search-results" class="search-dropdown">
               @for (result of searchResults; track result.id) {
               <div
                 class="search-result-item"
@@ -151,6 +155,7 @@
           <label for="org-name">Registered Organization Name</label>
           <input
             id="org-name"
+            data-cy="org-name"
             type="text"
             [value]="organizationInfo?.orgName"
             disabled
@@ -163,6 +168,7 @@
           <label for="reg-number">Registered Organization Number</label>
           <input
             id="reg-number"
+            data-cy="reg-number"
             type="text"
             [value]="organizationInfo?.orgNumber"
             disabled
@@ -178,6 +184,7 @@
           <label for="org-status">Organization Book Status</label>
           <input
             id="org-status"
+            data-cy="org-status"
             [value]="organizationInfo?.orgStatus"
             disabled
             class="form-control"
@@ -189,6 +196,7 @@
           <label for="org-type">Organization Type</label>
           <input
             id="org-type"
+            data-cy="org-type"
             type="text"
             [value]="
               organizationInfo?.organizationType
@@ -208,6 +216,7 @@
           <label for="non-reg-org-name">Non-Registered Organization Name</label>
           <input
             id="non-reg-org-name"
+            data-cy="non-reg-org-name"
             name="nonRegOrgName"
             type="text"
             [ngModel]="organizationInfo?.nonRegOrgName || ''"
@@ -228,6 +237,7 @@
           <label for="org-size">Organization Size</label>
           <input
             id="org-size"
+            data-cy="org-size"
             name="orgSize"
             type="number"
             [ngModel]="organizationInfo?.orgSize || ''"
@@ -256,6 +266,7 @@
           <select
             class="form-select"
             id="fiscal-month"
+            data-cy="fiscal-month"
             name="fiscalMonth"
             [(ngModel)]="selectedFiscalMonth"
             (change)="onFiscalMonthChange($event)"
@@ -283,6 +294,7 @@
           <select
             class="form-select"
             id="fiscal-day"
+            data-cy="fiscal-day"
             name="fiscalDay"
             [(ngModel)]="selectedFiscalDay"
             (change)="onFiscalDayChange($event)"

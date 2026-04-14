@@ -9,7 +9,7 @@
       }
     </span>
   } @else if (orgNumber || orgName) {
-    <span id="applicant-id" class="app-id">{{ orgNumber }}</span>
-    <span id="applicant-name" class="app-name">{{ orgName }}</span>
+    <span id="applicant-id" data-cy="applicant-id" class="app-id">{{ orgNumber }}</span>
+    <span id="applicant-name" data-cy="applicant-name" class="app-name">{{ orgName }}</span>
   }
 </div>

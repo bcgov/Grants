@@ -58,6 +58,7 @@
             <label for="workspace-select" class="dropdown-label">Workspace</label>
             <select
               id="workspace-select"
+              data-cy="workspace-select"
               class="dropdown-select"
               [(ngModel)]="selectedDropdownWorkspace"
               (ngModelChange)="onDropdownWorkspaceChange($event)"
@@ -72,6 +73,7 @@
           <button
             type="button"
             id="workspace-continue-btn"
+            data-cy="workspace-continue-btn"
             class="btn btn-primary selector-btn"
             [disabled]="!selectedDropdownWorkspace"
             (click)="confirmWorkspaceSelection()"
@@ -96,6 +98,7 @@
               <label for="provider-select" class="dropdown-label">Provider</label>
               <select
                 id="provider-select"
+                data-cy="provider-select"
                 class="dropdown-select"
                 [(ngModel)]="selectedDropdownProvider"
               >
@@ -109,6 +112,7 @@
             <button
               type="button"
               id="provider-continue-btn"
+              data-cy="provider-continue-btn"
               class="btn btn-primary selector-btn"
               [disabled]="!selectedDropdownProvider"
               (click)="confirmProviderSelection()"
@@ -119,6 +123,7 @@
             <button
               type="button"
               id="provider-back-btn"
+              data-cy="provider-back-btn"
               class="btn-back"
               (click)="goBackToWorkspaceSelection()"
             >
@@ -135,6 +140,7 @@
           <button
             type="button"
             id="workspace-back-to-login-btn"
+            data-cy="workspace-back-to-login-btn"
             class="btn-back"
             (click)="backToLogin()"
           >
