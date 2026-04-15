@@ -1,0 +1,12 @@
+{
+    "baseUrl": "https://dev-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "dev",
+    "test1username": "",
+    "test1password": "",
+    "test2username": "",
+    "test2password": "",
+    "bcscUsername": "",
+    "bcscPassword": "",
+    "workspaceName": "Demo",
+    "providerName": "PROGRAM1"
+}

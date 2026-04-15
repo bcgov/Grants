@@ -6,7 +6,8 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-declare namespace Cypress {   
-  interface Chainable {    
-  }
+// Extend this interface when new custom Cypress commands are added to commands.ts.
+declare namespace Cypress {
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
+  interface Chainable {}
 }

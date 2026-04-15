@@ -1,20 +1,48 @@
-import { defineConfig } from 'cypress';
+import { defineConfig } from "cypress";
+import * as fs from "fs";
+import * as path from "path";
+
+const ALLOWED_ENVS = new Set(["dev", "test"]);
+
 // https://docs.cypress.io/guides/references/configuration
+function loadEnvConfig(env: string): Record<string, unknown> {
+  if (!ALLOWED_ENVS.has(env)) {
+    throw new Error(
+      `Invalid ENV "${env}". Allowed values: ${Array.from(ALLOWED_ENVS).join(", ")}`,
+    );
+  }
+
+  const configPath = path.resolve(__dirname, `cypress/config/${env}.json`);
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`Environment config not found: ${configPath}`);
+  }
+  return JSON.parse(fs.readFileSync(configPath, "utf-8"));
+}
+
 export default defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      const env = String(config.env["ENV"] || process.env.CYPRESS_ENV || "dev");
+      const runtimeEnv = { ...config.env };
+      const envConfig = loadEnvConfig(env);
+
+      config.baseUrl = String(
+        runtimeEnv.baseUrl || envConfig.baseUrl || config.baseUrl || "",
+      );
+      // Keep file config as defaults, but let runtime-provided values win.
+      Object.assign(config.env, envConfig, runtimeEnv);
+
+      return config;
     },
-    baseUrl: 'https://developer.gov.bc.ca/',
     defaultCommandTimeout: 20000, // Time, in milliseconds, to wait until most DOM based commands are considered timed out.
-    viewportWidth: 1440,  // Default width in pixels.
-    viewportHeight: 900,  // Default height in pixels.
+    viewportWidth: 1440, // Default width in pixels.
+    viewportHeight: 900, // Default height in pixels.
     chromeWebSecurity: false, // Chromium-based browser's Web Security for same-origin policy and insecure mixed content.
-    testIsolation: false,  // Set true to ensure a clean browser context between test cases.
-    retries:  // The number of times to retry a failing test. 
-      {
-        "runMode": 3, 
-        "openMode": 0
-      }
+    testIsolation: true, // Ensure a clean browser context between test cases.
+    // The number of times to retry a failing test.
+    retries: {
+      runMode: 3,
+      openMode: 0,
+    },
   },
 });
