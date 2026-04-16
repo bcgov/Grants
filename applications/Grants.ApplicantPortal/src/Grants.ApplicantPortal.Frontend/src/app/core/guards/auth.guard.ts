@@ -33,14 +33,18 @@ export const authGuard: CanActivateFn = (route, state) => {
             workspaceService.getAvailableWorkspaces().subscribe(response => {
               // Always redirect to workspace selector for consistent UX
               // It will handle auto-selection with proper loading states
-              router.navigate(['/workspace-selector']);
+              router.navigate(['/workspace-selector'], {
+                queryParams: { returnUrl: state.url }
+              });
             });
             return false; // Block navigation until workspace is handled
           }
           
           // If workspace selection is required, redirect to selector
           if (workspaceService.isWorkspaceSelectionRequired() || !workspaceState.isWorkspaceSelected) {
-            router.navigate(['/workspace-selector']);
+            router.navigate(['/workspace-selector'], {
+              queryParams: { returnUrl: state.url }
+            });
             return false;
           }
           

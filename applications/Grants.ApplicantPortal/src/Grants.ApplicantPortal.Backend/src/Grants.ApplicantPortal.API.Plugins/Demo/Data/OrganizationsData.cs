@@ -16,6 +16,8 @@ public static class OrganizationsData
   private sealed record OrganizationInfo
   {
     public string Id { get; init; } = string.Empty;
+    public string? ApplicantRefId { get; init; }
+    public string? ApplicantName { get; init; }
     public string OrgName { get; init; } = string.Empty;
     public string OrgNumber { get; init; } = string.Empty;
     public string OrgStatus { get; init; } = string.Empty;
@@ -48,6 +50,8 @@ public static class OrganizationsData
         new OrganizationInfo
         {
           Id = "6CEE6704-16C2-4D8B-8575-57D5F25B40D9",
+          ApplicantRefId = "200001",
+          ApplicantName = "Demo Applicant 1",
           OrgName = "Cowichan Exhibition",
           OrgNumber = "S0003748",
           OrgStatus = "Active",
@@ -78,6 +82,8 @@ public static class OrganizationsData
         new OrganizationInfo
         {
           Id = "7DEF7815-27D3-5E9C-9686-68E6F36C51EA",
+          ApplicantRefId = "200002",
+          ApplicantName = "Demo Applicant 2",
           OrgName = "Hub Tech Solutions",
           OrgNumber = "S1113734",
           OrgStatus = "Active",
@@ -237,6 +243,8 @@ public static class OrganizationsData
         .Select(o => new
         {
           o.Id,
+          o.ApplicantRefId,
+          o.ApplicantName,
           o.OrgName,
           o.OrganizationType,
           o.OrgNumber,
@@ -283,6 +291,8 @@ public static class OrganizationsData
         .Select(o => new
         {
           o.Id,
+          o.ApplicantRefId,
+          o.ApplicantName,
           o.OrgName,
           o.OrganizationType,
           o.OrgNumber,
