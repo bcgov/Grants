@@ -3,6 +3,15 @@
     <div class="page-title">
       <h3 id="header-page-title" data-cy="header-page-title" class="m-0">{{ pageTitle }}</h3>
     </div>
+    <app-org-header
+      [orgNumber]="orgNumber"
+      [orgName]="orgName"
+      [applicantRefId]="applicantRefId"
+      [applicantName]="applicantName"
+      [hasMultipleOrgs]="hasMultipleOrgs"
+      [tenantEmail]="tenantEmail"
+      displayMode="applicant"
+    ></app-org-header>
   </div>
   <div class="header-right">
     <!-- Workspace Selector -->

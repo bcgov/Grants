@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
 import { NotificationsDropdownComponent } from '../../shared/components/notifications-dropdown/notifications-dropdown.component';
+import { OrgHeaderComponent } from '../../shared/components/org-header/org-header.component';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
@@ -13,7 +14,7 @@ import { Subject } from 'rxjs';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, UserDropdownComponent, NotificationsDropdownComponent],
+  imports: [CommonModule, UserDropdownComponent, NotificationsDropdownComponent, OrgHeaderComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
 })
@@ -27,6 +28,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   currentProviders: Provider[] = [];
   isChangingWorkspace = false;
   isLoadingProviders = false;
+
+  // Org header properties
+  orgNumber: string = '';
+  orgName: string = '';
+  applicantRefId: string = '';
+  applicantId: string = '';
+  applicantName: string = '';
+  hasMultipleOrgs: boolean = false;
+  tenantEmail: string | null = null;
+
   private readonly destroy$ = new Subject<void>();
   private readonly fetchProviders$ = new Subject<string>();
 
@@ -97,6 +108,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.selectedProvider = state.selectedProvider;
         this.selectedProviderName = state.selectedProviderName;
         this.availableWorkspaces = state.availableWorkspaces;
+
+        // Update org header properties
+        this.orgNumber = state.orgNumber;
+        this.orgName = state.orgName;
+        this.applicantId = state.applicantId ?? '';
+        this.applicantRefId = state.applicantRefId ?? '';
+        this.applicantName = state.applicantName;
+        this.hasMultipleOrgs = state.hasMultipleOrgs;
+        this.tenantEmail = state.tenantEmail;
 
         // Fetch providers from API when workspace changes
         if (workspaceChanged && state.selectedWorkspace) {

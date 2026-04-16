@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, switchMap, takeUntil, timer, retry, catchError, EMPTY } from 'rxjs';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -31,17 +31,26 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   showSelectedWorkspace = false;
   showProviderSelection = false;
   showNoApplicationsMessage = false;
+  private returnUrl: string = '/app/applicant-info';
   private destroy$ = new Subject<void>();
 
   constructor(
     private readonly workspaceService: WorkspaceService,
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {}
 
   private hasFetchedWorkspaces = false;
 
   ngOnInit(): void {
+    // Read return URL from query params
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['returnUrl']) {
+        this.returnUrl = this.sanitizeReturnUrl(params['returnUrl']);
+      }
+    });
+
     // Subscribe to workspace state changes
     this.workspaceService.currentWorkspaceState$
       .pipe(takeUntil(this.destroy$))
@@ -112,7 +121,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   private handleWorkspaceState(state: WorkspaceState): void {
     // If workspace and provider already selected, navigate away
     if (state.isWorkspaceSelected && state.isProviderSelected && state.selectedWorkspace) {
-      this.router.navigate(['/applicant-info']);
+      this.router.navigateByUrl(this.returnUrl);
       return;
     }
 
@@ -241,15 +250,15 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   selectWorkspace(workspace: Plugin): void {
     this.workspaceService.selectWorkspace(workspace);
     
-    // Navigate to the main application
-    this.router.navigate(['/applicant-info']);
+    // Navigate to the return URL or default
+    this.router.navigateByUrl(this.returnUrl);
   }
 
   selectWorkspaceWithProvider(workspace: Plugin, provider: string): void {
     this.workspaceService.selectWorkspace(workspace, provider);
     
-    // Navigate to the main application
-    this.router.navigate(['/applicant-info']);
+    // Navigate to the return URL or default
+    this.router.navigateByUrl(this.returnUrl);
   }
 
   onDropdownWorkspaceChange(workspace: Plugin): void {
@@ -268,7 +277,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
 
   selectWorkspaceWithProviderDetails(workspace: Plugin, provider: Provider): void {
     this.workspaceService.selectWorkspaceWithProviderDetails(workspace, provider);
-    this.router.navigate(['/applicant-info']);
+    this.router.navigateByUrl(this.returnUrl);
   }
 
   goBackToWorkspaceSelection(): void {
@@ -281,5 +290,14 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
 
   backToLogin(): void {
     this.authService.logout();
+  }
+
+  private sanitizeReturnUrl(url: string): string {
+    const DEFAULT_URL = '/app/applicant-info';
+    const trimmed = url?.trim();
+    if (!trimmed || !trimmed.startsWith('/app/')) {
+      return DEFAULT_URL;
+    }
+    return trimmed;
   }
 }

@@ -14,6 +14,8 @@ export class WorkspaceService {
   private readonly defaultOrgState = {
     hasMultipleOrgs: false,
     applicantId: null,
+    applicantRefId: null,
+    applicantName: '',
     orgNumber: '',
     orgName: '',
     tenantEmail: null
@@ -90,6 +92,8 @@ export class WorkspaceService {
           ...currentState,
           hasMultipleOrgs: true,
           applicantId: null,
+          applicantRefId: null,
+          applicantName: '',
           orgNumber: '',
           orgName: ''
         });
@@ -99,6 +103,8 @@ export class WorkspaceService {
           ...currentState,
           hasMultipleOrgs: false,
           applicantId: org.id ?? null,
+          applicantRefId: org.applicantRefId ?? null,
+          applicantName: org.applicantName ?? '',
           orgNumber: org.orgNumber ?? org.businessNumber ?? '',
           orgName: org.orgName ?? org.legalName ?? ''
         });
