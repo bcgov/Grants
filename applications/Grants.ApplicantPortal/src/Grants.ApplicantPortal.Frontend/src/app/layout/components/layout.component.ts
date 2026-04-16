@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
@@ -7,6 +7,7 @@ import { ApplicantService } from '../../core/services/applicant.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
+import { NotificationsDropdownComponent } from '../../shared/components/notifications-dropdown/notifications-dropdown.component';
 
 @Component({
   selector: 'app-layout',
@@ -17,16 +18,19 @@ import { UserDropdownComponent } from '../../shared/components/user-dropdown/use
     HeaderComponent,
     SidebarComponent,
     UserDropdownComponent,
+    NotificationsDropdownComponent,
   ],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss'],
 })
-export class LayoutComponent implements OnInit {
+export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('mobileHeaderRef') mobileHeaderRef!: ElementRef<HTMLElement>;
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
   sidebarCollapsed = false;
 
   private readonly lgBreakpoint = 992;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(
     private readonly applicantService: ApplicantService,
@@ -40,6 +44,23 @@ export class LayoutComponent implements OnInit {
       .subscribe((data: ApplicantInfo) => {
         this.applicantInfo = data;
       });
+  }
+
+  ngAfterViewInit(): void {
+    if (this.mobileHeaderRef?.nativeElement) {
+      this.updateMobileHeaderHeight();
+      this.resizeObserver = new ResizeObserver(() => this.updateMobileHeaderHeight());
+      this.resizeObserver.observe(this.mobileHeaderRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
+  private updateMobileHeaderHeight(): void {
+    const height = this.mobileHeaderRef?.nativeElement?.offsetHeight ?? 70;
+    document.documentElement.style.setProperty('--mobile-header-height', `${height}px`);
   }
 
   @HostListener('window:resize')
