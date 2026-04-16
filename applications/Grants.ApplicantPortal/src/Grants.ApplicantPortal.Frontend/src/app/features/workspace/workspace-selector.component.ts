@@ -295,7 +295,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   private sanitizeReturnUrl(url: string): string {
     const DEFAULT_URL = '/app/applicant-info';
     const trimmed = url?.trim();
-    if (!trimmed || !trimmed.startsWith('/app/')) {
+    if (!trimmed?.startsWith('/app/')) {
       return DEFAULT_URL;
     }
     return trimmed;
