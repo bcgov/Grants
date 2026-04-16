@@ -47,7 +47,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     // Read return URL from query params
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['returnUrl']) {
-        this.returnUrl = params['returnUrl'];
+        this.returnUrl = this.sanitizeReturnUrl(params['returnUrl']);
       }
     });
 
@@ -290,5 +290,14 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
 
   backToLogin(): void {
     this.authService.logout();
+  }
+
+  private sanitizeReturnUrl(url: string): string {
+    const DEFAULT_URL = '/app/applicant-info';
+    const trimmed = url?.trim();
+    if (!trimmed || !trimmed.startsWith('/app/')) {
+      return DEFAULT_URL;
+    }
+    return trimmed;
   }
 }

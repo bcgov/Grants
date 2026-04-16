@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, AfterViewInit, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -20,7 +20,7 @@ import { TableSortService, SortState, TableSortConfig } from '../../services/tab
   styleUrls: ['./datatable.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
+export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   @Input({ required: true }) idSuffix!: string;
   @Input() config!: DatatableConfig;
   @Input() data: any[] = [];
@@ -47,7 +47,14 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
 
-  constructor(private tableSortService: TableSortService) {}
+  private readonly dropdownHiddenHandler = (event: Event) => {
+    this.setWrapperOverflow(event.target as HTMLElement | null, false);
+  };
+
+  constructor(
+    private tableSortService: TableSortService,
+    private elementRef: ElementRef
+  ) {}
 
   ngOnInit(): void {
     // Set default configuration values
@@ -97,14 +104,19 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.elementRef.nativeElement.addEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
+  }
+
   ngOnDestroy(): void {
+    this.elementRef.nativeElement.removeEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
   
   ngOnChanges(): void {
-    // Re-apply filtering and sorting when data changes
-    this.applySearch(this.searchTerm);
+    // Re-apply filtering and sorting when data changes, preserving current page
+    this.applySearch(this.searchTerm, false);
   }
 
   onSearchInput(term: string): void {
@@ -116,7 +128,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     this.applySearch('');
   }
 
-  private applySearch(term: string): void {
+  private applySearch(term: string, resetPage: boolean = true): void {
     const minChars = this.config?.searchMinChars ?? 1;
     if (this.config?.enableSearch && term.length >= minChars) {
       const lowerTerm = term.toLowerCase();
@@ -129,7 +141,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.filteredData = [];
     }
-    this.applySorting();
+    this.applySorting(resetPage);
   }
 
   onRowClick(row: any, index: number, event: Event): void {
@@ -181,7 +193,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Applies sorting to the data and emits the sorted result
    */
-  private applySorting(): void {
+  private applySorting(resetPage: boolean = true): void {
     const sourceData = this.isSearchActive ? this.filteredData : this.data;
     if (!this.sortConfig) {
       this.sortedData = [...sourceData];
@@ -193,8 +205,15 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       );
     }
     
-    // Reset to first page when data/sort changes
-    this.currentPage = 1;
+    if (resetPage) {
+      this.currentPage = 1;
+    } else {
+      // Clamp to last valid page (e.g., after deleting the only record on the last page)
+      const maxPage = this.totalPages || 1;
+      if (this.currentPage > maxPage) {
+        this.currentPage = maxPage;
+      }
+    }
 
     // Emit the sorted data
     this.dataChange.emit(this.sortedData);
@@ -299,7 +318,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     // This method can be used for cleanup if needed
   }
 
-  private setWrapperOverflow(element: HTMLElement, open: boolean): void {
+  private setWrapperOverflow(element: HTMLElement | null | undefined, open: boolean): void {
     const wrapper = element?.closest('.datatable-wrapper') as HTMLElement;
     if (wrapper) {
       wrapper.style.overflow = open ? 'visible' : '';
