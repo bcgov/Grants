@@ -255,6 +255,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     if (dropdownToggle) {
       dropdownToggle.click();
     }
+    this.setWrapperOverflow(dropdownToggle, false);
   }
 
   onDropdownToggle(toggleElement: HTMLElement, event: Event): void {
@@ -262,6 +263,13 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Close all other open dropdowns before opening this one
     this.closeAllDropdownsExcept(toggleElement);
+
+    // Allow the wrapper to grow so the dropdown menu isn't clipped
+    requestAnimationFrame(() => {
+      const menu = toggleElement.nextElementSibling;
+      const isOpen = menu?.classList.contains('show');
+      this.setWrapperOverflow(toggleElement, !!isOpen);
+    });
   }
 
   private closeAllDropdownsExcept(exceptElement: HTMLElement): void {
@@ -289,6 +297,13 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
 
   onDropdownClosed(): void {
     // This method can be used for cleanup if needed
+  }
+
+  private setWrapperOverflow(element: HTMLElement, open: boolean): void {
+    const wrapper = element?.closest('.datatable-wrapper') as HTMLElement;
+    if (wrapper) {
+      wrapper.style.overflow = open ? 'visible' : '';
+    }
   }
 
   getSortIcon(column: string): string {
