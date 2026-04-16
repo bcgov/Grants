@@ -4,7 +4,6 @@ import { Subject } from 'rxjs';
 import { takeUntil, filter } from 'rxjs/operators';
 import { PaymentData } from '../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../shared/components/datatable/datatable.component';
-import { OrgHeaderComponent } from '../../shared/components/org-header/org-header.component';
 import {
   DatatableConfig,
   DatatableSortEvent,
@@ -16,7 +15,7 @@ import { WorkspaceState } from '../../shared/models/workspace.interface';
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [CommonModule, DatatableComponent, OrgHeaderComponent],
+  imports: [CommonModule, DatatableComponent],
   templateUrl: './payments.component.html',
 })
 export class PaymentsComponent implements OnInit, OnDestroy {

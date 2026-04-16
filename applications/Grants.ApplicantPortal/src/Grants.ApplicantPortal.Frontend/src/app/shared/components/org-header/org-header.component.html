@@ -8,8 +8,14 @@
         This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator.
       }
     </span>
-  } @else if (orgNumber || orgName) {
-    <span id="applicant-id" data-cy="applicant-id" class="app-id">{{ orgNumber }}</span>
-    <span id="applicant-name" data-cy="applicant-name" class="app-name">{{ orgName }}</span>
+  } @else if (displayId || displayName) {
+    <div class="app-field" *ngIf="displayId">
+      <span class="app-label">{{ displayMode === 'applicant' ? 'ID' : 'Org #' }}</span>
+      <span id="applicant-id" data-cy="applicant-id" class="app-id">{{ displayId }}</span>
+    </div>
+    <div class="app-field" *ngIf="displayName">
+      <span class="app-label">{{ displayMode === 'applicant' ? 'Name' : 'Organization' }}</span>
+      <span id="applicant-name" data-cy="applicant-name" class="app-name">{{ displayName }}</span>
+    </div>
   }
 </div>

@@ -5,7 +5,6 @@ import { takeUntil, filter } from 'rxjs/operators';
 
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { WorkspaceState } from '../../shared/models/workspace.interface';
-import { OrgHeaderComponent } from '../../shared/components/org-header/org-header.component';
 import { OrganizationInfoComponent } from './organization/organization.component';
 import { SubmissionsComponent } from './submissions/submissions.component';
 import { ContactsComponent } from './contacts/contacts.component';
@@ -16,7 +15,6 @@ import { AddressesComponent } from './addresses/addresses.component';
   standalone: true,
   imports: [
     CommonModule,
-    OrgHeaderComponent,
     OrganizationInfoComponent,
     SubmissionsComponent,
     ContactsComponent,
@@ -36,6 +34,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
   hasMultipleOrgs: boolean = false;
   isSingleOrg: boolean = false;
   applicantId: string | null = null;
+  applicantRefId: string | null = null;
   tenantEmail: string | null = null;
 
   // Cleanup subject
@@ -65,6 +64,7 @@ export class ApplicantInfoComponent implements OnInit, OnDestroy {
           this.hasMultipleOrgs = state.hasMultipleOrgs;
           this.isSingleOrg = !state.hasMultipleOrgs && !!state.applicantId;
           this.applicantId = state.applicantId;
+          this.applicantRefId = state.applicantRefId;
           this.orgNumber = state.orgNumber;
           this.orgName = state.orgName;
           this.tenantEmail = state.tenantEmail;

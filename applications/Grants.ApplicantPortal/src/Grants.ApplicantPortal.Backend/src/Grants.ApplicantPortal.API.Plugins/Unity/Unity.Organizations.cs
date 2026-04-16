@@ -101,6 +101,8 @@ public partial class UnityPlugin
               var updated = new
               {
                 id = editId,
+                applicantRefId = existing.TryGetProperty("applicantRefId", out var ari) ? ari.GetString() : null,
+                applicantName = existing.TryGetProperty("applicantName", out var an) ? an.GetString() : null,
                 orgName = editRequest.Name,
                 organizationType = editRequest.OrganizationType,
                 orgNumber = editRequest.OrganizationNumber,
