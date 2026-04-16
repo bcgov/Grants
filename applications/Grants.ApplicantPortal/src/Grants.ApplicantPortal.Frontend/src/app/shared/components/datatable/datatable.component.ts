@@ -52,8 +52,8 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
   };
 
   constructor(
-    private tableSortService: TableSortService,
-    private elementRef: ElementRef
+    private readonly tableSortService: TableSortService,
+    private readonly elementRef: ElementRef
   ) {}
 
   ngOnInit(): void {
