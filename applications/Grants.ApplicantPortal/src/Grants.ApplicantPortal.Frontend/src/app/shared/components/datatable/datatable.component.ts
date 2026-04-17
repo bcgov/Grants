@@ -44,6 +44,12 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   // Pagination
   currentPage = 1;
+
+  // Mobile responsive
+  isMobile = false;
+  mobileSortColumn = '';
+  private mobileQuery!: MediaQueryList;
+  private readonly mobileQueryHandler = (e: MediaQueryListEvent) => this.isMobile = e.matches;
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
 
@@ -89,8 +95,21 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
       }
     }
     
+    // Setup mobile detection
+    if (typeof window !== 'undefined') {
+      this.mobileQuery = window.matchMedia('(max-width: 768px)');
+      this.isMobile = this.mobileQuery.matches;
+      this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
+    }
+
     // Initial sort of data
     this.applySorting();
+
+    // Initialize mobile sort column from current sort state
+    if (this.currentSortState) {
+      this.mobileSortColumn = this.currentSortState.direction === 'none' ? '' 
+        : `${this.currentSortState.column}:${this.currentSortState.direction}`;
+    }
 
     // Setup search debounce
     if (this.config.enableSearch) {
@@ -110,6 +129,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   ngOnDestroy(): void {
     this.elementRef.nativeElement.removeEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
+    this.mobileQuery?.removeEventListener('change', this.mobileQueryHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -404,5 +424,34 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
       return false;
     }
     return !row[this.config.disabledActionsField];
+  }
+
+  get sortableColumns(): DatatableColumn[] {
+    return this.config.columns.filter(c => c.sortable);
+  }
+
+  onMobileSortChange(value: string): void {
+    this.mobileSortColumn = value;
+    if (!value) {
+      if (this.sortConfig) {
+        this.currentSortState = { column: '', direction: 'none' };
+        this.tableSortService.setSortState(this.sortConfig.tableId, this.currentSortState);
+        this.applySorting();
+      }
+      return;
+    }
+    const [column, direction] = value.split(':');
+    if (!this.sortConfig) return;
+    this.currentSortState = { column, direction: direction as 'asc' | 'desc' };
+    this.tableSortService.setSortState(this.sortConfig.tableId, this.currentSortState);
+    this.applySorting();
+    this.sort.emit({ column, direction: direction as 'asc' | 'desc' });
+  }
+
+  onMobileCardClick(row: any, index: number, event: Event): void {
+    if (!this.config.rowClickable) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('.card-actions')) return;
+    this.rowClick.emit({ row, index });
   }
 }

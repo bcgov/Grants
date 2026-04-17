@@ -1,14 +1,5 @@
 <div class="app-info">
-  @if (hasMultipleOrgs) {
-    <span class="alert-block alert-warning">
-      <img src="images/icons/warning.svg" class="alert-icon" alt="" aria-hidden="true">
-      @if (tenantEmail) {
-        This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator at {{ tenantEmail }}.
-      } @else {
-        This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator.
-      }
-    </span>
-  } @else if (displayId || displayName) {
+  @if (displayId || displayName) {
     <div class="app-field" *ngIf="displayId">
       <span class="app-label">{{ displayMode === 'applicant' ? 'ID' : 'Org #' }}</span>
       <span id="applicant-id" data-cy="applicant-id" class="app-id">{{ displayId }}</span>
