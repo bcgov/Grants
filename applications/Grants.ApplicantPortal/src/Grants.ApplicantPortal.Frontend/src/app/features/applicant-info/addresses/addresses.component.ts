@@ -150,20 +150,13 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.complete();
   }
 
-  allReadOnly = false;
-  readOnlyTooltip = '';
-
   // Helper method to get safe data for datatable
   getAddressesForTable(): AddressDisplay[] {
     return this.addresses && Array.isArray(this.addresses) ? this.addresses : [];
   }
 
   private updateActionsVisibility(): void {
-    const hasAddresses = this.addresses.length > 0;
-    const allDisabled = hasAddresses && this.addresses.every(a => !a.isEditable);
-    this.allReadOnly = allDisabled;
-    if (allDisabled) {
-      this.readOnlyTooltip = this.addresses[0]?.disabledTooltip || this.addressesTableConfig.disabledActionsTooltip || '';
+    if (this.hasMultipleOrgs) {
       this.addressesTableConfig = { ...this.addressesTableConfig, actionsType: 'none' };
     } else {
       this.addressesTableConfig = { ...this.addressesTableConfig, actionsType: 'dropdown' };
