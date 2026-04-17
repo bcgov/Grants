@@ -58,6 +58,14 @@
     box-shadow: 0 2px 4px rgba(160, 160, 160, 0.08);
   }
 
+  .global-warning-banner {
+    padding: 0.8rem 1rem 0 1rem;
+
+    .alert-block {
+      width: 100%;
+    }
+  }
+
   .page-content {
     flex: 1;
     padding: 0;
@@ -240,6 +248,10 @@
 
     .page-content {
       padding: 1rem;
+    }
+
+    .global-warning-banner {
+      padding: 0.8rem 1rem 0 1rem;
     }
   }
 

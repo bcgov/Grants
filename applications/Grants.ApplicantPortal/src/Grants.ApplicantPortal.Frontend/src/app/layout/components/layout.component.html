@@ -78,6 +78,19 @@
 
         <!-- Page Content Section -->
         <main class="page-content">
+          <!-- Global Warning Banner -->
+          @if (hasMultipleOrgs) {
+            <div class="global-warning-banner">
+              <span class="alert-block alert-warning">
+                <img src="images/icons/warning.svg" class="alert-icon" alt="" aria-hidden="true">
+                @if (tenantEmail) {
+                  This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator at {{ tenantEmail }}.
+                } @else {
+                  This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator.
+                }
+              </span>
+            </div>
+          }
           <router-outlet></router-outlet>
         </main>
       </div>

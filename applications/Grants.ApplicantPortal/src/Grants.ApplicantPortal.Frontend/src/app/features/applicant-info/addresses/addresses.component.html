@@ -299,7 +299,7 @@
 <div class="modal-backdrop fade" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" *ngIf="showAddAddressModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div id="address-delete-modal" data-cy="address-delete-modal" class="modal fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
+<div id="address-delete-modal" data-cy="address-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">

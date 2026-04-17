@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
 import { ApplicantService } from '../../core/services/applicant.service';
 import { AuthService } from '../../core/services/auth.service';
+import { WorkspaceService } from '../../core/services/workspace.service';
 import { ApplicantInfo } from '../../shared/models/applicant.interface';
 import { UserDropdownComponent } from '../../shared/components/user-dropdown/user-dropdown.component';
 import { NotificationsDropdownComponent } from '../../shared/components/notifications-dropdown/notifications-dropdown.component';
@@ -28,13 +30,17 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
   applicantInfo: ApplicantInfo | null = null;
   sidebarOpen = false;
   sidebarCollapsed = false;
+  hasMultipleOrgs = false;
+  tenantEmail: string | null = null;
 
   private readonly lgBreakpoint = 992;
   private resizeObserver: ResizeObserver | null = null;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly applicantService: ApplicantService,
     private readonly authService: AuthService,
+    private readonly workspaceService: WorkspaceService,
     private router: Router
   ) {}
 
@@ -43,6 +49,13 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
       .getApplicantInfo()
       .subscribe((data: ApplicantInfo) => {
         this.applicantInfo = data;
+      });
+
+    this.workspaceService.currentWorkspaceState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        this.hasMultipleOrgs = state.hasMultipleOrgs;
+        this.tenantEmail = state.tenantEmail;
       });
   }
 
@@ -56,6 +69,8 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private updateMobileHeaderHeight(): void {
@@ -65,10 +80,10 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:resize')
   onResize(): void {
-    if (window.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
+    if (globalThis.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
       this.sidebarCollapsed = false;
     }
-    if (window.innerWidth >= this.lgBreakpoint && this.sidebarOpen) {
+    if (globalThis.innerWidth >= this.lgBreakpoint && this.sidebarOpen) {
       this.sidebarOpen = false;
     }
   }
@@ -88,7 +103,7 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Close sidebar when clicking on main content on mobile
   onMainContentClick(): void {
-    if (window.innerWidth < 768) {
+    if (globalThis.innerWidth < 768) {
       this.closeSidebar();
     }
   }

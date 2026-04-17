@@ -45,6 +45,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return this.selectedWorkspace;
   }
 
+  get showOrgInfo(): boolean {
+    return !!(this.applicantRefId || this.applicantName || this.orgNumber || this.orgName);
+  }
+
   constructor(
     private readonly router: Router,
     private readonly authService: AuthService,
