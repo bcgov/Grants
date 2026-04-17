@@ -411,3 +411,80 @@ h3 {
     }
   }
 }
+
+/* ===================================
+   Custom Tooltip (BC Gov style)
+   =================================== */
+.app-tooltip {
+  position: absolute;
+  z-index: 10000;
+  max-width: 260px;
+  padding: 6px 10px;
+  background-color: #2d2d2d;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: normal;
+  word-wrap: break-word;
+
+  .app-tooltip__arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+  }
+
+  &--top .app-tooltip__arrow {
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: #2d2d2d;
+  }
+
+  &--bottom .app-tooltip__arrow {
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: #2d2d2d;
+  }
+
+  &--left .app-tooltip__arrow {
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: #2d2d2d;
+  }
+
+  &--right .app-tooltip__arrow {
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: #2d2d2d;
+  }
+}
+
+.disabled-action-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+button.disabled-action-info {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.multi-org-info-banner {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 0.8125rem;
+  color: var(--bc-primary);
+  background-color: var(--bc-surface-info);
+  border-bottom: 1px solid var(--bc-gray-50);
+}

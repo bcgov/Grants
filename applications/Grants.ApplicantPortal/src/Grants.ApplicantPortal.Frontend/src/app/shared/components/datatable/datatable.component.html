@@ -162,12 +162,14 @@
                     @if (!shouldShowActions(row)) {
                       <!-- Hidden by visibility field -->
                     } @else if (isActionsDisabled(row)) {
-                      <span
-                        class="d-inline-block text-muted"
-                        [title]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
+                      <button
+                        type="button"
+                        class="d-inline-block disabled-action-info"
+                        [appTooltip]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
+                        aria-label="Info"
                       >
-                        <i class="fas fa-ellipsis-v"></i>
-                      </span>
+                        <img src="images/icons/info.svg" alt="" class="disabled-action-icon" />
+                      </button>
                     } @else {
                     <div class="dropdown">
                       <button
@@ -328,7 +330,7 @@
                 }
               } @else {
                 <div class="card-disabled-message">
-                  <i class="fas fa-info-circle me-1"></i>
+                  <img src="images/icons/info.svg" alt="Info" class="disabled-action-icon me-1" />
                   {{ (config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || 'Actions are not available for this record.' }}
                 </div>
               }

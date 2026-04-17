@@ -16,6 +16,7 @@ import {
   DatatableRowClickEvent,
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
+import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
 interface ContactDisplay {
   id: string;
@@ -41,6 +42,7 @@ interface ContactDisplay {
     CommonModule,
     FormsModule,
     DatatableComponent,
+    TooltipDirective,
   ],
   templateUrl: './contacts.component.html',
   styleUrls: ['./contacts.component.scss'],
@@ -151,9 +153,24 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.complete();
   }
 
+  allReadOnly = false;
+  readOnlyTooltip = '';
+
   // Helper method to get safe data for datatable
   getContactsForTable(): ContactDisplay[] {
     return this.contacts && Array.isArray(this.contacts) ? this.contacts : [];
+  }
+
+  private updateActionsVisibility(): void {
+    const hasContacts = this.contacts.length > 0;
+    const allDisabled = hasContacts && this.contacts.every(c => !c.isEditable);
+    this.allReadOnly = allDisabled;
+    if (allDisabled) {
+      this.readOnlyTooltip = this.contacts[0]?.disabledTooltip || this.contactsTableConfig.disabledActionsTooltip || '';
+      this.contactsTableConfig = { ...this.contactsTableConfig, actionsType: 'none' };
+    } else {
+      this.contactsTableConfig = { ...this.contactsTableConfig, actionsType: 'dropdown' };
+    }
   }
 
   private loadApplicantInfo(): void {
@@ -194,6 +211,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
           this.isLoading = false;
           this.contacts = this.processContactsData(result.contactsData || []);
           this.primaryContact = this.contacts.find(contact => contact.isPrimary) || null;
+          this.updateActionsVisibility();
         },
         error: (error) => {
           this.isLoading = false;

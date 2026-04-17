@@ -14,9 +14,24 @@
         >
           Add
         </button>
+      } @else if (hasMultipleOrgs) {
+        <button
+          type="button"
+          class="d-none d-md-inline-block disabled-action-info"
+          [appTooltip]="'Multiple organization records found — please contact support to consolidate before managing addresses'"
+          aria-label="Info: Multiple organization records found"
+        >
+          <img src="images/icons/info.svg" alt="" class="disabled-action-icon" />
+        </button>
       }
     </div>
   </div>
+  @if (hasMultipleOrgs) {
+    <div class="d-block d-md-none multi-org-info-banner">
+      <img src="images/icons/info.svg" alt="Info" class="disabled-action-icon me-1" />
+      Multiple organization records found — please contact support to consolidate before managing addresses
+    </div>
+  }
   <div class="card-body">
     <div class="addresses-container">
       @if (isLoading) {
