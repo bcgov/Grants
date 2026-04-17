@@ -380,7 +380,7 @@ h3 {
 /* Full-screen modals on mobile */
 @media (max-width: 768px) {
   .ap-edit-modal,
-  .modal:has(.delete-modal) {
+  .ap-delete-modal {
     .modal-dialog {
       width: 100vw;
       height: 100dvh;

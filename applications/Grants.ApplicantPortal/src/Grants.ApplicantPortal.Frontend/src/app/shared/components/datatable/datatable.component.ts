@@ -49,7 +49,12 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
   isMobile = false;
   mobileSortColumn = '';
   private mobileQuery!: MediaQueryList;
-  private readonly mobileQueryHandler = (e: MediaQueryListEvent) => this.isMobile = e.matches;
+  private readonly mobileQueryHandler = (e: MediaQueryListEvent) => {
+    this.isMobile = e.matches;
+    if (e.matches) {
+      this.syncMobileSortColumn();
+    }
+  };
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
 
@@ -96,20 +101,21 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     }
     
     // Setup mobile detection
-    if (typeof window !== 'undefined') {
+    if (typeof globalThis.window !== 'undefined') {
       this.mobileQuery = globalThis.matchMedia('(max-width: 768px)');
       this.isMobile = this.mobileQuery.matches;
-      this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
+      if (this.mobileQuery.addEventListener) {
+        this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
+      } else {
+        this.mobileQuery.addListener(this.mobileQueryHandler);
+      }
     }
 
     // Initial sort of data
     this.applySorting();
 
     // Initialize mobile sort column from current sort state
-    if (this.currentSortState) {
-      this.mobileSortColumn = this.currentSortState.direction === 'none' ? '' 
-        : `${this.currentSortState.column}:${this.currentSortState.direction}`;
-    }
+    this.syncMobileSortColumn();
 
     // Setup search debounce
     if (this.config.enableSearch) {
@@ -129,7 +135,11 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   ngOnDestroy(): void {
     this.elementRef.nativeElement.removeEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
-    this.mobileQuery?.removeEventListener('change', this.mobileQueryHandler);
+    if (this.mobileQuery?.removeEventListener) {
+      this.mobileQuery.removeEventListener('change', this.mobileQueryHandler);
+    } else {
+      this.mobileQuery?.removeListener(this.mobileQueryHandler);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -176,6 +186,11 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     this.rowClick.emit({ row, index });
   }
 
+  onRowKeySpace(row: any, index: number, event: Event): void {
+    event.preventDefault();
+    this.onRowClick(row, index, event);
+  }
+
   onActionClick(actionType: string, row: any, index: number, event: Event): void {
     event.stopPropagation();
     this.actionClick.emit({ action: actionType, row, index });
@@ -202,6 +217,9 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
     // Apply sorting to data
     this.applySorting();
+
+    // Keep mobile sort select in sync
+    this.syncMobileSortColumn();
 
     // Emit sort event
     this.sort.emit({ 
@@ -430,6 +448,14 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     return this.config.columns.filter(c => c.sortable);
   }
 
+  private syncMobileSortColumn(): void {
+    if (this.currentSortState && this.currentSortState.direction !== 'none') {
+      this.mobileSortColumn = `${this.currentSortState.column}:${this.currentSortState.direction}`;
+    } else {
+      this.mobileSortColumn = '';
+    }
+  }
+
   onMobileSortChange(value: string): void {
     this.mobileSortColumn = value;
     if (!value) {
@@ -453,5 +479,10 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     const target = event.target as HTMLElement;
     if (target.closest('.card-actions')) return;
     this.rowClick.emit({ row, index });
+  }
+
+  onMobileCardKeySpace(row: any, index: number, event: Event): void {
+    event.preventDefault();
+    this.onMobileCardClick(row, index, event);
   }
 }

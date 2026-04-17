@@ -85,10 +85,11 @@
               [id]="'datatable-body-' + idSuffix + '-' + i"
               [attr.data-cy]="'datatable-row-' + idSuffix + '-' + i"
               [class]="config.tableClass ? config.tableClass + '-row' : 'datatable-row'"
+              [attr.role]="config.rowClickable ? 'button' : null"
               [tabindex]="config.rowClickable ? 0 : -1"
               (click)="onRowClick(row, i, $event)"
               (keydown.enter)="config.rowClickable ? onRowClick(row, i, $event) : null"
-              (keydown.space)="config.rowClickable ? onRowClick(row, i, $event) : null"
+              (keydown.space)="config.rowClickable ? onRowKeySpace(row, i, $event) : null"
             >
               @for (column of config.columns; track column.key) {
                 <td [class]="column.cssClass || column.key + '-column'">
@@ -138,6 +139,7 @@
                       <a
                         [href]="getRowLink(row)"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="btn btn-link p-0 border-0"
                         [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i"
                         (click)="$event.stopPropagation()"
@@ -236,9 +238,11 @@
           class="datatable-card"
           [class.clickable]="config.rowClickable"
           [attr.data-cy]="'datatable-card-' + idSuffix + '-' + i"
+          [attr.role]="config.rowClickable ? 'button' : null"
           [tabindex]="config.rowClickable ? 0 : -1"
           (click)="onMobileCardClick(row, i, $event)"
           (keydown.enter)="config.rowClickable ? onMobileCardClick(row, i, $event) : null"
+          (keydown.space)="config.rowClickable ? onMobileCardKeySpace(row, i, $event) : null"
         >
           <!-- Card Fields -->
           @for (column of config.columns; track column.key) {
@@ -283,49 +287,50 @@
           }
 
           <!-- Card Actions -->
-          @if (config.actionsType && config.actionsType !== 'none') {
+          @if (config.actionsType === 'chevron') {
             <div class="card-actions">
-              @if (config.actionsType === 'chevron') {
-                @if (getRowLink(row)) {
-                  <a
-                    [href]="getRowLink(row)"
-                    target="_blank"
-                    class="btn btn-sm btn-outline-primary card-action-btn"
-                    [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i"
-                    (click)="$event.stopPropagation()"
-                  >
-                    <i class="fas fa-external-link-alt me-1"></i> Open
-                  </a>
-                } @else {
+              @if (getRowLink(row)) {
+                <a
+                  [href]="getRowLink(row)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-sm btn-outline-primary card-action-btn"
+                  [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i"
+                  (click)="$event.stopPropagation()"
+                >
+                  <i class="fas fa-external-link-alt me-1"></i> Open
+                </a>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary card-action-btn"
+                  [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i"
+                  (click)="onActionClick('view', row, i, $event)"
+                >
+                  <i class="fas fa-chevron-right me-1"></i> View
+                </button>
+              }
+            </div>
+          } @else if (config.actionsType === 'dropdown' && config.actionItems && shouldShowActions(row)) {
+            <div class="card-actions">
+              @if (!isActionsDisabled(row)) {
+                @for (action of config.actionItems; track action.action) {
                   <button
                     type="button"
-                    class="btn btn-sm btn-outline-primary card-action-btn"
-                    [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i"
-                    (click)="onActionClick('view', row, i, $event)"
+                    class="btn btn-sm card-action-btn"
+                    [class]="'btn btn-sm card-action-btn ' + (action.cssClass || 'btn-outline-primary')"
+                    [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i + '-' + action.action"
+                    (click)="onActionClick(action.action, row, i, $event)"
                   >
-                    <i class="fas fa-chevron-right me-1"></i> View
+                    <i class="fas {{ action.icon }} me-1"></i>
+                    {{ action.label }}
                   </button>
                 }
-              } @else if (config.actionsType === 'dropdown' && config.actionItems) {
-                @if (shouldShowActions(row) && !isActionsDisabled(row)) {
-                  @for (action of config.actionItems; track action.action) {
-                    <button
-                      type="button"
-                      class="btn btn-sm card-action-btn"
-                      [class]="'btn btn-sm card-action-btn ' + (action.cssClass || 'btn-outline-primary')"
-                      [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i + '-' + action.action"
-                      (click)="onActionClick(action.action, row, i, $event)"
-                    >
-                      <i class="fas {{ action.icon }} me-1"></i>
-                      {{ action.label }}
-                    </button>
-                  }
-                } @else if (shouldShowActions(row) && isActionsDisabled(row)) {
-                  <div class="card-disabled-message">
-                    <i class="fas fa-info-circle me-1"></i>
-                    {{ (config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || 'Actions are not available for this record.' }}
-                  </div>
-                }
+              } @else {
+                <div class="card-disabled-message">
+                  <i class="fas fa-info-circle me-1"></i>
+                  {{ (config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || 'Actions are not available for this record.' }}
+                </div>
               }
             </div>
           }
