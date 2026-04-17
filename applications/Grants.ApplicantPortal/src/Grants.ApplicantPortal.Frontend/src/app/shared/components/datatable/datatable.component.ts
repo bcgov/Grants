@@ -97,7 +97,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     
     // Setup mobile detection
     if (typeof window !== 'undefined') {
-      this.mobileQuery = window.matchMedia('(max-width: 768px)');
+      this.mobileQuery = globalThis.matchMedia('(max-width: 768px)');
       this.isMobile = this.mobileQuery.matches;
       this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
     }

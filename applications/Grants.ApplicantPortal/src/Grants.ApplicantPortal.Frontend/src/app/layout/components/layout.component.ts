@@ -80,10 +80,10 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:resize')
   onResize(): void {
-    if (window.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
+    if (globalThis.innerWidth < this.lgBreakpoint && this.sidebarCollapsed) {
       this.sidebarCollapsed = false;
     }
-    if (window.innerWidth >= this.lgBreakpoint && this.sidebarOpen) {
+    if (globalThis.innerWidth >= this.lgBreakpoint && this.sidebarOpen) {
       this.sidebarOpen = false;
     }
   }
@@ -103,7 +103,7 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Close sidebar when clicking on main content on mobile
   onMainContentClick(): void {
-    if (window.innerWidth < 768) {
+    if (globalThis.innerWidth < 768) {
       this.closeSidebar();
     }
   }
