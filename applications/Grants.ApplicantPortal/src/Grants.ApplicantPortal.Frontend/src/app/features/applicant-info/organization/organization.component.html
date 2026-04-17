@@ -5,18 +5,9 @@
     </div>
     <!-- Action Buttons - only show for single organization -->
     @if (showSingleOrgForm) {
-    <div class="d-flex">
-      <button
-        id="org-edit-btn"
-        data-cy="org-edit-btn"
-        *ngIf="!isEditMode"
-        type="button"
-        class="btn btn-primary btn-sm"
-        (click)="onEdit()"
-      >
-        Edit
-      </button>
-      <div *ngIf="isEditMode" class="btn-group">
+    <div class="d-flex align-items-center">
+      @if (isEditMode) {
+      <div class="btn-group">
         <button
           id="org-save-btn"
           data-cy="org-save-btn"
@@ -43,6 +34,17 @@
           Cancel
         </button>
       </div>
+      } @else {
+      <button
+        id="org-edit-btn"
+        data-cy="org-edit-btn"
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="onEdit()"
+      >
+        Edit
+      </button>
+      }
     </div>
     }
   </div>

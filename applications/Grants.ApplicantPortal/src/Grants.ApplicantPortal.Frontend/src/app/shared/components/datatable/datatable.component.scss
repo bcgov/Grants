@@ -154,6 +154,13 @@
                   i { width: 16px; font-size: var(--bc-font-size-12) !important; }
                 }
               }
+
+              .disabled-action-icon {
+                width: 14px;
+                height: 14px;
+                opacity: 0.7;
+                cursor: pointer;
+              }
             }
           }
         }

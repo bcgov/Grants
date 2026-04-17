@@ -11,11 +11,12 @@ import {
   DatatableSortEvent
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TooltipDirective],
   templateUrl: './datatable.component.html',
   styleUrls: ['./datatable.component.scss'],
   encapsulation: ViewEncapsulation.None
