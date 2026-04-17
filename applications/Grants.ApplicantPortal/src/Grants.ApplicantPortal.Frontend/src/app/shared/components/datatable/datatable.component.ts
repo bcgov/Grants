@@ -101,14 +101,10 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     }
     
     // Setup mobile detection
-    if (typeof globalThis.window !== 'undefined') {
+    if (globalThis.window !== undefined) {
       this.mobileQuery = globalThis.matchMedia('(max-width: 768px)');
       this.isMobile = this.mobileQuery.matches;
-      if (this.mobileQuery.addEventListener) {
-        this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
-      } else {
-        this.mobileQuery.addListener(this.mobileQueryHandler);
-      }
+      this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
     }
 
     // Initial sort of data
@@ -135,11 +131,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   ngOnDestroy(): void {
     this.elementRef.nativeElement.removeEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
-    if (this.mobileQuery?.removeEventListener) {
-      this.mobileQuery.removeEventListener('change', this.mobileQueryHandler);
-    } else {
-      this.mobileQuery?.removeListener(this.mobileQueryHandler);
-    }
+    this.mobileQuery?.removeEventListener('change', this.mobileQueryHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
