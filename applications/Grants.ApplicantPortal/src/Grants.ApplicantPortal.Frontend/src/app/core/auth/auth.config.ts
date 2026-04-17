@@ -4,13 +4,13 @@ import { environment } from '../../../environments/environment';
 export const authConfig: PassedInitialConfig = {
   config: {
     authority: `${environment.keycloak.authority}/realms/${environment.keycloak.realm}`,
-    redirectUrl: window.location.origin + '/auth/callback',
-    postLogoutRedirectUri: window.location.origin + '/login',
+    redirectUrl: globalThis.location.origin + '/auth/callback',
+    postLogoutRedirectUri: globalThis.location.origin + '/login',
     clientId: environment.keycloak.clientId,
     scope: 'openid profile email offline_access',
     responseType: 'code',
     silentRenew: true,
-    silentRenewUrl: window.location.origin + '/auth/callback',
+    silentRenewUrl: globalThis.location.origin + '/auth/callback',
     useRefreshToken: true,
     renewTimeBeforeTokenExpiresInSeconds: 60,
     // Reduce log level to prevent localStorage bloat

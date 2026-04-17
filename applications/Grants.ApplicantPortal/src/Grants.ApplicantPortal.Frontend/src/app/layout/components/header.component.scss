@@ -19,6 +19,11 @@
   font-weight: 600;
   padding-right: 1.25rem;
   border-right: 1px solid var(--bc-gray-50, #ccc);
+
+  &.no-separator {
+    border-right: none;
+    padding-right: 0;
+  }
 }
 
 .header-right {

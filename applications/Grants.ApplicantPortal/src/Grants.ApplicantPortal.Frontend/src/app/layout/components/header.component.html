@@ -1,6 +1,6 @@
 <header class="header">
   <div class="header-left">
-    <div class="page-title">
+    <div class="page-title" [class.no-separator]="!showOrgInfo">
       <h3 id="header-page-title" data-cy="header-page-title" class="m-0">{{ pageTitle }}</h3>
     </div>
     <app-org-header

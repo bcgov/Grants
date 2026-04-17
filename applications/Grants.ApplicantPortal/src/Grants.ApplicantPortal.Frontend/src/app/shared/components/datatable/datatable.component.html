@@ -40,6 +40,8 @@
       </div>
     }
 
+    <!-- Desktop: Table View -->
+    @if (!isMobile) {
     <!-- Table Wrapper -->
     <div class="datatable-wrapper">
       <table 
@@ -83,10 +85,11 @@
               [id]="'datatable-body-' + idSuffix + '-' + i"
               [attr.data-cy]="'datatable-row-' + idSuffix + '-' + i"
               [class]="config.tableClass ? config.tableClass + '-row' : 'datatable-row'"
+              [attr.role]="config.rowClickable ? 'button' : null"
               [tabindex]="config.rowClickable ? 0 : -1"
               (click)="onRowClick(row, i, $event)"
               (keydown.enter)="config.rowClickable ? onRowClick(row, i, $event) : null"
-              (keydown.space)="config.rowClickable ? onRowClick(row, i, $event) : null"
+              (keydown.space)="config.rowClickable ? onRowKeySpace(row, i, $event) : null"
             >
               @for (column of config.columns; track column.key) {
                 <td [class]="column.cssClass || column.key + '-column'">
@@ -136,6 +139,7 @@
                       <a
                         [href]="getRowLink(row)"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="btn btn-link p-0 border-0"
                         [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i"
                         (click)="$event.stopPropagation()"
@@ -158,12 +162,14 @@
                     @if (!shouldShowActions(row)) {
                       <!-- Hidden by visibility field -->
                     } @else if (isActionsDisabled(row)) {
-                      <span
-                        class="d-inline-block text-muted"
-                        [title]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
+                      <button
+                        type="button"
+                        class="d-inline-block disabled-action-info"
+                        [appTooltip]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
+                        aria-label="Info"
                       >
-                        <i class="fas fa-ellipsis-v"></i>
-                      </span>
+                        <img src="images/icons/info.svg" alt="" class="disabled-action-icon" />
+                      </button>
                     } @else {
                     <div class="dropdown">
                       <button
@@ -205,6 +211,135 @@
         </tbody>
       </table>
     </div>
+    } @else {
+    <!-- Mobile: Card View -->
+
+    <!-- Mobile Sort Control -->
+    @if (sortableColumns.length > 0) {
+      <div class="datatable-mobile-sort">
+        <label [for]="'datatable-sort-' + idSuffix" class="mobile-sort-label">Sort by</label>
+        <select
+          [id]="'datatable-sort-' + idSuffix"
+          class="form-select form-select-sm mobile-sort-select"
+          [ngModel]="mobileSortColumn"
+          (ngModelChange)="onMobileSortChange($event)"
+        >
+          <option value="">Default</option>
+          @for (col of sortableColumns; track col.key) {
+            <option [value]="col.key + ':asc'">{{ col.label }} (A–Z)</option>
+            <option [value]="col.key + ':desc'">{{ col.label }} (Z–A)</option>
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Card List -->
+    <div class="datatable-cards" [attr.data-cy]="'datatable-cards-' + idSuffix">
+      @for (row of getDisplayData(); track trackByFn($index, row); let i = $index) {
+        <div
+          class="datatable-card"
+          [class.clickable]="config.rowClickable"
+          [attr.data-cy]="'datatable-card-' + idSuffix + '-' + i"
+          [attr.role]="config.rowClickable ? 'button' : null"
+          [tabindex]="config.rowClickable ? 0 : -1"
+          (click)="onMobileCardClick(row, i, $event)"
+          (keydown.enter)="config.rowClickable ? onMobileCardClick(row, i, $event) : null"
+          (keydown.space)="config.rowClickable ? onMobileCardKeySpace(row, i, $event) : null"
+        >
+          <!-- Card Fields -->
+          @for (column of config.columns; track column.key) {
+            <div class="card-field">
+              <span class="card-field-label">{{ column.label }}</span>
+              <span class="card-field-value">
+                @if (column.type === 'badge' && config.badgeConfig) {
+                  <span [class]="getBadgeClass(row)">
+                    {{ getBadgeDisplayValue(row, column) || '—' }}
+                  </span>
+                } @else if (column.type === 'date') {
+                  @if (getCellValue(row, column) != null) {
+                    {{ getCellValue(row, column) | date:'mediumDate' }}
+                  } @else {
+                    —
+                  }
+                } @else if (column.type === 'currency') {
+                  {{ getCellValue(row, column) | currency }}
+                } @else if (column.type === 'email') {
+                  <span class="email-link">{{ getCellValue(row, column) }}</span>
+                } @else if (column.type === 'phone') {
+                  <span class="phone-number">{{ getCellValue(row, column) }}</span>
+                } @else if (column.type === 'boolean') {
+                  @if (getCellValue(row, column) != null) {
+                    @if (getCellValue(row, column)) {
+                      <i class="fas fa-check text-success" aria-label="Yes"></i>
+                    } @else if (!column.booleanFalseBlank) {
+                      <i class="fas fa-times text-danger" aria-label="No"></i>
+                    }
+                  } @else {
+                    —
+                  }
+                } @else {
+                  @if (getCellValue(row, column) != null) {
+                    {{ getCellValue(row, column) }}
+                  } @else {
+                    —
+                  }
+                }
+              </span>
+            </div>
+          }
+
+          <!-- Card Actions -->
+          @if (config.actionsType === 'chevron') {
+            <div class="card-actions">
+              @if (getRowLink(row)) {
+                <a
+                  [href]="getRowLink(row)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-sm btn-outline-primary card-action-btn"
+                  [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i"
+                  (click)="$event.stopPropagation()"
+                >
+                  <i class="fas fa-external-link-alt me-1"></i> Open
+                </a>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary card-action-btn"
+                  [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i"
+                  (click)="onActionClick('view', row, i, $event)"
+                >
+                  <i class="fas fa-chevron-right me-1"></i> View
+                </button>
+              }
+            </div>
+          } @else if (config.actionsType === 'dropdown' && config.actionItems && shouldShowActions(row)) {
+            <div class="card-actions">
+              @if (!isActionsDisabled(row)) {
+                @for (action of config.actionItems; track action.action) {
+                  <button
+                    type="button"
+                    class="btn btn-sm card-action-btn"
+                    [class]="'btn btn-sm card-action-btn ' + (action.cssClass || 'btn-outline-primary')"
+                    [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i + '-' + action.action"
+                    (click)="onActionClick(action.action, row, i, $event)"
+                  >
+                    <i class="fas {{ action.icon }} me-1"></i>
+                    {{ action.label }}
+                  </button>
+                }
+              } @else {
+                <div class="card-disabled-message">
+                  <img src="images/icons/info.svg" alt="Info" class="disabled-action-icon me-1" />
+                  {{ (config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || 'Actions are not available for this record.' }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+    }
 
     <!-- Pager -->
     @if (showPager) {

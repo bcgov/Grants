@@ -264,23 +264,150 @@
     font-style: italic;
     p { margin-bottom: 0; font-size: var(--bc-font-size-13); }
   }
-}
 
-// Responsive adjustments
-@media (max-width: 768px) {
-  .datatable-container {
-    .datatable-wrapper {
-      border-radius: 0;
-      border-left: none;
-      border-right: none;
+  // Mobile sort control
+  .datatable-mobile-sort {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
 
-      table, .datatable {
-        thead th { padding: 8px 12px; font-size: var(--bc-font-size-12); }
-        tbody td { padding: 12px; }
+    .mobile-sort-label {
+      font-size: var(--bc-font-size-13);
+      font-weight: 600;
+      color: var(--bc-primary);
+      white-space: nowrap;
+    }
+
+    .mobile-sort-select {
+      font-size: var(--bc-font-size-13);
+      border: 1px solid var(--bc-gray-50);
+      border-radius: 4px;
+      max-width: 220px;
+
+      &:focus {
+        border-color: var(--bc-blue);
+        box-shadow: 0 0 0 2px rgba(1, 51, 102, 0.15);
+      }
+    }
+  }
+
+  // Mobile card view
+  .datatable-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .datatable-card {
+    border: 1px solid var(--bc-gray-50);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--bc-white, #fff);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+    &.clickable {
+      cursor: pointer;
+
+      &:hover, &:focus-visible {
+        border-color: var(--bc-blue);
+        box-shadow: 0 2px 8px rgba(1, 51, 102, 0.1);
       }
     }
 
-    .status-badge, .contact-type-badge {
+    .card-field {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--bc-gray-10);
+
+      &:last-of-type {
+        border-bottom: none;
+      }
+
+      .card-field-label {
+        font-size: var(--bc-font-size-12);
+        font-weight: 600;
+        color: var(--bc-gray-80);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        min-width: 100px;
+        flex-shrink: 0;
+        padding-right: 12px;
+      }
+
+      .card-field-value {
+        font-size: var(--bc-font-size-13);
+        color: var(--bc-primary);
+        text-align: right;
+        word-break: break-word;
+
+        .email-link {
+          color: var(--bc-blue);
+        }
+      }
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--bc-gray-50);
+
+      .card-action-btn {
+        font-size: var(--bc-font-size-12);
+        padding: 4px 12px;
+        border-radius: 4px;
+        flex: 1;
+        min-width: 0;
+
+        &.btn-outline-primary {
+          color: var(--bc-blue);
+          border-color: var(--bc-blue);
+
+          &:hover {
+            background-color: var(--bc-blue);
+            color: var(--bc-white, #fff);
+          }
+        }
+
+        // Delete action styling
+        &.text-danger, &.btn-outline-danger {
+          color: #CE3E39;
+          border-color: #CE3E39;
+          background-color: transparent;
+
+          &:hover {
+            background-color: #CE3E39;
+            color: #fff;
+          }
+        }
+      }
+
+      .card-disabled-message {
+        width: 100%;
+        font-size: var(--bc-font-size-12);
+        color: var(--bc-gray-80);
+        font-style: italic;
+        padding: 4px 0;
+
+        i { color: var(--bc-gray-80); }
+      }
+    }
+  }
+}
+
+// Responsive adjustments — desktop table tweaks at mobile widths
+@media (max-width: 768px) {
+  .datatable-container {
+    .datatable-search .search-input-wrapper {
+      max-width: 100%;
+    }
+
+    .status-badge, .contact-type-badge, .address-type-badge {
       font-size: var(--bc-font-size-12);
       padding: 2px 8px;
       min-width: 70px;

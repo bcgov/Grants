@@ -15,6 +15,7 @@ import {
   DatatableRowClickEvent,
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
+import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
 interface AddressDisplay {
   id: string;
@@ -40,6 +41,7 @@ interface AddressDisplay {
     CommonModule,
     FormsModule,
     DatatableComponent,
+    TooltipDirective,
   ],
   templateUrl: './addresses.component.html',
   styleUrls: ['./addresses.component.scss'],
@@ -148,9 +150,24 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.complete();
   }
 
+  allReadOnly = false;
+  readOnlyTooltip = '';
+
   // Helper method to get safe data for datatable
   getAddressesForTable(): AddressDisplay[] {
     return this.addresses && Array.isArray(this.addresses) ? this.addresses : [];
+  }
+
+  private updateActionsVisibility(): void {
+    const hasAddresses = this.addresses.length > 0;
+    const allDisabled = hasAddresses && this.addresses.every(a => !a.isEditable);
+    this.allReadOnly = allDisabled;
+    if (allDisabled) {
+      this.readOnlyTooltip = this.addresses[0]?.disabledTooltip || this.addressesTableConfig.disabledActionsTooltip || '';
+      this.addressesTableConfig = { ...this.addressesTableConfig, actionsType: 'none' };
+    } else {
+      this.addressesTableConfig = { ...this.addressesTableConfig, actionsType: 'dropdown' };
+    }
   }
 
   private loadApplicantInfo(): void {
@@ -195,6 +212,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           this.isLoading = false;
           this.addresses = this.processAddressesData(result.addressesData || []);
           this.primaryAddress = this.addresses.find(addr => addr.isPrimary) || null;
+          this.updateActionsVisibility();
         },
         error: (error) => {
           this.isLoading = false;

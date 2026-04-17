@@ -19,7 +19,7 @@ export class SidebarComponent {
   }
 
   onMenuItemClick(): void {
-    if (window.innerWidth < 768) {
+    if (globalThis.innerWidth < 768) {
       this.menuItemClicked.emit();
     }
   }
