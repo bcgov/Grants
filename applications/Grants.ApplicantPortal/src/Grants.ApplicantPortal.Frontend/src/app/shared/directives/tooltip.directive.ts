@@ -1,4 +1,5 @@
-import { Directive, Input, ElementRef, OnDestroy, HostListener } from '@angular/core';
+import { Directive, Input, ElementRef, OnDestroy, HostListener, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
 @Directive({
   selector: '[appTooltip]',
@@ -9,8 +10,15 @@ export class TooltipDirective implements OnDestroy {
   @Input() tooltipPosition: 'top' | 'bottom' | 'left' | 'right' = 'top';
 
   private tooltipEl: HTMLElement | null = null;
+  private tooltipId = '';
+  private static nextId = 0;
 
-  constructor(private readonly el: ElementRef<HTMLElement>) {}
+  constructor(
+    private readonly el: ElementRef<HTMLElement>,
+    @Inject(DOCUMENT) private readonly document: Document
+  ) {
+    this.tooltipId = `app-tooltip-${TooltipDirective.nextId++}`;
+  }
 
   @HostListener('mouseenter')
   onMouseEnter(): void {
@@ -41,15 +49,18 @@ export class TooltipDirective implements OnDestroy {
   private show(): void {
     if (this.tooltipEl) return;
 
-    this.tooltipEl = document.createElement('div');
+    this.tooltipEl = this.document.createElement('div');
     this.tooltipEl.className = `app-tooltip app-tooltip--${this.tooltipPosition}`;
+    this.tooltipEl.id = this.tooltipId;
+    this.tooltipEl.setAttribute('role', 'tooltip');
     this.tooltipEl.textContent = this.tooltipText;
 
-    const arrow = document.createElement('div');
+    const arrow = this.document.createElement('div');
     arrow.className = 'app-tooltip__arrow';
     this.tooltipEl.appendChild(arrow);
 
-    document.body.appendChild(this.tooltipEl);
+    this.document.body.appendChild(this.tooltipEl);
+    this.el.nativeElement.setAttribute('aria-describedby', this.tooltipId);
     this.positionTooltip();
   }
 
@@ -57,6 +68,7 @@ export class TooltipDirective implements OnDestroy {
     if (this.tooltipEl) {
       this.tooltipEl.remove();
       this.tooltipEl = null;
+      this.el.nativeElement.removeAttribute('aria-describedby');
     }
   }
 
@@ -65,8 +77,9 @@ export class TooltipDirective implements OnDestroy {
 
     const hostRect = this.el.nativeElement.getBoundingClientRect();
     const tooltipRect = this.tooltipEl.getBoundingClientRect();
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
+    const win = this.document.defaultView;
+    const scrollX = win?.scrollX ?? 0;
+    const scrollY = win?.scrollY ?? 0;
     const gap = 8;
 
     let top = 0;

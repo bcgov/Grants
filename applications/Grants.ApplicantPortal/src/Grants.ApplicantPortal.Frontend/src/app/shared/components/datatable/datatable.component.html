@@ -165,6 +165,9 @@
                       <span
                         class="d-inline-block"
                         [appTooltip]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
+                        tabindex="0"
+                        role="button"
+                        aria-label="Info"
                       >
                         <img src="images/icons/info.svg" alt="Info" class="disabled-action-icon" />
                       </span>
