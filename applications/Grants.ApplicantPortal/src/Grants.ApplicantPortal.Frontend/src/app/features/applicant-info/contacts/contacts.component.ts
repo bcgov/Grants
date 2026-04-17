@@ -153,20 +153,13 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.complete();
   }
 
-  allReadOnly = false;
-  readOnlyTooltip = '';
-
   // Helper method to get safe data for datatable
   getContactsForTable(): ContactDisplay[] {
     return this.contacts && Array.isArray(this.contacts) ? this.contacts : [];
   }
 
   private updateActionsVisibility(): void {
-    const hasContacts = this.contacts.length > 0;
-    const allDisabled = hasContacts && this.contacts.every(c => !c.isEditable);
-    this.allReadOnly = allDisabled;
-    if (allDisabled) {
-      this.readOnlyTooltip = this.contacts[0]?.disabledTooltip || this.contactsTableConfig.disabledActionsTooltip || '';
+    if (this.hasMultipleOrgs) {
       this.contactsTableConfig = { ...this.contactsTableConfig, actionsType: 'none' };
     } else {
       this.contactsTableConfig = { ...this.contactsTableConfig, actionsType: 'dropdown' };
