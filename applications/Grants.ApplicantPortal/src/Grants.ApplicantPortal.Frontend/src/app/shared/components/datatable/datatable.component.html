@@ -162,15 +162,14 @@
                     @if (!shouldShowActions(row)) {
                       <!-- Hidden by visibility field -->
                     } @else if (isActionsDisabled(row)) {
-                      <span
-                        class="d-inline-block"
+                      <button
+                        type="button"
+                        class="d-inline-block disabled-action-info"
                         [appTooltip]="(config.disabledActionsTooltipField && row[config.disabledActionsTooltipField]) || config.disabledActionsTooltip || ''"
-                        tabindex="0"
-                        role="button"
                         aria-label="Info"
                       >
-                        <img src="images/icons/info.svg" alt="Info" class="disabled-action-icon" />
-                      </span>
+                        <img src="images/icons/info.svg" alt="" class="disabled-action-icon" />
+                      </button>
                     } @else {
                     <div class="dropdown">
                       <button

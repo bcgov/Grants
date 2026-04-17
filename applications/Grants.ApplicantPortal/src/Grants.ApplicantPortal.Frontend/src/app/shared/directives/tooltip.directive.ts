@@ -10,7 +10,7 @@ export class TooltipDirective implements OnDestroy {
   @Input() tooltipPosition: 'top' | 'bottom' | 'left' | 'right' = 'top';
 
   private tooltipEl: HTMLElement | null = null;
-  private tooltipId = '';
+  private readonly tooltipId: string;
   private static nextId = 0;
 
   constructor(

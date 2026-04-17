@@ -472,7 +472,10 @@ h3 {
   cursor: pointer;
 }
 
-.disabled-action-info {
+button.disabled-action-info {
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
 }
 
