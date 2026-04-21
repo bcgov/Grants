@@ -197,6 +197,7 @@ on:
    - Uses `SonarSource/sonarqube-scan-action@v7`
    - Requires `SONAR_TOKEN` secret
    - Automatic PR decoration enabled
+   - Version handling: Uses `GRANTS_BUILD_VERSION` variable if set, otherwise removes version property
 
 #### Required GitHub Secrets
 
@@ -205,7 +206,7 @@ on:
 
 #### Required GitHub Environment Variables
 
-- **`GRANTS_BUILD_VERSION`:** Project version set at runtime (fallback: `1.0.0`)
+- **`GRANTS_BUILD_VERSION`:** Project version set at runtime (optional - if not set, SonarCloud will use automatic versioning)
 
 ---
 
