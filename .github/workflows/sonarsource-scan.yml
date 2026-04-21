@@ -68,12 +68,15 @@ jobs:
         run: |
           VERSION="${{ vars.GRANTS_BUILD_VERSION }}"
           echo "Debug: GRANTS_BUILD_VERSION variable value: '$VERSION'"
-          if [ -z "$VERSION" ]; then
-            echo "BUILD_VERSION=1.0.0" >> $GITHUB_ENV
-            echo "Using fallback version: 1.0.0 (GRANTS_BUILD_VERSION variable not set)"
-          else
+          if [ -n "$VERSION" ]; then
             echo "BUILD_VERSION=$VERSION" >> $GITHUB_ENV
             echo "Using project version: $VERSION"
+            # Replace ${BUILD_VERSION} with actual value
+            sed -i "s/\${BUILD_VERSION}/$VERSION/g" applications/Grants.ApplicantPortal/sonar-project.properties
+          else
+            echo "GRANTS_BUILD_VERSION variable not set - removing sonar.projectVersion property"
+            # Remove the projectVersion line entirely if no version is available
+            sed -i "/sonar.projectVersion=/d" applications/Grants.ApplicantPortal/sonar-project.properties
           fi
 
       - name: Clear npm cache
@@ -94,6 +97,12 @@ jobs:
       - name: Build .NET solution
         working-directory: ./applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend  
         run: dotnet build Grants.ApplicantPortal.API.sln --no-restore
+
+      - name: SonarCloud sonar.projectVersion
+        run: |
+          echo "BUILD_VERSION environment variable: $BUILD_VERSION"
+          echo "Updated sonar-project.properties:"
+          cat applications/Grants.ApplicantPortal/sonar-project.properties | grep "sonar.projectVersion" || echo "No projectVersion set"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v7
