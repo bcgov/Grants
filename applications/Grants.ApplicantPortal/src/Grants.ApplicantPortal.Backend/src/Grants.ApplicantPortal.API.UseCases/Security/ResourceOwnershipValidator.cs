@@ -311,15 +311,64 @@ public class ResourceOwnershipValidator(
   }
 
   /// <summary>
-  /// Converts the cached Data object (which may be a JsonElement or other type) to a JsonElement for parsing.
+  /// Converts the cached Data object (which may be a JsonElement, a raw JSON string, or another type) to a JsonElement for parsing.
   /// </summary>
   private static JsonElement SerializeToJsonElement(object data)
   {
     if (data is JsonElement element)
-      return element;
+    {
+      if (TryUnwrapStringElement(element, out var unwrapped))
+        return unwrapped;
 
-    var json = JsonSerializer.Serialize(data);
-    return JsonSerializer.Deserialize<JsonElement>(json);
+      // A string element that could not be unwrapped (non-JSON-like or malformed) must not be
+      // returned as-is: TryGetProperty throws InvalidOperationException on non-object elements,
+      // which would route ownership checks into the error-log path for expected "no match" cases.
+      // Return an empty object so callers fail-closed via a normal property-not-found warning.
+      if (element.ValueKind == JsonValueKind.String)
+        return JsonSerializer.Deserialize<JsonElement>("{}");
+
+      return element;
+    }
+
+    if (data is string str)
+    {
+      if (string.IsNullOrWhiteSpace(str))
+        return JsonSerializer.Deserialize<JsonElement>("{}");
+      return JsonSerializer.Deserialize<JsonElement>(str);
+    }
+
+    return JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(data));
+  }
+
+  /// <summary>
+  /// Some plugins (e.g. Demo) serialize the ProfileData.Data payload as a JSON string,
+  /// which round-trips through JsonElement as ValueKind.String. Attempts to parse the inner
+  /// JSON when the string looks like an object or array, and returns false (leaving the caller
+  /// to use the original element) if the string is not JSON-like or fails to parse.
+  /// </summary>
+  private static bool TryUnwrapStringElement(JsonElement element, out JsonElement unwrapped)
+  {
+    unwrapped = default;
+    if (element.ValueKind != JsonValueKind.String)
+      return false;
+
+    var inner = element.GetString();
+    if (string.IsNullOrWhiteSpace(inner))
+      return false;
+
+    var trimmed = inner.TrimStart();
+    if (!trimmed.StartsWith('{') && !trimmed.StartsWith('['))
+      return false;
+
+    try
+    {
+      unwrapped = JsonSerializer.Deserialize<JsonElement>(inner);
+      return true;
+    }
+    catch (JsonException)
+    {
+      return false;
+    }
   }
 
   /// <summary>

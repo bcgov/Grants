@@ -6,12 +6,15 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: min(420px, calc(100vw - 2rem));
   max-width: 420px;
   pointer-events: none;
 }
 
 .toast-item {
   pointer-events: auto;
+  width: 100%;
+  box-sizing: border-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: slideIn 0.25s ease-out;
   padding: 0.75rem 1rem;
@@ -50,6 +53,22 @@
 
   &:hover {
     opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .toast-container {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+
+  .toast-item {
+    gap: 0.625rem;
+    padding: 0.75rem;
+    align-items: flex-start;
   }
 }
 
