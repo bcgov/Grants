@@ -274,11 +274,10 @@ public class ResourceOwnershipValidatorTests
         _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", "PROV1:CONTACTINFO", Arg.Any<CancellationToken>())
             .Returns(profileData);
 
-        var act = async () => await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+        Func<Task<OwnershipValidationResult>> act = () => _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
 
-        await act.Should().NotThrowAsync();
-        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
-        result.IsOwned.Should().BeFalse();
+        var result = await act.Should().NotThrowAsync();
+        result.Subject.IsOwned.Should().BeFalse();
     }
 
     [Fact]
@@ -292,11 +291,10 @@ public class ResourceOwnershipValidatorTests
         _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", "PROV1:CONTACTINFO", Arg.Any<CancellationToken>())
             .Returns(profileData);
 
-        var act = async () => await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+        Func<Task<OwnershipValidationResult>> act = () => _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
 
-        await act.Should().NotThrowAsync();
-        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
-        result.IsOwned.Should().BeFalse();
+        var result = await act.Should().NotThrowAsync();
+        result.Subject.IsOwned.Should().BeFalse();
     }
 
     #endregion

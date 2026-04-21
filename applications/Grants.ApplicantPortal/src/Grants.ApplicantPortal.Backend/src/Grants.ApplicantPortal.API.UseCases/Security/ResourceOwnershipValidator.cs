@@ -319,6 +319,14 @@ public class ResourceOwnershipValidator(
     {
       if (TryUnwrapStringElement(element, out var unwrapped))
         return unwrapped;
+
+      // A string element that could not be unwrapped (non-JSON-like or malformed) must not be
+      // returned as-is: TryGetProperty throws InvalidOperationException on non-object elements,
+      // which would route ownership checks into the error-log path for expected "no match" cases.
+      // Return an empty object so callers fail-closed via a normal property-not-found warning.
+      if (element.ValueKind == JsonValueKind.String)
+        return JsonSerializer.Deserialize<JsonElement>("{}");
+
       return element;
     }
 
