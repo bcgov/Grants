@@ -311,12 +311,33 @@ public class ResourceOwnershipValidator(
   }
 
   /// <summary>
-  /// Converts the cached Data object (which may be a JsonElement or other type) to a JsonElement for parsing.
+  /// Converts the cached Data object (which may be a JsonElement, a raw JSON string, or another type) to a JsonElement for parsing.
   /// </summary>
   private static JsonElement SerializeToJsonElement(object data)
   {
     if (data is JsonElement element)
+    {
+      // Some plugins (e.g. Demo) serialize the ProfileData.Data payload as a JSON string,
+      // which round-trips through JsonElement as ValueKind.String. Parse the inner JSON in that case.
+      if (element.ValueKind == JsonValueKind.String)
+      {
+        var inner = element.GetString();
+        if (!string.IsNullOrWhiteSpace(inner))
+        {
+          return JsonSerializer.Deserialize<JsonElement>(inner);
+        }
+      }
       return element;
+    }
+
+    if (data is string str)
+    {
+      if (string.IsNullOrWhiteSpace(str))
+      {
+        return JsonSerializer.Deserialize<JsonElement>("{}");
+      }
+      return JsonSerializer.Deserialize<JsonElement>(str);
+    }
 
     var json = JsonSerializer.Serialize(data);
     return JsonSerializer.Deserialize<JsonElement>(json);
