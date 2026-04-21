@@ -317,30 +317,50 @@ public class ResourceOwnershipValidator(
   {
     if (data is JsonElement element)
     {
-      // Some plugins (e.g. Demo) serialize the ProfileData.Data payload as a JSON string,
-      // which round-trips through JsonElement as ValueKind.String. Parse the inner JSON in that case.
-      if (element.ValueKind == JsonValueKind.String)
-      {
-        var inner = element.GetString();
-        if (!string.IsNullOrWhiteSpace(inner))
-        {
-          return JsonSerializer.Deserialize<JsonElement>(inner);
-        }
-      }
+      if (TryUnwrapStringElement(element, out var unwrapped))
+        return unwrapped;
       return element;
     }
 
     if (data is string str)
     {
       if (string.IsNullOrWhiteSpace(str))
-      {
         return JsonSerializer.Deserialize<JsonElement>("{}");
-      }
       return JsonSerializer.Deserialize<JsonElement>(str);
     }
 
-    var json = JsonSerializer.Serialize(data);
-    return JsonSerializer.Deserialize<JsonElement>(json);
+    return JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(data));
+  }
+
+  /// <summary>
+  /// Some plugins (e.g. Demo) serialize the ProfileData.Data payload as a JSON string,
+  /// which round-trips through JsonElement as ValueKind.String. Attempts to parse the inner
+  /// JSON when the string looks like an object or array, and returns false (leaving the caller
+  /// to use the original element) if the string is not JSON-like or fails to parse.
+  /// </summary>
+  private static bool TryUnwrapStringElement(JsonElement element, out JsonElement unwrapped)
+  {
+    unwrapped = default;
+    if (element.ValueKind != JsonValueKind.String)
+      return false;
+
+    var inner = element.GetString();
+    if (string.IsNullOrWhiteSpace(inner))
+      return false;
+
+    var trimmed = inner.TrimStart();
+    if (!trimmed.StartsWith('{') && !trimmed.StartsWith('['))
+      return false;
+
+    try
+    {
+      unwrapped = JsonSerializer.Deserialize<JsonElement>(inner);
+      return true;
+    }
+    catch (JsonException)
+    {
+      return false;
+    }
   }
 
   /// <summary>

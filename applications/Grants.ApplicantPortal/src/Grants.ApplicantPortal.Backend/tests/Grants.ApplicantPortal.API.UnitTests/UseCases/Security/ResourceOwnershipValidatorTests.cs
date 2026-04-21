@@ -227,6 +227,80 @@ public class ResourceOwnershipValidatorTests
 
     #endregion
 
+    #region Data Shape Variants (SerializeToJsonElement)
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsSuccess_WhenDataIsDoubleSerializedJsonElement()
+    {
+        // Simulates a plugin that serializes the payload as a JSON string stored inside a JsonElement
+        // (i.e. JsonElement of ValueKind.String whose string value is a JSON object).
+        var contactId = Guid.NewGuid();
+        var innerJson = JsonSerializer.Serialize(new { contacts = new[] { new { contactId = contactId.ToString(), isEditable = true } } });
+        var doubleSerializedElement = JsonSerializer.SerializeToElement(innerJson); // ValueKind.String
+        var profileData = new ProfileData(ProfileId, "UNITY", "PROV1", "PROV1:CONTACTINFO", doubleSerializedElement);
+        _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", "PROV1:CONTACTINFO", Arg.Any<CancellationToken>())
+            .Returns(profileData);
+
+        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+        result.IsEditable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateOrganizationOwnership_ReturnsSuccess_WhenDataIsRawJsonString()
+    {
+        // Simulates a plugin that stores Data as a raw JSON string (not a JsonElement).
+        var orgId = Guid.NewGuid();
+        var rawJson = JsonSerializer.Serialize(new { organizations = new[] { new { id = orgId.ToString() } } });
+        var profileData = new ProfileData(ProfileId, "UNITY", "PROV1", "PROV1:ORGINFO", rawJson);
+        _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", "PROV1:ORGINFO", Arg.Any<CancellationToken>())
+            .Returns(profileData);
+
+        var result = await _sut.ValidateOrganizationOwnershipAsync(orgId, DefaultContext);
+
+        result.IsOwned.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsNotOwned_WhenDataIsJsonElementStringWithMalformedJson()
+    {
+        // A JsonElement of ValueKind.String whose content starts with '{' but is not valid JSON.
+        // Must be fail-closed: no exception, IsOwned = false.
+        var contactId = Guid.NewGuid();
+        var malformedJson = "{not: valid json!!!";
+        var element = JsonSerializer.SerializeToElement(malformedJson); // ValueKind.String
+        var profileData = new ProfileData(ProfileId, "UNITY", "PROV1", "PROV1:CONTACTINFO", element);
+        _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", "PROV1:CONTACTINFO", Arg.Any<CancellationToken>())
+            .Returns(profileData);
+
+        var act = async () => await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+
+        await act.Should().NotThrowAsync();
+        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+        result.IsOwned.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateContactOwnership_ReturnsNotOwned_WhenDataIsJsonElementStringWithNonJsonValue()
+    {
+        // A JsonElement of ValueKind.String containing a plain string (not JSON-like).
+        // Must not throw and must be fail-closed.
+        var contactId = Guid.NewGuid();
+        var element = JsonSerializer.SerializeToElement("just a plain string value");
+        var profileData = new ProfileData(ProfileId, "UNITY", "PROV1", "PROV1:CONTACTINFO", element);
+        _cacheService.TryGetAsync<ProfileData>(ProfileId, "UNITY", "PROV1:CONTACTINFO", Arg.Any<CancellationToken>())
+            .Returns(profileData);
+
+        var act = async () => await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+
+        await act.Should().NotThrowAsync();
+        var result = await _sut.ValidateContactOwnershipAsync(contactId, DefaultContext);
+        result.IsOwned.Should().BeFalse();
+    }
+
+    #endregion
+
     #region Helpers
 
     private void SetupCachedData(string cacheSegment, object data)
