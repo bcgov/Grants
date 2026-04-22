@@ -1,9 +1,37 @@
 <div class="card">
-  <div class="card-header d-flex align-items-center">
+  <div class="card-header d-flex align-items-center justify-content-between">
     <div>
       <h3 class="mb-0 ap-pad-10">Address Information</h3>
     </div>
+    <div>
+      @if (isSingleOrg) {
+        <button
+          id="address-add-btn"
+          data-cy="address-add-btn"
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="onAddAddress()"
+        >
+          Add
+        </button>
+      } @else if (hasMultipleOrgs) {
+        <button
+          type="button"
+          class="d-none d-md-inline-block disabled-action-info"
+          [appTooltip]="'Multiple organization records found — please contact support to consolidate before managing addresses'"
+          aria-label="Info: Multiple organization records found"
+        >
+          <img src="images/icons/info.svg" alt="" class="disabled-action-icon" />
+        </button>
+      }
+    </div>
   </div>
+  @if (hasMultipleOrgs) {
+    <div class="d-block d-md-none multi-org-info-banner">
+      <img src="images/icons/info.svg" alt="Info" class="disabled-action-icon me-1" />
+      Multiple organization records found — please contact support to consolidate before managing addresses
+    </div>
+  }
   <div class="card-body">
     <div class="addresses-container">
       @if (isLoading) {
@@ -18,7 +46,7 @@
         </div>
       </div>
       } @else if (primaryAddress) {
-      <div id="primary-address-info" class="primary-address-info">
+      <div id="primary-address-info" data-cy="primary-address-info" class="primary-address-info">
         <h6 class="mb-2">PRIMARY ADDRESS</h6>
         <div class="row">
           <div class="col-md-10 col-sm-12">
@@ -36,13 +64,14 @@
         </div>
       </div>
       } @else {
-      <div id="no-addresses-message" class="no-primary-address text-center text-muted">
-        <p>No addresses found.</p>
+      <div id="no-addresses-message" data-cy="no-addresses-message" class="no-primary-address text-center text-muted">
+        <p>No addresses found.{{ isSingleOrg ? ' Click "Add" to create your first address.' : '' }}</p>
       </div>
       }
 
       <!-- Addresses Table -->
       <app-datatable
+        idSuffix="addresses"
         [config]="addressesTableConfig"
         [data]="getAddressesForTable()"
         [loading]="isLoading"
@@ -54,15 +83,18 @@
   </div>
 </div>
 
-<!-- Edit Address Modal -->
-<div id="address-edit-modal" class="modal fade ap-edit-modal" [class.show]="showEditAddressModal" [style.display]="showEditAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="editAddressModalLabel" [attr.aria-hidden]="!showEditAddressModal">
+<!-- Add/Edit Address Modal -->
+<div id="address-modal" data-cy="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-address-modal-label" [attr.aria-hidden]="!showAddAddressModal">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="editAddressModalLabel">Edit Address</h5>
-        <button type="button" class="btn-close" (click)="onCancelEditAddress()" aria-label="Close"></button>
+        <h5 class="modal-title" id="add-address-modal-label" data-cy="add-address-modal-label">
+          {{ isEditMode ? 'Edit Address' : 'Add New Address' }}
+        </h5>
+        <button type="button" id="address-modal-close-btn" data-cy="address-modal-close-btn" class="btn-close" (click)="onCancelAddAddress()" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <!-- Error Display -->
         @if (saveAddressError) {
           <div class="alert alert-danger" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
@@ -70,33 +102,52 @@
           </div>
         }
 
-        <form>
+        <form #addressForm="ngForm">
           <!-- Row 1: Address Type / Primary -->
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressType" class="form-label">Address Type <span class="text-danger">*</span></label>
+                <label for="address-type" class="form-label">Address Type <span class="text-danger">*</span></label>
                 <select
                   class="form-select"
-                  id="addressType"
-                  [(ngModel)]="editAddress.addressType"
+                  [class.is-invalid]="formSubmitted && addrType.invalid"
+                  id="address-type"
+                  data-cy="address-type"
+                  [(ngModel)]="newAddress.addressType"
                   name="addressType"
+                  #addrType="ngModel"
+                  required
                   [disabled]="isSavingAddress">
-                  <option value="Physical">Physical</option>
-                  <option value="Mailing">Mailing</option>
+                  <option value="" disabled>Select a type</option>
+                  @if (addressTypes.length > 0) {
+                    @for (type of addressTypes; track type.key) {
+                      <option [value]="type.key">{{ type.label }}</option>
+                    }
+                  } @else {
+                    <option value="Physical">Physical</option>
+                    <option value="Mailing">Mailing</option>
+                  }
                 </select>
+                @if (formSubmitted && addrType.invalid) {
+                  <div class="invalid-feedback">
+                    Address type is required
+                  </div>
+                }
               </div>
             </div>
-            <div class="col-md-6 d-flex align-items-center">
-              <div class="form-check mt-2">
+            <div class="col-md-6">
+              <div class="form-check mt-4 pt-2">
                 <input
                   type="checkbox"
                   class="form-check-input"
-                  id="addressIsPrimary"
-                  [(ngModel)]="editAddress.isPrimary"
+                  id="address-is-primary"
+                  data-cy="address-is-primary"
+                  [(ngModel)]="newAddress.isPrimary"
                   name="isPrimary"
                   [disabled]="isSavingAddress">
-                <label for="addressIsPrimary" class="form-check-label">Set as Primary</label>
+                <label for="address-is-primary" class="form-check-label">
+                  Set as Primary Address
+                </label>
               </div>
             </div>
           </div>
@@ -105,25 +156,37 @@
           <div class="row">
             <div class="col-md-8">
               <div class="mb-3">
-                <label for="addressStreet" class="form-label">Street <span class="text-danger">*</span></label>
+                <label for="address-street" class="form-label">Street <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressStreet"
-                  [(ngModel)]="editAddress.street"
+                  [class.is-invalid]="formSubmitted && addrStreet.invalid"
+                  id="address-street"
+                  data-cy="address-street"
+                  [(ngModel)]="newAddress.street"
                   name="street"
+                  #addrStreet="ngModel"
+                  required
+                  maxlength="200"
                   [disabled]="isSavingAddress">
+                @if (formSubmitted && addrStreet.errors?.['required']) {
+                  <div class="invalid-feedback">
+                    Street is required.
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-4">
               <div class="mb-3">
-                <label for="addressUnit" class="form-label">Unit</label>
+                <label for="address-unit" class="form-label">Unit</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressUnit"
-                  [(ngModel)]="editAddress.unit"
+                  id="address-unit"
+                  data-cy="address-unit"
+                  [(ngModel)]="newAddress.unit"
                   name="unit"
+                  maxlength="50"
                   [disabled]="isSavingAddress">
               </div>
             </div>
@@ -133,27 +196,38 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressStreet2" class="form-label">Street 2</label>
+                <label for="address-street-2" class="form-label">Street 2</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressStreet2"
-                  [(ngModel)]="editAddress.street2"
+                  id="address-street-2"
+                  data-cy="address-street-2"
+                  [(ngModel)]="newAddress.street2"
                   name="street2"
+                  maxlength="200"
                   [disabled]="isSavingAddress">
               </div>
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressCity" class="form-label">City <span class="text-danger">*</span></label>
+                <label for="address-city" class="form-label">City <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressCity"
-                  [(ngModel)]="editAddress.city"
+                  [class.is-invalid]="formSubmitted && addrCity.invalid"
+                  id="address-city"
+                  data-cy="address-city"
+                  [(ngModel)]="newAddress.city"
                   name="city"
-                  [disabled]="isSavingAddress"
-                  required>
+                  #addrCity="ngModel"
+                  required
+                  maxlength="100"
+                  [disabled]="isSavingAddress">
+                @if (formSubmitted && addrCity.errors?.['required']) {
+                  <div class="invalid-feedback">
+                    City is required.
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -162,28 +236,46 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressProvince" class="form-label">Province <span class="text-danger">*</span></label>
+                <label for="address-province" class="form-label">Province <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressProvince"
-                  [(ngModel)]="editAddress.province"
+                  [class.is-invalid]="formSubmitted && addrProvince.invalid"
+                  id="address-province"
+                  data-cy="address-province"
+                  [(ngModel)]="newAddress.province"
                   name="province"
-                  [disabled]="isSavingAddress"
-                  required>
+                  #addrProvince="ngModel"
+                  required
+                  maxlength="50"
+                  [disabled]="isSavingAddress">
+                @if (formSubmitted && addrProvince.errors?.['required']) {
+                  <div class="invalid-feedback">
+                    Province is required.
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="addressPostalCode" class="form-label">Postal Code <span class="text-danger">*</span></label>
+                <label for="address-postal-code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
-                  id="addressPostalCode"
-                  [(ngModel)]="editAddress.postalCode"
+                  [class.is-invalid]="formSubmitted && addrPostalCode.invalid"
+                  id="address-postal-code"
+                  data-cy="address-postal-code"
+                  [(ngModel)]="newAddress.postalCode"
                   name="postalCode"
-                  [disabled]="isSavingAddress"
-                  required>
+                  #addrPostalCode="ngModel"
+                  required
+                  maxlength="20"
+                  [disabled]="isSavingAddress">
+                @if (formSubmitted && addrPostalCode.errors?.['required']) {
+                  <div class="invalid-feedback">
+                    Postal code is required.
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -192,21 +284,25 @@
       <div class="modal-footer">
         <button
           type="button"
+          id="address-modal-cancel-btn"
+          data-cy="address-modal-cancel-btn"
           class="btn btn-secondary"
-          (click)="onCancelEditAddress()"
+          (click)="onCancelAddAddress()"
           [disabled]="isSavingAddress">
           Cancel
         </button>
         <button
           type="button"
+          id="address-modal-save-btn"
+          data-cy="address-modal-save-btn"
           class="btn btn-primary"
-          (click)="onSaveAddress()"
-          [disabled]="!isValidAddress() || isSavingAddress">
+          (click)="onSaveNewAddress()"
+          [disabled]="isSavingAddress">
           @if (isSavingAddress) {
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Updating...
+            {{ isEditMode ? 'Updating...' : 'Creating...' }}
           } @else {
-            Update Address
+            {{ isEditMode ? 'Update' : 'Create' }}
           }
         </button>
       </div>
@@ -215,4 +311,75 @@
 </div>
 
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showEditAddressModal" [style.display]="showEditAddressModal ? 'block' : 'none'" *ngIf="showEditAddressModal"></div>
+<div class="modal-backdrop fade" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" *ngIf="showAddAddressModal"></div>
+
+<!-- Delete Confirmation Modal -->
+<div id="address-delete-modal" data-cy="address-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content delete-modal">
+      <div class="modal-header delete-modal-header">
+        <h5 class="modal-title delete-modal-title" id="delete-address-modal-label" data-cy="delete-address-modal-label">
+          Remove Address
+        </h5>
+        <button type="button" class="btn-close delete-modal-close" (click)="onCancelDeleteAddress()" aria-label="Close" [disabled]="isDeletingAddress"></button>
+      </div>
+      <div class="modal-body delete-modal-body">
+        <!-- Error Display -->
+        @if (deleteAddressError) {
+          <div class="alert delete-modal-error" role="alert">
+            {{ deleteAddressError }}
+          </div>
+        }
+
+        @if (addressToDelete) {
+          <p class="delete-modal-question">Are you sure you want to remove this <strong>{{ addressToDelete.addressType }}</strong> address from your addresses?</p>
+          <p class="delete-modal-warning">This action cannot be undone.</p>
+
+          <div class="delete-modal-details">
+            <div class="details-header">Address Information</div>
+            <div class="details-row">
+              <span class="details-label">Type:</span>
+              <span class="details-value">{{ addressToDelete.addressType }}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Street:</span>
+              <span class="details-value">{{ addressToDelete.fullAddress }}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">City:</span>
+              <span class="details-value">{{ addressToDelete.city }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer delete-modal-footer">
+        <button
+          type="button"
+          id="address-delete-cancel-btn"
+          data-cy="address-delete-cancel-btn"
+          class="btn delete-modal-cancel"
+          (click)="onCancelDeleteAddress()"
+          [disabled]="isDeletingAddress">
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="address-delete-confirm-btn"
+          data-cy="address-delete-confirm-btn"
+          class="btn delete-modal-confirm"
+          (click)="onConfirmDeleteAddress()"
+          [disabled]="isDeletingAddress">
+          @if (isDeletingAddress) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Removing...
+          } @else {
+            Remove Address
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" *ngIf="showDeleteConfirmModal"></div>

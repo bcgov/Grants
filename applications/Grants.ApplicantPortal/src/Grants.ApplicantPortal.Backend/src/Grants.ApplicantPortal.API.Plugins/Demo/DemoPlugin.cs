@@ -48,6 +48,14 @@ public partial class DemoPlugin(
 
     public IReadOnlyList<ContactRoleOption> GetContactRoles() => _contactRoles;
 
+    private static readonly IReadOnlyList<AddressTypeOption> _addressTypes =
+    [
+        new("Physical", "Physical"),
+        new("Mailing", "Mailing")
+    ];
+
+    public IReadOnlyList<AddressTypeOption> GetAddressTypes() => _addressTypes;
+
     public Task<IReadOnlyList<ProviderInfo>> GetProvidersAsync(Guid profileId, string subject, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<ProviderInfo> providers =

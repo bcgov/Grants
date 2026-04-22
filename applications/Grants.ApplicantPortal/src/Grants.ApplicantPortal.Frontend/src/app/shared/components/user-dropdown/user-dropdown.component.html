@@ -3,6 +3,7 @@
     [ngClass]="buttonClass"
     type="button"
     [id]="dropdownId"
+    [attr.data-cy]="dropdownId"
     [attr.aria-label]="ariaLabel"
     data-bs-toggle="dropdown"
     aria-expanded="false"
@@ -16,7 +17,7 @@
     [attr.aria-labelledby]="dropdownId"
   >
     <li *ngIf="showLogout">
-      <a class="dropdown-item" [attr.id]="dropdownId + '-logout'" href="#" (click)="onLogout($event)">Log out</a>
+      <a class="dropdown-item" [attr.id]="dropdownId + '-logout'" [attr.data-cy]="dropdownId + '-logout'" href="#" (click)="onLogout($event)">Log out</a>
     </li>
   </ul>
 </div>

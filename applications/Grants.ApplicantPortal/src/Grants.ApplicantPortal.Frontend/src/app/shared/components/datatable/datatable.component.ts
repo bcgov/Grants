@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, AfterViewInit, ViewEncapsulation, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -11,16 +11,18 @@ import {
   DatatableSortEvent
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TooltipDirective],
   templateUrl: './datatable.component.html',
   styleUrls: ['./datatable.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
+export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
+  @Input({ required: true }) idSuffix!: string;
   @Input() config!: DatatableConfig;
   @Input() data: any[] = [];
   @Input() loading = false;
@@ -43,10 +45,28 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
 
   // Pagination
   currentPage = 1;
+
+  // Mobile responsive
+  isMobile = false;
+  mobileSortColumn = '';
+  private mobileQuery!: MediaQueryList;
+  private readonly mobileQueryHandler = (e: MediaQueryListEvent) => {
+    this.isMobile = e.matches;
+    if (e.matches) {
+      this.syncMobileSortColumn();
+    }
+  };
   
   @ViewChildren('dropdownToggle') dropdownToggles!: QueryList<ElementRef>;
 
-  constructor(private tableSortService: TableSortService) {}
+  private readonly dropdownHiddenHandler = (event: Event) => {
+    this.setWrapperOverflow(event.target as HTMLElement | null, false);
+  };
+
+  constructor(
+    private readonly tableSortService: TableSortService,
+    private readonly elementRef: ElementRef
+  ) {}
 
   ngOnInit(): void {
     // Set default configuration values
@@ -81,8 +101,18 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       }
     }
     
+    // Setup mobile detection
+    if (globalThis.window !== undefined) {
+      this.mobileQuery = globalThis.matchMedia('(max-width: 768px)');
+      this.isMobile = this.mobileQuery.matches;
+      this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
+    }
+
     // Initial sort of data
     this.applySorting();
+
+    // Initialize mobile sort column from current sort state
+    this.syncMobileSortColumn();
 
     // Setup search debounce
     if (this.config.enableSearch) {
@@ -96,14 +126,20 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.elementRef.nativeElement.addEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
+  }
+
   ngOnDestroy(): void {
+    this.elementRef.nativeElement.removeEventListener('hidden.bs.dropdown', this.dropdownHiddenHandler);
+    this.mobileQuery?.removeEventListener('change', this.mobileQueryHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
   
   ngOnChanges(): void {
-    // Re-apply filtering and sorting when data changes
-    this.applySearch(this.searchTerm);
+    // Re-apply filtering and sorting when data changes, preserving current page
+    this.applySearch(this.searchTerm, false);
   }
 
   onSearchInput(term: string): void {
@@ -115,7 +151,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     this.applySearch('');
   }
 
-  private applySearch(term: string): void {
+  private applySearch(term: string, resetPage: boolean = true): void {
     const minChars = this.config?.searchMinChars ?? 1;
     if (this.config?.enableSearch && term.length >= minChars) {
       const lowerTerm = term.toLowerCase();
@@ -128,7 +164,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.filteredData = [];
     }
-    this.applySorting();
+    this.applySorting(resetPage);
   }
 
   onRowClick(row: any, index: number, event: Event): void {
@@ -141,6 +177,11 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     this.rowClick.emit({ row, index });
+  }
+
+  onRowKeySpace(row: any, index: number, event: Event): void {
+    event.preventDefault();
+    this.onRowClick(row, index, event);
   }
 
   onActionClick(actionType: string, row: any, index: number, event: Event): void {
@@ -170,6 +211,9 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     // Apply sorting to data
     this.applySorting();
 
+    // Keep mobile sort select in sync
+    this.syncMobileSortColumn();
+
     // Emit sort event
     this.sort.emit({ 
       column, 
@@ -180,7 +224,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Applies sorting to the data and emits the sorted result
    */
-  private applySorting(): void {
+  private applySorting(resetPage: boolean = true): void {
     const sourceData = this.isSearchActive ? this.filteredData : this.data;
     if (!this.sortConfig) {
       this.sortedData = [...sourceData];
@@ -192,8 +236,15 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       );
     }
     
-    // Reset to first page when data/sort changes
-    this.currentPage = 1;
+    if (resetPage) {
+      this.currentPage = 1;
+    } else {
+      // Clamp to last valid page (e.g., after deleting the only record on the last page)
+      const maxPage = this.totalPages || 1;
+      if (this.currentPage > maxPage) {
+        this.currentPage = maxPage;
+      }
+    }
 
     // Emit the sorted data
     this.dataChange.emit(this.sortedData);
@@ -254,6 +305,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     if (dropdownToggle) {
       dropdownToggle.click();
     }
+    this.setWrapperOverflow(dropdownToggle, false);
   }
 
   onDropdownToggle(toggleElement: HTMLElement, event: Event): void {
@@ -261,6 +313,13 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Close all other open dropdowns before opening this one
     this.closeAllDropdownsExcept(toggleElement);
+
+    // Allow the wrapper to grow so the dropdown menu isn't clipped
+    requestAnimationFrame(() => {
+      const menu = toggleElement.nextElementSibling;
+      const isOpen = menu?.classList.contains('show');
+      this.setWrapperOverflow(toggleElement, !!isOpen);
+    });
   }
 
   private closeAllDropdownsExcept(exceptElement: HTMLElement): void {
@@ -288,6 +347,13 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
 
   onDropdownClosed(): void {
     // This method can be used for cleanup if needed
+  }
+
+  private setWrapperOverflow(element: HTMLElement | null | undefined, open: boolean): void {
+    const wrapper = element?.closest('.datatable-wrapper') as HTMLElement;
+    if (wrapper) {
+      wrapper.style.overflow = open ? 'visible' : '';
+    }
   }
 
   getSortIcon(column: string): string {
@@ -369,5 +435,47 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges {
       return false;
     }
     return !row[this.config.disabledActionsField];
+  }
+
+  get sortableColumns(): DatatableColumn[] {
+    return this.config.columns.filter(c => c.sortable);
+  }
+
+  private syncMobileSortColumn(): void {
+    if (this.currentSortState && this.currentSortState.direction !== 'none') {
+      this.mobileSortColumn = `${this.currentSortState.column}:${this.currentSortState.direction}`;
+    } else {
+      this.mobileSortColumn = '';
+    }
+  }
+
+  onMobileSortChange(value: string): void {
+    this.mobileSortColumn = value;
+    if (!value) {
+      if (this.sortConfig) {
+        this.currentSortState = { column: '', direction: 'none' };
+        this.tableSortService.setSortState(this.sortConfig.tableId, this.currentSortState);
+        this.applySorting();
+      }
+      return;
+    }
+    const [column, direction] = value.split(':');
+    if (!this.sortConfig) return;
+    this.currentSortState = { column, direction: direction as 'asc' | 'desc' };
+    this.tableSortService.setSortState(this.sortConfig.tableId, this.currentSortState);
+    this.applySorting();
+    this.sort.emit({ column, direction: direction as 'asc' | 'desc' });
+  }
+
+  onMobileCardClick(row: any, index: number, event: Event): void {
+    if (!this.config.rowClickable) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('.card-actions')) return;
+    this.rowClick.emit({ row, index });
+  }
+
+  onMobileCardKeySpace(row: any, index: number, event: Event): void {
+    event.preventDefault();
+    this.onMobileCardClick(row, index, event);
   }
 }

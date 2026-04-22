@@ -34,6 +34,8 @@ export interface WorkspaceState {
   isProviderSelected: boolean;
   hasMultipleOrgs: boolean;
   applicantId: string | null;
+  applicantRefId: string | null;
+  applicantName: string;
   orgNumber: string;
   orgName: string;
   tenantEmail: string | null;

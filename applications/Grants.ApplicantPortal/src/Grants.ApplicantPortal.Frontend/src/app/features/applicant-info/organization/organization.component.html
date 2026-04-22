@@ -5,19 +5,12 @@
     </div>
     <!-- Action Buttons - only show for single organization -->
     @if (showSingleOrgForm) {
-    <div class="d-flex">
-      <button
-        id="org-edit-btn"
-        *ngIf="!isEditMode"
-        type="button"
-        class="btn btn-primary btn-sm"
-        (click)="onEdit()"
-      >
-        Edit
-      </button>
-      <div *ngIf="isEditMode" class="btn-group">
+    <div class="d-flex align-items-center">
+      @if (isEditMode) {
+      <div class="btn-group">
         <button
           id="org-save-btn"
+          data-cy="org-save-btn"
           type="button"
           class="btn btn-primary btn-sm"
           [disabled]="isSaving"
@@ -32,6 +25,7 @@
         </button>
         <button
           id="org-cancel-btn"
+          data-cy="org-cancel-btn"
           type="button"
           class="btn btn-secondary btn-sm"
           [disabled]="isSaving"
@@ -40,6 +34,17 @@
           Cancel
         </button>
       </div>
+      } @else {
+      <button
+        id="org-edit-btn"
+        data-cy="org-edit-btn"
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="onEdit()"
+      >
+        Edit
+      </button>
+      }
     </div>
     }
   </div>
@@ -72,6 +77,7 @@
         <div class="col-md-12">
           <h5>Associated Organizations</h5>
           <app-datatable
+            idSuffix="organizations"
             [config]="orgbookDataTableConfig"
             [data]="multipleOrganizations"
             [loading]="false">
@@ -86,11 +92,12 @@
     <div class="row">
       <div class="col-md-12">
         <div class="field">
-          <label for="orgSearch">Organization Book Search</label>
+          <label for="org-search">Organization Book Search</label>
           <div class="search-container">
             <div class="input-group">
                 <input
-                  id="orgSearch"
+                  id="org-search"
+                  data-cy="org-search"
                   name="orgSearch"
                   type="text"
                   [(ngModel)]="searchTerm"
@@ -112,7 +119,7 @@
 
             <!-- Search Results Dropdown -->
             @if (showDropdown && searchResults.length > 0) {
-            <div id="org-search-results" class="search-dropdown">
+            <div id="org-search-results" data-cy="org-search-results" class="search-dropdown">
               @for (result of searchResults; track result.id) {
               <div
                 class="search-result-item"
@@ -121,12 +128,6 @@
                 <div class="result-name">{{ result.orgName }}</div>
                 <div class="result-details">
                   <span class="reg-number">{{ result.orgNumber }}</span>
-                  <span
-                    class="status"
-                    [class.active]="result.orgStatus === 'Active'"
-                    >{{ result.orgStatus }}</span
-                  >
-                  <span class="type">{{ result.organizationType }}</span>
                 </div>
               </div>
               }
@@ -147,9 +148,10 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="orgName">Registered Organization Name</label>
+          <label for="org-name">Registered Organization Name</label>
           <input
-            id="orgName"
+            id="org-name"
+            data-cy="org-name"
             type="text"
             [value]="organizationInfo?.orgName"
             disabled
@@ -159,9 +161,10 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="regNumber">Registered Organization Number</label>
+          <label for="reg-number">Registered Organization Number</label>
           <input
-            id="regNumber"
+            id="reg-number"
+            data-cy="reg-number"
             type="text"
             [value]="organizationInfo?.orgNumber"
             disabled
@@ -174,9 +177,10 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="orgStatus">Organization Book Status</label>
+          <label for="org-status">Organization Book Status</label>
           <input
-            id="orgStatus"
+            id="org-status"
+            data-cy="org-status"
             [value]="organizationInfo?.orgStatus"
             disabled
             class="form-control"
@@ -185,9 +189,10 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="orgType">Organization Type</label>
+          <label for="org-type">Organization Type</label>
           <input
-            id="orgType"
+            id="org-type"
+            data-cy="org-type"
             type="text"
             [value]="
               organizationInfo?.organizationType
@@ -204,9 +209,10 @@
     <div class="row">
       <div class="col-md-8">
         <div class="field">
-          <label for="nonRegOrgName">Non-Registered Organization Name</label>
+          <label for="non-reg-org-name">Non-Registered Organization Name</label>
           <input
-            id="nonRegOrgName"
+            id="non-reg-org-name"
+            data-cy="non-reg-org-name"
             name="nonRegOrgName"
             type="text"
             [ngModel]="organizationInfo?.nonRegOrgName || ''"
@@ -224,9 +230,10 @@
       </div>
       <div class="col-md-4">
         <div class="field">
-          <label for="orgSize">Organization Size</label>
+          <label for="org-size">Organization Size</label>
           <input
-            id="orgSize"
+            id="org-size"
+            data-cy="org-size"
             name="orgSize"
             type="number"
             [ngModel]="organizationInfo?.orgSize || ''"
@@ -251,10 +258,11 @@
     <div class="row">
       <div class="col-md-6">
         <div class="field">
-          <label for="fiscalMonth">Fiscal Year End Month</label>
+          <label for="fiscal-month">Fiscal Year End Month</label>
           <select
             class="form-select"
-            id="fiscalMonth"
+            id="fiscal-month"
+            data-cy="fiscal-month"
             name="fiscalMonth"
             [(ngModel)]="selectedFiscalMonth"
             (change)="onFiscalMonthChange($event)"
@@ -278,10 +286,11 @@
       </div>
       <div class="col-md-6">
         <div class="field">
-          <label for="fiscalDay">Fiscal Year End Day</label>
+          <label for="fiscal-day">Fiscal Year End Day</label>
           <select
             class="form-select"
-            id="fiscalDay"
+            id="fiscal-day"
+            data-cy="fiscal-day"
             name="fiscalDay"
             [(ngModel)]="selectedFiscalDay"
             (change)="onFiscalDayChange($event)"

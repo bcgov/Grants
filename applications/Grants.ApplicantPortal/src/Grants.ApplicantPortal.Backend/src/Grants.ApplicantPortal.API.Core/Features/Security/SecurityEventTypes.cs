@@ -44,4 +44,11 @@ public static class SecurityEventTypes
     /// User profile was created
     /// </summary>
     public const string ProfileCreated = "ProfileCreated";
+
+    /// <summary>
+    /// Resource ownership validation failed — user attempted to access or modify
+    /// a resource (contact, address, organization, or applicantId) that does not
+    /// belong to their profile
+    /// </summary>
+    public const string ResourceOwnershipFailure = "ResourceOwnershipFailure";
 }

@@ -26,7 +26,8 @@ public class EditAddressHandler(
         request.IsPrimary,
         request.Street2,
         request.Unit,
-        request.Country);
+        request.Country,
+        request.ApplicantId);
 
       var profileContext = new ProfileContext(
         request.ProfileId,
@@ -55,6 +56,9 @@ public class EditAddressHandler(
 
       if (result.Status == ResultStatus.NotFound)
         return Result<AddressMutationResult>.NotFound();
+
+      if (result.Status == ResultStatus.Forbidden)
+        return Result<AddressMutationResult>.Forbidden();
 
       return Result<AddressMutationResult>.Invalid(result.ValidationErrors);
     }

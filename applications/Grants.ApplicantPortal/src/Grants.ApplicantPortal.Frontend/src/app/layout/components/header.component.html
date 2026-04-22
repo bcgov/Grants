@@ -1,8 +1,17 @@
 <header class="header">
   <div class="header-left">
-    <div class="page-title">
-      <h3 id="header-page-title" class="m-0">{{ pageTitle }}</h3>
+    <div class="page-title" [class.no-separator]="!showOrgInfo">
+      <h3 id="header-page-title" data-cy="header-page-title" class="m-0">{{ pageTitle }}</h3>
     </div>
+    <app-org-header
+      [orgNumber]="orgNumber"
+      [orgName]="orgName"
+      [applicantRefId]="applicantRefId"
+      [applicantName]="applicantName"
+      [hasMultipleOrgs]="hasMultipleOrgs"
+      [tenantEmail]="tenantEmail"
+      displayMode="applicant"
+    ></app-org-header>
   </div>
   <div class="header-right">
     <!-- Workspace Selector -->
@@ -11,7 +20,8 @@
         <button
           class="btn btn-outline-primary dropdown-toggle workspace-btn"
           type="button"
-          id="workspaceDropdown"
+          id="workspace-dropdown"
+          data-cy="workspace-dropdown"
           data-bs-toggle="dropdown"
           aria-expanded="false"
           [attr.aria-label]="'Current workspace: ' + displayText"
@@ -21,7 +31,7 @@
           <i class="fas fa-briefcase me-2" *ngIf="!isChangingWorkspace" aria-hidden="true"></i>
           {{ isChangingWorkspace ? 'Switching...' : displayText }}
         </button>
-        <ul class="dropdown-menu workspace-dropdown" aria-labelledby="workspaceDropdown">
+        <ul class="dropdown-menu workspace-dropdown" aria-labelledby="workspace-dropdown">
           <!-- Current Workspace Info -->
           <li>
             <h6 class="dropdown-header">
@@ -42,6 +52,7 @@
               <button 
                 class="dropdown-item provider-item"
                 [attr.id]="'provider-item-' + provider.id"
+                [attr.data-cy]="'provider-item-' + provider.id"
                 [class.active]="provider.id === selectedProvider"
                 (click)="selectProviderById(provider)"
                 type="button"
@@ -62,6 +73,7 @@
             <li>
               <button 
                 id="change-workspace-btn"
+                data-cy="change-workspace-btn"
                 class="dropdown-item change-workspace-item"
                 (click)="changeWorkspace()"
                 type="button"
@@ -80,7 +92,7 @@
 
     <app-user-dropdown
       [userInfo]="applicantInfo"
-      dropdownId="headerUserDropdown"
+      dropdownId="header-user-dropdown"
       buttonClass="btn btn-link dropdown-toggle"
       dropdownClass="header-dropdown"
       iconSrc="images/icons/gg_profile.svg"

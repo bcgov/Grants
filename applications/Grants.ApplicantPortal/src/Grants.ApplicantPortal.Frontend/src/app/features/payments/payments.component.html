@@ -1,19 +1,13 @@
-<div class="page-inner">
-  <app-org-header
-    [orgNumber]="orgNumber"
-    [orgName]="orgName"
-    [hasMultipleOrgs]="hasMultipleOrgs"
-    [tenantEmail]="tenantEmail"
-  ></app-org-header>
-
-  <div class="card">
+<div class="page-inner" id="payments-page-inner" data-cy="payments-page-inner">
+  <div class="card" id="payments-card" data-cy="payments-card">
     <div class="card-header d-flex align-items-center">
       <div>
-        <h3 class="mb-0 ap-pad-10">Payments</h3>
+        <h3 class="mb-0 ap-pad-10" id="payments-header" data-cy="payments-header">Payments</h3>
       </div>
     </div>
     <div class="card-body">
       <app-datatable
+        idSuffix="payments"
         [config]="paymentsTableConfig"
         [data]="paymentsData"
         [loading]="isLoading"

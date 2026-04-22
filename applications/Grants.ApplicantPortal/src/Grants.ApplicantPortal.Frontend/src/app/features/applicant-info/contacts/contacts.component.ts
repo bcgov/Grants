@@ -16,6 +16,7 @@ import {
   DatatableRowClickEvent,
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
+import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
 interface ContactDisplay {
   id: string;
@@ -41,6 +42,7 @@ interface ContactDisplay {
     CommonModule,
     FormsModule,
     DatatableComponent,
+    TooltipDirective,
   ],
   templateUrl: './contacts.component.html',
   styleUrls: ['./contacts.component.scss'],
@@ -156,6 +158,14 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     return this.contacts && Array.isArray(this.contacts) ? this.contacts : [];
   }
 
+  private updateActionsVisibility(): void {
+    if (this.hasMultipleOrgs) {
+      this.contactsTableConfig = { ...this.contactsTableConfig, actionsType: 'none' };
+    } else {
+      this.contactsTableConfig = { ...this.contactsTableConfig, actionsType: 'dropdown' };
+    }
+  }
+
   private loadApplicantInfo(): void {
     this.applicantService
       .getApplicantInfo()
@@ -194,6 +204,7 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
           this.isLoading = false;
           this.contacts = this.processContactsData(result.contactsData || []);
           this.primaryContact = this.contacts.find(contact => contact.isPrimary) || null;
+          this.updateActionsVisibility();
         },
         error: (error) => {
           this.isLoading = false;

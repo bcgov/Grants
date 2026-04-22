@@ -11,12 +11,19 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 .page-title {
   font-size: var(--bc-font-size-18);
   font-weight: 600;
+  padding-right: 1.25rem;
+  border-right: 1px solid var(--bc-gray-50, #ccc);
+
+  &.no-separator {
+    border-right: none;
+    padding-right: 0;
+  }
 }
 
 .header-right {
@@ -181,24 +188,73 @@
 }
 
 @media (max-width: 991px) {
-  .header-right app-user-dropdown {
-    display: none;
+  .header {
+    flex-wrap: wrap;
+    padding: 0.7rem 1rem;
+    gap: 0.4rem;
+  }
+
+  .header-left {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .page-title {
+    font-size: var(--bc-font-size-16, 0.9rem);
+
+    h3 {
+      font-size: inherit;
+    }
+  }
+
+  .header-right {
+    gap: 0.5rem;
+    flex-shrink: 0;
+    margin-left: auto;
+
+    app-user-dropdown,
+    app-notifications-dropdown {
+      display: none;
+    }
   }
 
   .workspace-selector {
-    margin-right: 0.5rem;
+    margin-right: 0;
   }
 
   .workspace-btn {
-    font-size: var(--bc-font-size-12);
-    padding: 6px 12px;
+    font-size: var(--bc-font-size-12, 0.75rem);
+    padding: 4px 10px;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .workspace-dropdown {
     min-width: 240px;
   }
+}
 
+@media (max-width: 575px) {
   .header {
-    padding: 0.8rem 2rem 0.6rem 2rem;
+    padding: 0.5rem 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .header-left {
+    gap: 0.5rem;
+  }
+
+  .page-title {
+    font-size: 0.8rem;
+  }
+
+  .workspace-btn {
+    max-width: 150px;
+    font-size: 0.7rem;
+    padding: 3px 8px;
   }
 }

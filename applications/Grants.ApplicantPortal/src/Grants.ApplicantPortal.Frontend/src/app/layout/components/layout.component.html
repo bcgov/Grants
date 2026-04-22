@@ -1,10 +1,11 @@
 <div class="container-fluid p-0">
   <div class="row g-0 min-vh-100">
     <!-- Mobile Header with Hamburger -->
-    <div class="mobile-header d-lg-none">
+    <div class="mobile-header d-lg-none" #mobileHeaderRef>
       <div class="mobile-header-content">
         <button
           id="mobile-hamburger-btn"
+          data-cy="mobile-hamburger-btn"
           class="hamburger-btn"
           (click)="toggleSidebar()"
           [class.active]="sidebarOpen"
@@ -27,15 +28,18 @@
           </div>
         </div>
 
-        <app-user-dropdown
-          [userInfo]="applicantInfo"
-          dropdownId="mobileUserDropdown"
-          buttonClass="btn btn-outline-light dropdown-toggle"
-          dropdownClass="mobile-dropdown"
-          iconSrc="images/icons/gg_profile.svg"
-          (logoutEvent)="onMobileLogout($event)"
-        >
-        </app-user-dropdown>
+        <div class="mobile-actions">
+          <app-notifications-dropdown></app-notifications-dropdown>
+          <app-user-dropdown
+            [userInfo]="applicantInfo"
+            dropdownId="mobile-user-dropdown"
+            buttonClass="btn btn-outline-light dropdown-toggle"
+            dropdownClass="mobile-dropdown"
+            iconSrc="images/icons/gg_profile.svg"
+            (logoutEvent)="onMobileLogout($event)"
+          >
+          </app-user-dropdown>
+        </div>
       </div>
     </div>
 
@@ -57,7 +61,7 @@
     >
       <div class="sidebar-container">
         <!-- Close button for mobile -->
-        <button id="mobile-close-btn" class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
+        <button id="mobile-close-btn" data-cy="mobile-close-btn" class="mobile-close-btn d-lg-none" (click)="closeSidebar()">
           <i class="fa-solid fa-times"></i>
         </button>
         <app-sidebar [collapsed]="sidebarCollapsed" (collapsedChange)="sidebarCollapsed = $event" (menuItemClicked)="closeSidebar()"></app-sidebar>
@@ -74,6 +78,19 @@
 
         <!-- Page Content Section -->
         <main class="page-content">
+          <!-- Global Warning Banner -->
+          @if (hasMultipleOrgs) {
+            <div class="global-warning-banner">
+              <span class="alert-block alert-warning">
+                <img src="images/icons/warning.svg" class="alert-icon" alt="" aria-hidden="true">
+                @if (tenantEmail) {
+                  This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator at {{ tenantEmail }}.
+                } @else {
+                  This page is displayed in read-only mode because multiple applicants are associated with your account. To resolve this issue, please contact the grant program administrator.
+                }
+              </span>
+            </div>
+          }
           <router-outlet></router-outlet>
         </main>
       </div>

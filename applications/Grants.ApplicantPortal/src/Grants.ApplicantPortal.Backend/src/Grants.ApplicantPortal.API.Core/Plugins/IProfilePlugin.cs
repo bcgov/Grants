@@ -42,4 +42,10 @@ public interface IProfilePlugin
   /// These are displayed as selectable options when creating or editing contacts.
   /// </summary>
   IReadOnlyList<ContactRoleOption> GetContactRoles() => [];
+
+  /// <summary>
+  /// Gets the available address type options for this plugin.
+  /// These are displayed as selectable options when creating or editing addresses.
+  /// </summary>
+  IReadOnlyList<AddressTypeOption> GetAddressTypes() => [];
 }

@@ -1,0 +1,176 @@
+<div class="selector-page">
+  <div class="selector-background">
+    <div class="bc-logo-header">
+      <img
+        src="images/logo/BCID_H_rgb_pos.png"
+        alt="British Columbia Government"
+        class="bc-header-logo"
+      />
+    </div>
+
+    <!-- Card -->
+    <div class="selector-card-container">
+      <div class="selector-card">
+        <div class="selector-header">
+          <h1>Enterprise Grant</h1>
+          <h2>Management System Portal</h2>
+        </div>
+
+        <div class="mobile-preview-image">
+          <img
+            src="images/dashboard-preview.png"
+            alt="Dashboard Preview"
+            class="dashboard-preview"
+          />
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="(isLoading || isAutoSelecting) && !hasError" class="selector-loading">
+          <div class="spinner"></div>
+          <p class="loading-text" *ngIf="isLoading">Setting up your workspace...</p>
+          <p class="loading-text" *ngIf="isAutoSelecting">Accessing {{ autoSelectingWorkspace?.description }}...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="hasError" class="selector-error">
+          <div class="error-icon">
+            <i class="fa fa-exclamation-triangle"></i>
+          </div>
+          <p class="error-text">Something went wrong &mdash; please try again later.</p>
+          <button
+            type="button"
+            class="btn btn-primary selector-btn"
+            [disabled]="isRetrying"
+            (click)="retryFetch()"
+          >
+            <span *ngIf="!isRetrying">Try Again</span>
+            <span *ngIf="isRetrying">Retrying...</span>
+          </button>
+        </div>
+
+        <!-- Workspace Selection -->
+        <div *ngIf="showWorkspaceSelection && !isLoading && !isAutoSelecting">
+          <div class="selector-description">
+            <p>Please select a workspace to continue.</p>
+          </div>
+
+          <div class="dropdown-group">
+            <label for="workspace-select" class="dropdown-label">Workspace</label>
+            <select
+              id="workspace-select"
+              data-cy="workspace-select"
+              class="dropdown-select"
+              [(ngModel)]="selectedDropdownWorkspace"
+              (ngModelChange)="onDropdownWorkspaceChange($event)"
+            >
+              <option [ngValue]="null" disabled>-- Select a workspace --</option>
+              <option *ngFor="let workspace of availableWorkspaces" [ngValue]="workspace">
+                {{ workspace.description }}
+              </option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            id="workspace-continue-btn"
+            data-cy="workspace-continue-btn"
+            class="btn btn-primary selector-btn"
+            [disabled]="!selectedDropdownWorkspace"
+            (click)="confirmWorkspaceSelection()"
+          >
+            Continue
+          </button>
+        </div>
+
+        <!-- Program Selection -->
+        <div *ngIf="showProviderSelection && selectedWorkspaceForProvider && !isLoading && !isAutoSelecting">
+          <div *ngIf="isLoadingProviders" class="selector-loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading providers...</p>
+          </div>
+
+          <div *ngIf="!isLoadingProviders">
+            <div class="selector-description">
+              <p>Select a grant program for <strong>{{ selectedWorkspaceForProvider.description }}</strong>.</p>
+            </div>
+
+            <div class="dropdown-group">
+              <label for="provider-select" class="dropdown-label">Provider</label>
+              <select
+                id="provider-select"
+                data-cy="provider-select"
+                class="dropdown-select"
+                [(ngModel)]="selectedDropdownProvider"
+              >
+                <option [ngValue]="null" disabled>-- Select a program --</option>
+                <option *ngFor="let provider of availableProviders" [ngValue]="provider">
+                  {{ provider.name }}
+                </option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              id="provider-continue-btn"
+              data-cy="provider-continue-btn"
+              class="btn btn-primary selector-btn"
+              [disabled]="!selectedDropdownProvider"
+              (click)="confirmProviderSelection()"
+            >
+              Continue
+            </button>
+
+            <button
+              type="button"
+              id="provider-back-btn"
+              data-cy="provider-back-btn"
+              class="btn-back"
+              (click)="goBackToWorkspaceSelection()"
+            >
+              &larr; Back to Workspaces
+            </button>
+          </div>
+        </div>
+
+        <!-- No Applications Message -->
+        <div *ngIf="showNoApplicationsMessage && !isLoading && !isAutoSelecting" class="no-applications">
+          <p class="no-applications-text">
+            You don't have any active or submitted applications yet. Please start a new application before accessing the Applicant Portal, or contact the grant administrator if you believe you have already submitted an application.
+          </p>
+          <button
+            type="button"
+            id="workspace-back-to-login-btn"
+            data-cy="workspace-back-to-login-btn"
+            class="btn-back"
+            (click)="backToLogin()"
+          >
+            &larr; Back to Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right side preview -->
+  <div class="preview-section">
+    <div class="bc-logo-corner">
+      <img
+        src="images/logo/BCID_H_rgb_pos.png"
+        alt="British Columbia"
+        class="bc-corner-logo"
+      />
+    </div>
+
+    <div class="preview-image">
+      <img
+        src="images/dashboard-preview.png"
+        alt="Dashboard Preview"
+        class="dashboard-preview"
+      />
+    </div>
+
+    <div class="footer-link">
+      <a href="https://grants.gov.bc.ca" target="_blank">grants.gov.bc.ca</a>
+    </div>
+  </div>
+</div>
