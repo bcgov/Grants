@@ -29,22 +29,47 @@ public static class CacheConfigs
         logger.LogInformation("Attempting to connect to Redis at: {RedisConnectionString}", redisConnectionString);
         
         // Add StackExchange Redis for L2 cache
+        // Use async connect to correctly handle Redis Sentinel topology resolution
         services.AddSingleton<IConnectionMultiplexer>(provider =>
         {
           var configOptions = ConfigurationOptions.Parse(redisConnectionString);
-          var multiplexer = ConnectionMultiplexer.Connect(configOptions);
-          
-          // Get the database number from connection string or use default 0
-          var database = multiplexer.GetDatabase();
-          logger.LogInformation("Redis connection established successfully - Database: {Database}, Endpoints: {Endpoints}", 
-              database.Database, string.Join(", ", multiplexer.GetEndPoints().Select(ep => ep.ToString())));
+
+          // Harden for Sentinel environments
+          configOptions.AbortOnConnectFail = false;
+          configOptions.ConnectRetry = 5;
+          configOptions.ConnectTimeout = 10000;    // 10 s – Sentinel needs time to resolve master
+          configOptions.SyncTimeout = 5000;
+          configOptions.ReconnectRetryPolicy = new ExponentialRetry(3000);
+
+          logger.LogInformation(
+              "Connecting to Redis – ServiceName (Sentinel): {ServiceName}, Endpoints: {Endpoints}",
+              configOptions.ServiceName ?? "(none)",
+              string.Join(", ", configOptions.EndPoints.Select(ep => ep.ToString())));
+
+          // ConnectAsync lets Sentinel finish master-discovery before returning
+          var multiplexer = ConnectionMultiplexer.ConnectAsync(configOptions).GetAwaiter().GetResult();
+
+          foreach (var server in multiplexer.GetServers())
+          {
+            logger.LogInformation(
+                "Redis server {Endpoint} – IsConnected: {IsConnected}, IsReplica: {IsReplica}, ServerType: {ServerType}",
+                server.EndPoint, server.IsConnected, server.IsReplica, server.ServerType);
+          }
+
+          var db = multiplexer.GetDatabase();
+          logger.LogInformation(
+              "Redis connection established successfully – Database: {Database}, Endpoints: {Endpoints}",
+              db.Database, string.Join(", ", multiplexer.GetEndPoints().Select(ep => ep.ToString())));
+
           return multiplexer;
         });
         
-        // Add StackExchange Redis Cache for distributed caching (Redis only, no HybridCache)
+        // Add StackExchange Redis Cache – reuse the hardened singleton multiplexer
+        // so both caching and distributed locks share the same resilient connection
         services.AddStackExchangeRedisCache(options =>
         {
-          options.Configuration = redisConnectionString;
+          options.ConnectionMultiplexerFactory = () =>
+              Task.FromResult(services.BuildServiceProvider().GetRequiredService<IConnectionMultiplexer>());
           options.InstanceName = "ApplicantPortal";
         });
         
