@@ -64,10 +64,12 @@ public static class CacheConfigs
           return multiplexer;
         });
         
-        // Add StackExchange Redis Cache for distributed caching (Redis only, no HybridCache)
+        // Add StackExchange Redis Cache – reuse the hardened singleton multiplexer
+        // so both caching and distributed locks share the same resilient connection
         services.AddStackExchangeRedisCache(options =>
         {
-          options.Configuration = redisConnectionString;
+          options.ConnectionMultiplexerFactory = () =>
+              Task.FromResult(services.BuildServiceProvider().GetRequiredService<IConnectionMultiplexer>());
           options.InstanceName = "ApplicantPortal";
         });
         
