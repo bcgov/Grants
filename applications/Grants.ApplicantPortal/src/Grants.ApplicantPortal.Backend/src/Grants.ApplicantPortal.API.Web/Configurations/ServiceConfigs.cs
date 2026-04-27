@@ -2,6 +2,7 @@
 using Grants.ApplicantPortal.API.Core.Features;
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.UseCases;
+using Grants.ApplicantPortal.API.Web.HealthChecks;
 using Grants.ApplicantPortal.API.Web.Profiles;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
@@ -31,6 +32,10 @@ public static class ServiceConfigs
             .AddCacheConfigs(builder, logger);
 
     services.AddScoped<IProfileService, ProfileService>();
+
+    services.AddHealthChecks()
+            .AddCheck<DatabaseReadinessHealthCheck>("database-readiness", tags: ["ready"])
+            .AddCheck<RedisReadinessHealthCheck>("redis-readiness", tags: ["ready"]);
 
     logger.LogInformation("{Project} services registered", "Mediatr, Authentication, Authorization, CORS and HybridCache");
 
