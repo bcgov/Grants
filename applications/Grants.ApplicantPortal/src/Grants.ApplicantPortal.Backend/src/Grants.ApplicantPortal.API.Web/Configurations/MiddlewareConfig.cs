@@ -3,7 +3,9 @@ using Grants.ApplicantPortal.API.Infrastructure.Data;
 using Grants.ApplicantPortal.API.Plugins;
 using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Web.Middleware;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
@@ -22,6 +24,30 @@ public static class MiddlewareConfig
       app.UseDefaultExceptionHandler(); // from FastEndpoints
       app.UseHsts();
     }
+
+    app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
+    {
+      Predicate = healthCheck => healthCheck.Tags.Contains("ready"),
+      ResultStatusCodes =
+      {
+        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+        [HealthStatus.Degraded] = StatusCodes.Status200OK,
+        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+      },
+      ResponseWriter = async (context, report) =>
+      {
+        const string readinessHeader = "readiness";
+        var readinessValue = report.Status switch
+        {
+          HealthStatus.Healthy => "healthy",
+          HealthStatus.Degraded => "degraded",
+          _ => "unhealthy"
+        };
+
+        context.Response.Headers[readinessHeader] = readinessValue;
+        await context.Response.WriteAsync(readinessValue);
+      }
+    });
 
     app.UseFastEndpoints()
         .UseSwaggerGen(); // Includes AddFileServer and static files middleware
@@ -74,7 +100,7 @@ public static class MiddlewareConfig
     catch (Exception ex)
     {
       var logger = services.GetRequiredService<ILogger<Program>>();
-      logger.LogError(ex, "An error occurred initializing the plugin registry. {exceptionMessage}", ex.Message);
+      logger.LogError(ex, "An error occurred initializing the plugin registry. {ExceptionMessage}", ex.Message);
     }
   }
 
@@ -108,7 +134,7 @@ public static class MiddlewareConfig
         // For development/testing scenarios, ensure database exists
         if (app.Environment.IsDevelopment())
         {
-          context.Database.EnsureCreated();
+          await context.Database.EnsureCreatedAsync();
         }
       }
 
@@ -126,7 +152,8 @@ public static class MiddlewareConfig
     catch (Exception ex)
     {
       var logger = services.GetRequiredService<ILogger<Program>>();
-      logger.LogError(ex, "An error occurred during database initialization. {exceptionMessage}", ex.Message);
+      logger.LogError(ex, "An error occurred during database initialization. {ExceptionMessage}", ex.Message);
     }
   }
 }
+

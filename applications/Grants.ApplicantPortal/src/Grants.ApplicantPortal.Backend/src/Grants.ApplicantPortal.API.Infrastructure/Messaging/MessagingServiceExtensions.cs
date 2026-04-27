@@ -65,65 +65,59 @@ public static class MessagingServiceExtensions
         IConfiguration configuration,
         ILogger logger)
     {
-        // Check if Redis connection is configured in appsettings
         var redisConnectionString = configuration.GetConnectionString("Redis");
         var hasRedisConfig = !string.IsNullOrEmpty(redisConnectionString);
-        
+
         if (hasRedisConfig)
         {
             logger.LogInformation("Redis connection string found. Using Redis-based distributed locking");
-            
+
             try
             {
-                // Check if IConnectionMultiplexer is already registered (by caching configuration)
                 var hasRedisConnection = services.Any(x => x.ServiceType == typeof(IConnectionMultiplexer));
-                
+
                 if (!hasRedisConnection)
                 {
-                    // Register Redis connection for messaging (development scenario)
-                    services.AddSingleton<IConnectionMultiplexer>(provider =>
+                    services.AddSingleton<IConnectionMultiplexer>(_ =>
                     {
-                        var multiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
+                        var options = RedisConnectionOptionsFactory.Create(redisConnectionString!, logger, "distributed locking");
+                        var multiplexer = ConnectionMultiplexer.Connect(options);
                         logger.LogDebug("Redis connection established for messaging services");
                         return multiplexer;
                     });
-                    
+
                     logger.LogDebug("Registered IConnectionMultiplexer for messaging services");
                 }
-                
-                // Register our Redis-based distributed lock service
+
                 services.AddSingleton<IDistributedLock, RedisDistributedLock>();
-                
+
                 logger.LogInformation("Redis distributed locking registered successfully");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to register Redis distributed locking. Falling back to in-memory implementation");
-                
-                // Fallback to in-memory if Redis fails
+
                 if (!services.Any(x => x.ServiceType == typeof(IDistributedCache)))
                 {
                     services.AddDistributedMemoryCache();
                 }
                 services.AddSingleton<IDistributedLock, InMemoryDistributedLock>();
-                
+
                 logger.LogWarning("Using in-memory distributed locking due to Redis registration failure");
             }
         }
         else
         {
             logger.LogInformation("No Redis connection string found. Using in-memory distributed locking");
-            
-            // Register in-memory distributed cache if not already registered
+
             if (!services.Any(x => x.ServiceType == typeof(IDistributedCache)))
             {
                 services.AddDistributedMemoryCache();
                 logger.LogDebug("Registered IDistributedMemoryCache for in-memory distributed locking");
             }
-            
-            // Register our in-memory distributed lock implementation
+
             services.AddSingleton<IDistributedLock, InMemoryDistributedLock>();
-            
+
             logger.LogInformation("In-memory distributed locking registered successfully");
         }
 

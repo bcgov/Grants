@@ -15,27 +15,23 @@ public static class InfrastructureServiceExtensions
     string? connectionString = config.GetConnectionString("Grants");
     Guard.Against.Null(connectionString);
 
-    // Add DbContext with PostgreSQL provider
-    // The IDomainEventDispatcher dependency will be injected by the Web layer's MediatrConfigs
+    var databaseOptions = config.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
+
     services.AddDbContext<AppDbContext>((serviceProvider, options) => 
     {
       options.UseNpgsql(connectionString, npgsqlOptions =>
       {
-        // Configure to use the default naming convention (no snake_case conversion)
-        // This ensures column names match exactly as defined in migrations
+        npgsqlOptions.CommandTimeout(databaseOptions.CommandTimeoutSeconds);
+        npgsqlOptions.EnableRetryOnFailure(
+          maxRetryCount: databaseOptions.MaxRetryCount,
+          maxRetryDelay: TimeSpan.FromSeconds(databaseOptions.MaxRetryDelaySeconds),
+          errorCodesToAdd: null);
       });
     });
-    
-    // Register repository support services
+
     services.AddRepositorySupport();
-    
-    // Register Custom Queries
     services.AddQueries();
-
-    // Add messaging services (Inbox/Outbox pattern with background jobs)
     services.AddMessagingServices(config, logger);
-
-    // Register core services
     services.AddCoreServices();
 
     logger.LogInformation("{Project} services registered", "Infrastructure");
