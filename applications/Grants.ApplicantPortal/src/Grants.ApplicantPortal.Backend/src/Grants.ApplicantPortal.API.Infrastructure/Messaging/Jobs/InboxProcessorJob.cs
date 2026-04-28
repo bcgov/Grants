@@ -73,15 +73,19 @@ public class InboxProcessorJob : IJob
 
         try
         {
-            // First, release any expired locks
-            await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
-
             // Acquire distributed lock to ensure only one instance processes messages
             var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
 
             if (!lockResult.IsSuccess)
             {
-                _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", string.Join(", ", lockResult.Errors));
+                var lockError = string.Join(", ", lockResult.Errors);
+                _logger.LogDebug("Could not acquire lock for inbox processing: {Error}", lockError);
+
+                if (IsInfrastructureLockFailure(lockError))
+                {
+                    throw new InvalidOperationException($"Distributed lock acquisition failed for {_lockKey}: {lockError}");
+                }
+
                 return;
             }
 
@@ -89,6 +93,9 @@ public class InboxProcessorJob : IJob
 
             try
             {
+                // Release any expired application-level inbox message locks (only the pod that won the distributed lock does this)
+                await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
+
                 var processed = 0;
                 var startTime = DateTime.UtcNow;
 
@@ -111,7 +118,18 @@ public class InboxProcessorJob : IJob
                     // Renew lock if we're still processing
                     if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
                     {
-                        await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        var renewResult = await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        if (!renewResult.IsSuccess)
+                        {
+                            var renewError = string.Join(", ", renewResult.Errors);
+                            _logger.LogWarning("Failed to renew lock for inbox processing: {Error}", renewError);
+
+                            if (IsInfrastructureLockFailure(renewError))
+                            {
+                                throw new InvalidOperationException($"Distributed lock renewal failed for {_lockKey}: {renewError}");
+                            }
+                        }
+
                         startTime = DateTime.UtcNow;
                     }
                 }
@@ -127,8 +145,17 @@ public class InboxProcessorJob : IJob
             }
             finally
             {
-                // Release the lock
-                await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+                var releaseResult = await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, CancellationToken.None);
+                if (!releaseResult.IsSuccess)
+                {
+                    var releaseError = string.Join(", ", releaseResult.Errors);
+                    _logger.LogWarning("Failed to release lock for inbox processing: {Error}", releaseError);
+
+                    if (IsInfrastructureLockFailure(releaseError))
+                    {
+                        throw new InvalidOperationException($"Distributed lock release failed for {_lockKey}: {releaseError}");
+                    }
+                }
             }
 
             _circuitBreaker.RecordSuccess(_lockKey);
@@ -137,6 +164,23 @@ public class InboxProcessorJob : IJob
         {
             _circuitBreaker.RecordFailure(_lockKey, ex);
         }
+    }
+
+    private static bool IsInfrastructureLockFailure(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        var normalized = error.ToLowerInvariant();
+        return normalized.Contains("redis") ||
+               normalized.Contains("connect") ||
+               normalized.Contains("socket") ||
+               normalized.Contains("network") ||
+               normalized.Contains("error acquiring lock") ||
+               normalized.Contains("error releasing lock") ||
+               normalized.Contains("error renewing lock");
     }
 
     private async Task ProcessMessage(InboxMessage message, CancellationToken cancellationToken)

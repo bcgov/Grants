@@ -73,7 +73,14 @@ public class OutboxTimeoutJob : IJob
 
             if (!lockResult.IsSuccess)
             {
-                _logger.LogDebug("Could not acquire lock for outbox timeout processing: {Error}", string.Join(", ", lockResult.Errors));
+                var lockError = string.Join(", ", lockResult.Errors);
+                _logger.LogDebug("Could not acquire lock for outbox timeout processing: {Error}", lockError);
+
+                if (IsInfrastructureLockFailure(lockError))
+                {
+                    throw new InvalidOperationException($"Distributed lock acquisition failed for {_lockKey}: {lockError}");
+                }
+
                 return;
             }
 
@@ -113,7 +120,17 @@ public class OutboxTimeoutJob : IJob
             }
             finally
             {
-                await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+                var releaseResult = await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+                if (!releaseResult.IsSuccess)
+                {
+                    var releaseError = string.Join(", ", releaseResult.Errors);
+                    _logger.LogWarning("Failed to release lock for outbox timeout processing: {Error}", releaseError);
+
+                    if (IsInfrastructureLockFailure(releaseError))
+                    {
+                        throw new InvalidOperationException($"Distributed lock release failed for {_lockKey}: {releaseError}");
+                    }
+                }
             }
 
             _circuitBreaker.RecordSuccess(_lockKey);
@@ -122,6 +139,24 @@ public class OutboxTimeoutJob : IJob
         {
             _circuitBreaker.RecordFailure(_lockKey, ex);
         }
+    }
+
+    private static bool IsInfrastructureLockFailure(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        var normalized = error.ToLowerInvariant();
+        return normalized.Contains("timeout") ||
+               normalized.Contains("redis") ||
+               normalized.Contains("connect") ||
+               normalized.Contains("socket") ||
+               normalized.Contains("network") ||
+               normalized.Contains("error acquiring lock") ||
+               normalized.Contains("error releasing lock") ||
+               normalized.Contains("error renewing lock");
     }
 
     private async Task ProcessTimedOutMessage(OutboxMessage message, CancellationToken cancellationToken)
