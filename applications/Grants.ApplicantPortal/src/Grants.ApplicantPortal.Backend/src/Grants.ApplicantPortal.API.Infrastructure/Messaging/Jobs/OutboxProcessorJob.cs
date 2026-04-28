@@ -58,9 +58,6 @@ public class OutboxProcessorJob : IJob
 
         try
         {
-            // First, release any expired locks
-            await _outboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
-
             // Acquire distributed lock to ensure only one instance processes messages
             var lockResult = await _distributedLock.AcquireLockAsync(_lockKey, _lockDuration, TimeSpan.FromSeconds(5), cancellationToken);
 
@@ -81,6 +78,9 @@ public class OutboxProcessorJob : IJob
 
             try
             {
+                // Release any expired message processing locks (only the pod that won the distributed lock does this)
+                await _outboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
+
                 var processed = 0;
                 var startTime = DateTime.UtcNow;
 
