@@ -103,7 +103,18 @@ public class OutboxProcessorJob : IJob
                     // Renew lock if we're still processing
                     if (DateTime.UtcNow.Subtract(startTime) > TimeSpan.FromMinutes(2))
                     {
-                        await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        var renewResult = await _distributedLock.RenewLockAsync(_lockKey, lockToken, _lockDuration, cancellationToken);
+                        if (!renewResult.IsSuccess)
+                        {
+                            var renewError = string.Join(", ", renewResult.Errors);
+                            _logger.LogWarning("Failed to renew lock for outbox processing: {Error}", renewError);
+
+                            if (IsInfrastructureLockFailure(renewError))
+                            {
+                                throw new InvalidOperationException($"Distributed lock renewal failed for {_lockKey}: {renewError}");
+                            }
+                        }
+
                         startTime = DateTime.UtcNow;
                     }
                 }
@@ -119,7 +130,7 @@ public class OutboxProcessorJob : IJob
             }
             finally
             {
-                var releaseResult = await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+                var releaseResult = await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, CancellationToken.None);
                 if (!releaseResult.IsSuccess)
                 {
                     var releaseError = string.Join(", ", releaseResult.Errors);
@@ -148,8 +159,7 @@ public class OutboxProcessorJob : IJob
         }
 
         var normalized = error.ToLowerInvariant();
-        return normalized.Contains("timeout") ||
-               normalized.Contains("redis") ||
+        return normalized.Contains("redis") ||
                normalized.Contains("connect") ||
                normalized.Contains("socket") ||
                normalized.Contains("network") ||
