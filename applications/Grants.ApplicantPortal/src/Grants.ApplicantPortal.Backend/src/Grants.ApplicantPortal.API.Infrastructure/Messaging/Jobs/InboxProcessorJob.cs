@@ -145,7 +145,7 @@ public class InboxProcessorJob : IJob
             }
             finally
             {
-                var releaseResult = await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, cancellationToken);
+                var releaseResult = await _distributedLock.ReleaseLockAsync(_lockKey, lockToken, CancellationToken.None);
                 if (!releaseResult.IsSuccess)
                 {
                     var releaseError = string.Join(", ", releaseResult.Errors);
@@ -174,8 +174,7 @@ public class InboxProcessorJob : IJob
         }
 
         var normalized = error.ToLowerInvariant();
-        return normalized.Contains("timeout") ||
-               normalized.Contains("redis") ||
+        return normalized.Contains("redis") ||
                normalized.Contains("connect") ||
                normalized.Contains("socket") ||
                normalized.Contains("network") ||
