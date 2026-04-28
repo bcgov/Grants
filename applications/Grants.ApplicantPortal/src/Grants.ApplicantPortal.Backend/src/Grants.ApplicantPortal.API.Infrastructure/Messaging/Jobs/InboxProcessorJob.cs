@@ -93,7 +93,7 @@ public class InboxProcessorJob : IJob
 
             try
             {
-                // Release any expired row-level locks (only the pod that won the distributed lock does this)
+                // Release any expired application-level inbox message locks (only the pod that won the distributed lock does this)
                 await _inboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
 
                 var processed = 0;

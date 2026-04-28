@@ -78,7 +78,7 @@ public class OutboxProcessorJob : IJob
 
             try
             {
-                // Release any expired row-level locks (only the pod that won the distributed lock does this)
+                // Release any expired message processing locks (only the pod that won the distributed lock does this)
                 await _outboxRepository.ReleaseExpiredLocksAsync(cancellationToken);
 
                 var processed = 0;
