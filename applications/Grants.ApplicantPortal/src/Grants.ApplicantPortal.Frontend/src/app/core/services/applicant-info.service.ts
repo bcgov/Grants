@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError, timer } from 'rxjs';
-import { map, retry, catchError, switchMap, shareReplay } from 'rxjs/operators';
+import { map, retry, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
@@ -573,20 +573,31 @@ export class ApplicantInfoService {
 
   /**
    * Returns a shared polling stream of events for the given workspace/provider.
-   * Emits immediately, then every 15s. Multiplexed across all subscribers via
+   * Emits immediately, then every 30s. Multiplexed across all subscribers via
    * shareReplay so we only hit the API once per interval regardless of how
-   * many components subscribe.
+   * many components subscribe. The cache entry is evicted automatically once
+   * the last subscriber unsubscribes, so switching workspaces/providers does
+   * not leak stale streams.
    */
   pollEvents(pluginId: string, provider: string): Observable<PluginEventDto[]> {
     const key = `${pluginId}|${provider}`;
-    let stream = this.eventsPollers.get(key);
-    if (!stream) {
-      stream = timer(0, ApplicantInfoService.EVENTS_POLL_INTERVAL_MS).pipe(
-        switchMap(() => this.getEvents(pluginId, provider)),
-        shareReplay({ bufferSize: 1, refCount: true })
-      );
-      this.eventsPollers.set(key, stream);
+    const existing = this.eventsPollers.get(key);
+    if (existing) {
+      return existing;
     }
+    let stream!: Observable<PluginEventDto[]>;
+    stream = timer(0, ApplicantInfoService.EVENTS_POLL_INTERVAL_MS).pipe(
+      switchMap(() => this.getEvents(pluginId, provider)),
+      finalize(() => {
+        // Only evict if this exact stream is still cached; a concurrent
+        // re-subscription may have replaced it.
+        if (this.eventsPollers.get(key) === stream) {
+          this.eventsPollers.delete(key);
+        }
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+    this.eventsPollers.set(key, stream);
     return stream;
   }
 

@@ -60,6 +60,7 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
             });
         } else {
           this.events = [];
+          this.isLoading = false;
         }
       });
   }
