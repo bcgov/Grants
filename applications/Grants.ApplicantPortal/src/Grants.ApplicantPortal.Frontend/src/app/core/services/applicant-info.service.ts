@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { map, retry, catchError } from 'rxjs/operators';
+import { Observable, of, throwError, timer } from 'rxjs';
+import { map, retry, catchError, switchMap, shareReplay } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
@@ -548,6 +548,15 @@ export class ApplicantInfoService {
   // ── Plugin Events ──────────────────────────────────────────────
 
   /**
+   * Cache of shared polling streams keyed by `${pluginId}|${provider}`.
+   * Ensures multiple subscribers (e.g. duplicated notifications dropdowns in
+   * mobile + desktop headers) share a single HTTP request per interval
+   * instead of each running their own timer.
+   */
+  private readonly eventsPollers = new Map<string, Observable<PluginEventDto[]>>();
+  private static readonly EVENTS_POLL_INTERVAL_MS = 30000;
+
+  /**
    * Gets unacknowledged events for the current workspace/provider.
    * Fails silently — events are non-blocking.
    */
@@ -560,6 +569,25 @@ export class ApplicantInfoService {
         return of([]);
       })
     );
+  }
+
+  /**
+   * Returns a shared polling stream of events for the given workspace/provider.
+   * Emits immediately, then every 15s. Multiplexed across all subscribers via
+   * shareReplay so we only hit the API once per interval regardless of how
+   * many components subscribe.
+   */
+  pollEvents(pluginId: string, provider: string): Observable<PluginEventDto[]> {
+    const key = `${pluginId}|${provider}`;
+    let stream = this.eventsPollers.get(key);
+    if (!stream) {
+      stream = timer(0, ApplicantInfoService.EVENTS_POLL_INTERVAL_MS).pipe(
+        switchMap(() => this.getEvents(pluginId, provider)),
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      this.eventsPollers.set(key, stream);
+    }
+    return stream;
   }
 
   /**
