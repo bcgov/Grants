@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { map, retry, catchError } from 'rxjs/operators';
+import { Observable, of, throwError, timer } from 'rxjs';
+import { map, retry, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import {
   BackendResponse,  
   OrganizationData,
@@ -548,6 +548,15 @@ export class ApplicantInfoService {
   // ── Plugin Events ──────────────────────────────────────────────
 
   /**
+   * Cache of shared polling streams keyed by `${pluginId}|${provider}`.
+   * Ensures multiple subscribers (e.g. duplicated notifications dropdowns in
+   * mobile + desktop headers) share a single HTTP request per interval
+   * instead of each running their own timer.
+   */
+  private readonly eventsPollers = new Map<string, Observable<PluginEventDto[]>>();
+  private static readonly EVENTS_POLL_INTERVAL_MS = 30000;
+
+  /**
    * Gets unacknowledged events for the current workspace/provider.
    * Fails silently — events are non-blocking.
    */
@@ -560,6 +569,36 @@ export class ApplicantInfoService {
         return of([]);
       })
     );
+  }
+
+  /**
+   * Returns a shared polling stream of events for the given workspace/provider.
+   * Emits immediately, then every 30s. Multiplexed across all subscribers via
+   * shareReplay so we only hit the API once per interval regardless of how
+   * many components subscribe. The cache entry is evicted automatically once
+   * the last subscriber unsubscribes, so switching workspaces/providers does
+   * not leak stale streams.
+   */
+  pollEvents(pluginId: string, provider: string): Observable<PluginEventDto[]> {
+    const key = `${pluginId}|${provider}`;
+    const existing = this.eventsPollers.get(key);
+    if (existing) {
+      return existing;
+    }
+    let stream!: Observable<PluginEventDto[]>;
+    stream = timer(0, ApplicantInfoService.EVENTS_POLL_INTERVAL_MS).pipe(
+      switchMap(() => this.getEvents(pluginId, provider)),
+      finalize(() => {
+        // Only evict if this exact stream is still cached; a concurrent
+        // re-subscription may have replaced it.
+        if (this.eventsPollers.get(key) === stream) {
+          this.eventsPollers.delete(key);
+        }
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+    this.eventsPollers.set(key, stream);
+    return stream;
   }
 
   /**
