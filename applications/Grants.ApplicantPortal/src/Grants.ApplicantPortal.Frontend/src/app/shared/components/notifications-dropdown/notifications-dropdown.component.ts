@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject, timer, of } from 'rxjs';
-import { takeUntil, switchMap } from 'rxjs/operators';
+import { Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { WorkspaceService } from '../../../core/services/workspace.service';
@@ -23,6 +23,7 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
 
   private pluginId: string | null = null;
   private provider: string | null = null;
+  private pollSub: Subscription | null = null;
 
   constructor(
     private readonly applicantInfoService: ApplicantInfoService,
@@ -31,39 +32,35 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // React to workspace changes and load events
+    // React to workspace changes and (re)start the shared events poll
     this.workspaceService.currentWorkspaceState$
       .pipe(takeUntil(this.destroy$))
       .subscribe(state => {
         this.pluginId = state.selectedWorkspace?.pluginId ?? null;
         this.provider = state.selectedProvider ?? null;
 
+        // Tear down any previous subscription before starting a new one
+        this.pollSub?.unsubscribe();
+        this.pollSub = null;
+
         if (this.pluginId && this.provider) {
-          this.loadEvents();
+          this.isLoading = true;
+          this.pollSub = this.applicantInfoService
+            .pollEvents(this.pluginId, this.provider)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (events) => {
+                this.events = events;
+                this.isLoading = false;
+              },
+              error: (err) => {
+                console.error('Failed to refresh events:', err);
+                this.isLoading = false;
+              }
+            });
         } else {
           this.events = [];
-        }
-      });
-
-    // Set up timer to refresh events every 15 seconds
-    timer(15000, 15000) // Start after 15 seconds, then every 15 seconds
-      .pipe(
-        takeUntil(this.destroy$),
-        switchMap(() => {
-          // Only refresh if we have valid pluginId and provider
-          if (this.pluginId && this.provider) {
-            return this.applicantInfoService.getEvents(this.pluginId, this.provider);
-          }
-          return of([]); // Return empty array to match PluginEventDto[] type
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          this.events = response;
-        },
-        error: (err) => {
-          console.error('Failed to refresh events:', err);
-          // Don't clear existing events on error, just log it
+          this.isLoading = false;
         }
       });
   }
@@ -121,23 +118,5 @@ export class NotificationsDropdownComponent implements OnInit, OnDestroy {
       case 'Info':
       default:        return 'fas fa-info-circle';
     }
-  }
-
-  private loadEvents(): void {
-    if (!this.pluginId || !this.provider) return;
-
-    this.isLoading = true;
-    this.applicantInfoService.getEvents(this.pluginId, this.provider)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (events) => {
-          this.events = events;
-          this.isLoading = false;
-        },
-        error: () => {
-          this.events = [];
-          this.isLoading = false;
-        }
-      });
   }
 }
