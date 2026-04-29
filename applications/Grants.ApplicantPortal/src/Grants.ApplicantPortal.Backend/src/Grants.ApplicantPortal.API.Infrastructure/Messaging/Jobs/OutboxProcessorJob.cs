@@ -68,7 +68,7 @@ public class OutboxProcessorJob : IJob
 
                 if (IsInfrastructureLockFailure(lockError))
                 {
-                    throw new InvalidOperationException($"Distributed lock acquisition failed for {_lockKey}: {lockError}");
+                    throw new DistributedLockException($"Distributed lock acquisition failed for {_lockKey}: {lockError}");
                 }
 
                 return;
@@ -111,7 +111,7 @@ public class OutboxProcessorJob : IJob
 
                             if (IsInfrastructureLockFailure(renewError))
                             {
-                                throw new InvalidOperationException($"Distributed lock renewal failed for {_lockKey}: {renewError}");
+                                throw new DistributedLockException($"Distributed lock renewal failed for {_lockKey}: {renewError}");
                             }
                         }
 
@@ -138,12 +138,16 @@ public class OutboxProcessorJob : IJob
 
                     if (IsInfrastructureLockFailure(releaseError))
                     {
-                        throw new InvalidOperationException($"Distributed lock release failed for {_lockKey}: {releaseError}");
+                        throw new DistributedLockException($"Distributed lock release failed for {_lockKey}: {releaseError}");
                     }
                 }
             }
 
             _circuitBreaker.RecordSuccess(_lockKey);
+        }
+        catch (DistributedLockException ex)
+        {
+            _circuitBreaker.RecordFailure(_lockKey, ex);
         }
         catch (Exception ex)
         {

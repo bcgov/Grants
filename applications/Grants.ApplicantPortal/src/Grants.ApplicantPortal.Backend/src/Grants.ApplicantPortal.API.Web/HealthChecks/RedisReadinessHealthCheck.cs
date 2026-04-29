@@ -25,11 +25,13 @@ public class RedisReadinessHealthCheck(
         try
         {
             var multiplexer = serviceProvider.GetService<IConnectionMultiplexer>();
-            if (multiplexer is not null && !multiplexer.IsConnected)
+            if (multiplexer is null)
             {
-                return HealthCheckResult.Degraded("Redis multiplexer is disconnected");
+                return HealthCheckResult.Degraded("Redis multiplexer is not registered");
             }
 
+            // Always attempt a real round-trip — IsConnected can return true even when the
+            // operation backlog is saturated after an overnight Redis pod recycle.
             var marker = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
             await distributedCache.SetStringAsync(
                 ProbeKey,
