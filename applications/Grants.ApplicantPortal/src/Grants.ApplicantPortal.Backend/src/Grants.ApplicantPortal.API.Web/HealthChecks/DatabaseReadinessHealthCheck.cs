@@ -20,9 +20,9 @@ public class DatabaseReadinessHealthCheck(
             // Open a fresh connection explicitly instead of relying on CanConnectAsync,
             // which may return a cached/pooled result and miss a stale pool after a DB recycle.
             // This ensures OpenShift's readiness probe detects dead connections and restarts the pod.
-            var connection = dbContext.Database.GetDbConnection();
-            await connection.OpenAsync(cancellationToken);
-            await connection.CloseAsync();
+            // Use EF's DatabaseFacade methods so EF tracks connection state consistently.
+            await dbContext.Database.OpenConnectionAsync(cancellationToken);
+            await dbContext.Database.CloseConnectionAsync();
 
             return HealthCheckResult.Healthy("Database connectivity verified");
         }

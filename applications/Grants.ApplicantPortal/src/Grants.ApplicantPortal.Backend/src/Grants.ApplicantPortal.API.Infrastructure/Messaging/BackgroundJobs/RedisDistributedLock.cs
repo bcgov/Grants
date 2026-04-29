@@ -71,12 +71,12 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
       // Transient connectivity loss (e.g. Redis pod recycled overnight). The job circuit
       // breaker handles back-off; log as Warning so it doesn't appear as an application error.
       logger.LogWarning(ex, "Redis unavailable while acquiring distributed lock {Key}", key);
-      return Result<string>.Error($"Error acquiring lock: {ex.Message}");
+      return Result<string>.Error("Redis unavailable while acquiring lock");
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error acquiring distributed lock {Key}", key);
-      return Result<string>.Error($"Error acquiring lock: {ex.Message}");
+      return Result<string>.Error("Error acquiring lock");
     }
   }
 
@@ -108,7 +108,7 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
     catch (Exception ex)
     {
       logger.LogError(ex, "Error renewing distributed lock {Key}", key);
-      return Result.Error($"Error renewing lock: {ex.Message}");
+      return Result.Error("Error renewing lock");
     }
   }
 
@@ -139,7 +139,7 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
     catch (Exception ex)
     {
       logger.LogError(ex, "Error releasing distributed lock {Key}", key);
-      return Result.Error($"Error releasing lock: {ex.Message}");
+      return Result.Error("Error releasing lock");
     }
   }
 

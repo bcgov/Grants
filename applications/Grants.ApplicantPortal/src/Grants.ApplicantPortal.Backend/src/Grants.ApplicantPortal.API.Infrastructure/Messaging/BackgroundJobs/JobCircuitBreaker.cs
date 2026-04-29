@@ -88,10 +88,7 @@ public sealed class JobCircuitBreaker
 
         // Log strategy: infrastructure failures (Redis/connectivity) at Warning; code failures at Error.
         // First failure always logged; every Nth failure logged during sustained outage; others suppressed.
-        var isInfrastructureFailure = exception is StackExchange.Redis.RedisException
-            || exception is System.Net.Sockets.SocketException
-            || (exception.InnerException is StackExchange.Redis.RedisException)
-            || (exception.InnerException is System.Net.Sockets.SocketException);
+        var isInfrastructureFailure = exception is DistributedLockException;
 
         if (state.ConsecutiveFailures == 1)
         {

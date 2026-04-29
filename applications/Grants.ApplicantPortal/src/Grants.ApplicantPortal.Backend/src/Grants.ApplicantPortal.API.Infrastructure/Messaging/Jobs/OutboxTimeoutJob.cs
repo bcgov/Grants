@@ -78,7 +78,7 @@ public class OutboxTimeoutJob : IJob
 
                 if (IsInfrastructureLockFailure(lockError))
                 {
-                    throw new InvalidOperationException($"Distributed lock acquisition failed for {_lockKey}: {lockError}");
+                    throw new DistributedLockException($"Distributed lock acquisition failed for {_lockKey}: {lockError}");
                 }
 
                 return;
@@ -128,18 +128,15 @@ public class OutboxTimeoutJob : IJob
 
                     if (IsInfrastructureLockFailure(releaseError))
                     {
-                        throw new InvalidOperationException($"Distributed lock release failed for {_lockKey}: {releaseError}");
+                        throw new DistributedLockException($"Distributed lock release failed for {_lockKey}: {releaseError}");
                     }
                 }
             }
 
             _circuitBreaker.RecordSuccess(_lockKey);
         }
-        catch (StackExchange.Redis.RedisException ex)
+        catch (DistributedLockException ex)
         {
-            // Redis unavailability is a transient infrastructure event, not a code bug.
-            // Route through the circuit breaker so subsequent ticks are skipped with
-            // exponential back-off instead of spamming [ERR] on every poll interval.
             _circuitBreaker.RecordFailure(_lockKey, ex);
         }
         catch (Exception ex)
