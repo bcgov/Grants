@@ -14,6 +14,9 @@ public static class RedisConnectionOptionsFactory
         options.ConnectTimeout = Math.Max(options.ConnectTimeout, 10000);
         options.SyncTimeout = Math.Max(options.SyncTimeout, 5000);
         options.ReconnectRetryPolicy = new ExponentialRetry(3000);
+        // Send TCP keep-alive probes every 60 s so the multiplexer detects dead connections
+        // (e.g. after an overnight Redis pod recycle) proactively rather than on the next operation.
+        options.KeepAlive = 60;
 
         logger.LogInformation(
             "Redis options prepared for {Purpose}. Sentinel: {IsSentinel}, ServiceName: {ServiceName}, Endpoints: {Endpoints}",
