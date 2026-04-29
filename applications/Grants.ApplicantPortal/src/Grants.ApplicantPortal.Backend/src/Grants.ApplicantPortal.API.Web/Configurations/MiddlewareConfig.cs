@@ -25,6 +25,16 @@ public static class MiddlewareConfig
       app.UseHsts();
     }
 
+    app.MapHealthChecks("/healthz", new HealthCheckOptions
+    {
+      Predicate = r => r.Tags.Contains("live"),
+      ResultStatusCodes =
+      {
+        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+      }
+    });
+
     app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
     {
       Predicate = healthCheck => healthCheck.Tags.Contains("ready"),
