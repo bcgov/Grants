@@ -86,12 +86,27 @@ public sealed class JobCircuitBreaker
 
         state.NextAllowedAttemptUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
 
-        // Log strategy: first failure = Error, every Nth = Warning, others = Debug
+        // Log strategy: infrastructure failures (Redis/connectivity) at Warning; code failures at Error.
+        // First failure always logged; every Nth failure logged during sustained outage; others suppressed.
+        var isInfrastructureFailure = exception is StackExchange.Redis.RedisException
+            || exception is System.Net.Sockets.SocketException
+            || (exception.InnerException is StackExchange.Redis.RedisException)
+            || (exception.InnerException is System.Net.Sockets.SocketException);
+
         if (state.ConsecutiveFailures == 1)
         {
-            _logger.LogError(exception,
-                "{JobKey} failed — circuit opened. Next attempt in {Backoff}s",
-                jobKey, (int)backoffSeconds);
+            if (isInfrastructureFailure)
+            {
+                _logger.LogWarning(exception,
+                    "{JobKey} infrastructure unavailable — circuit opened. Next attempt in {Backoff}s",
+                    jobKey, (int)backoffSeconds);
+            }
+            else
+            {
+                _logger.LogError(exception,
+                    "{JobKey} failed — circuit opened. Next attempt in {Backoff}s",
+                    jobKey, (int)backoffSeconds);
+            }
         }
         else if (state.ConsecutiveFailures % logEveryNth == 0)
         {

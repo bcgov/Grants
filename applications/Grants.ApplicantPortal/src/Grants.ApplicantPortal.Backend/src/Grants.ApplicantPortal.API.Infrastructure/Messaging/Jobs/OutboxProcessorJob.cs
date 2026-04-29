@@ -145,6 +145,13 @@ public class OutboxProcessorJob : IJob
 
             _circuitBreaker.RecordSuccess(_lockKey);
         }
+        catch (StackExchange.Redis.RedisException ex)
+        {
+            // Redis unavailability is a transient infrastructure event, not a code bug.
+            // Route through the circuit breaker so subsequent ticks are skipped with
+            // exponential back-off instead of spamming [ERR] on every poll interval.
+            _circuitBreaker.RecordFailure(_lockKey, ex);
+        }
         catch (Exception ex)
         {
             _circuitBreaker.RecordFailure(_lockKey, ex);

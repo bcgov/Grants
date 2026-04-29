@@ -1,4 +1,5 @@
 ﻿using Grants.ApplicantPortal.API.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Grants.ApplicantPortal.API.Web.HealthChecks;
@@ -16,11 +17,12 @@ public class DatabaseReadinessHealthCheck(
             using var scope = serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
-            if (!canConnect)
-            {
-                return HealthCheckResult.Unhealthy("Database is not reachable");
-            }
+            // Open a fresh connection explicitly instead of relying on CanConnectAsync,
+            // which may return a cached/pooled result and miss a stale pool after a DB recycle.
+            // This ensures OpenShift's readiness probe detects dead connections and restarts the pod.
+            var connection = dbContext.Database.GetDbConnection();
+            await connection.OpenAsync(cancellationToken);
+            await connection.CloseAsync();
 
             return HealthCheckResult.Healthy("Database connectivity verified");
         }

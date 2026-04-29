@@ -66,6 +66,13 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
       logger.LogDebug("Failed to acquire distributed lock {Key}", key);
       return Result<string>.Error($"Could not acquire lock '{key}' within the specified timeout");
     }
+    catch (RedisConnectionException ex)
+    {
+      // Transient connectivity loss (e.g. Redis pod recycled overnight). The job circuit
+      // breaker handles back-off; log as Warning so it doesn't appear as an application error.
+      logger.LogWarning(ex, "Redis unavailable while acquiring distributed lock {Key}", key);
+      return Result<string>.Error($"Error acquiring lock: {ex.Message}");
+    }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error acquiring distributed lock {Key}", key);
