@@ -17,9 +17,17 @@ public static class InfrastructureServiceExtensions
 
     var databaseOptions = config.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
 
-    services.AddDbContext<AppDbContext>((serviceProvider, options) => 
+    // Append connection pool lifetime settings directly on the connection string so that
+    // pooled TCP sockets are rotated before they go stale (e.g. after a CrunchyDB recycle).
+    var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder(connectionString)
     {
-      options.UseNpgsql(connectionString, npgsqlOptions =>
+        ConnectionLifetime = databaseOptions.ConnectionLifetimeSeconds,
+        ConnectionIdleLifetime = databaseOptions.ConnectionIdleLifetimeSeconds
+    };
+
+    services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+    {
+      options.UseNpgsql(connectionStringBuilder.ConnectionString, npgsqlOptions =>
       {
         npgsqlOptions.CommandTimeout(databaseOptions.CommandTimeoutSeconds);
         npgsqlOptions.EnableRetryOnFailure(
