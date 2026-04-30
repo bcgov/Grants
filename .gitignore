@@ -149,6 +149,9 @@ rcf/
 ClientBin/
 CLAUDE.*
 .claude
+# Allow project-level Claude skills/instructions to be tracked
+!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/
+!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/**
 ~$*
 *~
 *.dbmdl
