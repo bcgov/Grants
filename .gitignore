@@ -150,8 +150,13 @@ ClientBin/
 CLAUDE.*
 .claude
 # Allow project-level Claude skills/instructions to be tracked
+!applications/Grants.ApplicantPortal/CLAUDE.md
+!applications/Grants.ApplicantPortal/.claude/
+!applications/Grants.ApplicantPortal/.claude/**
 !applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/
 !applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/**
+!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/
+!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/**
 ~$*
 *~
 *.dbmdl
