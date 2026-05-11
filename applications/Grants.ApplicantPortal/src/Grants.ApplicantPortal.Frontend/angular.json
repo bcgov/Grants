@@ -31,6 +31,7 @@
             ],
             "styles": [
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/@bcgov/design-tokens/css/variables.css",
               "node_modules/@bcgov/bootstrap-v5-theme/css/bootstrap-theme.min.css",
               "src/styles/styles.scss"
             ],
@@ -98,6 +99,7 @@
             ],
             "styles": [
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/@bcgov/design-tokens/css/variables.css",
               "node_modules/@bcgov/bootstrap-v5-theme/css/bootstrap-theme.min.css",
               "src/styles/styles.scss"
             ],
