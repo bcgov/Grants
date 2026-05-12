@@ -43,4 +43,7 @@ Read an existing comparable endpoint in `applications/Grants.ApplicantPortal/src
 - Do NOT create MVC controllers
 
 ## After creating files
-Ask if the user also wants to scaffold the matching use case (Command/Query + Handler) in `API.UseCases/<Domain>/<Action>/`.
+
+Run `dotnet build` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/` to confirm no compilation errors before reporting done.
+
+Ask if the user also wants to scaffold the matching use case (Command/Query + Handler) in `API.UseCases/<Domain>/<Action>/` — the use case agent will write the unit test as part of that step.

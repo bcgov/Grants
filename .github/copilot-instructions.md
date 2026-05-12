@@ -62,9 +62,12 @@ src/app/
 
 ### Testing
 
+- **Tests are mandatory** — every new component and service must have a `*.spec.ts` written in the same pass as the implementation
 - Unit tests live next to source: `*.component.spec.ts`, `*.service.spec.ts`
-- Use `TestBed` for Angular component/service tests
-- Run: `npm test` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`
+- Use `TestBed` with `imports: [StandaloneComponent]` for standalone components — never `declarations`
+- Use `HttpClientTestingModule` + `HttpTestingController` for services that make HTTP calls
+- Minimum coverage: creates + key `@Input` bindings + primary method behaviour
+- Run: `npm test -- --no-progress --watch=false --browsers=ChromeHeadless` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`
 
 ---
 
@@ -125,7 +128,8 @@ Never throw exceptions for expected domain failures.
 
 ### Testing
 
-- **Unit**: `tests/API.UnitTests/` — mock repositories, test handlers in isolation
+- **Tests are mandatory** — every new handler must have a unit test written in the same pass as the implementation
+- **Unit**: `tests/API.UnitTests/<Domain>/<HandlerName>Tests.cs` — mock dependencies with `Moq`, assert `Result<T>` values
 - **Integration**: `tests/API.IntegrationTests/` — real PostgreSQL (no mocks)
 - **Functional**: `tests/API.FunctionalTests/` — HTTP-level, real running app
 - Run: `dotnet test` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`

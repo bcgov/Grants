@@ -36,5 +36,16 @@ Read a comparable handler in `applications/Grants.ApplicantPortal/src/Grants.App
 - Constructor injection only — no service locator
 - Check `UseCases/<Domain>/` for an existing mutation result DTO before creating a new one
 
+## Write a unit test (mandatory)
+
+Create a test class in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/tests/Grants.ApplicantPortal.API.UnitTests/<Domain>/`
+
+File: `<Action><Domain>HandlerTests.cs`
+
+- Read an existing test in that folder first to match the exact Moq + xUnit arrange/act/assert pattern
+- Mock all injected dependencies with `Moq`
+- Cover: happy path (`Result.Success`), not-found, forbidden/ownership failure, and validation failure where applicable
+- Assert the `Result<T>` value and status — do not test HTTP layer behaviour from unit tests
+
 ## After creating files
-Report each file path created and the interfaces implemented. Offer to also run `/new-endpoint` to wire up the HTTP layer.
+Report each file path created, including the test file, and the interfaces implemented. Offer to also run `/new-endpoint` to wire up the HTTP layer.

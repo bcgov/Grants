@@ -18,6 +18,8 @@ documentation/
 └── architecture-decisions/  # HANDS OFF — immutable ADR records
 ```
 
+**Do not forget to update this structure description if the docs structure changes.**
+
 ---
 
 ## Task 1 — Update `documentation/auto/API-Endpoints.md`

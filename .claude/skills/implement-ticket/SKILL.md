@@ -102,6 +102,7 @@ Pass each sub-agent:
 - The relevant part of the architectural plan from Phase 3
 - The acceptance criteria their work must satisfy
 - A reminder to read existing parallel files before writing
+- An explicit instruction: **unit tests are part of this phase** — every new handler (backend) and every new component/service (frontend) must have a spec file written before the sub-agent reports done
 
 Wait for both to complete before proceeding.
 
@@ -111,8 +112,9 @@ Wait for both to complete before proceeding.
 
 Delegate to the **test-guardian** sub-agent:
 
-- Run the relevant test suite(s) for the changed code
-- If tests fail: fix them (or ask the appropriate developer sub-agent to fix them), then re-run
+- Run the full relevant test suite(s) — tests were written in Phase 4, this is the verification gate
+- If any tests fail: diagnose the root cause, fix via the appropriate developer sub-agent, then re-run
+- If any new code is found to be untested (Phase 4 missed it): write the missing tests now
 - Confirm all tests pass before proceeding
 
 ---

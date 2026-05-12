@@ -54,6 +54,7 @@ Instruct the sub-agent to:
 - Make the **smallest targeted change** that fixes the root cause
 - Not refactor surrounding code unless it is directly causing the bug
 - Not change test assertions to hide a failure — fix the source
+- **Write a regression test** that would have caught this bug — this is mandatory, not optional
 
 ---
 
@@ -61,9 +62,10 @@ Instruct the sub-agent to:
 
 Delegate to the **test-guardian** sub-agent:
 
-- Run the test suite(s) covering the affected code
-- If there was no test covering this bug path: write one that would have caught it
-- Confirm all tests pass
+- Run the full test suite(s) covering the affected code
+- Confirm the regression test written in Phase 3 is present and passes
+- If any other tests fail as a result of the fix: diagnose and fix them
+- Confirm all tests pass before proceeding
 
 ---
 

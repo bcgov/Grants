@@ -43,10 +43,76 @@ src/app/
 - No `any` types — define interfaces in `src/app/shared/models/`
 - HTTP methods return `Observable<T>` — never `Promise`; never subscribe in a service
 
+## Tests (mandatory — not optional)
+
+Every new component and service **must** have a spec file written as part of the same implementation pass.
+
+**Component spec pattern** (`<name>.component.spec.ts`):
+```typescript
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MyComponent } from './my.component';
+
+describe('MyComponent', () => {
+  let component: MyComponent;
+  let fixture: ComponentFixture<MyComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent],  // standalone — import the component itself
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  // Add tests for: @Input bindings, key template output, user interactions, emitted @Output events
+});
+```
+
+**Service spec pattern** (`<name>.service.spec.ts`):
+```typescript
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { MyService } from './my.service';
+
+describe('MyService', () => {
+  let service: MyService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [MyService],
+    });
+    service = TestBed.inject(MyService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  // Add tests for: each public method, observable emissions, HTTP request/response shapes
+});
+```
+
+Minimum coverage per file:
+- Component: creates, key `@Input`s bind correctly, primary template behaviour
+- Service: creates, each public method makes the expected HTTP call or returns the expected observable
+
 ## Before writing any code
 
 Read an existing parallel file in the same layer to match exact patterns. Do not guess — read first.
 
 ## After completing work
 
-Run `npm run build:dev` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/` to confirm no compilation errors. Report every file created or modified.
+1. Run `npm run build:dev` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/` — fix any compilation errors before reporting done.
+2. Run `npm test -- --no-progress --watch=false --browsers=ChromeHeadless` — fix any test failures before reporting done.
+3. Report every file created or modified, including spec files.

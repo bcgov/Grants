@@ -38,10 +38,24 @@ Invalid          → AddError() + SendErrorsAsync(422)
 result.Errors    → AddError() + SendErrorsAsync(400)
 ```
 
+## Tests (mandatory — not optional)
+
+Every new handler **must** have a corresponding unit test written as part of the same implementation pass.
+
+- Test location: `tests/Grants.ApplicantPortal.API.UnitTests/<Domain>/`
+- Naming: `<HandlerName>Tests.cs`
+- Mock injected interfaces with `Moq` — never use real infrastructure
+- Assert the `Result<T>` value, status, and errors — not HTTP layer behaviour
+- Cover: happy path, not-found, forbidden/ownership failure, and validation failure where applicable
+
+Read an existing test in the same domain before writing — e.g. look for `*Tests.cs` files in `tests/Grants.ApplicantPortal.API.UnitTests/` to match the exact arrange/act/assert pattern used.
+
 ## Before writing any code
 
 Read an existing parallel file in the same domain to match exact patterns. Do not guess — read first.
 
 ## After completing work
 
-Run `dotnet build` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/` to confirm no compilation errors. Report every file created or modified.
+1. Run `dotnet build` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/` — fix any compilation errors before reporting done.
+2. Run `dotnet test tests/Grants.ApplicantPortal.API.UnitTests` — fix any test failures before reporting done.
+3. Report every file created or modified, including test files.
