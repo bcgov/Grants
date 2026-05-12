@@ -1,10 +1,10 @@
 ---
-applyTo: src/Grants.ApplicantPortal.Frontend/**
+applyTo: applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/**
 ---
 
 # Frontend Instructions — Angular 20
 
-These rules apply to all files in the Angular frontend (`src/Grants.ApplicantPortal.Frontend/`).
+These rules apply to all files in the Angular frontend (`applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`).
 
 ## Architecture layers
 
@@ -57,4 +57,4 @@ src/app/
 
 - Unit test files live next to source: `<name>.component.spec.ts`, `<name>.service.spec.ts`
 - Use `TestBed` for Angular component and service tests
-- Run: `npm test` from `src/Grants.ApplicantPortal.Frontend/`
+- Run: `npm test` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`

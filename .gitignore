@@ -147,16 +147,9 @@ rcf/
 
 # Others
 ClientBin/
-CLAUDE.*
-.claude
-# Allow project-level Claude skills/instructions to be tracked
-!applications/Grants.ApplicantPortal/CLAUDE.md
-!applications/Grants.ApplicantPortal/.claude/
-!applications/Grants.ApplicantPortal/.claude/**
-!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/
-!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/**
-!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/
-!applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/**
+# Claude Code — tracked as first-class project files
+# .claude/settings.local.json is user-specific and should not be committed
+.claude/settings.local.json
 ~$*
 *~
 *.dbmdl

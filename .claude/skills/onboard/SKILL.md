@@ -31,7 +31,7 @@ Use the **Explore** sub-agent to read key files and produce a guided tour.
 ### If frontend is in scope
 
 Walk through:
-- `src/Grants.ApplicantPortal.Frontend/src/app/` — the four layers (core / features / layout / shared)
+- `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/` — the four layers (core / features / layout / shared)
 - `app.routes.ts` — how routing works, the auth guard pattern
 - `app.config.ts` — Angular providers and Keycloak setup
 - `api.service.ts` — how HTTP calls are made
@@ -55,7 +55,7 @@ Explain in plain language (adapted to their background from Phase 1):
 
 - **How auth works end-to-end**: Keycloak → login redirect → JWT → Bearer token → `auth.guard` / `auth.interceptor` → `RequireAuthenticatedUser` policy → `GetRequiredProfile()`
 - **How a feature is built**: ticket → endpoint → use case → handler → frontend service → component
-- **How to run the stack locally**: `docker-compose up --build` vs individual services
+- **How to run the stack locally**: `docker-compose up --build` from `applications/Grants.ApplicantPortal/` vs individual services
 - **How tests are organised**: unit / integration / functional on backend; spec files on frontend
 
 ---
@@ -74,9 +74,14 @@ Produce a personalised quick-reference card:
 ## Grants Applicant Portal — Cheat Sheet
 
 ### Run the stack
-docker-compose up --build   # full stack
-npm start                   # frontend only (http://localhost:4200)
-dotnet run --project ...    # backend only (https://localhost:7000)
+cd applications/Grants.ApplicantPortal
+docker-compose up --build                        # full stack
+
+cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
+npm start                                        # frontend only (http://localhost:4200)
+
+cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
+dotnet run --project src/Grants.ApplicantPortal.API.Web   # backend only (https://localhost:7000)
 
 ### Common tasks
 /implement-ticket <paste ticket>   # full ticket → code pipeline
@@ -91,12 +96,16 @@ dotnet run --project ...    # backend only (https://localhost:7000)
 /api-call <endpoint description>        # typed frontend HTTP method
 
 ### Tests
-dotnet test                                           # all backend suites
-dotnet test tests/...UnitTests                        # unit only
-npm test -- --no-progress --watch=false               # frontend
+# From applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/
+dotnet test                                     # all backend suites
+dotnet test tests/...UnitTests                  # unit only
+
+# From applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/
+npm test -- --no-progress --watch=false         # frontend
 
 ### Migrations
-dotnet ef migrations add <Name> --project src/API.Migrations --startup-project src/API.Web
+# From applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/
+dotnet ef migrations add <Name> --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web
 ```
 
 ## Rules

@@ -35,6 +35,10 @@ If no specific files or diff are provided, review all files changed on the curre
 - [ ] New handlers have unit tests in `tests/API.UnitTests/`
 - [ ] New Angular components/services have `*.spec.ts` files
 
+### Cypress E2E (AutoUI)
+- [ ] UI changes (route paths, selectors, labels, navigation) — flag if existing specs in `applications/Grants.AutoUI/` are likely affected
+- [ ] New user-facing features — flag if a stub spec should be created (use **autoui-guardian** agent to action this)
+
 ## Output format
 
 Produce a structured report:

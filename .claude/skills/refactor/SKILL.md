@@ -8,7 +8,7 @@ Refactor code in the Grants Applicant Portal.
 Target and goal: $ARGUMENTS
 
 Examples:
-- `refactor src/app/features/applicant-info/ extract shared address form logic into a shared service`
+- `refactor applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/features/applicant-info/ extract shared address form logic into a shared service`
 - `refactor API.UseCases/Addresses reduce duplication between Create and Update handlers`
 
 If `$ARGUMENTS` is empty, ask the user for the target (file, folder, or domain) and the refactoring goal before proceeding.
@@ -72,7 +72,34 @@ Delegate to the **code-reviewer** sub-agent to confirm the refactored code still
 
 ---
 
-## Phase 6 — Summary
+## Phase 6 — AutoUI Guard
+
+Delegate to the **autoui-guardian** sub-agent.
+
+Pass it:
+- A description of what changed in the UI (if anything): routes, selectors, element structure, text, navigation
+- The list of files modified
+
+The agent will check whether any existing Cypress specs or page objects in `applications/Grants.AutoUI/` are affected, and update them if needed.
+
+**Skip this phase and state "no AutoUI changes required" if the refactor was backend-only or had no UI-visible impact.**
+
+---
+
+## Phase 7 — Document
+
+Delegate to the **auto-documenter** sub-agent.
+
+Pass it:
+- Whether any API routes, request/response shapes, or auth policies changed as part of the refactor
+- Whether any architectural patterns were renamed or restructured in a way that would make `documentation/architecture/` docs inaccurate
+- The list of files modified
+
+**Skip this phase and state "no documentation changes required" if the refactor was purely internal with no externally visible changes.**
+
+---
+
+## Phase 8 — Summary
 
 ```
 ## Refactor complete
@@ -88,6 +115,12 @@ Delegate to the **code-reviewer** sub-agent to confirm the refactored code still
 
 ### Test results
 <suite: X passed>
+
+### AutoUI
+<list of Cypress specs/page objects fixed — or "no AutoUI changes required">
+
+### Documentation
+<docs updated — or "no documentation changes required">
 ```
 
 ## Rules

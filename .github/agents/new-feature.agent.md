@@ -9,9 +9,9 @@ Ask the user for the **feature name** (kebab-case, e.g. `grant-summary`, `paymen
 
 ## Before writing anything
 
-Read one existing feature component — e.g. `src/Grants.ApplicantPortal.Frontend/src/app/features/workspace/workspace-selector.component.ts` — to understand the exact decorator usage, import patterns, and coding style already in this project.
+Read one existing feature component — e.g. `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/features/workspace/workspace-selector.component.ts` — to understand the exact decorator usage, import patterns, and coding style already in this project.
 
-## Create files in `src/Grants.ApplicantPortal.Frontend/src/app/features/<name>/`
+## Create files in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/features/<name>/`
 
 - **`<name>.component.ts`** — standalone Angular component:
   - `selector: 'app-<name>'`, `standalone: true`
@@ -27,7 +27,7 @@ Read one existing feature component — e.g. `src/Grants.ApplicantPortal.Fronten
 
 ## Register the route
 
-Add a lazy-loaded route in `src/Grants.ApplicantPortal.Frontend/src/app/app.routes.ts` using `loadComponent`. Place it in the correct position relative to existing routes (authenticated routes after the auth guard).
+Add a lazy-loaded route in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/app.routes.ts` using `loadComponent`. Place it in the correct position relative to existing routes (authenticated routes after the auth guard).
 
 ## Check if a data service is needed
 

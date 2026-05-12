@@ -9,9 +9,9 @@ Ask the user for: **Domain** (e.g. `Addresses`) and **Action** (e.g. `Create`, `
 
 ## Before writing anything
 
-Read an existing comparable endpoint in `src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Web/<Domain>/` to understand the exact constructor injection, `Configure()` structure, result-mapping pattern, and namespace conventions used in this project.
+Read an existing comparable endpoint in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Web/<Domain>/` to understand the exact constructor injection, `Configure()` structure, result-mapping pattern, and namespace conventions used in this project.
 
-## Create four files in `src/Grants.ApplicantPortal.API.Web/<Domain>/`
+## Create four files in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Web/<Domain>/`
 
 ### `<Action>.cs` — endpoint class
 - Namespace: `Grants.ApplicantPortal.API.Web.<Domain>`

@@ -73,7 +73,33 @@ If the bug involved auth, ownership validation, or data access, delegate to **se
 
 ---
 
-## Phase 6 — Summary
+## Phase 6 — AutoUI Guard
+
+Delegate to the **autoui-guardian** sub-agent.
+
+Pass it:
+- A description of what the fix changed in the UI (if anything): routes, selectors, form fields, text, navigation
+- The list of files modified
+
+The agent will check whether any existing Cypress specs or page objects in `applications/Grants.AutoUI/` are affected by the fix, and update them if needed.
+
+**Skip this phase and state "no AutoUI changes required" if the bug was backend-only with no UI changes.**
+
+---
+
+## Phase 7 — Document
+
+Delegate to the **auto-documenter** sub-agent.
+
+Pass it:
+- A description of any API changes the fix introduced (corrected route, changed request/response shape)
+- The list of files modified
+
+**Skip this phase and state "no documentation changes required" if the fix had no API or pattern changes.**
+
+---
+
+## Phase 8 — Summary
 
 ```
 ## Bug fixed
@@ -90,6 +116,12 @@ If the bug involved auth, ownership validation, or data access, delegate to **se
 
 ## Test added
 <test name and what it covers — or "existing tests cover this">
+
+## AutoUI
+<list of Cypress specs/page objects fixed — or "no AutoUI changes required">
+
+## Documentation
+<docs updated — or "no documentation changes required">
 ```
 
 ## Rules

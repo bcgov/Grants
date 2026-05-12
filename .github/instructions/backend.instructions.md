@@ -1,10 +1,10 @@
 ---
-applyTo: src/Grants.ApplicantPortal.Backend/**
+applyTo: applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/**
 ---
 
 # Backend Instructions — .NET 9
 
-These rules apply to all files in the .NET backend (`src/Grants.ApplicantPortal.Backend/`).
+These rules apply to all files in the .NET backend (`applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`).
 
 ## Architecture layers
 
@@ -61,7 +61,7 @@ result.Errors    → AddError() + SendErrorsAsync(400)
 
 - Inject `IApplicationDbContext` — never `new AppDbContext()`
 - All queries use EF Core — **no raw SQL strings**; if raw SQL is necessary use parameterised `FromSqlRaw`
-- Migrations live in `API.Migrations/` — run with `dotnet ef migrations add <Name> --project src/API.Migrations --startup-project src/API.Web`
+- Migrations live in `API.Migrations/` — run with `dotnet ef migrations add <Name> --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web` from the backend root
 
 ## Validation
 
@@ -74,7 +74,7 @@ result.Errors    → AddError() + SendErrorsAsync(400)
 - **Integration tests**: `tests/API.IntegrationTests/` — real PostgreSQL, no mocks
 - **Functional tests**: `tests/API.FunctionalTests/` — HTTP-level against the running app
 - Do not mock the database in integration or functional tests
-- Run: `dotnet test` from `src/Grants.ApplicantPortal.Backend/`
+- Run: `dotnet test` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`
 
 ## NuGet packages
 

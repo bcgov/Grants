@@ -55,8 +55,8 @@ Present the plan to the user. Wait for approval (or adjustments) before implemen
 Before writing a single line of code, check the approved plan against the project guides.
 
 **Read the relevant guide(s):**
-- Frontend work → read `src/Grants.ApplicantPortal.Frontend/.claude/UI_STYLE_GUIDE.md`
-- Backend work → read `src/Grants.ApplicantPortal.Backend/.claude/ARCHITECTURE_GUIDE.md`
+- Frontend work → read `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/UI_STYLE_GUIDE.md`
+- Backend work → read `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/ARCHITECTURE_GUIDE.md`
 - Full-stack → read both
 
 **Check every planned file and change against the "What requires a deviation confirmation" section of each guide.**
@@ -126,7 +126,42 @@ Delegate to **code-reviewer** and **security-reviewer** sub-agents in parallel:
 
 ---
 
-## Phase 7 — Summary
+## Phase 7 — AutoUI Guard
+
+Delegate to the **autoui-guardian** sub-agent.
+
+Pass it:
+- A description of all UI/frontend changes made: routes added or changed, form fields added or renamed, element selectors changed, navigation changes, text or label changes
+- A description of any new features, pages, or user flows introduced
+- The full list of files modified in this ticket
+
+The agent will:
+1. Check whether any existing Cypress specs or page objects in `applications/Grants.AutoUI/` are broken by the changes, and fix them (self-healing)
+2. Create stub spec files (with `it.skip` placeholders) for any new user-facing feature that warrants future automated testing
+
+**Skip this phase and state "no AutoUI changes required" if the ticket is backend-only with no UI changes.**
+
+---
+
+## Phase 8 — Document
+
+Delegate to the **auto-documenter** sub-agent.
+
+Pass it:
+- A description of all API changes: endpoints added, modified, or removed
+- A description of any new architectural patterns introduced (new domain, new auth mechanism, new integration)
+- The list of files modified in this ticket
+
+The agent will:
+1. Update `documentation/auto/API-Endpoints.md` if any endpoints changed
+2. Patch stale sections in `documentation/architecture/` if a described pattern changed
+3. Create an architecture doc stub for any genuinely new pattern or domain
+
+**Skip this phase and state "no documentation changes required" if the ticket was a pure frontend feature with no backend API changes and no new patterns.**
+
+---
+
+## Phase 9 — Summary
 
 Produce a commit-ready summary:
 
@@ -142,6 +177,12 @@ Produce a commit-ready summary:
 
 ## Test results
 <suite name: X passed, 0 failed>
+
+## AutoUI
+<list of Cypress specs/page objects fixed, or stubs created — or "no AutoUI changes required">
+
+## Documentation
+<list of docs updated or stubs created — or "no documentation changes required">
 ```
 
 ## Rules

@@ -9,7 +9,7 @@ Ask the user to describe the endpoint (HTTP verb, path, and what it returns) if 
 
 ## Before writing anything
 
-Read `src/Grants.ApplicantPortal.Frontend/src/app/api.service.ts` in full to understand the existing method signatures, HTTP verb usage, base URL handling, error propagation pattern, and return types.
+Read `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/api.service.ts` in full to understand the existing method signatures, HTTP verb usage, base URL handling, error propagation pattern, and return types.
 
 ## Determine the right service
 
@@ -19,7 +19,7 @@ Read `src/Grants.ApplicantPortal.Frontend/src/app/api.service.ts` in full to und
 
 ## Check or create the response interface
 
-Look in `src/app/shared/models/` for an existing interface matching the response shape. If none exists, create `src/app/shared/models/<resource>.interface.ts` with a typed interface — no `any`.
+Look in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/shared/models/` for an existing interface matching the response shape. If none exists, create `src/app/shared/models/<resource>.interface.ts` with a typed interface — no `any`.
 
 ## Add the method
 

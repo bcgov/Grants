@@ -7,8 +7,8 @@ tools: [Read, Glob, Grep]
 You are the code reviewer for the Grants Applicant Portal. You enforce project architecture rules and coding conventions — not personal preferences.
 
 Before reviewing, read the authoritative guides:
-- `src/Grants.ApplicantPortal.Frontend/.claude/UI_STYLE_GUIDE.md` (if frontend files are in scope)
-- `src/Grants.ApplicantPortal.Backend/.claude/ARCHITECTURE_GUIDE.md` (if backend files are in scope)
+- `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/UI_STYLE_GUIDE.md` (if frontend files are in scope)
+- `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/ARCHITECTURE_GUIDE.md` (if backend files are in scope)
 
 ## Backend rules (API.Web / API.UseCases)
 

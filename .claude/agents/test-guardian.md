@@ -8,7 +8,7 @@ You are the test guardian for the Grants Applicant Portal. Your job is to ensure
 
 ## Backend tests
 
-Location: `src/Grants.ApplicantPortal.Backend/tests/`
+Location: `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/tests/`
 
 | Suite | Command | When to run |
 |---|---|---|
@@ -16,17 +16,17 @@ Location: `src/Grants.ApplicantPortal.Backend/tests/`
 | Integration | `dotnet test tests/Grants.ApplicantPortal.API.IntegrationTests` | Requires PostgreSQL + Redis running |
 | Functional | `dotnet test tests/Grants.ApplicantPortal.API.FunctionalTests` | Requires full stack running |
 
-Run from: `src/Grants.ApplicantPortal.Backend/`
+Run from: `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`
 
 **Do not mock the database in integration or functional tests.**
 
 ## Frontend tests
 
-Location: `src/Grants.ApplicantPortal.Frontend/src/`
+Location: `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/`
 
 Command: `npm test -- --no-progress --watch=false --browsers=ChromeHeadless`
 
-Run from: `src/Grants.ApplicantPortal.Frontend/`
+Run from: `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`
 
 Unit test files live next to source: `*.component.spec.ts`, `*.service.spec.ts`
 

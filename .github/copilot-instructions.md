@@ -7,11 +7,26 @@ BC Government full-stack application for grant applicants. Angular 20 frontend +
 ## Project Overview
 
 ```
-src/
-├── Grants.ApplicantPortal.Frontend/   # Angular 20 SPA (port 4200 dev / 4000 Docker)
-└── Grants.ApplicantPortal.Backend/    # .NET 9 FastEndpoints API (port 7000 dev / 5100 Docker)
-docker-compose.yml                     # Full stack: frontend, backend, PostgreSQL, Redis
+applications/
+├── Grants.ApplicantPortal/
+│   ├── src/
+│   │   ├── Grants.ApplicantPortal.Frontend/   # Angular 20 SPA (port 4200 dev / 4000 Docker)
+│   │   └── Grants.ApplicantPortal.Backend/    # .NET 9 FastEndpoints API (port 7000 dev / 5100 Docker)
+│   └── docker-compose.yml                     # Full stack: frontend, backend, PostgreSQL, Redis
+└── Grants.AutoUI/                             # Cypress E2E test suite (targets deployed envs)
+    └── cypress/
+        ├── e2e/        # Spec files (*.cy.ts)
+        ├── pages/      # Page Object Model classes
+        └── support/    # Custom commands and reusable login flows
 ```
+
+### Cypress E2E (Grants.AutoUI)
+
+Specs run against deployed environments — not locally. After any UI change, use the **autoui-guardian** agent to:
+1. Fix existing specs or page objects broken by the change (self-healing)
+2. Create stub spec files for new user-facing features (with `it.skip` placeholders for QA to implement)
+
+Backend-only changes require no AutoUI action.
 
 ---
 
@@ -37,7 +52,7 @@ src/app/
 - Import individual directives (`RouterLink`, `AsyncPipe`) — never `CommonModule` or `RouterModule`
 - **No `any` types** — define interfaces in `src/app/shared/models/`
 - All HTTP calls return `Observable<T>` — never `Promise`; never subscribe inside a service
-- Backend calls go through `api.service.ts` — components never call `HttpClient` directly
+- Backend calls go through `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/src/app/api.service.ts` — components never call `HttpClient` directly
 
 ### Auth
 
@@ -49,7 +64,7 @@ src/app/
 
 - Unit tests live next to source: `*.component.spec.ts`, `*.service.spec.ts`
 - Use `TestBed` for Angular component/service tests
-- Run: `npm test` (Karma/Jasmine)
+- Run: `npm test` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`
 
 ---
 
@@ -113,7 +128,7 @@ Never throw exceptions for expected domain failures.
 - **Unit**: `tests/API.UnitTests/` — mock repositories, test handlers in isolation
 - **Integration**: `tests/API.IntegrationTests/` — real PostgreSQL (no mocks)
 - **Functional**: `tests/API.FunctionalTests/` — HTTP-level, real running app
-- Run: `dotnet test`
+- Run: `dotnet test` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`
 
 ---
 

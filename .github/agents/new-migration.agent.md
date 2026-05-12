@@ -9,9 +9,9 @@ Ask the user for the **migration name** (PascalCase, descriptive — e.g. `AddAp
 
 ## Steps
 
-1. **Read the DbContext and relevant entity configs** in `src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Infrastructure/Data/` to understand what model changes are pending before running the command.
+1. **Read the DbContext and relevant entity configs** in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Infrastructure/Data/` to understand what model changes are pending before running the command.
 
-2. **Run the migration** from `src/Grants.ApplicantPortal.Backend/`:
+2. **Run the migration** from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`:
    ```bash
    dotnet ef migrations add <MigrationName> \
      --project src/Grants.ApplicantPortal.API.Migrations \

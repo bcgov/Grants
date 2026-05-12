@@ -1,23 +1,26 @@
-# Grants Applicant Portal — Monorepo
+# Grants — Monorepo
 
-Full-stack BC Government application for managing grant applications.
+BC Government grants management platform.
 
 ## Structure
 
-```
-src/
-├── Grants.ApplicantPortal.Frontend/   # Angular 20 SPA
-│   └── .claude/                       # Claude Code context for frontend
-└── Grants.ApplicantPortal.Backend/    # .NET 9 Web API
-    └── .claude/                       # Claude Code context for backend
-docker-compose.yml                     # Full stack via Docker
-sonar-project.properties               # SonarCloud configuration
+```text
+applications/
+├── Grants.ApplicantPortal/            # Full-stack grant applicant portal
+│   ├── src/
+│   │   ├── Grants.ApplicantPortal.Frontend/   # Angular 20 SPA
+│   │   │   └── .claude/                       # Claude Code context for frontend
+│   │   └── Grants.ApplicantPortal.Backend/    # .NET 9 Web API
+│   │       └── .claude/                       # Claude Code context for backend
+│   └── docker-compose.yml                     # Full stack via Docker
+└── Grants.AutoUI/                     # Cypress E2E test suite
+documentation/                         # Architecture decisions and guides
 ```
 
 ## Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Frontend | Angular 20, TypeScript, standalone components, Keycloak OIDC, BC Gov Bootstrap v5 |
 | Backend | .NET 9, FastEndpoints, MediatR (CQRS), Ardalis.Result, FluentValidation |
 | Database | PostgreSQL 17, Entity Framework Core migrations |
@@ -30,7 +33,8 @@ sonar-project.properties               # SonarCloud configuration
 ## Quick Start
 
 ```powershell
-# Full stack
+# Full stack (run from applications/Grants.ApplicantPortal/)
+cd applications/Grants.ApplicantPortal
 docker-compose up --build
 
 # Frontend: http://localhost:4000
@@ -41,7 +45,7 @@ docker-compose up --build
 ## Frontend
 
 ```bash
-cd src/Grants.ApplicantPortal.Frontend
+cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
 npm start          # dev server at http://localhost:4200
 npm test           # Karma/Jasmine unit tests
 npm run build      # production build
@@ -49,12 +53,12 @@ npm run build      # production build
 
 Claude Code skills: `/new-feature`, `/new-shared-component`, `/new-service`, `/api-call`, `/env-check`
 
-Full context: [Frontend CLAUDE.md](src/Grants.ApplicantPortal.Frontend/.claude/CLAUDE.md)
+Full context: [Frontend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/CLAUDE.md)
 
 ## Backend
 
 ```bash
-cd src/Grants.ApplicantPortal.Backend
+cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
 dotnet run --project src/Grants.ApplicantPortal.API.Web          # https://localhost:7000
 dotnet test                                                       # all test suites
 dotnet test tests/Grants.ApplicantPortal.API.UnitTests            # unit tests only
@@ -62,16 +66,16 @@ dotnet test tests/Grants.ApplicantPortal.API.UnitTests            # unit tests o
 
 Claude Code skills: `/new-endpoint`, `/new-use-case`, `/new-migration`, `/run-tests`
 
-Full context: [Backend CLAUDE.md](src/Grants.ApplicantPortal.Backend/.claude/CLAUDE.md)
+Full context: [Backend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/CLAUDE.md)
 
 ## Orchestrated Workflows (start here for most tasks)
 
 | Skill | Trigger | What it does |
 | --- | --- | --- |
-| `/implement-ticket` | Paste ticket details | Analyze → architect → develop (parallel frontend+backend) → test → review → PR summary |
-| `/fix-bug` | Paste bug report / stack trace | Locate root cause → targeted fix → verify tests → security check if auth-related |
+| `/implement-ticket` | Paste ticket details | Analyze → architect → develop (parallel frontend+backend) → test → review → AutoUI guard → document → PR summary |
+| `/fix-bug` | Paste bug report / stack trace | Locate root cause → targeted fix → verify tests → security check → AutoUI guard → document → summary |
 | `/review-pr` | Current branch or PR# | Security + architecture + test coverage in parallel → structured verdict |
-| `/refactor` | Target path + goal | Understand → plan → implement → verify nothing broke |
+| `/refactor` | Target path + goal | Understand → plan → implement → verify nothing broke → AutoUI guard → document → summary |
 | `/onboard` | Optional: `frontend` / `backend` | Codebase tour + patterns explanation + personalised cheat sheet |
 
 ## Sub-agents (used automatically by orchestrators)
@@ -83,6 +87,7 @@ Full context: [Backend CLAUDE.md](src/Grants.ApplicantPortal.Backend/.claude/CLA
 | `test-guardian` | Runs suites, diagnoses failures, writes missing tests |
 | `security-reviewer` | Auth gaps, OWASP, secrets, injection (read-only) |
 | `code-reviewer` | Architecture rules, naming conventions (read-only) |
+| `autoui-guardian` | Cypress E2E self-healing: fixes broken specs and stubs new ones for new features |
 
 ## Key Conventions
 

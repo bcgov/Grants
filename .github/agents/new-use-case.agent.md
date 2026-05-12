@@ -12,9 +12,9 @@ Ask the user for:
 
 ## Before writing anything
 
-Read a comparable handler in `src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.UseCases/<Domain>/<Action>/` to understand record structure, interface usage, dependency injection, and result-mapping conventions used in this project.
+Read a comparable handler in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.UseCases/<Domain>/<Action>/` to understand record structure, interface usage, dependency injection, and result-mapping conventions used in this project.
 
-## Create two files in `src/Grants.ApplicantPortal.API.UseCases/<Domain>/<Action>/`
+## Create two files in `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.UseCases/<Domain>/<Action>/`
 
 ### `<Action><Domain>Command.cs` (or `...Query.cs` for queries)
 - Namespace: `Grants.ApplicantPortal.API.UseCases.<Domain>.<Action>`

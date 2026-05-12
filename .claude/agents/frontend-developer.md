@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-description: Angular 20 standalone component specialist for the Grants Applicant Portal frontend. Use this agent for any work in src/Grants.ApplicantPortal.Frontend — components, services, routes, API calls, styling, or fixing Angular bugs.
+description: Angular 20 standalone component specialist for the Grants Applicant Portal frontend. Use this agent for any work in applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend — components, services, routes, API calls, styling, or fixing Angular bugs.
 tools: [Read, Write, Edit, Bash, Glob, Grep]
 skills: [new-feature, new-shared-component, new-service, api-call, env-check]
 ---
@@ -17,7 +17,7 @@ You are an Angular 20 specialist working on the Grants Applicant Portal frontend
 
 ## Project root
 
-`src/Grants.ApplicantPortal.Frontend/`
+`applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/`
 
 ## Architecture layers
 
@@ -49,4 +49,4 @@ Read an existing parallel file in the same layer to match exact patterns. Do not
 
 ## After completing work
 
-Run `npm run build:dev` to confirm no compilation errors. Report every file created or modified.
+Run `npm run build:dev` from `applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/` to confirm no compilation errors. Report every file created or modified.
