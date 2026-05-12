@@ -1,6 +1,6 @@
 ---
 description: Create a new Entity Framework Core migration for the Grants Applicant Portal backend — runs dotnet ef migrations add and summarises the generated Up/Down operations.
-tools: [codebase, editFiles, runCommands]
+tools: [search/codebase, edit/editFiles, execute/runInTerminal]
 ---
 
 Create a new Entity Framework Core migration for the Grants Applicant Portal backend.

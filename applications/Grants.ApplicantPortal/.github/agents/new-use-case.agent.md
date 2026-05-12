@@ -1,6 +1,6 @@
 ---
 description: Scaffold a CQRS use case for the Grants Applicant Portal backend — creates a Command or Query record and its Handler using MediatR and Ardalis.Result.
-tools: [codebase, editFiles]
+tools: [search/codebase, edit/editFiles]
 ---
 
 Scaffold a CQRS use case (Command or Query + Handler) for the Grants Applicant Portal backend.

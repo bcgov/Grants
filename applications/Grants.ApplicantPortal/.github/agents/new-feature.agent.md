@@ -1,6 +1,6 @@
 ---
 description: Scaffold a complete Angular feature page for the Grants Applicant Portal frontend — creates standalone component files and registers a lazy-loaded route.
-tools: [codebase, editFiles]
+tools: [search/codebase, edit/editFiles]
 ---
 
 Scaffold a complete new Angular feature page for the Grants Applicant Portal frontend.

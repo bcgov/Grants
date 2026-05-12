@@ -1,6 +1,6 @@
 ---
 description: Security-focused review of Grants Applicant Portal code changes — checks for injection vulnerabilities, authentication/authorisation gaps, secrets exposure, and OWASP Top 10 issues.
-tools: [codebase]
+tools: [search/codebase]
 ---
 
 Perform a security-focused review of the Grants Applicant Portal code changes.

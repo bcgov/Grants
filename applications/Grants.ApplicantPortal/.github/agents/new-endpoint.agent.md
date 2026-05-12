@@ -1,6 +1,6 @@
 ---
 description: Scaffold a complete FastEndpoints endpoint for the Grants Applicant Portal backend — creates the endpoint class, request, response, and validator files.
-tools: [codebase, editFiles, runCommands]
+tools: [search/codebase, edit/editFiles, execute/runInTerminal]
 ---
 
 Scaffold a complete FastEndpoints endpoint for the Grants Applicant Portal backend.
