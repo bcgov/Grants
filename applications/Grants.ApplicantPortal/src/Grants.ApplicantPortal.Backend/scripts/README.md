@@ -111,7 +111,7 @@ Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
 ### Token Security
 - **Tokens are temporary** (typically 5-15 minutes)
 - **Automatic environment variable**: `$env:KEYCLOAK_TOKEN`
-- **JSON file saved**: `keycloak-token.json` for backup
+- **JSON file saved**: `keycloak-token.json` (gitignored — use `keycloak-token.example.json` as a template)
 - **Copy buttons** make it easy to use tokens securely
 
 ## ?? Dependencies

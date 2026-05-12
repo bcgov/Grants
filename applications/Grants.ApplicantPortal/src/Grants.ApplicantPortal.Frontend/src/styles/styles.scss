@@ -12,7 +12,7 @@
   --bc-blue-90: var(--theme-blue-90);                         /* #1E5189 — button hover */
   --bc-gold: var(--theme-primary-gold);                       /* #FCBA19 — primary */
   --bc-gold-80: var(--theme-gold-80);                         /* #F9C462 */
-  --bc-gray: #edebe9;                                         /* no exact token match */
+  --bc-gray: var(--theme-gray-30);                            /* #ECEAE8 */
   --bc-gray-10: var(--theme-gray-10);                         /* #FAF9F8 */
   --bc-gray-20: var(--theme-gray-20);                         /* #F3F2F1 */
   --bc-gray-30: var(--theme-gray-30);                         /* #ECEAE8 — hover tertiary */
@@ -25,8 +25,6 @@
   --bc-bg-success: var(--support-border-color-success);       /* #42814A */
   --bc-bg-error: var(--support-border-color-danger);          /* #CE3E39 */
   --bc-bg-warning: var(--support-border-color-warning);       /* #F8BB47 */
-  --bc-purple: #6f2c91;                                       /* no equivalent token */
-
   --bc-surface-info: var(--support-surface-color-info);       /* #F7F9FC */
   --bc-surface-success: var(--support-surface-color-success); /* #F6FFF8 */
   --bc-surface-error: var(--support-surface-color-danger);    /* #F4E1E2 */

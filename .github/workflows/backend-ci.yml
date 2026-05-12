@@ -4,12 +4,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "src/Grants.ApplicantPortal.Backend/**"
+      - "applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/**"
       - ".github/workflows/backend-ci.yml"
 
 defaults:
   run:
-    working-directory: src/Grants.ApplicantPortal.Backend
+    working-directory: applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
 
 jobs:
   build-and-test:
