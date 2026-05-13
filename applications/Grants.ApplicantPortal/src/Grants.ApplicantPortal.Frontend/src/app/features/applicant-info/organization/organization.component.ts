@@ -16,6 +16,7 @@ import { environment } from '../../../../environments/environment';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
+import { ENTITY_TYPE_LOOKUP } from '../../../shared/models/orgbook.constants';
 
 @Component({
   selector: 'app-organization-info',
@@ -347,7 +348,8 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     const orgName = topic.names?.[0]?.text ?? '';
     const orgNumber = topic.source_id ?? '';
     const inactive = topic.inactive ?? false;
-    const entityType = topic.attributes?.find((a: any) => a.type === 'entity_type')?.value ?? '';
+    const entityTypeCode = topic.attributes?.find((a: any) => a.type === 'entity_type')?.value ?? '';
+    const entityType = ENTITY_TYPE_LOOKUP[entityTypeCode] ?? '';
 
     const base = this.organizationInfo ?? {} as OrganizationData;
     this.organizationInfo = {
