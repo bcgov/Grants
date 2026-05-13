@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(npm run build:dev)",
+      "Bash(npm run build:docker)",
+      "Bash(npm start)",
+      "Bash(npm test)",
+      "Bash(npm run watch)",
+      "Bash(npm install)",
+      "Bash(npm install *)",
+      "Bash(ng generate *)",
+      "Bash(ng build *)",
+      "Bash(ng test *)",
+      "Bash(ng lint *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)"
+    ],
+    "deny": []
+  }
+}

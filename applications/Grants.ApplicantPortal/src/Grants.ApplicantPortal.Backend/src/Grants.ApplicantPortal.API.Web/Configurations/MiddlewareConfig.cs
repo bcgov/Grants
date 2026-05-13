@@ -25,6 +25,19 @@ public static class MiddlewareConfig
       app.UseHsts();
     }
 
+    var logHealthChecks = app.Configuration.GetValue<bool>("Logging:LogHealthCheckRequests", false);
+    app.UseSerilogRequestLogging(options =>
+    {
+      options.GetLevel = (ctx, _, _) =>
+      {
+        if (!logHealthChecks && IsHealthCheckPath(ctx.Request.Path))
+          return Serilog.Events.LogEventLevel.Verbose;
+        return ctx.Response.StatusCode >= 500 ? Serilog.Events.LogEventLevel.Error
+             : ctx.Response.StatusCode >= 400 ? Serilog.Events.LogEventLevel.Warning
+             : Serilog.Events.LogEventLevel.Information;
+      };
+    });
+
     app.MapHealthChecks("/healthz", new HealthCheckOptions
     {
       Predicate = r => r.Tags.Contains("live"),
@@ -81,6 +94,10 @@ public static class MiddlewareConfig
 
     return app;
   }
+
+  static bool IsHealthCheckPath(PathString path) =>
+    path.StartsWithSegments("/healthz") ||
+    path.StartsWithSegments("/System/health");
 
   static void InitializePluginRegistry(WebApplication app)
   {
