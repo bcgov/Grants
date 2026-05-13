@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { Observable, of } from 'rxjs';
 
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
@@ -39,7 +38,7 @@ function runGuard(
       return Promise.resolve(result);
     }
     return new Promise<boolean>((resolve, reject) => {
-      (result as ReturnType<typeof of>).subscribe({
+      (result as Observable<boolean>).subscribe({
         next: (v: boolean) => resolve(v),
         error: reject,
       });
