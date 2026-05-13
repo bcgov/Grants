@@ -420,8 +420,15 @@ local.settings.json
 
 ## PROJECT SPECIFIC ##
 
+# Local Keycloak token file — use keycloak-token.example.json as a template
+keycloak-token.json
+
+
 # Aspire temporary files
 .aspire/
+
+# Claude Code personal overrides — project .claude/ is tracked, personal overrides are not
+.claude/settings.local.json
 
 # Docker
 .dockerignore

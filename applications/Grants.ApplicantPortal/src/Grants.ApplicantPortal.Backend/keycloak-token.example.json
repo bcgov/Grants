@@ -1,0 +1,8 @@
+﻿{
+    "Scope":  "openid bceidboth email profile azureidir",
+    "AccessToken":  "<access_token>",
+    "ExpiresIn":  300,
+    "TokenType":  "Bearer",
+    "RefreshToken":  "<refresh_token>",
+    "IdToken":  "<id_token>"
+}
