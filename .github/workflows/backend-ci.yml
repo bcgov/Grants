@@ -68,7 +68,7 @@ jobs:
 
       - name: Run integration tests
         env:
-          ConnectionStrings__DefaultConnection: >-
+          ConnectionStrings__Grants: >-
             Host=localhost;Port=5432;Database=grants_test;Username=postgres;Password=postgres
           ConnectionStrings__Redis: "localhost:6379"
         run: >
