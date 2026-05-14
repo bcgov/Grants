@@ -141,7 +141,9 @@ describe('ErrorHandlerService', () => {
     it('throws for generic auth errors', (done) => {
       const error = new Error('some auth error');
       service.handleAuthError(error).subscribe({
-        error: () => {
+        error: (err: Error) => {
+          expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+          expect(err).toBe(error);
           done();
         },
       });
