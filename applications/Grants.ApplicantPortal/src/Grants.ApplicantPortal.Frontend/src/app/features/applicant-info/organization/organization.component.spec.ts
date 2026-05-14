@@ -70,6 +70,11 @@ describe('OrganizationInfoComponent', () => {
     httpMock.verify();
   });
 
+  function flushTopicRequest(entityTypeCode: string | undefined): void {
+    const req = httpMock.expectOne((r) => r.url.includes('/v4/search/topic'));
+    req.flush(makeSearchResponse(entityTypeCode));
+  }
+
   // ── creation ────────────────────────────────────────────────────────────────
 
   it('should create', () => {
@@ -132,11 +137,6 @@ describe('OrganizationInfoComponent', () => {
       orgStatus: '',
       organizationType: '',
     };
-
-    function flushTopicRequest(entityTypeCode: string | undefined): void {
-      const req = httpMock.expectOne((r) => r.url.includes('/v4/search/topic'));
-      req.flush(makeSearchResponse(entityTypeCode));
-    }
 
     it('sets organizationType to "General Partnership" for code GP', fakeAsync(() => {
       component.onSearchResultSelect(searchResult);
