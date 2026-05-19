@@ -138,36 +138,36 @@ describe('OrganizationInfoComponent', () => {
       organizationType: '',
     };
 
-    it('sets organizationType to "General Partnership" for code GP', fakeAsync(() => {
+    it('stores raw code GP for entity_type GP', fakeAsync(() => {
       component.onSearchResultSelect(searchResult);
       flushTopicRequest('GP');
       tick();
 
-      expect(component.organizationInfo?.organizationType).toBe('General Partnership');
+      expect(component.organizationInfo?.organizationType).toBe('GP');
     }));
 
-    it('sets organizationType to "BC Company" for code BC', fakeAsync(() => {
+    it('stores raw code BC for entity_type BC', fakeAsync(() => {
       component.onSearchResultSelect(searchResult);
       flushTopicRequest('BC');
       tick();
 
-      expect(component.organizationInfo?.organizationType).toBe('BC Company');
+      expect(component.organizationInfo?.organizationType).toBe('BC');
     }));
 
-    it('sets organizationType to "Society" for code S', fakeAsync(() => {
+    it('stores raw code S for entity_type S', fakeAsync(() => {
       component.onSearchResultSelect(searchResult);
       flushTopicRequest('S');
       tick();
 
-      expect(component.organizationInfo?.organizationType).toBe('Society');
+      expect(component.organizationInfo?.organizationType).toBe('S');
     }));
 
-    it('sets organizationType to empty string for an unknown code', fakeAsync(() => {
+    it('stores the raw code for an unknown entity_type code', fakeAsync(() => {
       component.onSearchResultSelect(searchResult);
       flushTopicRequest('UNKNOWN');
       tick();
 
-      expect(component.organizationInfo?.organizationType).toBe('');
+      expect(component.organizationInfo?.organizationType).toBe('UNKNOWN');
     }));
 
     it('sets organizationType to empty string when entity_type attribute is absent', fakeAsync(() => {
@@ -177,5 +177,74 @@ describe('OrganizationInfoComponent', () => {
 
       expect(component.organizationInfo?.organizationType).toBe('');
     }));
+  });
+
+  // ── organizationTypeDisplay getter ──────────────────────────────────────────
+
+  describe('organizationTypeDisplay getter', () => {
+    it('returns N/A when organizationInfo is null', () => {
+      expect(component.organizationInfo).toBeNull();
+      expect(component.organizationTypeDisplay).toBe('N/A');
+    });
+
+    it('returns the human-readable label for a known code', () => {
+      component.organizationInfo = { organizationType: 'GP' } as any;
+      expect(component.organizationTypeDisplay).toBe('General Partnership');
+    });
+
+    it('returns the raw code for an unknown code', () => {
+      component.organizationInfo = { organizationType: 'UNKNOWN' } as any;
+      expect(component.organizationTypeDisplay).toBe('UNKNOWN');
+    });
+  });
+
+  // ── onSave: organizationType normalization ──────────────────────────────────
+
+  function setupSaveableComponent(organizationType: string): void {
+    component.organizationInfo = {
+      orgName: 'Acme Corp',
+      orgNumber: 'BC0001234',
+      orgStatus: 'Active',
+      organizationType,
+      nonRegOrgName: '',
+      orgSize: null,
+      fiscalMonth: null,
+      fiscalDay: null,
+      organizationId: '1',
+      legalName: 'Acme Corp',
+      doingBusinessAs: '',
+      ein: '',
+      founded: 0,
+      address: {} as any,
+      contactInfo: {} as any,
+      mission: '',
+      servicesAreas: [],
+      certifications: [],
+      allowEdit: true,
+    } as any;
+    applicantInfoServiceSpy.saveOrganizationInfo.and.returnValue(of({ success: true }));
+  }
+
+  describe('onSave — organizationType normalization', () => {
+    it('sends the raw code when organizationType is already a code', () => {
+      setupSaveableComponent('GP');
+      component['onSave']();
+      const saved = applicantInfoServiceSpy.saveOrganizationInfo.calls.mostRecent().args[0];
+      expect(saved.organizationType).toBe('GP');
+    });
+
+    it('reverse-maps a display name to its code before saving', () => {
+      setupSaveableComponent('General Partnership');
+      component['onSave']();
+      const saved = applicantInfoServiceSpy.saveOrganizationInfo.calls.mostRecent().args[0];
+      expect(saved.organizationType).toBe('GP');
+    });
+
+    it('reverse-maps BC Company to BC before saving', () => {
+      setupSaveableComponent('BC Company');
+      component['onSave']();
+      const saved = applicantInfoServiceSpy.saveOrganizationInfo.calls.mostRecent().args[0];
+      expect(saved.organizationType).toBe('BC');
+    });
   });
 });

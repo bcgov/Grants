@@ -194,11 +194,7 @@
             id="org-type"
             data-cy="org-type"
             type="text"
-            [value]="
-              organizationInfo?.organizationType
-                ? organizationInfo?.organizationType
-                : 'N/A'
-            "
+            [value]="organizationTypeDisplay"
             disabled
             class="form-control"
           />
