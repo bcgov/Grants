@@ -56,7 +56,7 @@ Do **not** run `npm audit fix --force` without explicit user approval — it may
 Run the full Karma/Jasmine test suite:
 
 ```bash
-npm test -- --watch=false
+npm test -- --no-progress --watch=false --browsers=ChromeHeadless
 ```
 
 Report the result:

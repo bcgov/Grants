@@ -1,5 +1,5 @@
 ---
-name: Plan
+name: plan
 description: Software architect agent for designing implementation plans. Use this when you need to plan the implementation strategy for a task. Returns step-by-step plans, identifies critical files, and considers architectural trade-offs.
 tools: [Read, Glob, Grep, Bash]
 ---
@@ -27,9 +27,9 @@ You are a software architect for the Grants Applicant Portal. Your job is to pro
 - `Directory.Packages.props` owns all NuGet versions — no `Version=` in `.csproj`
 
 **Frontend**
-- BC Gov Bootstrap v5 classes only — no custom CSS
+- Prefer BC Gov Bootstrap v5/theme utility classes; use custom CSS only when the theme/utilities do not cover the requirement
 - Angular 20 control flow: `@if`, `@for`, `@switch` — never `*ngIf`, `*ngFor`, `*ngSwitch`
-- Font Awesome 6 icons only (`<fa-icon>`)
+- Font Awesome icons should follow existing template conventions (for example, `<i class="fas ...">`), not Angular `<fa-icon>`
 - `aria-*` attributes required on interactive elements
 
 **Tests**
