@@ -9,17 +9,24 @@ Bug details: $ARGUMENTS
 
 If `$ARGUMENTS` is empty, ask the user to describe the bug (what happened, what was expected, any error messages or stack traces) before proceeding.
 
+**Ticket number**: Extract `AB#<number>` from the bug report. If no ticket number is present, ask: *"What is the AB ticket number? (e.g. AB#12345)"* — do not proceed until you have it.
+
+**Branch type**: Ask the user: *"Is this a hotfix on `test` or `main`, or a regular bug fix branched from `dev`?"*
+- Regular bug fix → `bugfix/AB#<ticket>` from `dev`
+- Hotfix → `hotfix/AB#<ticket>` from `test` or `main`
+
 ---
 
 ## Phase 1 — Understand the bug
 
 Parse the report and identify:
 
-1. **Symptom**: what the user sees
-2. **Expected behaviour**: what should happen
-3. **Stack trace / error**: paste verbatim if provided
-4. **Scope**: backend / frontend / both
-5. **Reproducibility**: always / intermittent / specific conditions
+1. **Ticket number**: confirm the `AB#<number>` and branch type established above
+2. **Symptom**: what the user sees
+3. **Expected behaviour**: what should happen
+4. **Stack trace / error**: paste verbatim if provided
+5. **Scope**: backend / frontend / both
+6. **Reproducibility**: always / intermittent / specific conditions
 
 ---
 
@@ -104,6 +111,16 @@ Pass it:
 ## Phase 8 — Summary
 
 ```
+## Branch
+git checkout <base-branch>          # dev for bugfix / test or main for hotfix
+git checkout -b <branch-name>
+  bugfix/AB#<ticket>   ← regular bug fix from dev
+  hotfix/AB#<ticket>   ← hotfix from test or main
+
+## Commit message format
+AB#<ticket> <short description>
+e.g. AB#12345 fix null reference in address lookup
+
 ## Bug fixed
 <one-line description>
 
