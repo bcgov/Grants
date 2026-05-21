@@ -9,17 +9,20 @@ Ticket details: $ARGUMENTS
 
 If `$ARGUMENTS` is empty, ask the user to paste the ticket details (title, description, acceptance criteria) before proceeding.
 
+**Ticket number**: Extract `AB#<number>` from the ticket details. If no ticket number is present, ask: *"What is the AB ticket number? (e.g. AB#12345)"* — do not proceed until you have it.
+
 ---
 
 ## Phase 1 — Analyse
 
 Parse the ticket and determine:
 
-1. **Scope**: backend only / frontend only / full-stack
-2. **Domain**: which domain area is affected (Addresses, Contacts, Submissions, Payments, etc.)
-3. **Type**: new feature / bug fix / enhancement / refactor
-4. **Acceptance criteria**: list each testable criterion explicitly
-5. **Open questions**: anything ambiguous that would block implementation — ask the user now before writing any code
+1. **Ticket number**: confirm the `AB#<number>` extracted above
+2. **Scope**: backend only / frontend only / full-stack
+3. **Domain**: which domain area is affected (Addresses, Contacts, Submissions, Payments, etc.)
+4. **Type**: new feature / bug fix / enhancement / refactor
+5. **Acceptance criteria**: list each testable criterion explicitly
+6. **Open questions**: anything ambiguous that would block implementation — ask the user now before writing any code
 
 Do not proceed past Phase 1 until all open questions are resolved.
 
@@ -168,6 +171,16 @@ The agent will:
 Produce a commit-ready summary:
 
 ```
+## Branch
+git checkout dev
+git checkout -b <branch-name>
+  feature/AB#<ticket>   ← new feature or enhancement
+  bugfix/AB#<ticket>    ← bug fix via implement-ticket
+
+## Commit message format
+AB#<ticket> <short description>
+e.g. AB#12345 add address validation endpoint
+
 ## What was implemented
 <bullet list of changes>
 

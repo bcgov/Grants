@@ -1,6 +1,6 @@
 ---
 description: Add a typed API method to the Grants Applicant Portal frontend for a new backend endpoint — creates the response interface if needed and adds the method with a test.
-tools: [codebase, editFiles]
+tools: [search/codebase, edit/editFiles]
 ---
 
 Add a typed API method to the Grants Applicant Portal frontend for a new backend endpoint.

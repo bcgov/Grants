@@ -1,6 +1,6 @@
 ---
 description: Review code changes in the Grants Applicant Portal for project conventions, architecture rules, security, and test coverage — produces a structured report.
-tools: [codebase]
+tools: [search/codebase]
 ---
 
 Review the code changes in the Grants Applicant Portal for correctness, project conventions, and completeness.

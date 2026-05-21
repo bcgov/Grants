@@ -9,6 +9,8 @@
       "Bash(npm run watch)",
       "Bash(npm install)",
       "Bash(npm install *)",
+      "Bash(npm audit)",
+      "Bash(npm audit fix)",
       "Bash(ng generate *)",
       "Bash(ng build *)",
       "Bash(ng test *)",
