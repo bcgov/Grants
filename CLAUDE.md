@@ -88,6 +88,21 @@ Full context: [Backend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants
 | `security-reviewer` | Auth gaps, OWASP, secrets, injection (read-only) |
 | `code-reviewer` | Architecture rules, naming conventions (read-only) |
 | `autoui-guardian` | Cypress E2E self-healing: fixes broken specs and stubs new ones for new features |
+| `auto-documenter` | Keeps `documentation/auto/` and architecture docs in sync after code changes |
+
+## Git Workflow
+
+Branch flow: `dev` → `test` → `main`
+
+| Branch type | Pattern | Base branch |
+| --- | --- | --- |
+| New feature / enhancement | `feature/AB#<ticket>` | `dev` |
+| Bug fix | `bugfix/AB#<ticket>` | `dev` |
+| Hotfix (production / test issue) | `hotfix/AB#<ticket>` | `test` or `main` |
+
+**Commit message format**: `AB#<ticket> <short description>` — e.g. `AB#12345 add address validation`
+
+All orchestrated skills (`/implement-ticket`, `/fix-bug`) will ask for the ticket number if it is not supplied up front.
 
 ## Key Conventions
 
