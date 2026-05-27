@@ -1,4 +1,3 @@
-﻿using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace Grants.ApplicantPortal.API.Infrastructure.Messaging.Configuration;
@@ -14,7 +13,7 @@ public static class RedisConnectionOptionsFactory
         options.ConnectTimeout = Math.Max(options.ConnectTimeout, 10000);
         options.SyncTimeout = Math.Max(options.SyncTimeout, 5000);
         // Cap at 10 s so retries don't stall for minutes after a Sentinel failover.
-        options.ReconnectRetryPolicy = new ExponentialRetry(1000, maxDeltaBackoffMilliseconds: 10000);
+        options.ReconnectRetryPolicy = new ExponentialRetry(1000, 10000);
         // Probe idle connections every 30 s so the multiplexer detects dead sockets
         // (e.g. after a Sentinel failover or overnight pod recycle) before the next operation.
         options.KeepAlive = 30;
@@ -52,6 +51,7 @@ public static class RedisConnectionOptionsFactory
                 cm.ReconfigureAsync("connection-failed-event").ContinueWith(
                     t => logger.LogWarning(t.Exception, "Redis ReconfigureAsync faulted after connection failure"),
                     TaskContinuationOptions.OnlyOnFaulted);
+        };
 
         multiplexer.ConnectionRestored += (_, e) =>
             logger.LogInformation(

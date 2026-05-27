@@ -160,7 +160,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
             }
 
             // Prepare message properties
-            var properties = _channel.CreateBasicProperties();
+            var properties = _channel!.CreateBasicProperties();
             properties.Persistent = true; // Make message durable
             properties.MessageId = (messageId ?? Guid.NewGuid()).ToString();
             properties.Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
