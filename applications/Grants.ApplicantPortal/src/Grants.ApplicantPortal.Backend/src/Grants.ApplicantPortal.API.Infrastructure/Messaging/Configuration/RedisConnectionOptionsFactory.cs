@@ -38,20 +38,16 @@ public static class RedisConnectionOptionsFactory
     public static void Subscribe(IConnectionMultiplexer multiplexer, ILogger logger)
     {
         multiplexer.ConnectionFailed += (_, e) =>
-        {
+            // Log only — do NOT call ReconfigureAsync here.
+            // During a Sentinel failover this event fires 6 times in rapid succession
+            // (Interactive + Subscription × 3 nodes). Calling ReconfigureAsync 6 times
+            // concurrently races against StackExchange.Redis's own internal +switch-master
+            // pub/sub handling and leaves the master endpoint inconsistent for minutes.
+            // The library manages Sentinel re-discovery automatically via +switch-master
+            // and the ConfigCheckSeconds = 15 periodic re-check.
             logger.LogWarning(
                 "Redis connection failed: {EndPoint} ({FailureType}, {ConnectionType})",
                 e.EndPoint, e.FailureType, e.ConnectionType);
-            // Nudge the multiplexer to re-query Sentinel immediately rather than waiting
-            // for the next ConfigCheckSeconds tick (15 s) or ExponentialRetry interval.
-            // ReconfigureAsync is on the concrete class; the cast is always valid here
-            // since multiplexer is created via ConnectionMultiplexer.Connect().
-            // ContinueWith handles the task so neither CS4014 nor SonarQube S1854 fires.
-            if (multiplexer is ConnectionMultiplexer cm)
-                cm.ReconfigureAsync("connection-failed-event").ContinueWith(
-                    t => logger.LogWarning(t.Exception, "Redis ReconfigureAsync faulted after connection failure"),
-                    TaskContinuationOptions.OnlyOnFaulted);
-        };
 
         multiplexer.ConnectionRestored += (_, e) =>
             logger.LogInformation(
