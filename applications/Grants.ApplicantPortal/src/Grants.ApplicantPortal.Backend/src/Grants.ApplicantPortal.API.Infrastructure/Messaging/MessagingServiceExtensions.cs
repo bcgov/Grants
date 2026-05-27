@@ -82,6 +82,7 @@ public static class MessagingServiceExtensions
                     {
                         var options = RedisConnectionOptionsFactory.Create(redisConnectionString!, logger, "distributed locking");
                         var multiplexer = ConnectionMultiplexer.Connect(options);
+                        RedisConnectionOptionsFactory.Subscribe(multiplexer, logger);
                         logger.LogDebug("Redis connection established for messaging services");
                         return multiplexer;
                     });

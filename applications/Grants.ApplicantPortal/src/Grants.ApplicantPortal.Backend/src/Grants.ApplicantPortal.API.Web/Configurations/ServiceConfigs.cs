@@ -11,16 +11,6 @@ public static class ServiceConfigs
 {
   public static IServiceCollection AddServiceConfigs(this IServiceCollection services, Microsoft.Extensions.Logging.ILogger logger, WebApplicationBuilder builder)
   {
-    // Add temporary diagnostic logging
-    logger.LogInformation("=== ENVIRONMENT DIAGNOSTICS ===");
-    logger.LogInformation("Environment Name: {EnvironmentName}", builder.Environment.EnvironmentName);
-    logger.LogInformation("Is Development: {IsDevelopment}", builder.Environment.IsDevelopment());
-    logger.LogInformation("ASPNETCORE_ENVIRONMENT: {AspNetCoreEnvironment}", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
-    
-    var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-    logger.LogInformation("Redis Connection String: {RedisConnectionString}", string.IsNullOrEmpty(redisConnectionString) ? "NOT SET" : redisConnectionString);
-    logger.LogInformation("=== END DIAGNOSTICS ===");
-
     services.AddInfrastructureServices(builder.Configuration, logger)
             .AddUseCaseServices(logger)            
             .AddFeatureServices(logger)
@@ -34,8 +24,8 @@ public static class ServiceConfigs
     services.AddScoped<IProfileService, ProfileService>();
 
     services.AddHealthChecks()
-            .AddCheck<DatabaseReadinessHealthCheck>("database-readiness", tags: ["ready"])
-            .AddCheck<RedisReadinessHealthCheck>("redis-readiness", tags: ["ready"]);
+            .AddCheck<DatabaseReadinessHealthCheck>("database-readiness", tags: ["ready"], timeout: TimeSpan.FromSeconds(10))
+            .AddCheck<RedisReadinessHealthCheck>("redis-readiness", tags: ["ready"], timeout: TimeSpan.FromSeconds(10));
 
     logger.LogInformation("{Project} services registered", "Mediatr, Authentication, Authorization, CORS and HybridCache");
 

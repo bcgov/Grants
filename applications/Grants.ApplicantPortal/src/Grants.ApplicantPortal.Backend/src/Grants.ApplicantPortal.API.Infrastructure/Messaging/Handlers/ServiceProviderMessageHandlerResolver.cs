@@ -29,7 +29,7 @@ public class ServiceProviderMessageHandlerResolver : IMessageHandlerResolver
             _logger.LogDebug("Found {Count} handlers for message type {MessageType}", 
                 handlers.Count(), messageType.Name);
             
-            return handlers;
+            return handlers.OfType<object>();
         }
         catch (Exception ex)
         {
