@@ -82,9 +82,11 @@ public static class MessagingServiceExtensions
                     {
                         var options = RedisConnectionOptionsFactory.Create(redisConnectionString!, logger, "distributed locking");
                         var multiplexer = ConnectionMultiplexer.Connect(options);
-                        RedisConnectionOptionsFactory.Subscribe(multiplexer, logger);
+                        var resettableMux = new ResettableConnectionMultiplexer(multiplexer, options, logger);
+                        // Subscribe to the wrapper so event handlers survive multiplexer recreation.
+                        RedisConnectionOptionsFactory.Subscribe(resettableMux, logger);
                         logger.LogDebug("Redis connection established for messaging services");
-                        return multiplexer;
+                        return resettableMux;
                     });
 
                     logger.LogDebug("Registered IConnectionMultiplexer for messaging services");

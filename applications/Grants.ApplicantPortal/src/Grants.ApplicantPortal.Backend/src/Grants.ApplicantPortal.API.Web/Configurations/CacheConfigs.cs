@@ -25,8 +25,10 @@ public static class CacheConfigs
       {
         var redisOptions = RedisConnectionOptionsFactory.Create(redisConnectionString, logger, "distributed cache");
         var mux = ConnectionMultiplexer.Connect(redisOptions);
-        RedisConnectionOptionsFactory.Subscribe(mux, logger);
-        services.AddSingleton<IConnectionMultiplexer>(mux);
+        var resettableMux = new ResettableConnectionMultiplexer(mux, redisOptions, logger);
+        // Subscribe to the wrapper — events are forwarded from inner so they survive recreation.
+        RedisConnectionOptionsFactory.Subscribe(resettableMux, logger);
+        services.AddSingleton<IConnectionMultiplexer>(resettableMux);
       }
 
       // Wire the cache to the shared singleton rather than creating its own internal multiplexer.
