@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+using Grants.ApplicantPortal.API.Infrastructure.Messaging.Configuration;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using StackExchange.Redis;
 
@@ -16,15 +17,11 @@ public class RedisReadinessHealthCheck(
     {
         var redisConnectionString = configuration.GetConnectionString("Redis");
         if (string.IsNullOrWhiteSpace(redisConnectionString))
-        {
             return HealthCheckResult.Healthy("Redis not configured; running in in-memory mode");
-        }
 
         var multiplexer = serviceProvider.GetService<IConnectionMultiplexer>();
         if (multiplexer is null)
-        {
             return HealthCheckResult.Unhealthy("Redis multiplexer is not registered");
-        }
 
         // Per-invocation key prevents concurrent probes from overwriting each other's
         // marker and producing a false negative on the round-trip value check.
@@ -44,18 +41,15 @@ public class RedisReadinessHealthCheck(
             await distributedCache.SetStringAsync(
                 probeKey,
                 marker,
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
-                },
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30) },
                 probeToken);
 
             var value = await distributedCache.GetStringAsync(probeKey, probeToken);
             if (value != marker)
-            {
                 return HealthCheckResult.Unhealthy("Redis cache probe round-trip returned unexpected value");
-            }
 
+            // Reset the consecutive-failure counter so recreation is not triggered spuriously.
+            (multiplexer as ResettableConnectionMultiplexer)?.RecordSuccess();
             return HealthCheckResult.Healthy("Redis cache round-trip verified");
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
@@ -66,26 +60,13 @@ public class RedisReadinessHealthCheck(
             // piling up on callers. The liveness probe does not check Redis so the pod
             // is not restarted.
             logger.LogWarning(ex, "Redis readiness check timed out after 5 s (connection hung — Sentinel failover or pod recycle in progress)");
+            (multiplexer as ResettableConnectionMultiplexer)?.RecordFailure();
             return HealthCheckResult.Unhealthy("Redis readiness check timed out");
         }
         catch (RedisConnectionException ex)
         {
             logger.LogWarning(ex, "Redis connection lost during readiness check (transient — Sentinel failover or pod recycle)");
-            // Kick Sentinel re-discovery so the multiplexer re-targets the new master rather
-            // than waiting for the next ConfigCheckSeconds tick (15 s) or ExponentialRetry interval.
-            // ReconfigureAsync lives on the concrete class, not the interface.
-            if (multiplexer is ConnectionMultiplexer cm)
-            {
-                try
-                {
-                    var reconfig = await cm.ReconfigureAsync("readiness-check-connection-loss");
-                    logger.LogInformation("Redis ReconfigureAsync returned {Result} (true = master endpoint updated)", reconfig);
-                }
-                catch (Exception reconfigEx)
-                {
-                    logger.LogWarning(reconfigEx, "Redis ReconfigureAsync faulted (Sentinel may also be unavailable)");
-                }
-            }
+            await RecordFailureAndReconfigureAsync(multiplexer);
             return HealthCheckResult.Unhealthy("Redis temporarily unavailable (connection lost)", ex);
         }
         catch (RedisServerException ex) when (ex.Message.Contains("READONLY", StringComparison.OrdinalIgnoreCase))
@@ -94,12 +75,41 @@ public class RedisReadinessHealthCheck(
             // Unhealthy removes the pod from rotation until the multiplexer re-targets
             // the new master via ExponentialRetry / ConfigCheckSeconds.
             logger.LogWarning(ex, "Redis write rejected — node is READONLY (Sentinel failover in progress)");
+            (multiplexer as ResettableConnectionMultiplexer)?.RecordFailure();
             return HealthCheckResult.Unhealthy("Redis READONLY — Sentinel failover in progress", ex);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Redis readiness check failed");
             return HealthCheckResult.Unhealthy("Redis readiness check failed", ex);
+        }
+    }
+
+    /// <summary>
+    /// Records a failure on the resettable wrapper (triggers recreation at threshold) and
+    /// kicks Sentinel re-discovery for faster sub-threshold recovery.
+    /// </summary>
+    private async Task RecordFailureAndReconfigureAsync(IConnectionMultiplexer multiplexer)
+    {
+        (multiplexer as ResettableConnectionMultiplexer)?.RecordFailure();
+
+        try
+        {
+            // Kick Sentinel re-discovery so the multiplexer re-targets the new master rather
+            // than waiting for the next ConfigCheckSeconds tick (15 s) or ExponentialRetry interval.
+            bool reconfig;
+            if (multiplexer is ResettableConnectionMultiplexer resettable)
+                reconfig = await resettable.ReconfigureAsync("readiness-check-connection-loss");
+            else if (multiplexer is ConnectionMultiplexer cm)
+                reconfig = await cm.ReconfigureAsync("readiness-check-connection-loss");
+            else
+                return;
+
+            logger.LogInformation("Redis ReconfigureAsync returned {Result} (true = master endpoint updated)", reconfig);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Redis ReconfigureAsync faulted (Sentinel may also be unavailable)");
         }
     }
 }
