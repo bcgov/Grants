@@ -76,10 +76,14 @@ public class RedisReadinessHealthCheck(
             // ReconfigureAsync lives on the concrete class, not the interface.
             if (multiplexer is ConnectionMultiplexer cm)
             {
-                try { await cm.ReconfigureAsync("readiness-check-connection-loss"); }
+                try
+                {
+                    var reconfig = await cm.ReconfigureAsync("readiness-check-connection-loss");
+                    logger.LogInformation("Redis ReconfigureAsync returned {Result} (true = master endpoint updated)", reconfig);
+                }
                 catch (Exception reconfigEx)
                 {
-                    logger.LogWarning(reconfigEx, "Redis ReconfigureAsync faulted during readiness check (Sentinel may also be unavailable)");
+                    logger.LogWarning(reconfigEx, "Redis ReconfigureAsync faulted (Sentinel may also be unavailable)");
                 }
             }
             return HealthCheckResult.Unhealthy("Redis temporarily unavailable (connection lost)", ex);
