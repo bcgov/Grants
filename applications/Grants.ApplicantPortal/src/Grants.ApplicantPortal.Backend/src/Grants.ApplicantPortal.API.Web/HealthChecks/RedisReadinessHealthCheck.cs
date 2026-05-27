@@ -22,23 +22,20 @@ public class RedisReadinessHealthCheck(
             return HealthCheckResult.Healthy("Redis not configured; running in in-memory mode");
         }
 
-        // Hard cap each probe at 5 s. Without this, a hung Redis connection (e.g. during a
-        // Sentinel failover where the client is still waiting to re-target the new master)
-        // blocks a thread-pool thread indefinitely. OpenShift fires the readiness probe every
-        // few seconds, so multiple hung tasks pile up, starve the thread pool, and eventually
-        // prevent even the liveness probe from responding — causing the pod to restart in a loop.
+        var multiplexer = serviceProvider.GetService<IConnectionMultiplexer>();
+        if (multiplexer is null)
+        {
+            return HealthCheckResult.Degraded("Redis multiplexer is not registered");
+        }
+
+        // Hard cap each probe at 5 s so a hung Redis connection (e.g. during a Sentinel failover)
+        // doesn't block a thread-pool thread for the full framework timeout (10 s).
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(5));
         var probeToken = cts.Token;
 
         try
         {
-            var multiplexer = serviceProvider.GetService<IConnectionMultiplexer>();
-            if (multiplexer is null)
-            {
-                return HealthCheckResult.Degraded("Redis multiplexer is not registered");
-            }
-
             // Always attempt a real round-trip — IsConnected can return true even when the
             // operation backlog is saturated after an overnight Redis pod recycle.
             var marker = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
@@ -70,11 +67,18 @@ public class RedisReadinessHealthCheck(
         }
         catch (RedisConnectionException ex)
         {
-            // Transient connectivity loss during a Sentinel failover or Redis pod recycle.
-            // Log at Warning (not Error) — consistent with RedisDistributedLock behaviour —
-            // and return Degraded so the readiness probe marks the pod temporarily unready
-            // rather than triggering an alert storm.
             logger.LogWarning(ex, "Redis connection lost during readiness check (transient — Sentinel failover or pod recycle)");
+            // Kick Sentinel re-discovery so the multiplexer re-targets the new master rather
+            // than waiting for the next ConfigCheckSeconds tick (15 s) or ExponentialRetry interval.
+            // ReconfigureAsync lives on the concrete class, not the interface.
+            if (multiplexer is ConnectionMultiplexer cm)
+            {
+                try { await cm.ReconfigureAsync("readiness-check-connection-loss"); }
+                catch (Exception reconfigEx)
+                {
+                    logger.LogWarning(reconfigEx, "Redis ReconfigureAsync faulted during readiness check (Sentinel may also be unavailable)");
+                }
+            }
             return HealthCheckResult.Degraded("Redis temporarily unavailable (connection lost)", ex);
         }
         catch (RedisServerException ex) when (ex.Message.Contains("READONLY", StringComparison.OrdinalIgnoreCase))

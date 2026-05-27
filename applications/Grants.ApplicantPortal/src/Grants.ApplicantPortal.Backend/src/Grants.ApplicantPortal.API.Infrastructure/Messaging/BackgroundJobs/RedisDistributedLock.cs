@@ -105,6 +105,11 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
       logger.LogDebug("Failed to renew distributed lock {Key} - token mismatch or lock doesn't exist", key);
       return Result.Error($"Could not renew lock '{key}' - token mismatch or lock doesn't exist");
     }
+    catch (RedisConnectionException ex)
+    {
+      logger.LogWarning(ex, "Redis unavailable while renewing distributed lock {Key}", key);
+      return Result.Error("Redis unavailable while renewing lock");
+    }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error renewing distributed lock {Key}", key);
@@ -136,6 +141,11 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
       logger.LogDebug("Failed to release distributed lock {Key} - token mismatch or lock doesn't exist", key);
       return Result.Error($"Could not release lock '{key}' - token mismatch or lock doesn't exist");
     }
+    catch (RedisConnectionException ex)
+    {
+      logger.LogWarning(ex, "Redis unavailable while releasing distributed lock {Key}", key);
+      return Result.Error("Redis unavailable while releasing lock");
+    }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error releasing distributed lock {Key}", key);
@@ -152,6 +162,11 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
 
       var exists = await database.KeyExistsAsync(lockKey);
       return exists;
+    }
+    catch (RedisConnectionException ex)
+    {
+      logger.LogWarning(ex, "Redis unavailable while checking distributed lock {Key}", key);
+      return false;
     }
     catch (Exception ex)
     {
