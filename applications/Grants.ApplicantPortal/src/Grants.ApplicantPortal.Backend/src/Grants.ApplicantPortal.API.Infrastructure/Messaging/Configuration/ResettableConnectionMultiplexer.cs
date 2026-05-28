@@ -166,7 +166,7 @@ public sealed class ResettableConnectionMultiplexer : IConnectionMultiplexer
     public bool Configure(TextWriter? log = null) => _inner.Configure(log);
     public Task<bool> ConfigureAsync(TextWriter? log = null) => _inner.ConfigureAsync(log);
     public void Dispose() { _recreateLock.Dispose(); _inner.Dispose(); }
-    public ValueTask DisposeAsync() => _inner.DisposeAsync();
+    public async ValueTask DisposeAsync() { _recreateLock.Dispose(); await _inner.DisposeAsync(); }
     public ServerCounters GetCounters() => _inner.GetCounters();
     public IDatabase GetDatabase(int db = -1, object? asyncState = null) => _inner.GetDatabase(db, asyncState);
     public EndPoint[] GetEndPoints(bool configuredOnly = false) => _inner.GetEndPoints(configuredOnly);
