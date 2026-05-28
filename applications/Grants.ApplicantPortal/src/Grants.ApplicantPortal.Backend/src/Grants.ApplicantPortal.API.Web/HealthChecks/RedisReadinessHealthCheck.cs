@@ -9,7 +9,7 @@ public class RedisReadinessHealthCheck(
     ILogger<RedisReadinessHealthCheck> logger,
     IConfiguration configuration,
     IDistributedCache distributedCache,
-    IConnectionMultiplexer? multiplexer) : IHealthCheck
+    IConnectionMultiplexer? multiplexer = null) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
