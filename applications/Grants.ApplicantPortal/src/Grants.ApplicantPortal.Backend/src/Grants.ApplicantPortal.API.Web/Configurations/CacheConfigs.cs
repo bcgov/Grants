@@ -1,6 +1,8 @@
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Configuration;
 using Grants.ApplicantPortal.API.UseCases;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace Grants.ApplicantPortal.API.Web.Configurations;
@@ -31,13 +33,28 @@ public static class CacheConfigs
         services.AddSingleton<IConnectionMultiplexer>(resettableMux);
       }
 
-      // Wire the cache to the shared singleton rather than creating its own internal multiplexer.
-      // Post-configure runs after the container is built, so IConnectionMultiplexer resolves
-      // correctly regardless of registration order.
-      services.AddStackExchangeRedisCache(options => options.InstanceName = "ApplicantPortal");
+      // Configure RedisCacheOptions manually (equivalent to AddStackExchangeRedisCache) so we can
+      // register ResettableDistributedCache instead of the bare RedisCache singleton.
+      // AddStackExchangeRedisCache = AddOptions() + Configure<RedisCacheOptions> + AddSingleton<IDistributedCache, RedisCache>
+      services.AddOptions();
+      services.Configure<RedisCacheOptions>(opts => opts.InstanceName = "ApplicantPortal");
+
+      // Wire the cache to the shared multiplexer wrapper. Post-configure runs after the container
+      // is built so IConnectionMultiplexer resolves correctly regardless of registration order.
       services.AddOptions<RedisCacheOptions>()
           .Configure<IConnectionMultiplexer>((options, mux) =>
               options.ConnectionMultiplexerFactory = () => Task.FromResult(mux));
+
+      // ResettableDistributedCache wraps RedisCache and recovers from ObjectDisposedException that
+      // occurs when the inner multiplexer is recreated (disposing the old one invalidates the
+      // IDatabase that RedisCache cached internally). On disposal exception, a fresh RedisCache is
+      // created via the factory, which re-fetches the database from the now-new multiplexer inner.
+      services.AddSingleton<IDistributedCache>(sp =>
+      {
+        var cacheOpts = sp.GetRequiredService<IOptions<RedisCacheOptions>>();
+        var cacheLogger = sp.GetRequiredService<ILogger<ResettableDistributedCache>>();
+        return new ResettableDistributedCache(() => new RedisCache(cacheOpts), cacheLogger);
+      });
 
       logger.LogInformation("Redis distributed cache configured successfully");
     }
