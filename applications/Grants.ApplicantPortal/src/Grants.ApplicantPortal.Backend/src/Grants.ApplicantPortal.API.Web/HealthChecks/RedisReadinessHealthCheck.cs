@@ -9,7 +9,7 @@ public class RedisReadinessHealthCheck(
     ILogger<RedisReadinessHealthCheck> logger,
     IConfiguration configuration,
     IDistributedCache distributedCache,
-    IServiceProvider serviceProvider) : IHealthCheck
+    IConnectionMultiplexer? multiplexer = null) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
@@ -19,7 +19,6 @@ public class RedisReadinessHealthCheck(
         if (string.IsNullOrWhiteSpace(redisConnectionString))
             return HealthCheckResult.Healthy("Redis not configured; running in in-memory mode");
 
-        var multiplexer = serviceProvider.GetService<IConnectionMultiplexer>();
         if (multiplexer is null)
             return HealthCheckResult.Unhealthy("Redis multiplexer is not registered");
 

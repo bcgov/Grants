@@ -341,7 +341,7 @@ public class AuthCallback : EndpointWithoutRequest
             new("grant_type", "authorization_code"),
             new("client_id", config.Resource),
             new("client_secret", config.Credentials.Secret),
-            new("code", code),
+            new("code", code!),
             new("redirect_uri", redirectUri)
         };
         
@@ -364,6 +364,9 @@ public class AuthCallback : EndpointWithoutRequest
             var responseContent = await response.Content.ReadAsStringAsync(ct);
             Logger.LogInformation("Token exchange successful - Response length: {Length} chars", responseContent?.Length ?? 0);
             
+            if (responseContent is null)
+                throw new InvalidOperationException("Token exchange returned empty response body");
+
             var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(responseContent, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
@@ -420,6 +423,9 @@ public class AuthCallback : EndpointWithoutRequest
                 var content = await response.Content.ReadAsStringAsync(ct);
                 Logger.LogInformation("User info retrieved successfully - Response length: {Length} chars", content?.Length ?? 0);
                 
+                if (content is null)
+                    return null;
+
                 return JsonSerializer.Deserialize<CallbackUserInfoResponse>(content, new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower

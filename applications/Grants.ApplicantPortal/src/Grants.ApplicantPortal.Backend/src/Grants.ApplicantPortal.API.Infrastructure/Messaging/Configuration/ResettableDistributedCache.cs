@@ -42,8 +42,9 @@ public sealed class ResettableDistributedCache : IDistributedCache
         try
         {
 #pragma warning disable CS0420
-            Interlocked.Exchange(ref _inner, _factory());
+            var old = Interlocked.Exchange(ref _inner, _factory());
 #pragma warning restore CS0420
+            (old as IDisposable)?.Dispose();
             _logger.LogInformation("ResettableDistributedCache: inner RedisCache replaced after ObjectDisposedException");
         }
         finally
@@ -62,8 +63,9 @@ public sealed class ResettableDistributedCache : IDistributedCache
         try
         {
 #pragma warning disable CS0420
-            Interlocked.Exchange(ref _inner, _factory());
+            var old = Interlocked.Exchange(ref _inner, _factory());
 #pragma warning restore CS0420
+            (old as IDisposable)?.Dispose();
             _logger.LogInformation("ResettableDistributedCache: inner RedisCache replaced (sync) after ObjectDisposedException");
         }
         finally
