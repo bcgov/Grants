@@ -112,10 +112,12 @@ jobs:
       TAGVERSION: ${{steps.tag_selector.outputs.TAGVERSION}}
   PushVariables:
     needs: [Setup,Branch,GenerateTag]
-    permissions:
-      actions: write
     runs-on: ubuntu-latest
     environment: test
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ secrets.GH_API_TOKEN }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
