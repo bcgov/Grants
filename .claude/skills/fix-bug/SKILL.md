@@ -12,8 +12,10 @@ If `$ARGUMENTS` is empty, ask the user to describe the bug (what happened, what 
 **Ticket number**: Extract `AB#<number>` from the bug report. If no ticket number is present, ask: *"What is the AB ticket number? (e.g. AB#12345)"* — do not proceed until you have it.
 
 **Branch type**: Ask the user: *"Is this a hotfix on `test` or `main`, or a regular bug fix branched from `dev`?"*
-- Regular bug fix → `bugfix/AB#<ticket>` from `dev`
-- Hotfix → `hotfix/AB#<ticket>` from `test` or `main`
+- Regular bug fix → `bugfix/AB#<ticket>-<slug>` from `dev`
+- Hotfix → `hotfix/AB#<ticket>-<slug>` from `test` or `main`
+
+Record the answer — it is used in Phase 8 to create the branch.
 
 ---
 
@@ -108,18 +110,48 @@ Pass it:
 
 ---
 
-## Phase 8 — Summary
+## Phase 8 — Branch & Commit
+
+Create the branch and commit all changes made during this fix.
+
+**Step 1 — Confirm branch type.**
+Use the branch type established at the start of the skill:
+- Regular bug fix → `bugfix/AB#<ticket>-<slug>`
+- Hotfix → `hotfix/AB#<ticket>-<slug>`
+
+**Step 2 — Confirm slug.**
+Derive a 2–4 word kebab-case slug from the bug title (e.g. `null-reference-fix`, `redis-timeout-handling`, `readonly-sentinel-failover`).
+Present it and ask: *"I'll name the branch `<full-branch-name>` — does that slug work, or would you prefer something different?"*
+Wait for confirmation before continuing.
+
+**Step 3 — Confirm base branch.**
+- `bugfix` → base is always `dev`
+- `hotfix` → ask: *"Which base branch for the hotfix — `test` or `main`?"* (or use the answer given at the start if already provided)
+
+**Step 4 — Execute.**
+
+```bash
+git checkout <base-branch>
+git checkout -b <branch-type>/AB#<ticket>-<slug>
+```
+
+Stage every file created or modified during this fix (be explicit — list files individually, do not use `git add .`) and commit:
+
+```bash
+git add <file1> <file2> ...
+git commit -m "AB#<ticket> <short description>"
+```
+
+Report the branch name and commit hash on completion.
+
+---
+
+## Phase 9 — Summary
 
 ```
-## Branch
-git checkout <base-branch>          # dev for bugfix / test or main for hotfix
-git checkout -b <branch-name>
-  bugfix/AB#<ticket>   ← regular bug fix from dev
-  hotfix/AB#<ticket>   ← hotfix from test or main
-
-## Commit message format
-AB#<ticket> <short description>
-e.g. AB#12345 fix null reference in address lookup
+## Branch & commit
+<branch name created>
+<commit hash and message>
 
 ## Bug fixed
 <one-line description>

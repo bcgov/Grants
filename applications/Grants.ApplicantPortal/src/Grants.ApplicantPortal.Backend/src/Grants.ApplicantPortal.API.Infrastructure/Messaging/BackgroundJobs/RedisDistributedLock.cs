@@ -11,6 +11,7 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
   ILogger<RedisDistributedLock> logger) : IDistributedLock
 {
   private static readonly string _instanceId = Environment.MachineName + "_" + Environment.ProcessId;
+  private const string ReadonlyError = "READONLY";
 
   // Lua script for atomic lock release
   private const string ReleaseLockScript = @"
@@ -68,10 +69,25 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
     }
     catch (RedisConnectionException ex)
     {
-      // Transient connectivity loss (e.g. Redis pod recycled overnight). The job circuit
-      // breaker handles back-off; log as Warning so it doesn't appear as an application error.
+      // transient connectivity loss (e.g. Redis pod recycled overnight)
       logger.LogWarning(ex, "Redis unavailable while acquiring distributed lock {Key}", key);
       return Result<string>.Error("Redis unavailable while acquiring lock");
+    }
+    catch (RedisTimeoutException ex)
+    {
+      logger.LogWarning(ex, "Redis command timed out while acquiring distributed lock {Key}", key);
+      return Result<string>.Error("Redis timed out while acquiring lock");
+    }
+    catch (RedisServerException ex) when (ex.Message.Contains(ReadonlyError, StringComparison.OrdinalIgnoreCase))
+    {
+      // Sentinel failover in progress — old master is now a replica
+      logger.LogWarning(ex, "Redis is READONLY while acquiring distributed lock {Key} (Sentinel failover in progress)", key);
+      return Result<string>.Error("Redis unavailable (READONLY) while acquiring lock");
+    }
+    catch (RedisException ex)
+    {
+      logger.LogWarning(ex, "Redis error while acquiring distributed lock {Key}", key);
+      return Result<string>.Error("Redis error while acquiring lock");
     }
     catch (Exception ex)
     {
@@ -110,6 +126,22 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
       logger.LogWarning(ex, "Redis unavailable while renewing distributed lock {Key}", key);
       return Result.Error("Redis unavailable while renewing lock");
     }
+    catch (RedisTimeoutException ex)
+    {
+      logger.LogWarning(ex, "Redis command timed out while renewing distributed lock {Key}", key);
+      return Result.Error("Redis timed out while renewing lock");
+    }
+    catch (RedisServerException ex) when (ex.Message.Contains(ReadonlyError, StringComparison.OrdinalIgnoreCase))
+    {
+      // Sentinel failover in progress — old master is now a replica
+      logger.LogWarning(ex, "Redis is READONLY while renewing distributed lock {Key} (Sentinel failover in progress)", key);
+      return Result.Error("Redis unavailable (READONLY) while renewing lock");
+    }
+    catch (RedisException ex)
+    {
+      logger.LogWarning(ex, "Redis error while renewing distributed lock {Key}", key);
+      return Result.Error("Redis error while renewing lock");
+    }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error renewing distributed lock {Key}", key);
@@ -146,6 +178,22 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
       logger.LogWarning(ex, "Redis unavailable while releasing distributed lock {Key}", key);
       return Result.Error("Redis unavailable while releasing lock");
     }
+    catch (RedisTimeoutException ex)
+    {
+      logger.LogWarning(ex, "Redis command timed out while releasing distributed lock {Key}", key);
+      return Result.Error("Redis timed out while releasing lock");
+    }
+    catch (RedisServerException ex) when (ex.Message.Contains(ReadonlyError, StringComparison.OrdinalIgnoreCase))
+    {
+      // Sentinel failover in progress — old master is now a replica
+      logger.LogWarning(ex, "Redis is READONLY while releasing distributed lock {Key} (Sentinel failover in progress)", key);
+      return Result.Error("Redis unavailable (READONLY) while releasing lock");
+    }
+    catch (RedisException ex)
+    {
+      logger.LogWarning(ex, "Redis error while releasing distributed lock {Key}", key);
+      return Result.Error("Redis error while releasing lock");
+    }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error releasing distributed lock {Key}", key);
@@ -166,6 +214,21 @@ public class RedisDistributedLock(IConnectionMultiplexer connectionMultiplexer,
     catch (RedisConnectionException ex)
     {
       logger.LogWarning(ex, "Redis unavailable while checking distributed lock {Key}", key);
+      return false;
+    }
+    catch (RedisTimeoutException ex)
+    {
+      logger.LogWarning(ex, "Redis command timed out while checking distributed lock {Key}", key);
+      return false;
+    }
+    catch (RedisServerException ex) when (ex.Message.Contains(ReadonlyError, StringComparison.OrdinalIgnoreCase))
+    {
+      logger.LogWarning(ex, "Redis is READONLY while checking distributed lock {Key} (Sentinel failover in progress)", key);
+      return false;
+    }
+    catch (RedisException ex)
+    {
+      logger.LogWarning(ex, "Redis error while checking distributed lock {Key}", key);
       return false;
     }
     catch (Exception ex)
