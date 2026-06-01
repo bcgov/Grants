@@ -77,6 +77,24 @@ public sealed class ResettableConnectionMultiplexer : IConnectionMultiplexer
             {
                 newMux = await ConnectionMultiplexer.ConnectAsync(_options);
             }
+            catch (RedisConnectionException ex)
+            {
+                _logger.LogWarning(ex,
+                    "ResettableConnectionMultiplexer: connection refused for replacement multiplexer — retaining existing connection");
+                return;
+            }
+            catch (RedisTimeoutException ex)
+            {
+                _logger.LogWarning(ex,
+                    "ResettableConnectionMultiplexer: connection attempt timed out for replacement multiplexer — retaining existing connection");
+                return;
+            }
+            catch (RedisException ex)
+            {
+                _logger.LogWarning(ex,
+                    "ResettableConnectionMultiplexer: Redis error creating replacement multiplexer — retaining existing connection");
+                return;
+            }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex,
@@ -99,6 +117,11 @@ public sealed class ResettableConnectionMultiplexer : IConnectionMultiplexer
             {
                 await old.CloseAsync(allowCommandsToComplete: false);
                 await old.DisposeAsync();
+            }
+            catch (ObjectDisposedException ex)
+            {
+                // Already disposed — nothing to do.
+                _logger.LogDebug(ex, "ResettableConnectionMultiplexer: replaced multiplexer was already disposed (non-fatal)");
             }
             catch (Exception ex)
             {

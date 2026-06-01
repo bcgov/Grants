@@ -68,6 +68,13 @@ public class RedisReadinessHealthCheck(
             await RecordFailureAndReconfigureAsync(multiplexer);
             return HealthCheckResult.Unhealthy("Redis temporarily unavailable (connection lost)", ex);
         }
+        catch (RedisTimeoutException ex)
+        {
+            // SE.Redis command-pipeline timeout — distinct from the internal 5 s CancellationToken above.
+            logger.LogWarning(ex, "Redis command timed out during readiness check");
+            await RecordFailureAndReconfigureAsync(multiplexer);
+            return HealthCheckResult.Unhealthy("Redis temporarily unavailable (command timed out)", ex);
+        }
         catch (RedisServerException ex) when (ex.Message.Contains("READONLY", StringComparison.OrdinalIgnoreCase))
         {
             // After a Sentinel failover the old master becomes a replica and rejects writes.
@@ -105,6 +112,14 @@ public class RedisReadinessHealthCheck(
                 return;
 
             logger.LogInformation("Redis ReconfigureAsync returned {Result} (true = master endpoint updated)", reconfig);
+        }
+        catch (RedisConnectionException ex)
+        {
+            logger.LogWarning(ex, "Redis ReconfigureAsync failed — connection lost (Sentinel may also be unavailable)");
+        }
+        catch (RedisTimeoutException ex)
+        {
+            logger.LogWarning(ex, "Redis ReconfigureAsync timed out (Sentinel may be unavailable)");
         }
         catch (Exception ex)
         {
