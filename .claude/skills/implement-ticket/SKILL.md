@@ -166,20 +166,51 @@ The agent will:
 
 ---
 
-## Phase 9 — Summary
+## Phase 9 — Branch & Commit
 
-Produce a commit-ready summary:
+Create the branch and commit all changes made during this ticket.
+
+**Step 1 — Confirm branch type.**
+Derive from the ticket type determined in Phase 1:
+- New feature or enhancement → `feature/AB#<ticket>-<slug>`
+- Bug fix → `bugfix/AB#<ticket>-<slug>`
+- Hotfix (only if the user explicitly requested it) → `hotfix/AB#<ticket>-<slug>`
+
+If the type is ambiguous, ask: *"Should this branch be `feature` or `bugfix`?"*
+
+**Step 2 — Confirm slug.**
+Derive a 2–4 word kebab-case slug from the ticket title (e.g. `redis-exceptions`, `address-validation`, `null-reference-fix`).
+Present it and ask: *"I'll name the branch `<full-branch-name>` — does that slug work, or would you prefer something different?"*
+Wait for confirmation before continuing.
+
+**Step 3 — Confirm base branch.**
+- `feature` and `bugfix` → base is always `dev`
+- `hotfix` → ask: *"Which base branch for the hotfix — `test` or `main`?"*
+
+**Step 4 — Execute.**
+
+```bash
+git checkout <base-branch>
+git checkout -b <branch-type>/AB#<ticket>-<slug>
+```
+
+Stage every file created or modified during this implementation (be explicit — list files individually, do not use `git add .`) and commit:
+
+```bash
+git add <file1> <file2> ...
+git commit -m "AB#<ticket> <short description>"
+```
+
+Report the branch name and commit hash on completion.
+
+---
+
+## Phase 10 — Summary
 
 ```
-## Branch
-git checkout dev
-git checkout -b <branch-name>
-  feature/AB#<ticket>   ← new feature or enhancement
-  bugfix/AB#<ticket>    ← bug fix via implement-ticket
-
-## Commit message format
-AB#<ticket> <short description>
-e.g. AB#12345 add address validation endpoint
+## Branch & commit
+<branch name created>
+<commit hash and message>
 
 ## What was implemented
 <bullet list of changes>
