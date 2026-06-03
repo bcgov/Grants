@@ -20,7 +20,6 @@
     <PackageReference Include="Quartz" />
     <PackageReference Include="Quartz.Extensions.Hosting" />
     <PackageReference Include="RabbitMQ.Client" />
-    <PackageReference Include="SQLite" />
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
   
