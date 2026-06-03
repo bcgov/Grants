@@ -1,26 +1,28 @@
+import { AppSelectors } from '../selectors/registry';
+
 class PaymentsPage {
   get pageInner() {
-    return cy.get('[data-cy="payments-page-inner"]');
+    return cy.get(AppSelectors.Payments.pageInner);
   }
 
   get paymentsCard() {
-    return cy.get('[data-cy="payments-card"]');
+    return cy.get(AppSelectors.Payments.card);
   }
 
   get pageHeader() {
-    return cy.get('[data-cy="payments-header"]');
+    return cy.get(AppSelectors.Payments.header);
   }
 
   get paymentsTable() {
-    return cy.get('[data-cy="datatable-payments"]').find('table');
+    return cy.get(AppSelectors.Payments.table).find('table');
   }
 
   get searchInput() {
-    return cy.get('[data-cy="datatable-search-payments"]');
+    return cy.get(AppSelectors.Payments.searchInput);
   }
 
   get tableRows() {
-    return cy.get('[data-cy="datatable-body-payments"]').find('tr');
+    return cy.get(AppSelectors.Payments.tableBody).find('tr');
   }
 
   verifyPageLoaded(): void {

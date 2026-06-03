@@ -53,6 +53,8 @@ npm run build      # production build
 
 Claude Code skills: `/new-feature`, `/new-shared-component`, `/new-service`, `/api-call`, `/env-check`
 
+> **After changing any `data-cy` attribute in Angular templates**, run `/sync-selectors` to keep Cypress tests in sync (see [AutoUI](#autoui) below).
+
 Full context: [Frontend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/CLAUDE.md)
 
 ## Backend
@@ -103,6 +105,50 @@ Branch flow: `dev` → `test` → `main`
 **Commit message format**: `AB#<ticket> <short description>` — e.g. `AB#12345 add address validation`
 
 All orchestrated skills (`/implement-ticket`, `/fix-bug`) will ask for the ticket number if it is not supplied up front.
+
+## AutoUI
+
+Cypress E2E suite lives in `applications/Grants.AutoUI/`.
+
+```bash
+cd applications/Grants.AutoUI
+npm install                      # first time (installs tsx + cypress)
+npm run validate:selectors       # check registry vs Angular HTML — exit 0 = clean
+npm run cy:run:bcsc-flow:dev     # run BCSC login flow against dev
+npm run typecheck                # TypeScript check (covers pages + selectors + scripts)
+```
+
+### Selector Registry
+
+All Cypress selectors live in two files — never hardcode strings in page objects or specs:
+
+| File | Contents |
+|---|---|
+| `cypress/selectors/registry.ts` | App-owned `data-cy` selectors (auto-validated) |
+| `cypress/selectors/external-registry.ts` | Third-party page selectors — Keycloak, BCeID, BC Services Card (never auto-validated) |
+
+Page objects in `cypress/pages/` import from these files. Only the registry ever changes when the Angular app renames a `data-cy` attribute — page objects and specs stay untouched.
+
+### `/sync-selectors` — Selector Sync Agent
+
+**When to run:** after any frontend developer changes or adds a `data-cy` attribute in an Angular HTML template.
+
+**What it does:**
+1. Runs `npm run validate:selectors` — diffs the registry against current HTML templates
+2. Detects renames (old value gone, similar new value appeared) and applies them automatically
+3. Adds new selectors to the correct namespace in `registry.ts`
+4. Marks removed selectors as `// ORPHAN` for manual review
+5. Verifies TypeScript still compiles
+6. Reports every change made
+
+**What it never touches:** spec files, page object logic, `external-registry.ts`.
+
+**Usage:**
+```
+/sync-selectors
+```
+
+---
 
 ## Key Conventions
 

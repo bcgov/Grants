@@ -1,39 +1,41 @@
+import { ExternalSelectors } from '../selectors/external-registry';
+
 export class BCeIDLoginPage {
   // ── Selectors ───────────────────────────────────────────────────────────────
   get panelContainer() {
-    return cy.get(".panel");
+    return cy.get(ExternalSelectors.BCeID.panelContainer);
   }
 
   get panelHeading() {
-    return cy.get(".panel-heading");
+    return cy.get(ExternalSelectors.BCeID.panelHeading);
   }
 
   get bceidLogo() {
-    return cy.get("#bceidLogo");
+    return cy.get(ExternalSelectors.BCeID.logo);
   }
 
   get userIdInput() {
-    return cy.get("#user");
+    return cy.get(ExternalSelectors.BCeID.userIdInput);
   }
 
   get passwordInput() {
-    return cy.get("#password");
+    return cy.get(ExternalSelectors.BCeID.passwordInput);
   }
 
   get continueButton() {
-    return cy.get('input[name="btnSubmit"]');
+    return cy.get(ExternalSelectors.BCeID.continueButton);
   }
 
   get errorContainer() {
-    return cy.get(".bg-error");
+    return cy.get(ExternalSelectors.BCeID.errorContainer);
   }
 
   get errorMessage() {
-    return cy.get(".field-help-text");
+    return cy.get(ExternalSelectors.BCeID.errorMessage);
   }
 
   get forgotLink() {
-    return cy.get(".link-forgot");
+    return cy.get(ExternalSelectors.BCeID.forgotLink);
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

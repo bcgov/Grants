@@ -1,54 +1,56 @@
+import { AppSelectors } from '../selectors/registry';
+
 class NavMenuPage {
   get navMenu() {
-    return cy.get("nav.nav-menu");
+    return cy.get(AppSelectors.Nav.menu);
   }
 
   get applicantInfoLink() {
-    return cy.get('[data-cy="nav-applicant-info"]');
+    return cy.get(AppSelectors.Nav.applicantInfoLink);
   }
 
   get paymentsLink() {
-    return cy.get('[data-cy="nav-payments"]');
+    return cy.get(AppSelectors.Nav.paymentsLink);
   }
 
   get workspaceDropdown() {
-    return cy.get('[data-cy="workspace-dropdown"]');
+    return cy.get(AppSelectors.Nav.workspaceDropdown);
   }
 
   get workspaceDropdownMenu() {
-    return cy.get("ul[aria-labelledby='workspace-dropdown']");
+    return cy.get(AppSelectors.Nav.workspaceDropdownMenu);
   }
 
   get workspaceDropdownHeader() {
-    return this.workspaceDropdownMenu.find(".dropdown-header").first();
+    return this.workspaceDropdownMenu.find(AppSelectors.Nav.dropdownHeader).first();
   }
 
   get providersHeader() {
-    return this.workspaceDropdownMenu.find(".dropdown-header").eq(1);
+    return this.workspaceDropdownMenu.find(AppSelectors.Nav.dropdownHeader).eq(1);
   }
 
   get activeProviderItem() {
-    return this.workspaceDropdownMenu.find(".provider-item.active");
+    return this.workspaceDropdownMenu.find(AppSelectors.Nav.providerItemActive);
   }
 
   providerItem(providerId: string) {
-    return cy.get(`[data-cy="provider-item-${providerId}"]`);
+    return cy.get(AppSelectors.Nav.providerItem(providerId));
   }
 
   get changeWorkspaceButton() {
-    return cy.get('[data-cy="change-workspace-btn"]');
+    return cy.get(AppSelectors.Nav.changeWorkspaceButton);
   }
 
   get userDropdownButton() {
-    return cy.get('[data-cy="header-user-dropdown"]');
+    return cy.get(AppSelectors.Nav.userDropdownButton);
   }
 
   get userDropdownMenu() {
-    return cy.get("ul[aria-labelledby='header-user-dropdown']");
+    return cy.get(AppSelectors.Nav.userDropdownMenu);
   }
 
   get logoutButton() {
-    return cy.get('[data-cy="header-user-dropdown-logout"]');
+    return cy.get(AppSelectors.Nav.logoutButton);
   }
 
   openUserDropdown(): void {
