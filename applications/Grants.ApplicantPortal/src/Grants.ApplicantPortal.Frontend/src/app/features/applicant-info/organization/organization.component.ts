@@ -16,6 +16,7 @@ import { environment } from '../../../../environments/environment';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
+import { ENTITY_TYPE_LOOKUP } from '../../../shared/models/orgbook.constants';
 
 @Component({
   selector: 'app-organization-info',
@@ -65,6 +66,7 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
 
   // Constants
   readonly daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
+  readonly entityTypeLookup = ENTITY_TYPE_LOOKUP;
   private readonly monthAbbreviations = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   private readonly orgbookBaseApi = environment.orgbookApiUrl;
   private readonly searchSubject = new Subject<string>();
@@ -347,7 +349,7 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     const orgName = topic.names?.[0]?.text ?? '';
     const orgNumber = topic.source_id ?? '';
     const inactive = topic.inactive ?? false;
-    const entityType = topic.attributes?.find((a: any) => a.type === 'entity_type')?.value ?? '';
+    const entityTypeCode = topic.attributes?.find((a: any) => a.type === 'entity_type')?.value ?? '';
 
     const base = this.organizationInfo ?? {} as OrganizationData;
     this.organizationInfo = {
@@ -355,11 +357,17 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       orgName,
       orgNumber,
       orgStatus: inactive ? 'Inactive' : 'Active',
-      organizationType: entityType,
+      organizationType: entityTypeCode,
       legalName: orgName,
     };
     this.searchTerm = orgName;
     this.cdr.detectChanges();
+  }
+
+  get organizationTypeDisplay(): string {
+    const code = this.organizationInfo?.organizationType;
+    if (!code) return 'N/A';
+    return this.entityTypeLookup[code] ?? code;
   }
 
   onFiscalMonthChange(event: Event): void {
@@ -398,8 +406,13 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
       ? this.monthAbbreviations.indexOf(this.selectedFiscalMonth)
       : null;
 
+    // Normalize organizationType to its code — handles previously-saved display names (e.g. "BC Company" → "BC")
+    const rawType = this.organizationInfo.organizationType ?? '';
+    const normalizedType = Object.entries(this.entityTypeLookup).find(([, v]) => v === rawType)?.[0] ?? rawType;
+
     const updatedOrgInfo: OrganizationData = {
       ...this.organizationInfo,
+      organizationType: normalizedType,
       fiscalMonth: this.selectedFiscalMonth || null,
       fiscalDay: this.selectedFiscalDay ? Number(this.selectedFiscalDay) : null,
       fiscalYearEndMonth: fiscalMonthIndex,

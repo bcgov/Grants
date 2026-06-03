@@ -29,6 +29,7 @@ bld/
 
 # Visual Studio cache/options directory
 .vs/
+.vscode/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
@@ -147,8 +148,9 @@ rcf/
 
 # Others
 ClientBin/
-CLAUDE.*
-.claude
+# Claude Code — tracked as first-class project files
+# .claude/settings.local.json is user-specific and should not be committed
+.claude/settings.local.json
 ~$*
 *~
 *.dbmdl
