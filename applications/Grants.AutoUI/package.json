@@ -9,11 +9,13 @@
     "cy:run:bcsc-flow": "cypress run --spec cypress/e2e/loginByBCSCFlow.cy.ts",
     "cy:run:bcsc-flow:dev": "cypress run --env ENV=dev --spec cypress/e2e/loginByBCSCFlow.cy.ts",
     "cy:run:bcsc-flow:test": "cypress run --env ENV=test --spec cypress/e2e/loginByBCSCFlow.cy.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate:selectors": "tsx cypress/scripts/validate-selectors.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.6",
     "cypress": "^13.17.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.3"
   }
 }

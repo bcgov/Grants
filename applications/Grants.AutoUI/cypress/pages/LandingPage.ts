@@ -1,43 +1,45 @@
+import { AppSelectors } from '../selectors/registry';
+
 class LandingPage {
-  // Cards
+  // ── Cards ─────────────────────────────────────────────────────────────────
   get orgInfoCard() {
-    return cy.get('[data-cy="card-organization"]');
+    return cy.get(AppSelectors.Landing.orgInfoCard);
   }
 
   get submissionsCard() {
-    return cy.get('[data-cy="card-submissions"]');
+    return cy.get(AppSelectors.Landing.submissionsCard);
   }
 
   get contactsCard() {
-    return cy.get('[data-cy="card-contacts"]');
+    return cy.get(AppSelectors.Landing.contactsCard);
   }
 
   get addressesCard() {
-    return cy.get('[data-cy="card-addresses"]');
+    return cy.get(AppSelectors.Landing.addressesCard);
   }
 
-  // Organization Information
+  // ── Organization Information ───────────────────────────────────────────────
   get orgTable() {
-    return cy.get('[data-cy="card-organization"] .orgbook-table');
+    return cy.get(AppSelectors.Landing.orgTable);
   }
 
-  // Submissions
+  // ── Submissions ───────────────────────────────────────────────────────────
   get submissionsTable() {
-    return cy.get('[data-cy="datatable-submissions"]');
+    return cy.get(AppSelectors.Landing.submissionsTable);
   }
 
-  // Contacts
+  // ── Contacts ─────────────────────────────────────────────────────────────
   get addContactButton() {
-    return cy.get('[data-cy="contact-add-btn"]');
+    return cy.get(AppSelectors.Landing.addContactButton);
   }
 
   get primaryContactInfo() {
-    return cy.get('[data-cy="primary-contact-info"]');
+    return cy.get(AppSelectors.Landing.primaryContactInfo);
   }
 
-  // Addresses
+  // ── Addresses ────────────────────────────────────────────────────────────
   get primaryAddressInfo() {
-    return cy.get('[data-cy="primary-address-info"]');
+    return cy.get(AppSelectors.Landing.primaryAddressInfo);
   }
 
   verifyPageLoaded(): void {

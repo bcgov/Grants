@@ -104,6 +104,14 @@ Branch flow: `dev` → `test` → `main`
 
 All orchestrated skills (`/implement-ticket`, `/fix-bug`) will ask for the ticket number if it is not supplied up front.
 
+## AutoUI
+
+Cypress E2E suite: `applications/Grants.AutoUI/`. The `autoui-guardian` sub-agent manages selector sync and spec maintenance as part of every orchestrated workflow (`/implement-ticket`, `/fix-bug`, `/refactor`).
+
+Developers can also run `/sync-selectors` explicitly after changing any `data-cy` attribute in Angular templates — it detects drift and heals the registry without touching spec logic.
+
+---
+
 ## Key Conventions
 
 - **Backend**: FastEndpoints (not controllers), CQRS via MediatR, Ardalis.Result for all return types
