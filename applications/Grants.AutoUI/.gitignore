@@ -3,10 +3,15 @@
 # Local Cypress env overrides (pipeline uses cypress.pipeline.env.json)
 cypress.env.json
 
+cypress/config/dev.json
+cypress/config/dev2.json
+cypress/config/test.json
+cypress/config/uat.json
+cypress/config/prod.json
+
 # Cypress runtime artifacts
 cypress/report/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
 cypress/results/
-cypress/selectors/
