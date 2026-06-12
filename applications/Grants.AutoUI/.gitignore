@@ -3,7 +3,6 @@
 # Local Cypress env overrides (pipeline uses cypress.pipeline.env.json)
 cypress.env.json
 
-
 # Cypress runtime artifacts
 cypress/report/
 cypress/videos/
