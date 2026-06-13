@@ -1,6 +1,6 @@
 {
-    "baseUrl": "https://test-grants.apps.silver.devops.gov.bc.ca/",
-    "environment": "test",
+    "baseUrl": "https://uat-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "uat",
     "test1username": "",
     "test1password": "",
     "test2username": "",
