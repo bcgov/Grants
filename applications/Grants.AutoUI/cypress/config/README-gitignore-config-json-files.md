@@ -1,31 +1,54 @@
-# AutoUI Cypress Config — Local Credentials Setup
+# Cypress Environment Config Files
 
-The `cypress/config/*.json` files are **tracked in git** with empty placeholder credentials.  
-To prevent accidentally committing your real credentials, each developer must run the following command once per clone.
+The `*.json` config files in this folder are **excluded from git** (via `.gitignore`) because they contain credentials.  
+Each developer must create their own local copies from the `.example` files provided.
 
-## One-time setup (run after cloning or pulling these files)
+## Setup
+
+Copy the example file(s) for the environment(s) you need and fill in your credentials:
 
 ```bash
-git update-index --skip-worktree \
-  applications/Grants.AutoUI/cypress/config/dev.json \
-  applications/Grants.AutoUI/cypress/config/dev2.json \
-  applications/Grants.AutoUI/cypress/config/test.json \
-  applications/Grants.AutoUI/cypress/config/uat.json \
-  applications/Grants.AutoUI/cypress/config/prod.json
+# Windows (PowerShell)
+Copy-Item cypress/config/dev.json.example   cypress/config/dev.json
+Copy-Item cypress/config/dev2.json.example  cypress/config/dev2.json
+Copy-Item cypress/config/test.json.example  cypress/config/test.json
+Copy-Item cypress/config/uat.json.example   cypress/config/uat.json
+Copy-Item cypress/config/prod.json.example  cypress/config/prod.json
+
+# macOS / Linux
+cp cypress/config/dev.json.example  cypress/config/dev.json
+cp cypress/config/test.json.example cypress/config/test.json
+# etc.
 ```
 
-After running this, fill in your credentials in the relevant config file(s). Git will ignore your local changes to these files going forward.
+Then open the file and fill in your credentials:
 
-## Why `--skip-worktree` instead of `.gitignore`?
+```json
+{
+    "baseUrl": "https://dev-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "dev",
+    "test1username": "your-test-username",
+    "test1password": "your-test-password",
+    "test2username": "your-second-test-username",
+    "test2password": "your-second-test-password",
+    "bcscUsername": "your-bcsc-username",
+    "bcscPassword": "your-bcsc-password",
+    "workspaceName": "your-workspace-name",
+    "providerName": "your-provider-name"
+}
+```
 
-| Approach | Files tracked in remote? | Ignores local edits? |
+## Available example files
+
+| Example file | Creates | Environment URL |
 |---|---|---|
-| `.gitignore` | Deletes from remote | yes |
-| `--skip-worktree` | Keeps placeholders in remote | yes |
+| `dev.json.example` | `dev.json` | https://dev-grants.apps.silver.devops.gov.bc.ca/ |
+| `dev2.json.example` | `dev2.json` | https://dev2-grants.apps.silver.devops.gov.bc.ca/ |
+| `test.json.example` | `test.json` | https://test-grants.apps.silver.devops.gov.bc.ca/ |
+| `uat.json.example` | `uat.json` | https://uat-grants.apps.silver.devops.gov.bc.ca/ |
+| `prod.json.example` | `prod.json` | https://prod-grants.apps.silver.devops.gov.bc.ca/ |
 
-## To temporarily re-enable tracking (e.g. to update placeholders)
+## Important
 
-```bash
-git update-index --no-skip-worktree applications/Grants.AutoUI/cypress/config/<file>.json
-# make your changes to the placeholder values, then commit and push
-```
+- **Never commit your `*.json` files** — they are gitignored to protect credentials.
+- **Do commit changes to `*.json.example` files** if the config structure or base URLs change.

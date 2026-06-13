@@ -3,6 +3,13 @@
 # Local Cypress env overrides (pipeline uses cypress.pipeline.env.json)
 cypress.env.json
 
+# Local environment config files — create from the .example files in cypress/config/
+cypress/config/dev.json
+cypress/config/dev2.json
+cypress/config/test.json
+cypress/config/uat.json
+cypress/config/prod.json
+
 # Cypress runtime artifacts
 cypress/report/
 cypress/videos/
