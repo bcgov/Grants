@@ -12,9 +12,22 @@ public class SecurityResponseHeadersTests : IClassFixture<CustomWebApplicationFa
   [Fact]
   public async Task ResponsesIncludeNoCacheHeaders()
   {
-    var response = await _client.GetAsync("/healthz");
+    using var response = await _client.GetAsync("/healthz");
 
-    Assert.Equal("no-store", response.Headers.CacheControl?.ToString());
-    Assert.Equal("no-cache", response.Headers.Pragma.ToString());
+    response.EnsureSuccessStatusCode();
+
+    Assert.NotNull(response.Headers.CacheControl);
+    Assert.True(response.Headers.CacheControl!.NoStore);
+    Assert.Contains("no-cache", response.Headers.Pragma.ToString());
+  }
+
+  [Fact]
+  public async Task ResponsesDoNotIncludeServerHeader()
+  {
+    using var response = await _client.GetAsync("/healthz");
+
+    response.EnsureSuccessStatusCode();
+
+    Assert.False(response.Headers.Contains("Server"));
   }
 }
