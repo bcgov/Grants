@@ -25,6 +25,8 @@ public static class MiddlewareConfig
       app.UseHsts();
     }
 
+    app.UseNoCacheResponseHeaders(); // AppScan: prevent caching of responses that may contain applicant/PII data
+
     var logHealthChecks = app.Configuration.GetValue<bool>("Logging:LogHealthCheckRequests", false);
     app.UseSerilogRequestLogging(options =>
     {
