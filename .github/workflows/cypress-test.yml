@@ -1,0 +1,25 @@
+name: Cypress E2E — Test
+
+# Runs against the test environment after a successful test deployment,
+# or manually via workflow_dispatch.
+#
+# Required secret (repo or environment scope):
+#   CYPRESS_CONFIG_TEST — full contents of cypress/config/test.json
+
+on:
+  workflow_run:
+    workflows: ["Test - Build & Push docker images"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cypress:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/cypress-e2e-runner.yml
+    with:
+      env_name: test
+    secrets:
+      cypress_config: ${{ secrets.CYPRESS_CONFIG_TEST }}
