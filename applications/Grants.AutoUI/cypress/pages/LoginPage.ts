@@ -1,10 +1,12 @@
+import { AppSelectors } from '../selectors/registry';
+
 export class LoginPage {
   // ── Selectors ───────────────────────────────────────────────────────────────
   get loginCard() {
-    return cy.get('[data-cy="login-card"]');
+    return cy.get(AppSelectors.Login.card);
   }
   get loginButton() {
-    return cy.get('[data-cy="login-btn"]');
+    return cy.get(AppSelectors.Login.button);
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

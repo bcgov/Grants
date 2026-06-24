@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Grants — Monorepo
 
 BC Government grants management platform.
@@ -33,13 +37,15 @@ documentation/                         # Architecture decisions and guides
 ## Quick Start
 
 ```powershell
-# Full stack (run from applications/Grants.ApplicantPortal/)
+# Full stack — run from applications/Grants.ApplicantPortal/
 cd applications/Grants.ApplicantPortal
 docker-compose up --build
+# or use the PowerShell helper: .\dev-env.ps1 start
 
-# Frontend: http://localhost:4000
-# Backend API: http://localhost:5100
-# Redis Commander: http://localhost:8081
+# Frontend:          http://localhost:4200
+# Backend API:       http://localhost:5100
+# Redis Commander:   http://localhost:8081
+# PostgreSQL:        localhost:5434 (user: postgres / password: localdev / db: GrantsDB)
 ```
 
 ## Frontend
@@ -59,9 +65,16 @@ Full context: [Frontend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grant
 
 ```bash
 cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
-dotnet run --project src/Grants.ApplicantPortal.API.Web          # https://localhost:7000
-dotnet test                                                       # all test suites
-dotnet test tests/Grants.ApplicantPortal.API.UnitTests            # unit tests only
+dotnet run --project src/Grants.ApplicantPortal.API.Web                    # API at https://localhost:7000
+dotnet test                                                                 # all test suites
+dotnet test tests/Grants.ApplicantPortal.API.UnitTests                     # unit tests only
+dotnet test tests/Grants.ApplicantPortal.API.IntegrationTests              # integration (real DB)
+dotnet test tests/Grants.ApplicantPortal.API.FunctionalTests               # HTTP-level tests
+dotnet test --filter "FullyQualifiedName~CreateAddressHandlerTests"        # single test class
+
+# EF migrations (from Grants.ApplicantPortal.Backend/)
+dotnet ef migrations add <Name> --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web
+dotnet ef database update --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web
 ```
 
 Claude Code skills: `/new-endpoint`, `/new-use-case`, `/new-migration`, `/run-tests`
@@ -103,6 +116,26 @@ Branch flow: `dev` → `test` → `main`
 **Commit message format**: `AB#<ticket> <short description>` — e.g. `AB#12345 add address validation`
 
 All orchestrated skills (`/implement-ticket`, `/fix-bug`) will ask for the ticket number if it is not supplied up front.
+
+## AutoUI
+
+Cypress E2E suite: `applications/Grants.AutoUI/`. Targets deployed environments — tests do **not** run against localhost.
+
+```bash
+cd applications/Grants.AutoUI
+npm run cy:open:dev    # interactive Cypress UI against dev
+npm run cy:run:dev     # headless run against dev
+npm run cy:run:test    # headless run against test
+npm run validate:selectors   # validate registry.ts against Angular data-cy attributes
+```
+
+Available `ENV` values: `dev`, `dev2`, `test`, `uat`, `prod` (configs in `cypress/config/<env>.json`).
+
+`autoui-guardian` manages selector sync and spec maintenance as part of every orchestrated workflow (`/implement-ticket`, `/fix-bug`, `/refactor`).
+
+Run `/sync-selectors` explicitly after changing any `data-cy` attribute in Angular templates — it detects drift and heals `cypress/selectors/registry.ts` without touching spec logic.
+
+---
 
 ## Key Conventions
 

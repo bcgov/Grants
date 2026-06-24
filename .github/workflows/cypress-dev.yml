@@ -1,0 +1,32 @@
+name: Cypress E2E — Dev
+
+# Auto-triggers after a successful dev deployment.
+# Can also be run manually — supply base_url to target a feature branch deployment
+# instead of the default dev environment URL.
+#
+# Required secret (repo or environment scope):
+#   CYPRESS_CONFIG_DEV — full contents of cypress/config/dev.json
+
+on:
+  workflow_run:
+    workflows: ["Dev - Build & Push docker images"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Override baseUrl (e.g. https://feature-branch.apps.silver.devops.gov.bc.ca/)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  cypress:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/cypress-e2e-runner.yml
+    with:
+      env_name: dev
+      base_url: ${{ inputs.base_url || '' }}
+    secrets:
+      cypress_config: ${{ secrets.CYPRESS_CONFIG_DEV }}

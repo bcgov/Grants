@@ -1,28 +1,30 @@
+import { ExternalSelectors } from '../selectors/external-registry';
+
 export class BCServicesCardPage {
   // ── Device Selection Selectors ───────────────────────────────────────────────
   get testWithUsernamePasswordTile() {
-    return cy.get("#tile_btn_test_with_username_password_device_div_id");
+    return cy.get(ExternalSelectors.BCServicesCard.testWithPasswordTile);
   }
 
   get testWithUsernamePasswordTitle() {
-    return this.testWithUsernamePasswordTile.find("h2");
+    return this.testWithUsernamePasswordTile.find(ExternalSelectors.BCServicesCard.tileTitleHeading);
   }
 
   get testWithUsernamePasswordImage() {
-    return cy.get("#image_test_with_username_password_device_div_id");
+    return cy.get(ExternalSelectors.BCServicesCard.testWithPasswordImage);
   }
 
   // ── Credential Form Selectors ────────────────────────────────────────────────
   get usernameInput() {
-    return cy.get("#username");
+    return cy.get(ExternalSelectors.BCServicesCard.usernameInput);
   }
 
   get passwordInput() {
-    return cy.get("#password");
+    return cy.get(ExternalSelectors.BCServicesCard.passwordInput);
   }
 
   get continueButton() {
-    return cy.get("#submit-btn");
+    return cy.get(ExternalSelectors.BCServicesCard.continueButton);
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

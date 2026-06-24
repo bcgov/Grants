@@ -8,6 +8,9 @@ const rateLimitMax = process.env.RATE_LIMIT_MAX || 1000;
 const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); // 10 mins
 
 const app = express();
+
+// Remove server identification headers
+app.disable('x-powered-by');
 const port = process.env.PORT || 4200;
 const enableProxy = process.env.ENABLE_API_PROXY === 'true';
 const backendServiceUrl = process.env.BACKEND_SERVICE_URL || 'http://backend:5100';

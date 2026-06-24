@@ -5,8 +5,8 @@
     "test1password": "",
     "test2username": "",
     "test2password": "",
-    "bcscUsername": "T00004185",
+    "bcscUsername": "",
     "bcscPassword": "",
-    "workspaceName": "Demo",
-    "providerName": "PROGRAM1"
+    "workspaceName": "",
+    "providerName": ""
 }

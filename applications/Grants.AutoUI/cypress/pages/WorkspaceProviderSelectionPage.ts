@@ -1,27 +1,29 @@
+import { AppSelectors } from '../selectors/registry';
+
 export class WorkspaceProviderSelectionPage {
-  // Workspace screen
+  // ── Workspace screen ──────────────────────────────────────────────────────
   get workspaceSelect() {
-    return cy.get('[data-cy="workspace-select"]');
+    return cy.get(AppSelectors.Workspace.workspaceSelect);
   }
 
   get workspaceContinueButton() {
-    return cy.get('[data-cy="workspace-continue-btn"]');
+    return cy.get(AppSelectors.Workspace.workspaceContinueBtn);
   }
 
-  // Provider screen
+  // ── Provider screen ───────────────────────────────────────────────────────
   get providerLabel() {
-    return cy.get('label[for="provider-select"]');
+    return cy.get(AppSelectors.Workspace.providerLabel);
   }
 
   get providerSelect() {
-    return cy.get('[data-cy="provider-select"]');
+    return cy.get(AppSelectors.Workspace.providerSelect);
   }
 
   get providerContinueButton() {
-    return cy.get('[data-cy="provider-continue-btn"]');
+    return cy.get(AppSelectors.Workspace.providerContinueBtn);
   }
 
-  // Actions
+  // ── Actions ───────────────────────────────────────────────────────────────
   verifyWorkspaceScreenLoaded(): void {
     this.workspaceSelect.should("be.visible");
     this.workspaceContinueButton.should("be.visible");
