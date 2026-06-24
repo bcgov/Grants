@@ -1,0 +1,25 @@
+name: Cypress E2E — UAT
+
+# Runs against the UAT environment after a successful main deployment,
+# or manually via workflow_dispatch.
+#
+# Required secret (repo or environment scope):
+#   CYPRESS_CONFIG_UAT — full contents of cypress/config/uat.json
+
+on:
+  workflow_run:
+    workflows: ["Main - Build & Push docker images"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cypress:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/cypress-e2e-runner.yml
+    with:
+      env_name: uat
+    secrets:
+      cypress_config: ${{ secrets.CYPRESS_CONFIG_UAT }}

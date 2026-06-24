@@ -1,0 +1,74 @@
+name: Cypress E2E (reusable)
+
+# Shared job called by cypress-dev/test/uat/prod.yml.
+# Writes the env config from a secret, installs deps, and runs headless Cypress.
+
+on:
+  workflow_call:
+    inputs:
+      env_name:
+        description: "Cypress environment name: dev | test | uat | prod"
+        required: true
+        type: string
+      base_url:
+        description: "Optional baseUrl override — use to target a feature branch deployment instead of the default env URL"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      cypress_config:
+        description: "Full contents of cypress/config/<env_name>.json"
+        required: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: applications/Grants.AutoUI
+
+jobs:
+  cypress:
+    name: Cypress E2E — ${{ inputs.env_name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: applications/Grants.AutoUI/package-lock.json
+
+      - name: Write environment config
+        # Secret contains the full JSON for cypress/config/<env>.json.
+        # Using env: avoids shell interpolation issues with quotes inside the JSON.
+        run: echo "$CYPRESS_CONFIG" > cypress/config/${{ inputs.env_name }}.json
+        env:
+          CYPRESS_CONFIG: ${{ secrets.cypress_config }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress tests
+        # BASE_URL is appended when provided, overriding the URL in the env config file.
+        # cypress.config.ts gives runtimeEnv priority over file config, so --env baseUrl=X wins.
+        run: |
+          EXTRA_ENV="ENV=${{ inputs.env_name }}"
+          if [ -n "$BASE_URL" ]; then
+            EXTRA_ENV="$EXTRA_ENV,baseUrl=$BASE_URL"
+          fi
+          npm run cy:run -- --env "$EXTRA_ENV"
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ inputs.env_name }}-${{ github.run_number }}
+          path: applications/Grants.AutoUI/cypress/screenshots
+          if-no-files-found: ignore
