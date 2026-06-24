@@ -1,19 +1,21 @@
+import { ExternalSelectors } from '../selectors/external-registry';
+
 export class TermsOfUsePage {
   // ── Selectors ───────────────────────────────────────────────────────────────
   get termsHeading() {
-    return cy.get(".section h2").first();
+    return cy.get(ExternalSelectors.BCServicesCardTerms.sectionHeading).first();
   }
 
   get acceptCheckbox() {
-    return cy.get("#accept");
+    return cy.get(ExternalSelectors.BCServicesCardTerms.acceptCheckbox);
   }
 
   get acceptLabel() {
-    return cy.get('label[for="accept"]');
+    return cy.get(ExternalSelectors.BCServicesCardTerms.acceptLabel);
   }
 
   get continueButton() {
-    return cy.get("#btnSubmit");
+    return cy.get(ExternalSelectors.BCServicesCardTerms.continueButton);
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

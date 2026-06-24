@@ -114,6 +114,9 @@
   "include": [
     "cypress.config.ts",
     "cypress/support/**/*.ts",
-    "cypress/e2e/**/*.ts"
+    "cypress/e2e/**/*.ts",
+    "cypress/pages/**/*.ts",
+    "cypress/selectors/**/*.ts",
+    "cypress/scripts/**/*.ts"
   ]
 }

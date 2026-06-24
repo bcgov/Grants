@@ -1,27 +1,29 @@
+import { ExternalSelectors } from '../selectors/external-registry';
+
 export class AuthenticatorPage {
   // ── Selectors ───────────────────────────────────────────────────────────────
   get cardContainer() {
-    return cy.get(".card-pf");
+    return cy.get(ExternalSelectors.Keycloak.cardContainer);
   }
 
   get pageTitle() {
-    return cy.get("#kc-page-title");
+    return cy.get(ExternalSelectors.Keycloak.pageTitle);
   }
 
   get socialProvidersSection() {
-    return cy.get("#kc-social-providers");
+    return cy.get(ExternalSelectors.Keycloak.socialProviders);
   }
 
   get idirMfaLink() {
-    return cy.get("#social-azureidir");
+    return cy.get(ExternalSelectors.Keycloak.idirLink);
   }
 
   get bceidLink() {
-    return cy.get("#social-bceidboth");
+    return cy.get(ExternalSelectors.Keycloak.bceidLink);
   }
 
   get bcServicesCardLink() {
-    return cy.get("#social-grants-portal-5361");
+    return cy.get(ExternalSelectors.Keycloak.bcServicesCard);
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

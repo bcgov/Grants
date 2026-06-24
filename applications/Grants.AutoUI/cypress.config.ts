@@ -2,7 +2,7 @@ import { defineConfig } from "cypress";
 import * as fs from "fs";
 import * as path from "path";
 
-const ALLOWED_ENVS = new Set(["dev", "test"]);
+const ALLOWED_ENVS = new Set(["dev", "dev2", "test", "uat", "prod"]);
 
 // https://docs.cypress.io/guides/references/configuration
 function loadEnvConfig(env: string): Record<string, unknown> {
