@@ -1,4 +1,4 @@
-name: Cypress E2E (reusable)
+name: Cypress E2E (runner)
 
 # Shared job called by cypress-dev/test/uat/prod.yml.
 # Writes the env config from a secret, installs deps, and runs headless Cypress.
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: applications/Grants.AutoUI/package-lock.json
 
