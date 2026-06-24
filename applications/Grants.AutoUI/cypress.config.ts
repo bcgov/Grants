@@ -41,7 +41,7 @@ export default defineConfig({
     testIsolation: true, // Ensure a clean browser context between test cases.
     // The number of times to retry a failing test.
     retries: {
-      runMode: 3,
+      runMode: 1,
       openMode: 0,
     },
   },
