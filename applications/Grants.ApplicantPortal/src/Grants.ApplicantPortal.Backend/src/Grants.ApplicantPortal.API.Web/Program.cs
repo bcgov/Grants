@@ -2,6 +2,12 @@
 
 var builder = WebApplication.CreateBuilder(args);
 
+// AppScan: suppress the "Server" response header so Kestrel doesn't disclose the underlying tech stack.
+builder.WebHost.ConfigureKestrel(options =>
+{
+  options.AddServerHeader = false;
+});
+
 // When running behind a reverse proxy (e.g. HAProxy → Node Express → Kestrel),
 // the proxy buffers the full request before forwarding to Kestrel. This introduces
 // a delay between Kestrel receiving the headers and the body arriving, which trips
