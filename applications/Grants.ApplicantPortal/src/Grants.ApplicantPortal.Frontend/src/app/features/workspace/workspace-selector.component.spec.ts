@@ -155,4 +155,27 @@ describe('WorkspaceSelectorComponent', () => {
   it('cleans up on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
+
+  describe('isSingleWorkspace', () => {
+    it('returns true when availableWorkspaces has exactly 1 item', () => {
+      component.availableWorkspaces = [mockPlugin];
+      expect(component.isSingleWorkspace).toBeTrue();
+    });
+
+    it('returns false when availableWorkspaces has 2 or more items', () => {
+      const secondPlugin: Plugin = {
+        pluginId: 'plugin-2',
+        description: 'Second Workspace',
+        features: [],
+        providers: [],
+      };
+      component.availableWorkspaces = [mockPlugin, secondPlugin];
+      expect(component.isSingleWorkspace).toBeFalse();
+    });
+
+    it('returns false when availableWorkspaces is empty', () => {
+      component.availableWorkspaces = [];
+      expect(component.isSingleWorkspace).toBeFalse();
+    });
+  });
 });

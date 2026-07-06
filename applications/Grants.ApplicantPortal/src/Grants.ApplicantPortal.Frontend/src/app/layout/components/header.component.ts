@@ -59,12 +59,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return this.currentProviders.length > 1;
   }
 
+  get isSingleWorkspace(): boolean {
+    return this.availableWorkspaces.length === 1;
+  }
+
   get displayText(): string {
     if (!this.selectedWorkspace) return 'No Workspace';
     if (!this.selectedProviderName) {
-      return this.selectedWorkspace.description;
+      return this.isSingleWorkspace ? 'Select Program' : this.selectedWorkspace.description;
     }
-    return `${this.selectedWorkspace.description} > ${this.selectedProviderName}`;
+    return this.isSingleWorkspace
+      ? this.selectedProviderName
+      : `${this.selectedWorkspace.description} > ${this.selectedProviderName}`;
   }
 
   ngOnInit(): void {

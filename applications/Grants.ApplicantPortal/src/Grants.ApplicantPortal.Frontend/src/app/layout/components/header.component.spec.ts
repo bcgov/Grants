@@ -105,13 +105,34 @@ describe('HeaderComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/workspace-selector']);
   });
 
+  describe('isSingleWorkspace', () => {
+    it('returns true when availableWorkspaces has exactly 1 item', () => {
+      component.availableWorkspaces = [{ pluginId: 'p1', description: 'WS One', features: [], providers: [] }];
+      expect(component.isSingleWorkspace).toBeTrue();
+    });
+
+    it('returns false when availableWorkspaces has 2 or more items', () => {
+      component.availableWorkspaces = [
+        { pluginId: 'p1', description: 'WS One', features: [], providers: [] },
+        { pluginId: 'p2', description: 'WS Two', features: [], providers: [] },
+      ];
+      expect(component.isSingleWorkspace).toBeFalse();
+    });
+
+    it('returns false when availableWorkspaces is empty', () => {
+      component.availableWorkspaces = [];
+      expect(component.isSingleWorkspace).toBeFalse();
+    });
+  });
+
   describe('displayText', () => {
     it('returns "No Workspace" when no workspace is selected', () => {
       component.selectedWorkspace = null;
       expect(component.displayText).toBe('No Workspace');
     });
 
-    it('returns workspace description when no provider name', () => {
+    it('returns workspace description when no provider name (multi-workspace)', () => {
+      component.availableWorkspaces = [];
       component.selectedWorkspace = {
         pluginId: 'p1',
         description: 'Test WS',
@@ -122,7 +143,8 @@ describe('HeaderComponent', () => {
       expect(component.displayText).toBe('Test WS');
     });
 
-    it('returns "workspace > provider" when provider name is present', () => {
+    it('returns "workspace > provider" when provider name is present (multi-workspace)', () => {
+      component.availableWorkspaces = [];
       component.selectedWorkspace = {
         pluginId: 'p1',
         description: 'Test WS',
@@ -131,6 +153,20 @@ describe('HeaderComponent', () => {
       };
       component.selectedProviderName = 'Provider One';
       expect(component.displayText).toBe('Test WS > Provider One');
+    });
+
+    it('returns just the provider name in single-workspace mode', () => {
+      component.availableWorkspaces = [{ pluginId: 'p1', description: 'Test WS', features: [], providers: [] }];
+      component.selectedWorkspace = { pluginId: 'p1', description: 'Test WS', features: [], providers: [] };
+      component.selectedProviderName = 'Provider One';
+      expect(component.displayText).toBe('Provider One');
+    });
+
+    it('returns "Select Program" in single-workspace mode when no provider is selected', () => {
+      component.availableWorkspaces = [{ pluginId: 'p1', description: 'Test WS', features: [], providers: [] }];
+      component.selectedWorkspace = { pluginId: 'p1', description: 'Test WS', features: [], providers: [] };
+      component.selectedProviderName = null;
+      expect(component.displayText).toBe('Select Program');
     });
   });
 
