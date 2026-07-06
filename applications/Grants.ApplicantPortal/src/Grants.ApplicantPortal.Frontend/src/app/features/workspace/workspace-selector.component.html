@@ -108,7 +108,7 @@
               >
                 <option [ngValue]="null" disabled>-- Select a program --</option>
                 <option *ngFor="let provider of availableProviders" [ngValue]="provider">
-                  {{ provider.name }}
+                  {{ provider.displayName ?? provider.name }}
                 </option>
               </select>
             </div>

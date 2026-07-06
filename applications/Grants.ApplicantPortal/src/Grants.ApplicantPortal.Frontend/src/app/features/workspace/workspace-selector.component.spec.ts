@@ -8,7 +8,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { WorkspaceSelectorComponent } from './workspace-selector.component';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Plugin, WorkspaceState } from '../../shared/models/workspace.interface';
+import { Plugin, Provider, WorkspaceState } from '../../shared/models/workspace.interface';
 
 const defaultWorkspaceState: WorkspaceState = {
   selectedWorkspace: null,
@@ -176,6 +176,32 @@ describe('WorkspaceSelectorComponent', () => {
     it('returns false when availableWorkspaces is empty', () => {
       component.availableWorkspaces = [];
       expect(component.isSingleWorkspace).toBeFalse();
+    });
+  });
+
+  describe('provider display label (dropdown)', () => {
+    beforeEach(() => {
+      component.isLoading = false;
+      component.isAutoSelecting = false;
+      component.isLoadingProviders = false;
+      component.selectedWorkspaceForProvider = mockPlugin;
+      component.showProviderSelection = true;
+    });
+
+    it('shows displayName when present', () => {
+      const provider: Provider = { id: 'a', name: 'internal-a', displayName: 'Program A' };
+      component.availableProviders = [provider];
+      fixture.detectChanges();
+      const options: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('#provider-select option');
+      expect(options[1].textContent?.trim()).toBe('Program A');
+    });
+
+    it('falls back to name when displayName is absent', () => {
+      const provider: Provider = { id: 'a', name: 'internal-a' };
+      component.availableProviders = [provider];
+      fixture.detectChanges();
+      const options: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('#provider-select option');
+      expect(options[1].textContent?.trim()).toBe('internal-a');
     });
   });
 });

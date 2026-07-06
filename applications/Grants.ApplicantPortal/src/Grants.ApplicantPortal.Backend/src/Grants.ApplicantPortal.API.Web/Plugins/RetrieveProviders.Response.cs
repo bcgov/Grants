@@ -8,5 +8,7 @@ public record RetrieveProvidersResponse(
 public record ProviderDto(
     string Id,
     string Name,
-    Dictionary<string, string> metaData
+    Dictionary<string, string> metaData,
+    string? DisplayName,
+    string? DefaultFromAddress
 );

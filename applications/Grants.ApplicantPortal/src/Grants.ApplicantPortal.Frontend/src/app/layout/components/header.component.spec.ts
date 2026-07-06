@@ -8,7 +8,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HeaderComponent } from './header.component';
 import { AuthService } from '../../core/services/auth.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
-import { WorkspaceState } from '../../shared/models/workspace.interface';
+import { Provider, WorkspaceState } from '../../shared/models/workspace.interface';
 
 const defaultWorkspaceState: WorkspaceState = {
   selectedWorkspace: null,
@@ -187,5 +187,71 @@ describe('HeaderComponent', () => {
 
   it('cleans up subscriptions on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
+  });
+
+  describe('provider display label (dropdown)', () => {
+    beforeEach(() => {
+      component.selectedWorkspace = { pluginId: 'p1', description: 'WS', features: [], providers: [] };
+    });
+
+    it('shows displayName when present', () => {
+      component.currentProviders = [
+        { id: 'a', name: 'internal-a', displayName: 'Program A' },
+        { id: 'b', name: 'internal-b', displayName: 'Program B' },
+      ];
+      fixture.detectChanges();
+      const spans: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.provider-item span');
+      expect(spans[0].textContent?.trim()).toBe('Program A');
+      expect(spans[1].textContent?.trim()).toBe('Program B');
+    });
+
+    it('falls back to name when displayName is absent', () => {
+      component.currentProviders = [
+        { id: 'a', name: 'internal-a' },
+        { id: 'b', name: 'internal-b' },
+      ];
+      fixture.detectChanges();
+      const spans: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.provider-item span');
+      expect(spans[0].textContent?.trim()).toBe('internal-a');
+      expect(spans[1].textContent?.trim()).toBe('internal-b');
+    });
+  });
+
+  describe('selectProviderById', () => {
+    beforeEach(() => {
+      component.selectedWorkspace = { pluginId: 'p1', description: 'WS', features: [], providers: [] };
+      component.selectedProvider = 'old-id';
+    });
+
+    it('calls setTenantEmail with the provider defaultFromAddress', () => {
+      const provider: Provider = { id: 'new-id', name: 'internal', defaultFromAddress: 'from@example.com' };
+      component.selectProviderById(provider);
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith('from@example.com');
+    });
+
+    it('calls setTenantEmail with null when defaultFromAddress is absent', () => {
+      const provider: Provider = { id: 'new-id', name: 'internal' };
+      component.selectProviderById(provider);
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith(null);
+    });
+  });
+
+  describe('updateTenantEmail (private)', () => {
+    it('sets tenant email from defaultFromAddress of the currently selected provider', () => {
+      component.currentProviders = [
+        { id: 'a', name: 'internal-a', defaultFromAddress: 'a@example.com' },
+        { id: 'b', name: 'internal-b', defaultFromAddress: 'b@example.com' },
+      ];
+      component.selectedProvider = 'b';
+      (component as any).updateTenantEmail();
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith('b@example.com');
+    });
+
+    it('sets tenant email to null when the selected provider has no defaultFromAddress', () => {
+      component.currentProviders = [{ id: 'a', name: 'internal-a' }];
+      component.selectedProvider = 'a';
+      (component as any).updateTenantEmail();
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith(null);
+    });
   });
 });

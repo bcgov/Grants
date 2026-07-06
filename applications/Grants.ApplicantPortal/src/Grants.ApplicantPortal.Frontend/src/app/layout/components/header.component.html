@@ -59,7 +59,7 @@
                 (click)="selectProviderById(provider)"
                 type="button"
               >
-                <span>{{ provider.name }}</span>
+                <span>{{ provider.displayName ?? provider.name }}</span>
                 <i 
                   class="fas fa-check ms-auto" 
                   *ngIf="provider.id === selectedProvider"
@@ -67,7 +67,7 @@
                 ></i>
               </button>
             </li>
-            <li><hr class="dropdown-divider"></li>
+            <li *ngIf="availableWorkspaces.length > 1"><hr class="dropdown-divider"></li>
           </div>
           
           <!-- Change Workspace (only if multiple available) -->

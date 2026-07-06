@@ -6,7 +6,9 @@
 public record ProviderInfo(
     string Id,
     string Name,
-    Dictionary<string, string> Metadata = null!
+    Dictionary<string, string> Metadata = null!,
+    string? DisplayName = null,
+    string? DefaultFromAddress = null
 )
 {
     public Dictionary<string, string> Metadata { get; init; } = Metadata ?? [];
