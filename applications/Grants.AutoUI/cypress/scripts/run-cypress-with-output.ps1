@@ -5,6 +5,15 @@ param(
 
 $ErrorActionPreference = "Continue"
 
+try {
+  chcp.com 65001 | Out-Null
+  [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+  [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+  $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+}
+catch {
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $outputDir = Join-Path $repoRoot "cypress\CypressTestOutput"
 $outputFile = Join-Path $outputDir "CypressOutput.txt"
@@ -21,7 +30,9 @@ $header = @"
 
 Set-Content -Path $outputFile -Value $header -Encoding UTF8
 
-& npm.cmd run $NpmScript 2>&1 |
+$cmd = "chcp 65001 >NUL && npm.cmd run $NpmScript 2>&1"
+
+& cmd.exe /d /s /c $cmd |
   Tee-Object -FilePath $outputFile -Append
 
 $exitCode = $LASTEXITCODE
