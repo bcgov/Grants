@@ -16,3 +16,7 @@ cypress/videos/
 cypress/screenshots/
 cypress/downloads/
 cypress/results/
+
+# Local Cypress CLI output bridge for Copilot / troubleshooting
+cypress/CypressTestOutput/*
+!cypress/CypressTestOutput/.gitkeep
