@@ -2,13 +2,39 @@
   "scripts": {
     "cy:open": "cypress open",
     "cy:open:dev": "cypress open --env ENV=dev",
+    "cy:open:dev2": "cypress open --env ENV=dev2",
     "cy:open:test": "cypress open --env ENV=test",
+    "cy:open:uat": "cypress open --env ENV=uat",
+    "cy:open:prod": "cypress open --env ENV=prod",
+
     "cy:run": "cypress run",
     "cy:run:dev": "cypress run --env ENV=dev",
+    "cy:run:dev2": "cypress run --env ENV=dev2",
     "cy:run:test": "cypress run --env ENV=test",
+    "cy:run:uat": "cypress run --env ENV=uat",
+    "cy:run:prod": "cypress run --env ENV=prod",
+
+    "cy:run:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run",
+    "cy:run:dev:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:dev",
+    "cy:run:dev2:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:dev2",
+    "cy:run:test:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:test",
+    "cy:run:uat:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:uat",
+    "cy:run:prod:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:prod",
+
     "cy:run:bcsc-flow": "cypress run --spec cypress/e2e/loginByBCSCFlow.cy.ts",
     "cy:run:bcsc-flow:dev": "cypress run --env ENV=dev --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+    "cy:run:bcsc-flow:dev2": "cypress run --env ENV=dev2 --spec cypress/e2e/loginByBCSCFlow.cy.ts",
     "cy:run:bcsc-flow:test": "cypress run --env ENV=test --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+    "cy:run:bcsc-flow:uat": "cypress run --env ENV=uat --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+    "cy:run:bcsc-flow:prod": "cypress run --env ENV=prod --spec cypress/e2e/loginByBCSCFlow.cy.ts",
+
+    "cy:run:bcsc-flow:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:bcsc-flow",
+    "cy:run:bcsc-flow:dev:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:bcsc-flow:dev",
+    "cy:run:bcsc-flow:dev2:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:bcsc-flow:dev2",
+    "cy:run:bcsc-flow:test:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:bcsc-flow:test",
+    "cy:run:bcsc-flow:uat:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:bcsc-flow:uat",
+    "cy:run:bcsc-flow:prod:log": "powershell -NoProfile -ExecutionPolicy Bypass -File cypress/scripts/run-cypress-with-output.ps1 cy:run:bcsc-flow:prod",
+
     "typecheck": "tsc --noEmit",
     "validate:selectors": "tsx cypress/scripts/validate-selectors.ts"
   },
