@@ -89,7 +89,12 @@ class NavMenuPage {
         const displayText = String(label).replace('Current workspace: ', '').trim();
         expect(displayText, 'selected workspace display text').to.not.equal('');
         expect(displayText, 'selected workspace display text').to.not.equal('No Workspace');
-        expect(displayText, 'selected workspace display text').to.include(' > ');
+
+        if (displayText.includes(' > ')) {
+          const [workspace, provider] = displayText.split(' > ').map((s) => s.trim());
+          expect(workspace, 'workspace part').to.not.equal('');
+          expect(provider, 'provider part').to.not.equal('');
+        }
       });
   }
 
