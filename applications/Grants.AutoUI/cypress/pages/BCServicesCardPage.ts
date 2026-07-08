@@ -41,11 +41,17 @@ export class BCServicesCardPage {
   }
 
   enterUsername(username: string): void {
-    this.usernameInput.should("be.visible").clear().type(username);
+    this.usernameInput
+      .should("be.visible")
+      .clear({ log: false })
+      .type(username, { log: false });
   }
 
   enterPassword(password: string): void {
-    this.passwordInput.should("be.visible").clear().type(password);
+    this.passwordInput
+      .should("be.visible")
+      .clear({ log: false })
+      .type(password, { log: false });
   }
 
   clickContinue(): void {
