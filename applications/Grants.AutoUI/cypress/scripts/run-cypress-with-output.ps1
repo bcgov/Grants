@@ -34,6 +34,8 @@ $header = @"
 
 $cmd = "chcp 65001 >NUL && npm.cmd run $NpmScript 2>&1"
 
+# Intentionally append each line as it arrives so the log file always contains
+# the latest streamed Cypress output, even if the process is interrupted.
 & cmd.exe /d /s /c $cmd | ForEach-Object {
   $line = [string]$_
 

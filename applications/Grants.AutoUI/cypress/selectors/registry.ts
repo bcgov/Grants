@@ -60,6 +60,7 @@ export const AppSelectors = {
     addressesCard:      '[data-cy="card-addresses"]',
     // Compound — selects the orgbook table nested inside the org card
     orgTable:           '[data-cy="card-organization"] .orgbook-table',
+    orgTableInner:      '.orgbook-table',
     orgNameField:       '[data-cy="org-name"]',
     regNumberField:     '[data-cy="reg-number"]',
     submissionsTable:   '[data-cy="datatable-submissions"]',
