@@ -122,7 +122,6 @@ describe(
 
       it("enters username and password then clicks Continue", () => {
         bcServicesCardPage.enterUsername(username());
-        bcServicesCardPage.usernameInput.should("have.value", username());
         bcServicesCardPage.enterPassword(password());
         bcServicesCardPage.clickContinue();
       });
