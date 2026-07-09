@@ -91,7 +91,11 @@
 
           <div *ngIf="!isLoadingProviders">
             <div class="selector-description">
-              <p>Select a grant program for <strong>{{ selectedWorkspaceForProvider.description }}</strong>.</p>
+              @if (isSingleWorkspace) {
+                <p>Select a grant program to continue.</p>
+              } @else {
+                <p>Select a grant program for <strong>{{ selectedWorkspaceForProvider.description }}</strong>.</p>
+              }
             </div>
 
             <div class="dropdown-group">
@@ -104,7 +108,7 @@
               >
                 <option [ngValue]="null" disabled>-- Select a program --</option>
                 <option *ngFor="let provider of availableProviders" [ngValue]="provider">
-                  {{ provider.name }}
+                  {{ provider.displayName ?? provider.name }}
                 </option>
               </select>
             </div>
@@ -120,15 +124,17 @@
               Continue
             </button>
 
-            <button
-              type="button"
-              id="provider-back-btn"
-              data-cy="provider-back-btn"
-              class="btn-back"
-              (click)="goBackToWorkspaceSelection()"
-            >
-              &larr; Back to Workspaces
-            </button>
+            @if (!isSingleWorkspace) {
+              <button
+                type="button"
+                id="provider-back-btn"
+                data-cy="provider-back-btn"
+                class="btn-back"
+                (click)="goBackToWorkspaceSelection()"
+              >
+                &larr; Back to Workspaces
+              </button>
+            }
           </div>
         </div>
 

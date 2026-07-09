@@ -222,7 +222,7 @@ export class WorkspaceService {
       ...currentState,
       selectedWorkspace: workspace,
       selectedProvider: provider.id,
-      selectedProviderName: provider.name,
+      selectedProviderName: provider.displayName ?? provider.name,
       isWorkspaceSelected: true,
       isProviderSelected: true
     };

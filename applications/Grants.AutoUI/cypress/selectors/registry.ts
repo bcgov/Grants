@@ -8,6 +8,11 @@
 // VALIDATION: data-cy selectors are automatically validated against Angular
 // HTML templates by:  npm run validate:selectors
 //
+// NOTE — Dynamic bindings: selectors generated via Angular [attr.data-cy]="expr"
+// bindings are not detectable by the static validator. They will appear in the
+// "onlyInRegistry" report but are NOT orphans — they exist at runtime. Each
+// such entry is marked with a comment below.
+//
 // SYNC: After changing any data-cy attribute in the Angular frontend, run the
 // /sync-selectors Claude skill to detect drift and update this file.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,11 +25,23 @@ export const AppSelectors = {
     button: '[data-cy="login-btn"]',
   },
 
+  // ── Auth callback (/auth/callback) ────────────────────────────────────────
+  Auth: {
+    callbackProcessing: '[data-cy="callback-processing"]',
+    callbackError:      '[data-cy="callback-error"]',
+    callbackErrorMsg:   '[data-cy="callback-error-message"]',
+  },
+
   // ── Navigation shell (sidebar + header) ──────────────────────────────────
   Nav: {
     menu:               'nav.nav-menu',
     applicantInfoLink:  '[data-cy="nav-applicant-info"]',
     paymentsLink:       '[data-cy="nav-payments"]',
+
+    // Header — page title and org header info
+    pageTitle:      '[data-cy="header-page-title"]',
+    applicantId:    '[data-cy="applicant-id"]',
+    applicantName:  '[data-cy="applicant-name"]',
 
     // Workspace dropdown (header)
     workspaceDropdown:      '[data-cy="workspace-dropdown"]',
@@ -35,10 +52,18 @@ export const AppSelectors = {
     providerItem: (id: string) => `[data-cy="provider-item-${id}"]`,
     changeWorkspaceButton:  '[data-cy="change-workspace-btn"]',
 
-    // User dropdown (header)
+    // User dropdown (header) — data-cy values are generated at runtime by
+    // user-dropdown.component.html via [attr.data-cy]="dropdownId" and
+    // [attr.data-cy]="dropdownId + '-logout'"; invisible to static validator.
     userDropdownButton: '[data-cy="header-user-dropdown"]',
     userDropdownMenu:   "ul[aria-labelledby='header-user-dropdown']",
     logoutButton:       '[data-cy="header-user-dropdown-logout"]',
+  },
+
+  // ── Layout shell (mobile navigation controls) ─────────────────────────────
+  Layout: {
+    mobileHamburgerBtn: '[data-cy="mobile-hamburger-btn"]',
+    mobileCloseBtn:     '[data-cy="mobile-close-btn"]',
   },
 
   // ── Workspace + provider selection screen ────────────────────────────────
@@ -49,6 +74,7 @@ export const AppSelectors = {
     providerLabel:        'label[for="provider-select"]',
     providerSelect:       '[data-cy="provider-select"]',
     providerContinueBtn:  '[data-cy="provider-continue-btn"]',
+    // Conditionally rendered — absent in single-workspace mode (@if !isSingleWorkspace)
     providerBackBtn:      '[data-cy="provider-back-btn"]',
   },
 
@@ -71,11 +97,74 @@ export const AppSelectors = {
     noAddressesMessage: '[data-cy="no-addresses-message"]',
   },
 
+  // ── Addresses (/app/applicant-info) ──────────────────────────────────────
+  Addresses: {
+    addBtn:           '[data-cy="address-add-btn"]',
+    noAddressesMsg:   '[data-cy="no-addresses-message"]',
+    modal:            '[data-cy="address-modal"]',
+    modalLabel:       '[data-cy="add-address-modal-label"]',
+    modalCloseBtn:    '[data-cy="address-modal-close-btn"]',
+    typeSelect:       '[data-cy="address-type"]',
+    isPrimaryToggle:  '[data-cy="address-is-primary"]',
+    streetInput:      '[data-cy="address-street"]',
+    unitInput:        '[data-cy="address-unit"]',
+    street2Input:     '[data-cy="address-street-2"]',
+    cityInput:        '[data-cy="address-city"]',
+    provinceSelect:   '[data-cy="address-province"]',
+    postalCodeInput:  '[data-cy="address-postal-code"]',
+    modalCancelBtn:   '[data-cy="address-modal-cancel-btn"]',
+    modalSaveBtn:     '[data-cy="address-modal-save-btn"]',
+    deleteModal:      '[data-cy="address-delete-modal"]',
+    deleteModalLabel: '[data-cy="delete-address-modal-label"]',
+    deleteCancelBtn:  '[data-cy="address-delete-cancel-btn"]',
+    deleteConfirmBtn: '[data-cy="address-delete-confirm-btn"]',
+  },
+
+  // ── Contacts (/app/applicant-info) ───────────────────────────────────────
+  Contacts: {
+    noPrimaryContact: '[data-cy="no-primary-contact"]',
+    modal:            '[data-cy="contact-modal"]',
+    modalLabel:       '[data-cy="add-contact-modal-label"]',
+    modalCloseBtn:    '[data-cy="contact-modal-close-btn"]',
+    roleSelect:       '[data-cy="contact-role"]',
+    isPrimaryToggle:  '[data-cy="contact-is-primary"]',
+    fullNameInput:    '[data-cy="contact-full-name"]',
+    titleInput:       '[data-cy="contact-title"]',
+    emailInput:       '[data-cy="contact-email"]',
+    phoneInput:       '[data-cy="contact-phone"]',
+    modalCancelBtn:   '[data-cy="contact-modal-cancel-btn"]',
+    modalSaveBtn:     '[data-cy="contact-modal-save-btn"]',
+    deleteModal:      '[data-cy="contact-delete-modal"]',
+    deleteModalLabel: '[data-cy="delete-contact-modal-label"]',
+    deleteCancelBtn:  '[data-cy="contact-delete-cancel-btn"]',
+    deleteConfirmBtn: '[data-cy="contact-delete-confirm-btn"]',
+  },
+
+  // ── Organization (/app/applicant-info) ───────────────────────────────────
+  Organization: {
+    saveBtn:       '[data-cy="org-save-btn"]',
+    cancelBtn:     '[data-cy="org-cancel-btn"]',
+    editBtn:       '[data-cy="org-edit-btn"]',
+    searchInput:   '[data-cy="org-search"]',
+    searchResults: '[data-cy="org-search-results"]',
+    nameField:     '[data-cy="org-name"]',
+    regNumber:     '[data-cy="reg-number"]',
+    statusField:   '[data-cy="org-status"]',
+    typeField:     '[data-cy="org-type"]',
+    nonRegOrgName: '[data-cy="non-reg-org-name"]',
+    sizeField:     '[data-cy="org-size"]',
+    fiscalMonth:   '[data-cy="fiscal-month"]',
+    fiscalDay:     '[data-cy="fiscal-day"]',
+  },
+
   // ── Payments page (/app/payments) ─────────────────────────────────────────
   Payments: {
     pageInner:   '[data-cy="payments-page-inner"]',
     card:        '[data-cy="payments-card"]',
     header:      '[data-cy="payments-header"]',
+    // The three selectors below are generated at runtime by datatable.component via
+    // [attr.data-cy]="'datatable-' + idSuffix" etc. (idSuffix="payments");
+    // invisible to static validator.
     table:       '[data-cy="datatable-payments"]',
     searchInput: '[data-cy="datatable-search-payments"]',
     tableBody:   '[data-cy="datatable-body-payments"]',
