@@ -99,7 +99,7 @@
                     </span>
                   } @else if (column.type === 'date') {
                     @if (getCellValue(row, column) != null) {
-                      {{ getCellValue(row, column) | date:'mediumDate' }}
+                      {{ getCellValue(row, column) | date:'mediumDate':'UTC' }}
                     } @else {
                       —
                     }
@@ -257,7 +257,7 @@
                   </span>
                 } @else if (column.type === 'date') {
                   @if (getCellValue(row, column) != null) {
-                    {{ getCellValue(row, column) | date:'mediumDate' }}
+                    {{ getCellValue(row, column) | date:'mediumDate':'UTC' }}
                   } @else {
                     —
                   }
