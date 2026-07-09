@@ -47,10 +47,17 @@ export const ExternalSelectors = {
     logo:           '#bceidLogo',
     userIdInput:    '#user',
     passwordInput:  '#password',
-    continueButton: 'input[name="btnSubmit"]',
+    continueButton: 'input[type="submit"][value="Continue"]',
     errorContainer: '.bg-error',
     errorMessage:   '.field-help-text',
     forgotLink:     '.link-forgot',
+  },
+
+  // ── BCeID account activity review page ────────────────────────────────────
+  BCeIDAccountActivity: {
+    pageText:           'body',
+    doNotShowCheckbox:  'input[type="checkbox"]',
+    continueButton:     'button, input[type="submit"]',
   },
 
 } as const;
