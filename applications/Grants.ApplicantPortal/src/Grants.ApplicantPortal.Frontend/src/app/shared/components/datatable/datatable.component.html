@@ -99,6 +99,12 @@
                     </span>
                   } @else if (column.type === 'date') {
                     @if (getCellValue(row, column) != null) {
+                      {{ getCellValue(row, column) | date:'mediumDate' }}
+                    } @else {
+                      —
+                    }
+                  } @else if (column.type === 'dateUtc') {
+                    @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) | date:'mediumDate':'UTC' }}
                     } @else {
                       —
@@ -256,6 +262,12 @@
                     {{ getBadgeDisplayValue(row, column) || '—' }}
                   </span>
                 } @else if (column.type === 'date') {
+                  @if (getCellValue(row, column) != null) {
+                    {{ getCellValue(row, column) | date:'mediumDate' }}
+                  } @else {
+                    —
+                  }
+                } @else if (column.type === 'dateUtc') {
                   @if (getCellValue(row, column) != null) {
                     {{ getCellValue(row, column) | date:'mediumDate':'UTC' }}
                   } @else {
