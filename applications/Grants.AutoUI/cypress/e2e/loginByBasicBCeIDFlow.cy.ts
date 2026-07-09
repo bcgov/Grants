@@ -11,7 +11,7 @@ import { AppSelectors } from "../selectors/registry";
 // testIsolation: false — browser state is preserved between tests so the flow
 // navigates forward once without resetting between each step.
 describe(
-  "Login by BCeID - Full Flow",
+  "Login by Basic BCeID - Full Flow",
   { testIsolation: false },
   () => {
     const getRequiredEnv = (key: string): string => {
@@ -25,8 +25,8 @@ describe(
       return String(value);
     };
 
-    const username = () => getRequiredEnv("test1username");
-    const password = () => getRequiredEnv("test1password");
+    const username = () => getRequiredEnv("test2username");
+    const password = () => getRequiredEnv("test2password");
     const currentEnv = String(
       Cypress.env("ENV") || Cypress.env("environment") || "",
     ).toLowerCase();
@@ -88,7 +88,7 @@ describe(
     });
 
     context("Step 2: Keycloak Authenticator", () => {
-      it("displays the authenticator page with BCeID option", () => {
+      it("displays the authenticator page with Basic BCeID option", () => {
         authenticatorPage.verifyPageLoaded();
         authenticatorPage.bceidLink.should("be.visible").within(() => {
           cy.get(".kc-social-provider-name").should(
@@ -98,13 +98,13 @@ describe(
         });
       });
 
-      it("clicks BCeID", () => {
+      it("clicks Basic BCeID", () => {
         authenticatorPage.clickBCeID();
       });
     });
 
-    context("Step 3: BCeID Login", () => {
-      it("displays the BCeID login page", () => {
+    context("Step 3: Basic BCeID Login", () => {
+      it("displays the Basic BCeID login page", () => {
         bceidLoginPage.verifyPageLoaded();
         bceidLoginPage.userIdInput.should("be.visible");
         bceidLoginPage.passwordInput.should("be.visible");
@@ -118,7 +118,7 @@ describe(
       });
     });
 
-    context("Step 4: BCeID Account Activity", () => {
+    context("Step 4: Basic BCeID Account Activity", () => {
       it("acknowledges account activity review if presented", () => {
         waitForPostLoginDestination();
 
