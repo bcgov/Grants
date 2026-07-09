@@ -31,6 +31,11 @@ describe(
       Cypress.env("ENV") || Cypress.env("environment") || "",
     ).toLowerCase();
     const shouldValidatePayments = currentEnv !== "prod";
+    const skipPaymentsInProd = (context: Mocha.Context): void => {
+      if (!shouldValidatePayments) {
+        context.skip();
+      }
+    };
     const workspaceName = () => getRequiredEnv("workspaceName");
     const providerName = () => getRequiredEnv("providerName");
     const bceidActivityHeading =
@@ -229,49 +234,34 @@ describe(
         navMenuPage.closeWorkspaceDropdown();
       });
 
-      it("clicks the Payments nav link", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments navigation in prod.");
-          return;
-        }
+      it("clicks the Payments nav link", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         navMenuPage.clickPayments();
       });
     });
 
     context("Step 8: Payments Page", () => {
-      it("navigates to the Payments page", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments page assertions in prod.");
-          return;
-        }
+      it("navigates to the Payments page", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.verifyPageLoaded();
       });
 
-      it("displays the payments search input", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments page assertions in prod.");
-          return;
-        }
+      it("displays the payments search input", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.searchInput.should("be.visible");
       });
 
-      it("displays payment rows in the table", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments data assertions in prod.");
-          return;
-        }
+      it("displays payment rows in the table", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.tableRows.should("have.length.greaterThan", 0);
       });
 
-      it("shows the core payments table columns", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments page assertions in prod.");
-          return;
-        }
+      it("shows the core payments table columns", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.verifyCoreColumns();
       });

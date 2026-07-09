@@ -30,7 +30,13 @@ describe(
     const currentEnv = String(
       Cypress.env("ENV") || Cypress.env("environment") || "",
     ).toLowerCase();
+    const isProd = currentEnv === "prod";
     const shouldValidatePayments = currentEnv !== "prod";
+    const skipInProd = (context: Mocha.Context): void => {
+      if (isProd) {
+        context.skip();
+      }
+    };
     const workspaceName = () => getRequiredEnv("workspaceName");
     const providerName = () => getRequiredEnv("providerName");
 
@@ -101,10 +107,17 @@ describe(
 
     context("Step 3: BC Services Card Device Selection", () => {
       it("displays the device selection page", () => {
+        if (isProd) {
+          bcServicesCardPage.verifyProdMfaPageLoaded();
+          return;
+        }
+
         bcServicesCardPage.verifyPageLoaded();
       });
 
-      it("shows the 'Test with username and password' tile and clicks it", () => {
+      it("shows the 'Test with username and password' tile and clicks it", function (this: Mocha.Context) {
+        skipInProd(this);
+
         bcServicesCardPage.testWithUsernamePasswordTitle.should(
           "contain.text",
           "Test with username and password",
@@ -114,13 +127,17 @@ describe(
     });
 
     context("Step 4: BC Services Card Credential Form", () => {
-      it("displays the username and password inputs and Continue button", () => {
+      it("displays the username and password inputs and Continue button", function (this: Mocha.Context) {
+        skipInProd(this);
+
         bcServicesCardPage.usernameInput.should("be.visible");
         bcServicesCardPage.passwordInput.should("be.visible");
         bcServicesCardPage.continueButton.should("be.visible");
       });
 
-      it("enters username and password then clicks Continue", () => {
+      it("enters username and password then clicks Continue", function (this: Mocha.Context) {
+        skipInProd(this);
+
         bcServicesCardPage.enterUsername(username());
         bcServicesCardPage.enterPassword(password());
         bcServicesCardPage.clickContinue();
@@ -130,7 +147,9 @@ describe(
     context("Step 5: Terms of Use", () => {
       // The app skips this page when the user has already accepted terms server-side.
       // Conditionally verify and accept only when the page is actually presented.
-      it("accepts terms if presented, then proceeds", () => {
+      it("accepts terms if presented, then proceeds", function (this: Mocha.Context) {
+        skipInProd(this);
+
         waitForPostLoginDestination();
 
         cy.location("href").then((href) => {
@@ -145,7 +164,9 @@ describe(
     });
 
     context("Step 6: Workspace and Provider Selection", () => {
-      it("selects workspace and continues", () => {
+      it("selects workspace and continues", function (this: Mocha.Context) {
+        skipInProd(this);
+
         waitForWorkspaceSelectionOrApp();
 
         cy.get("body").then(($body) => {
@@ -163,7 +184,9 @@ describe(
         });
       });
 
-      it("waits for provider screen, selects provider, and continues", () => {
+      it("waits for provider screen, selects provider, and continues", function (this: Mocha.Context) {
+        skipInProd(this);
+
         waitForWorkspaceSelectionOrApp();
 
         cy.get("body").then(($body) => {
@@ -184,25 +207,33 @@ describe(
     });
 
     context("Step 7: Portal Landing Page", () => {
-      it("displays all four dashboard cards", () => {
+      it("displays all four dashboard cards", function (this: Mocha.Context) {
+        skipInProd(this);
+
         landingPage.verifyPageLoaded();
       });
 
-      it("shows the Organization Information card with org table", () => {
+      it("shows the Organization Information card with org table", function (this: Mocha.Context) {
+        skipInProd(this);
+
         landingPage.orgInfoCard
           .find("h3")
           .should("contain.text", "Organization Information");
         landingPage.verifyOrganizationContentLoaded();
       });
 
-      it("shows the Submissions card with submissions table", () => {
+      it("shows the Submissions card with submissions table", function (this: Mocha.Context) {
+        skipInProd(this);
+
         landingPage.submissionsCard
           .find("h3")
           .should("contain.text", "Submissions");
         landingPage.submissionsTable.should("be.visible");
       });
 
-      it("shows the Contact Information card with Add button and primary contact", () => {
+      it("shows the Contact Information card with Add button and primary contact", function (this: Mocha.Context) {
+        skipInProd(this);
+
         landingPage.contactsCard
           .find("h3")
           .should("contain.text", "Contact Information");
@@ -218,7 +249,9 @@ describe(
         landingPage.verifyContactsContentLoaded();
       });
 
-      it("shows the Address Information card with primary address", () => {
+      it("shows the Address Information card with primary address", function (this: Mocha.Context) {
+        skipInProd(this);
+
         landingPage.addressesCard
           .find("h3")
           .should("contain.text", "Address Information");
@@ -227,15 +260,21 @@ describe(
     });
 
     context("Step 8: Navigation Menu and Workspace Indicator", () => {
-      it("shows the Applicant Info and Payments nav links", () => {
+      it("shows the Applicant Info and Payments nav links", function (this: Mocha.Context) {
+        skipInProd(this);
+
         navMenuPage.verifyPrimaryNavItems();
       });
 
-      it("shows the workspace dropdown button with selected workspace and provider", () => {
+      it("shows the workspace dropdown button with selected workspace and provider", function (this: Mocha.Context) {
+        skipInProd(this);
+
         navMenuPage.verifyWorkspaceSelection();
       });
 
-      it("opens the workspace dropdown and validates menu contents", () => {
+      it("opens the workspace dropdown and validates menu contents", function (this: Mocha.Context) {
+        skipInProd(this);
+
         navMenuPage.openWorkspaceDropdown();
         navMenuPage.verifyWorkspaceDropdownMenu();
         // Close dropdown explicitly so next click targets are not obscured.
@@ -291,11 +330,15 @@ describe(
     });
 
     context("Step 10: User Header Dropdown and Logout", () => {
-      it("displays the user avatar dropdown button in the header", () => {
+      it("displays the user avatar dropdown button in the header", function (this: Mocha.Context) {
+        skipInProd(this);
+
         navMenuPage.userDropdownButton.should("be.visible");
       });
 
-      it("opens the user dropdown and validates the logout option", () => {
+      it("opens the user dropdown and validates the logout option", function (this: Mocha.Context) {
+        skipInProd(this);
+
         navMenuPage.openUserDropdown();
         navMenuPage.userDropdownMenu.should("be.visible");
         navMenuPage.logoutButton
