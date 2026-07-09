@@ -86,12 +86,15 @@ export const AppSelectors = {
     addressesCard:      '[data-cy="card-addresses"]',
     // Compound — selects the orgbook table nested inside the org card
     orgTable:           '[data-cy="card-organization"] .orgbook-table',
-    // Generated at runtime by datatable.component via [attr.data-cy]="'datatable-' + idSuffix"
-    // (idSuffix="submissions"); invisible to static validator.
+    orgTableInner:      '.orgbook-table',
+    orgNameField:       '[data-cy="org-name"]',
+    regNumberField:     '[data-cy="reg-number"]',
     submissionsTable:   '[data-cy="datatable-submissions"]',
     addContactButton:   '[data-cy="contact-add-btn"]',
     primaryContactInfo: '[data-cy="primary-contact-info"]',
+    noPrimaryContact:   '[data-cy="no-primary-contact"]',
     primaryAddressInfo: '[data-cy="primary-address-info"]',
+    noAddressesMessage: '[data-cy="no-addresses-message"]',
   },
 
   // ── Addresses (/app/applicant-info) ──────────────────────────────────────
