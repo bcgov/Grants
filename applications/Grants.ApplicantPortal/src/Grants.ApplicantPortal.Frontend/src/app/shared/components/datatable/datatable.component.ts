@@ -255,6 +255,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     
     switch (column.type) {
       case 'date':
+      case 'dateUtc':
         return value ? new Date(value) : null;
       case 'currency':
         return value ? Number(value) : 0;
