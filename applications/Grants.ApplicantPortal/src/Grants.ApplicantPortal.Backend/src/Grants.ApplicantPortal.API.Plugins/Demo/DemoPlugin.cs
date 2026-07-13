@@ -60,8 +60,8 @@ public partial class DemoPlugin(
     {
         IReadOnlyList<ProviderInfo> providers =
         [
-            new("PROGRAM1", "PROGRAM1"),
-            new("PROGRAM2", "PROGRAM2")
+            new("PROGRAM1", "PROGRAM1", DisplayName: "Program One", DefaultFromAddress: "NoReply@gov.bc.ca"),
+            new("PROGRAM2", "PROGRAM2", DisplayName: "Program Two", DefaultFromAddress: "NoReply@gov.bc.ca")
         ];
         return Task.FromResult(providers);
     }

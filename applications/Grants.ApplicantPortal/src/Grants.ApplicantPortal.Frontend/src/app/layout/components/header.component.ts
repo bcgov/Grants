@@ -59,12 +59,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return this.currentProviders.length > 1;
   }
 
+  get isSingleWorkspace(): boolean {
+    return this.availableWorkspaces.length === 1;
+  }
+
   get displayText(): string {
     if (!this.selectedWorkspace) return 'No Workspace';
     if (!this.selectedProviderName) {
-      return this.selectedWorkspace.description;
+      return this.isSingleWorkspace ? 'Select Program' : this.selectedWorkspace.description;
     }
-    return `${this.selectedWorkspace.description} > ${this.selectedProviderName}`;
+    return this.isSingleWorkspace
+      ? this.selectedProviderName
+      : `${this.selectedWorkspace.description} > ${this.selectedProviderName}`;
   }
 
   ngOnInit(): void {
@@ -162,7 +168,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.selectedWorkspace && provider.id !== this.selectedProvider) {
       this.isChangingWorkspace = true;
       this.workspaceService.selectWorkspaceWithProviderDetails(this.selectedWorkspace, provider);
-      this.workspaceService.setTenantEmail(provider.metaData?.['DefaultFromAddress'] ?? null);
+      this.workspaceService.setTenantEmail(provider.defaultFromAddress ?? null);
       
       setTimeout(() => {
         this.isChangingWorkspace = false;
@@ -190,7 +196,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private updateTenantEmail(): void {
     const currentProvider = this.currentProviders.find(p => p.id === this.selectedProvider);
-    this.workspaceService.setTenantEmail(currentProvider?.metaData?.['DefaultFromAddress'] ?? null);
+    this.workspaceService.setTenantEmail(currentProvider?.defaultFromAddress ?? null);
   }
 
   private clearSession(): void {

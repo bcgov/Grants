@@ -2,7 +2,7 @@ export interface DatatableColumn {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'text' | 'date' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean';
+  type?: 'text' | 'date' | 'dateUtc' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean';
   cssClass?: string;
   width?: string;
   booleanFalseBlank?: boolean;

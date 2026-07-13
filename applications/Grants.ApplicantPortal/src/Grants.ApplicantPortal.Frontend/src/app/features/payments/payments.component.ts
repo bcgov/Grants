@@ -42,7 +42,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       { key: 'referenceNo', label: 'Submission #', sortable: true },
       { key: 'paymentStatus', label: 'Payment Status', sortable: true, type: 'badge', cssClass: 'status-column' },
       { key: 'amount', label: 'Paid Amount', sortable: true, type: 'currency' },
-      { key: 'paymentDate', label: 'Paid Date', sortable: true, type: 'date' },
+      { key: 'paymentDate', label: 'Paid Date', sortable: true, type: 'dateUtc' },
     ],
     actionsType: 'none',
     badgeConfig: {

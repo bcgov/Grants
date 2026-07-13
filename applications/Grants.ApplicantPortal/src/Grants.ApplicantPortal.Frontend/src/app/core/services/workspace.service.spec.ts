@@ -122,6 +122,33 @@ describe('WorkspaceService', () => {
         }
       });
     });
+
+    it('uses displayName as selectedProviderName when present', (done) => {
+      const providerWithDisplayName: Provider = {
+        id: 'prov-2',
+        name: 'internal-name',
+        displayName: 'Friendly Name',
+      };
+      service.selectWorkspaceWithProviderDetails(mockPlugin, providerWithDisplayName);
+
+      service.currentWorkspaceState$.subscribe((state: WorkspaceState) => {
+        if (state.selectedProvider === 'prov-2') {
+          expect(state.selectedProviderName).toBe('Friendly Name');
+          done();
+        }
+      });
+    });
+
+    it('falls back to name as selectedProviderName when displayName is absent', (done) => {
+      service.selectWorkspaceWithProviderDetails(mockPlugin, mockProvider);
+
+      service.currentWorkspaceState$.subscribe((state: WorkspaceState) => {
+        if (state.selectedProvider === 'prov-1') {
+          expect(state.selectedProviderName).toBe('Provider One');
+          done();
+        }
+      });
+    });
   });
 
   describe('clearWorkspace', () => {

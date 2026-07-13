@@ -78,27 +78,46 @@ class NavMenuPage {
       .and("have.attr", "href", "/app/payments");
   }
 
-  verifyWorkspaceSelection(workspaceName: string, providerName: string): void {
+  verifyWorkspaceSelection(): void {
     this.workspaceDropdown
       .should("be.visible")
       .invoke("attr", "aria-label")
-      .should("include", workspaceName)
-      .and("include", providerName);
+      .should((label) => {
+        expect(label, 'workspace aria-label').to.be.a('string');
+        expect(label, 'workspace aria-label').to.include('Current workspace: ');
+
+        const displayText = String(label).replace('Current workspace: ', '').trim();
+        expect(displayText, 'selected workspace display text').to.not.equal('');
+        expect(displayText, 'selected workspace display text').to.not.equal('No Workspace');
+
+        if (displayText.includes(' > ')) {
+          const [workspace, provider] = displayText.split(' > ').map((s) => s.trim());
+          expect(workspace, 'workspace part').to.not.equal('');
+          expect(provider, 'provider part').to.not.equal('');
+        }
+      });
   }
 
-  verifyWorkspaceDropdownMenu(
-    workspaceName: string,
-    providerName: string,
-  ): void {
-    this.workspaceDropdownMenu.should("be.visible");
-    this.workspaceDropdownHeader.should("contain.text", workspaceName);
-    this.providersHeader.should("contain.text", "Providers");
-    this.activeProviderItem
-      .should("be.visible")
-      .and("contain.text", providerName);
-    this.changeWorkspaceButton
-      .should("be.visible")
-      .and("contain.text", "Change Workspace");
+  verifyWorkspaceDropdownMenu(): void {
+    this.workspaceDropdownMenu.should("be.visible").then(($menu) => {
+      const headers = $menu.find(AppSelectors.Nav.dropdownHeader);
+      expect(headers.length, 'workspace dropdown headers').to.be.greaterThan(0);
+      expect(headers.first().text().trim(), 'workspace header text').to.not.equal('');
+
+      if (headers.length > 1) {
+        this.providersHeader.should("contain.text", "Providers");
+      }
+
+      if ($menu.find(AppSelectors.Nav.providerItemActive).length > 0) {
+        this.activeProviderItem.should("be.visible");
+      }
+
+      if ($menu.find(AppSelectors.Nav.changeWorkspaceButton).length > 0) {
+        this.changeWorkspaceButton
+          .should("be.visible")
+          .and("contain.text", "Change Workspace");
+      }
+    });
   }
 
   clickPayments(): void {

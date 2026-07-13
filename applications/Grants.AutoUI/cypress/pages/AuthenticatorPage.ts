@@ -27,6 +27,10 @@ export class AuthenticatorPage {
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────
+  clickBCeID(): void {
+    this.bceidLink.click();
+  }
+
   clickBCServicesCard(): void {
     this.bcServicesCardLink.click();
   }

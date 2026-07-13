@@ -288,6 +288,10 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
     this.showWorkspaceSelection = true;
   }
 
+  get isSingleWorkspace(): boolean {
+    return this.availableWorkspaces.length === 1;
+  }
+
   backToLogin(): void {
     this.authService.logout();
   }

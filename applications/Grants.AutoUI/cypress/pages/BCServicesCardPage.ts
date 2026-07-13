@@ -36,16 +36,29 @@ export class BCServicesCardPage {
     );
   }
 
+  verifyProdMfaPageLoaded(): void {
+    cy.contains('body', 'BC Services Card Login').should('be.visible');
+    cy.contains('body', 'Continue with:').should('be.visible');
+    cy.contains('body', 'BC Services Card app').should('be.visible');
+    cy.contains('body', 'Username/password + BC Token').should('be.visible');
+  }
+
   clickTestWithUsernamePassword(): void {
     this.testWithUsernamePasswordTile.click();
   }
 
   enterUsername(username: string): void {
-    this.usernameInput.should("be.visible").clear().type(username);
+    this.usernameInput
+      .should("be.visible")
+      .clear({ log: false })
+      .type(username, { log: false });
   }
 
   enterPassword(password: string): void {
-    this.passwordInput.should("be.visible").clear().type(password);
+    this.passwordInput
+      .should("be.visible")
+      .clear({ log: false })
+      .type(password, { log: false });
   }
 
   clickContinue(): void {

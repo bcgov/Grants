@@ -1,17 +1,17 @@
 import { loginPage } from "../pages/LoginPage";
 import { authenticatorPage } from "../pages/AuthenticatorPage";
-import { bcServicesCardPage } from "../pages/BCServicesCardPage";
-import { termsOfUsePage } from "../pages/TermsOfUsePage";
+import { bceidLoginPage } from "../pages/BCeIDLoginPage";
+import { bceidAccountActivityPage } from "../pages/BCeIDAccountActivityPage";
 import { workspaceProviderSelectionPage } from "../pages/WorkspaceProviderSelectionPage";
 import { landingPage } from "../pages/LandingPage";
 import { navMenuPage } from "../pages/NavMenuPage";
 import { paymentsPage } from "../pages/PaymentsPage";
 import { AppSelectors } from "../selectors/registry";
 
-// testIsolation: false â€” browser state is preserved between tests so the flow
+// testIsolation: false — browser state is preserved between tests so the flow
 // navigates forward once without resetting between each step.
 describe(
-  "Login by BC Services Card - Full Flow",
+  "Login by Business BCeID - Full Flow",
   { testIsolation: false },
   () => {
     const getRequiredEnv = (key: string): string => {
@@ -25,28 +25,32 @@ describe(
       return String(value);
     };
 
-    const username = () => getRequiredEnv("bcscUsername");
-    const password = () => getRequiredEnv("bcscPassword");
+    const username = () => getRequiredEnv("test1username");
+    const password = () => getRequiredEnv("test1password");
     const currentEnv = String(
       Cypress.env("ENV") || Cypress.env("environment") || "",
     ).toLowerCase();
-    const isProd = currentEnv === "prod";
     const shouldValidatePayments = currentEnv !== "prod";
-    const skipInProd = (context: Mocha.Context): void => {
-      if (isProd) {
+    const skipPaymentsInProd = (context: Mocha.Context): void => {
+      if (!shouldValidatePayments) {
         context.skip();
       }
     };
     const workspaceName = () => getRequiredEnv("workspaceName");
     const providerName = () => getRequiredEnv("providerName");
+    const bceidActivityHeading =
+      "To complete login with your BCeID, review your BCeID account activity.";
 
     const waitForPostLoginDestination = () => {
-      cy.location("href", { timeout: 60000 }).should((href) => {
+      cy.get("body", { timeout: 60000 }).should(($body) => {
+        const pathname = $body[0].ownerDocument.location.pathname;
+        const bodyText = $body.text();
+
         expect(
-          href.includes("acceptTerms") ||
-            href.includes("/workspace-selector") ||
-            href.includes("/app/"),
-          `expected post-login destination, got ${href}`,
+          bodyText.includes(bceidActivityHeading) ||
+            pathname === "/workspace-selector" ||
+            pathname.startsWith("/app/"),
+          `expected post-login destination, got ${pathname}`,
         ).to.be.true;
       });
     };
@@ -69,7 +73,6 @@ describe(
     };
 
     before(() => {
-      // Ensure a clean logged-out browser state before linear, non-isolated flow steps.
       cy.clearCookies();
       cy.clearLocalStorage();
       loginPage.visit();
@@ -90,83 +93,52 @@ describe(
     });
 
     context("Step 2: Keycloak Authenticator", () => {
-      it("displays the authenticator page with BC Services Card option", () => {
+      it("displays the authenticator page with Business BCeID option", () => {
         authenticatorPage.verifyPageLoaded();
-        authenticatorPage.bcServicesCardLink.should("be.visible").within(() => {
+        authenticatorPage.bceidLink.should("be.visible").within(() => {
           cy.get(".kc-social-provider-name").should(
             "contain.text",
-            "BC Services Card",
+            "Basic or Business BCeID",
           );
         });
       });
 
-      it("clicks BC Services Card", () => {
-        authenticatorPage.clickBCServicesCard();
+      it("clicks Business BCeID", () => {
+        authenticatorPage.clickBCeID();
       });
     });
 
-    context("Step 3: BC Services Card Device Selection", () => {
-      it("displays the device selection page", () => {
-        if (isProd) {
-          bcServicesCardPage.verifyProdMfaPageLoaded();
-          return;
-        }
-
-        bcServicesCardPage.verifyPageLoaded();
+    context("Step 3: Business BCeID Login", () => {
+      it("displays the Business BCeID login page", () => {
+        bceidLoginPage.verifyPageLoaded();
+        bceidLoginPage.userIdInput.should("be.visible");
+        bceidLoginPage.passwordInput.should("be.visible");
+        bceidLoginPage.continueButton.should("be.visible");
       });
 
-      it("shows the 'Test with username and password' tile and clicks it", function (this: Mocha.Context) {
-        skipInProd(this);
-
-        bcServicesCardPage.testWithUsernamePasswordTitle.should(
-          "contain.text",
-          "Test with username and password",
-        );
-        bcServicesCardPage.clickTestWithUsernamePassword();
+      it("enters username and password then clicks Continue", () => {
+        bceidLoginPage.enterUserId(username());
+        bceidLoginPage.enterPassword(password());
+        bceidLoginPage.clickContinue();
       });
     });
 
-    context("Step 4: BC Services Card Credential Form", () => {
-      it("displays the username and password inputs and Continue button", function (this: Mocha.Context) {
-        skipInProd(this);
-
-        bcServicesCardPage.usernameInput.should("be.visible");
-        bcServicesCardPage.passwordInput.should("be.visible");
-        bcServicesCardPage.continueButton.should("be.visible");
-      });
-
-      it("enters username and password then clicks Continue", function (this: Mocha.Context) {
-        skipInProd(this);
-
-        bcServicesCardPage.enterUsername(username());
-        bcServicesCardPage.enterPassword(password());
-        bcServicesCardPage.clickContinue();
-      });
-    });
-
-    context("Step 5: Terms of Use", () => {
-      // The app skips this page when the user has already accepted terms server-side.
-      // Conditionally verify and accept only when the page is actually presented.
-      it("accepts terms if presented, then proceeds", function (this: Mocha.Context) {
-        skipInProd(this);
-
+    context("Step 4: Business BCeID Account Activity", () => {
+      it("acknowledges account activity review if presented", () => {
         waitForPostLoginDestination();
 
-        cy.location("href").then((href) => {
-          if (href.includes("acceptTerms")) {
-            termsOfUsePage.verifyPageLoaded();
-            termsOfUsePage.acceptCheckbox.should("not.be.checked");
-            termsOfUsePage.acceptAndContinue();
-            waitForPostLoginDestination();
+        cy.get("body").then(($body) => {
+          if ($body.text().includes(bceidActivityHeading)) {
+            bceidAccountActivityPage.verifyPageLoaded();
+            bceidAccountActivityPage.skipFutureActivityPrompt();
+            bceidAccountActivityPage.continueToPortal();
           }
         });
       });
     });
 
-    context("Step 6: Workspace and Provider Selection", () => {
-      it("selects workspace and continues", function (this: Mocha.Context) {
-        skipInProd(this);
-
+    context("Step 5: Workspace and Provider Selection", () => {
+      it("selects workspace and continues", () => {
         waitForWorkspaceSelectionOrApp();
 
         cy.get("body").then(($body) => {
@@ -184,9 +156,7 @@ describe(
         });
       });
 
-      it("waits for provider screen, selects provider, and continues", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("waits for provider screen, selects provider, and continues", () => {
         waitForWorkspaceSelectionOrApp();
 
         cy.get("body").then(($body) => {
@@ -206,34 +176,26 @@ describe(
       });
     });
 
-    context("Step 7: Portal Landing Page", () => {
-      it("displays all four dashboard cards", function (this: Mocha.Context) {
-        skipInProd(this);
-
+    context("Step 6: Portal Landing Page", () => {
+      it("displays all four dashboard cards", () => {
         landingPage.verifyPageLoaded();
       });
 
-      it("shows the Organization Information card with org table", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("shows the Organization Information card with org table", () => {
         landingPage.orgInfoCard
           .find("h3")
           .should("contain.text", "Organization Information");
         landingPage.verifyOrganizationContentLoaded();
       });
 
-      it("shows the Submissions card with submissions table", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("shows the Submissions card with submissions table", () => {
         landingPage.submissionsCard
           .find("h3")
           .should("contain.text", "Submissions");
         landingPage.submissionsTable.should("be.visible");
       });
 
-      it("shows the Contact Information card with Add button and primary contact", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("shows the Contact Information card with Add button and primary contact", () => {
         landingPage.contactsCard
           .find("h3")
           .should("contain.text", "Contact Information");
@@ -249,9 +211,7 @@ describe(
         landingPage.verifyContactsContentLoaded();
       });
 
-      it("shows the Address Information card with primary address", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("shows the Address Information card with primary address", () => {
         landingPage.addressesCard
           .find("h3")
           .should("contain.text", "Address Information");
@@ -259,86 +219,60 @@ describe(
       });
     });
 
-    context("Step 8: Navigation Menu and Workspace Indicator", () => {
-      it("shows the Applicant Info and Payments nav links", function (this: Mocha.Context) {
-        skipInProd(this);
-
+    context("Step 7: Navigation Menu and Workspace Indicator", () => {
+      it("shows the Applicant Info and Payments nav links", () => {
         navMenuPage.verifyPrimaryNavItems();
       });
 
-      it("shows the workspace dropdown button with selected workspace and provider", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("shows the workspace dropdown button with selected workspace and provider", () => {
         navMenuPage.verifyWorkspaceSelection();
       });
 
-      it("opens the workspace dropdown and validates menu contents", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("opens the workspace dropdown and validates menu contents", () => {
         navMenuPage.openWorkspaceDropdown();
         navMenuPage.verifyWorkspaceDropdownMenu();
-        // Close dropdown explicitly so next click targets are not obscured.
         navMenuPage.closeWorkspaceDropdown();
       });
 
-      it("clicks the Payments nav link", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments navigation in prod.");
-          return;
-        }
+      it("clicks the Payments nav link", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         navMenuPage.clickPayments();
       });
     });
 
-    context("Step 9: Payments Page", () => {
-      it("navigates to the Payments page", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments page assertions in prod.");
-          return;
-        }
+    context("Step 8: Payments Page", () => {
+      it("navigates to the Payments page", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.verifyPageLoaded();
       });
 
-      it("displays the payments search input", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments page assertions in prod.");
-          return;
-        }
+      it("displays the payments search input", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.searchInput.should("be.visible");
       });
 
-      it("displays payment rows in the table", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments data assertions in prod.");
-          return;
-        }
+      it("displays payment rows in the table", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.tableRows.should("have.length.greaterThan", 0);
       });
 
-      it("shows the core payments table columns", () => {
-        if (!shouldValidatePayments) {
-          cy.log("Skipping Payments page assertions in prod.");
-          return;
-        }
+      it("shows the core payments table columns", function (this: Mocha.Context) {
+        skipPaymentsInProd(this);
 
         paymentsPage.verifyCoreColumns();
       });
     });
 
-    context("Step 10: User Header Dropdown and Logout", () => {
-      it("displays the user avatar dropdown button in the header", function (this: Mocha.Context) {
-        skipInProd(this);
-
+    context("Step 9: User Header Dropdown and Logout", () => {
+      it("displays the user avatar dropdown button in the header", () => {
         navMenuPage.userDropdownButton.should("be.visible");
       });
 
-      it("opens the user dropdown and validates the logout option", function (this: Mocha.Context) {
-        skipInProd(this);
-
+      it("opens the user dropdown and validates the logout option", () => {
         navMenuPage.openUserDropdown();
         navMenuPage.userDropdownMenu.should("be.visible");
         navMenuPage.logoutButton
