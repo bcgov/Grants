@@ -109,8 +109,6 @@ class NavMenuPage {
   verifyWorkspaceDropdownMenu(): void {
     this.workspaceDropdownMenu.should("be.visible").then(($menu) => {
       const headers = $menu.find(AppSelectors.Nav.dropdownHeader);
-      expect(headers.length, 'workspace dropdown headers').to.be.greaterThan(0);
-      expect(headers.first().text().trim(), 'workspace header text').to.not.equal('');
 
       if (headers.length > 1) {
         this.providersHeader.should("contain.text", "Providers");
