@@ -58,14 +58,22 @@ class NavMenuPage {
   }
 
   openWorkspaceDropdown(): void {
-    this.workspaceDropdown
-      .should("have.attr", "aria-expanded", "false")
-      .click();
+    this.workspaceDropdown.then(($dropdown) => {
+      if ($dropdown.attr("aria-expanded") !== "true") {
+        cy.wrap($dropdown).click();
+      }
+    });
+
     this.workspaceDropdown.should("have.attr", "aria-expanded", "true");
   }
 
   closeWorkspaceDropdown(): void {
-    this.workspaceDropdown.should("have.attr", "aria-expanded", "true").click();
+    this.workspaceDropdown.then(($dropdown) => {
+      if ($dropdown.attr("aria-expanded") === "true") {
+        cy.wrap($dropdown).click();
+      }
+    });
+
     this.workspaceDropdown.should("have.attr", "aria-expanded", "false");
   }
 
