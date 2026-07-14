@@ -56,12 +56,13 @@ export class WorkspaceProviderSelectionPage {
   }
 
   private normalizeOption(text: string): string {
-    return text.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return text.toLowerCase().replaceAll(/[^a-z0-9]/g, '');
   }
 
   private getProviderAliases(providerName: string): string[] {
-    const aliases = new Set<string>([providerName.trim()]);
-    const match = providerName.trim().match(/^program\s*(\d+)$/i);
+    const trimmedProviderName = providerName.trim();
+    const aliases = new Set<string>([trimmedProviderName]);
+    const match = /^program\s*(\d+)$/i.exec(trimmedProviderName);
 
     if (match) {
       const digit = match[1];
@@ -80,14 +81,16 @@ export class WorkspaceProviderSelectionPage {
   selectProvider(providerName: string): void {
     this.providerSelect.should("be.visible").then(($select) => {
       const aliases = this.getProviderAliases(providerName);
-      const normalizedAliases = aliases.map((alias) => this.normalizeOption(alias));
+      const normalizedAliases = new Set(
+        aliases.map((alias) => this.normalizeOption(alias)),
+      );
       const availableOptions = Array.from($select.find('option'))
         .map((option) => option.textContent?.trim() ?? '')
         .filter((text) => text.length > 0 && !text.startsWith('-- '));
 
       const matchedOption = availableOptions.find((option) => {
         const normalizedOption = this.normalizeOption(option);
-        return normalizedAliases.includes(normalizedOption);
+        return normalizedAliases.has(normalizedOption);
       });
 
       expect(
