@@ -1,6 +1,8 @@
 export interface Provider {
   id: string;
   name: string;
+  displayName?: string | null;
+  defaultFromAddress?: string | null;
   metaData?: Record<string, string> | null;
 }
 

@@ -21,7 +21,7 @@ import { Router } from '@angular/router';
           <div class="logout-card">
             <div class="logout-header">
               <h1>Enterprise Grant</h1>
-              <h2>Management System Portal</h2>
+              <h2>Management Portal</h2>
             </div>
 
             <div class="mobile-preview-image">

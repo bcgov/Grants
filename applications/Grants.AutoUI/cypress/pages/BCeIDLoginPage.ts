@@ -46,15 +46,21 @@ export class BCeIDLoginPage {
   }
 
   enterUserId(username: string): void {
-    this.userIdInput.clear().type(username);
+    this.userIdInput
+      .should("be.visible")
+      .clear({ log: false })
+      .type(username, { log: false });
   }
 
   enterPassword(password: string): void {
-    this.passwordInput.clear().type(password);
+    this.passwordInput
+      .should("be.visible")
+      .clear({ log: false })
+      .type(password, { log: false });
   }
 
   clickContinue(): void {
-    this.continueButton.click();
+    this.continueButton.should("be.visible").click();
   }
 
   submitCredentials(username: string, password: string): void {
