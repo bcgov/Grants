@@ -10,9 +10,7 @@
       [config]="submissionsTableConfig"
       [data]="submissionsData || []"
       [loading]="isLoading"
-      (rowClick)="onSubmissionRowClick($event)"
       (actionClick)="onSubmissionAction($event)"
-      (sort)="onSubmissionSort($event)"
     ></app-datatable>
   </div>
 </div>
