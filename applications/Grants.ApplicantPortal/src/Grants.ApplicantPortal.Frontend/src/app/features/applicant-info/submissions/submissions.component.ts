@@ -8,9 +8,7 @@ import {
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig,
-  DatatableActionEvent,
-  DatatableRowClickEvent,
-  DatatableSortEvent
+  DatatableActionEvent
 } from '../../../shared/components/datatable/datatable.models';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 @Component({
@@ -25,7 +23,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() provider!: string;
   @Input() key!: string;
 
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
   submissionsData: SubmissionsData[] = [];
   linkSource?: string;
@@ -65,7 +63,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   };
 
   constructor(
-    private applicantInfoService: ApplicantInfoService
+    private readonly applicantInfoService: ApplicantInfoService
   ) {}
 
   ngOnInit(): void {
@@ -105,9 +103,12 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
               }
             };
           }
-          const submissionsArray = Array.isArray(response.submissionsData) 
-            ? response.submissionsData 
-            : (response.submissionsData ? [response.submissionsData] : []);
+          let submissionsArray = response.submissionsData;
+          
+          if (!Array.isArray(submissionsArray)) {
+            submissionsArray = submissionsArray ? [submissionsArray] : [];
+          }
+          
           this.submissionsData = submissionsArray;
           this.isLoading = false;
         },
@@ -145,29 +146,9 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  sortSubmissions(column: string): void {
-    // Implement sorting functionality
-    // Example sorting implementation:
-    // this.submissions.sort((a, b) => {
-    //   const aValue = a[column as keyof Submission];
-    //   const bValue = b[column as keyof Submission];
-    //   return aValue > bValue ? 1 : -1;
-    // });
-  }
-
-  // Datatable event handlers
-  onSubmissionRowClick(event: DatatableRowClickEvent): void {
-    // TODO: Navigate to submission detail view
-  }
-
   onSubmissionAction(event: DatatableActionEvent): void {
     if (event.action === 'view') {
       this.onSubmissionClick(event.row);
     }
-  }
-
-  onSubmissionSort(event: DatatableSortEvent): void {
-    // The datatable component now handles all sorting internally
-    // This event is emitted for any additional logic you might need
   }
 }

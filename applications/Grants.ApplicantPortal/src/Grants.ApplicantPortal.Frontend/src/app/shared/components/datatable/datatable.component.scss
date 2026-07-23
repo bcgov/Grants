@@ -161,8 +161,12 @@
     }
   }
 
-  // Consolidated badge styles
-  .status-badge, .contact-type-badge, .address-type-badge {
+  // Generic badge shape only — this is a table presentation pattern, not
+  // data semantics. Owning feature components supply the per-status/type
+  // color mapping via `:host ::ng-deep` (badges render inside this
+  // component's own DOM, so a parent's scoped styles can't reach them any
+  // other way), referencing the shared --bc-badge-* tokens in styles.scss.
+  .status-badge {
     display: inline-block;
     padding: 2px 8px;
     border-radius: 4px;
@@ -172,41 +176,6 @@
     min-width: 90px;
     letter-spacing: 0.5px;
     color: #ffffff;
-
-    // Status variations - using CSS custom properties for efficiency
-    &.status-submitted { background-color: #013366; }
-    &.status-assigned, &.status-approved { background-color: #42814A; }
-    &.status-under-initial-review { background-color: #013366; }
-    &.status-initial-review-completed, &.status-assessment-completed { background-color: #42814A; }
-    &.status-under-assessment { background-color: #7B1FA2; }
-    &.status-grant-approved { background-color: #42814A; }
-    &.status-on-hold, &.status-defer { background-color: #FF9800; }
-    &.status-grant-not-approved { background-color: #CE3E39; }
-    &.status-awaiting-approval, &.status-pending { background-color: #013366; }
-    &.status-declined { background-color: #757575; }
-    &.status-not-validated { background-color: #605E5C; }
-    &.status-failed { background-color: #605E5C; }
-    &.status-paid { background-color: #42814A; }
-    &.status-fsb { background-color: #7B1FA2; }
-    &.status-withdrawn { background-color: #757575; }
-    &.status-closed { background-color: #424242; }
-    &.status-draft { background-color: var(--bc-bg-warning); color: var(--bc-primary); }
-    &.status-in-progress { background-color: var(--bc-bg-info); }
-    &.status-rejected { background-color: var(--bc-bg-error); }
-
-    // Orgbook-specific status badges
-    &.status-active { background-color: #013366; color: #ffffff; }
-    &.status-inactive, &.status-suspended, &.status-unknown { background-color: #6c757d; color: #ffffff; }
-
-    // Contact/Address type variations
-    &.contact-type-primary, &.address-type-primary { background-color: var(--bc-bg-info); }
-    &.contact-type-secondary { background-color: var(--bc-bg-error); }
-    &.contact-type-emergency { background-color: #ffc107; color: #212529; }
-    &.address-type-physical { background-color: #013366; }
-    &.address-type-mailing { background-color: #42814A; }
-    &.address-type-billing { background-color: #7F4098; }
-    &.address-type-office { background-color: #CE3E39; }
-    &.address-type-other { background-color: #606060; }
   }
 
   // Loading and empty states
@@ -407,7 +376,7 @@
       max-width: 100%;
     }
 
-    .status-badge, .contact-type-badge, .address-type-badge {
+    .status-badge {
       font-size: var(--bc-font-size-12);
       padding: 2px 8px;
       min-width: 70px;
