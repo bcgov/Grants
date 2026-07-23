@@ -8,7 +8,7 @@ echo "Setting up Grants Applicant Portal API secrets..."
 # Navigate to the Web project directory
 WEB_PROJECT_PATH="src/Grants.ApplicantPortal.API.Web"
 
-if [ ! -d "$WEB_PROJECT_PATH" ]; then
+if [[ ! -d "$WEB_PROJECT_PATH" ]]; then
     echo "? Web project directory not found: $WEB_PROJECT_PATH"
     echo "   Make sure you're running this script from the repository root directory."
     exit 1
