@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private readonly refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   /**
    * Tracks the last time we redirected to /login due to a 401.
@@ -24,8 +24,8 @@ export class AuthInterceptor implements HttpInterceptor {
   private static readonly AUTH_FAILURE_COOLDOWN_MS = 10_000; // 10 seconds
 
   constructor(
-    private oidcSecurityService: OidcSecurityService,
-    private router: Router
+    private readonly oidcSecurityService: OidcSecurityService,
+    private readonly router: Router
   ) {}
 
   intercept(
