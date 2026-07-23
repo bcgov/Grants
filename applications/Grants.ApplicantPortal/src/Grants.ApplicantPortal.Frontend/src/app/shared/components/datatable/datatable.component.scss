@@ -341,7 +341,7 @@
         font-size: var(--bc-font-size-13);
         color: var(--bc-primary);
         text-align: right;
-        word-break: break-word;
+        overflow-wrap: anywhere;
 
         .email-link {
           color: var(--bc-blue);

@@ -30,7 +30,7 @@
   }
 
   &.status-initial-review-completed {
-    background-color: #388E3C; // Green - review completed
+    background-color: #348538; // Green - review completed (darkened for AA contrast with white text)
     color: #ffffff;
   }
 
@@ -40,7 +40,7 @@
   }
 
   &.status-assessment-completed {
-    background-color: #689F38; // Light green - assessment done
+    background-color: #54812D; // Light green - assessment done (darkened for AA contrast with white text)
     color: #ffffff;
   }
 
@@ -53,12 +53,12 @@
   // Neutral/waiting status badges
   &.status-on-hold {
     background-color: #FF9800; // Orange - on hold
-    color: #ffffff;
+    color: var(--bc-primary); // Dark text for AA contrast against orange (BC Gov's standard body text color)
   }
 
   &.status-defer {
     background-color: #FF9800; // Orange - deferred
-    color: #ffffff;
+    color: var(--bc-primary); // Dark text for AA contrast against orange (BC Gov's standard body text color)
   }
 
   // Negative outcome badges

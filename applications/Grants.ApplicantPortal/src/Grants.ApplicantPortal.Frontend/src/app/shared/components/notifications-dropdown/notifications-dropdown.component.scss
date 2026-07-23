@@ -153,7 +153,7 @@
   font-size: var(--bc-font-size-13);
   color: var(--bc-primary);
   line-height: 1.4;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .notification-time {
