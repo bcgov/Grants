@@ -47,7 +47,12 @@
     <div
       class="sidebar-overlay"
       [class.show]="sidebarOpen"
+      role="button"
+      tabindex="0"
+      aria-label="Close sidebar"
       (click)="closeSidebar()"
+      (keydown.enter)="closeSidebar()"
+      (keydown.space)="$event.preventDefault(); closeSidebar()"
       *ngIf="sidebarOpen"
     ></div>
 

@@ -17,9 +17,9 @@
           (click)="onSave()"
         >
           @if (isSaving) {
-            <div class="spinner-border spinner-border-sm me-2" role="status">
+            <output class="spinner-border spinner-border-sm me-2">
               <span class="sr-only">Saving...</span>
-            </div>
+            </output>
           }
           {{ isSaving ? 'Saving...' : 'Save' }}
         </button>
@@ -123,7 +123,11 @@
               @for (result of searchResults; track result.id) {
               <div
                 class="search-result-item"
+                role="button"
+                tabindex="0"
                 (click)="onSearchResultSelect(result)"
+                (keydown.enter)="onSearchResultSelect(result)"
+                (keydown.space)="$event.preventDefault(); onSearchResultSelect(result)"
               >
                 <div class="result-name">{{ result.orgName }}</div>
                 <div class="result-details">
