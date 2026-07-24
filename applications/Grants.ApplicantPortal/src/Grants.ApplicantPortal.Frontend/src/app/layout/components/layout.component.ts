@@ -41,7 +41,7 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly applicantService: ApplicantService,
     private readonly authService: AuthService,
     private readonly workspaceService: WorkspaceService,
-    private router: Router
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {

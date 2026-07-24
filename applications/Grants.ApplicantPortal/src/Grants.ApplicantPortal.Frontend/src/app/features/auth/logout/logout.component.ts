@@ -69,7 +69,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./logout.component.scss']
 })
 export class LogoutComponent implements OnInit {
-  constructor(private router: Router) {}
+  constructor(private readonly router: Router) {}
 
   ngOnInit(): void {
     // Clear all storage and redirect after a short delay

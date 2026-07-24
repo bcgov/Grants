@@ -331,7 +331,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
           const dropdownMenu = toggle.nextElementSibling;
           
           // Remove Bootstrap's show class and reset aria-expanded
-          if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+          if (dropdownMenu?.classList.contains('show')) {
             dropdownMenu.classList.remove('show');
             toggle.setAttribute('aria-expanded', 'false');
             
