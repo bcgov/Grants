@@ -121,19 +121,16 @@
             @if (showDropdown && searchResults.length > 0) {
             <div id="org-search-results" data-cy="org-search-results" class="search-dropdown">
               @for (result of searchResults; track result.id) {
-              <div
+              <button
+                type="button"
                 class="search-result-item"
-                role="button"
-                tabindex="0"
                 (click)="onSearchResultSelect(result)"
-                (keydown.enter)="onSearchResultSelect(result)"
-                (keydown.space)="$event.preventDefault(); onSearchResultSelect(result)"
               >
                 <div class="result-name">{{ result.orgName }}</div>
                 <div class="result-details">
                   <span class="reg-number">{{ result.orgNumber }}</span>
                 </div>
-              </div>
+              </button>
               }
             </div>
             }

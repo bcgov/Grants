@@ -17,9 +17,16 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     .search-result-item {
+      display: block;
+      width: 100%;
       padding: 12px 16px;
-      cursor: pointer;
+      background: none;
+      border: none;
       border-bottom: 1px solid var(--bc-gray-50);
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
 
       &:hover {
         background-color: var(--bc-gray-30);
