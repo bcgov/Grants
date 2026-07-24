@@ -284,6 +284,18 @@ h3 {
   }
 }
 
+/* Reset native <dialog> UA defaults (background/border/padding) so it
+   behaves like the plain <div> Bootstrap's .modal expects, leaving the
+   .modal-backdrop sibling visible behind it. */
+dialog.modal {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  max-width: none;
+  max-height: none;
+}
+
 /* Edit Modal Pattern - shared by address/contact/etc edit modals */
 .ap-edit-modal {
   .modal-content {
