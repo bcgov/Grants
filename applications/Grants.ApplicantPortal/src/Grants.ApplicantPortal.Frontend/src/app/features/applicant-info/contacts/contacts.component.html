@@ -53,20 +53,20 @@
         <h6 class="mb-2">PRIMARY CONTACT</h6>
         <div class="row">
           <div class="col-md-3 col-sm-6">
-            <label class="form-label">Name</label>
-            <p class="contact-value">{{ primaryContact.name }}</p>
+            <label for="primary-contact-name" class="form-label">Name</label>
+            <p id="primary-contact-name" class="contact-value">{{ primaryContact.name }}</p>
           </div>
           <div class="col-md-3 col-sm-6">
-            <label class="form-label">Email</label>
-            <p class="contact-value">{{ primaryContact.email }}</p>
+            <label for="primary-contact-email" class="form-label">Email</label>
+            <p id="primary-contact-email" class="contact-value">{{ primaryContact.email }}</p>
           </div>
           <div class="col-md-3 col-sm-6">
-            <label class="form-label">Phone</label>
-            <p class="contact-value">{{ primaryContact.workPhoneNumber }}</p>
+            <label for="primary-contact-phone" class="form-label">Phone</label>
+            <p id="primary-contact-phone" class="contact-value">{{ primaryContact.workPhoneNumber }}</p>
           </div>
           <div class="col-md-3 col-sm-6">
-            <label class="form-label">Title</label>
-            <p class="contact-value">{{ primaryContact.title }}</p>
+            <label for="primary-contact-title" class="form-label">Title</label>
+            <p id="primary-contact-title" class="contact-value">{{ primaryContact.title }}</p>
           </div>
         </div>
       </div>
@@ -82,15 +82,13 @@
         [config]="contactsTableConfig"
         [data]="getContactsForTable()"
         [loading]="isLoading"
-        (rowClick)="onContactRowClick($event)"
         (actionClick)="onContactAction($event)"
-        (sort)="onContactSort($event)"
       ></app-datatable>
 </div>
 
 <!-- Add Contact Modal -->
-<div id="contact-modal" data-cy="contact-modal" class="modal fade ap-edit-modal" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-contact-modal-label" [attr.aria-hidden]="!showAddContactModal">
-  <div class="modal-dialog modal-lg" role="document">
+<dialog id="contact-modal" data-cy="contact-modal" class="modal fade ap-edit-modal" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="add-contact-modal-label" [attr.aria-hidden]="!showAddContactModal">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="add-contact-modal-label" data-cy="add-contact-modal-label">
@@ -272,7 +270,7 @@
           (click)="onSaveNewContact()"
           [disabled]="isSavingContact">
           @if (isSavingContact) {
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <output class="spinner-border spinner-border-sm me-2" aria-hidden="true"></output>
             {{ isEditMode ? 'Updating...' : 'Creating...' }}
           } @else {
             {{ isEditMode ? 'Update' : 'Create' }}
@@ -281,14 +279,14 @@
       </div>
     </div>
   </div>
-</div>
+</dialog>
 
 <!-- Modal Backdrop -->
 <div class="modal-backdrop fade" [class.show]="showAddContactModal" [style.display]="showAddContactModal ? 'block' : 'none'" *ngIf="showAddContactModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div id="contact-delete-modal" data-cy="contact-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-contact-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
-  <div class="modal-dialog modal-dialog-centered" role="document">
+<dialog id="contact-delete-modal" data-cy="contact-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="delete-contact-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">
         <h5 class="modal-title delete-modal-title" id="delete-contact-modal-label" data-cy="delete-contact-modal-label">
@@ -343,7 +341,7 @@
           (click)="onConfirmDeleteContact()"
           [disabled]="isDeletingContact">
           @if (isDeletingContact) {
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <output class="spinner-border spinner-border-sm me-2" aria-hidden="true"></output>
             Removing...
           } @else {
             Remove Contact
@@ -352,7 +350,7 @@
       </div>
     </div>
   </div>
-    </div>
+    </dialog>
   </div>
 </div>
 
