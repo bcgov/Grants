@@ -55,10 +55,7 @@ export class TableSortService {
     const currentState = this.getSortState(tableId);
     let newDirection: SortDirection;
 
-    if (currentState?.column !== column) {
-      // First click on this column or different column
-      newDirection = 'asc';
-    } else {
+    if (currentState?.column === column) {
       // Cycle through states for the same column
       switch (currentState.direction) {
         case 'asc':
@@ -72,6 +69,9 @@ export class TableSortService {
           newDirection = 'asc';
           break;
       }
+    } else {
+      // First click on this column or different column
+      newDirection = 'asc';
     }
 
     const newState: SortState = { column, direction: newDirection };
