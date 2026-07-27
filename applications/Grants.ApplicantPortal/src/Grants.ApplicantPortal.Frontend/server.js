@@ -1,8 +1,8 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const { resolve } = require('path');
+const { resolve } = require('node:path');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs');
+const fs = require('node:fs');
 
 const rateLimitMax = process.env.RATE_LIMIT_MAX || 1000;
 const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); // 10 mins
@@ -103,7 +103,7 @@ function substituteEnvironmentVariables(content) {
     
     // Handle regular ${VARIABLE} pattern
     const placeholder = `\${${key}}`;
-    const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regularMatches = content.match(new RegExp(escapedPlaceholder, 'g'));
     if (regularMatches) {
       console.log(`Found ${regularMatches.length} regular placeholder(s) for ${key}: ${placeholder}`);
@@ -113,19 +113,19 @@ function substituteEnvironmentVariables(content) {
     
     // Handle URL-encoded ${VARIABLE} pattern (%7B = {, %7D = })
     const urlEncodedPlaceholder = `$%7B${key}%7D`;
-    const urlMatches = content.match(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+    const urlMatches = content.match(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'));
     if (urlMatches) {
       console.log(`Found ${urlMatches.length} URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholder}`);
-      result = result.replace(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+      result = result.replace(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'), value);
       substitutionsMade = true;
     }
     
     // Handle mixed case URL encoding
     const urlEncodedPlaceholderLower = `$%7b${key}%7d`;
-    const lowerMatches = content.match(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+    const lowerMatches = content.match(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'));
     if (lowerMatches) {
       console.log(`Found ${lowerMatches.length} lowercase URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholderLower}`);
-      result = result.replace(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+      result = result.replace(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'), value);
       substitutionsMade = true;
     }
   });
