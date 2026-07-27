@@ -1,6 +1,6 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const { resolve } = require('node:path');
+const { resolve, relative, isAbsolute } = require('node:path');
 const rateLimit = require('express-rate-limit');
 const fs = require('node:fs');
 
@@ -8,6 +8,12 @@ const rateLimitMax = process.env.RATE_LIMIT_MAX || 1000;
 const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); // 10 mins
 
 const app = express();
+
+// Strip CR/LF and other control characters from user-controlled values before
+// writing them to logs, to prevent log injection/forging (CWE-117).
+function sanitizeForLog(value) {
+  return String(value).replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ');
+}
 
 // Remove server identification headers
 app.disable('x-powered-by');
@@ -30,7 +36,7 @@ app.set('trust proxy', 1);
 
 // Global request logging middleware
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] ${sanitizeForLog(req.method)} ${sanitizeForLog(req.url)}`);
   next();
 });
 
@@ -145,28 +151,38 @@ console.log(`Serving static files from: ${staticPath}`);
 // This MUST come BEFORE the static file middleware
 app.get('*.js', (req, res, next) => {
   const filePath = resolve(staticPath, req.path.substring(1));
-  
-  console.log(`JavaScript request: ${req.path}`);
-  console.log(`Looking for file: ${filePath}`);
-  
+
+  console.log(`JavaScript request: ${sanitizeForLog(req.path)}`);
+
+  // Ensure the resolved path is actually within staticPath before touching the
+  // filesystem, to prevent path traversal (CWE-22) via crafted request paths.
+  const relativePath = relative(staticPath, filePath);
+  const isWithinStaticPath = relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath);
+  if (!isWithinStaticPath) {
+    console.log('Rejected JavaScript request resolving outside static root');
+    return next();
+  }
+
+  console.log(`Looking for file: ${sanitizeForLog(filePath)}`);
+
   if (fs.existsSync(filePath)) {
-    console.log(`File exists, reading for substitution: ${filePath}`);
+    console.log(`File exists, reading for substitution: ${sanitizeForLog(filePath)}`);
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
-        console.error('Error reading JS file:', filePath, err);
+        console.error('Error reading JS file:', sanitizeForLog(filePath), err);
         return next();
       }
-      
-      console.log(`Processing JS file for env substitution: ${req.path} (${data.length} characters)`);
+
+      console.log(`Processing JS file for env substitution: ${sanitizeForLog(req.path)} (${data.length} characters)`);
       const substitutedContent = substituteEnvironmentVariables(data);
-      
+
       // Log if substitution occurred
       if (substitutedContent !== data) {
-        console.log('Environment variable substitution applied to:', req.path);
+        console.log('Environment variable substitution applied to:', sanitizeForLog(req.path));
       } else {
-        console.log('No substitutions needed for:', req.path);
+        console.log('No substitutions needed for:', sanitizeForLog(req.path));
       }
-      
+
       res.setHeader('Content-Type', 'application/javascript');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -174,7 +190,7 @@ app.get('*.js', (req, res, next) => {
       res.send(substitutedContent);
     });
   } else {
-    console.log(`File does not exist: ${filePath}`);
+    console.log(`File does not exist: ${sanitizeForLog(filePath)}`);
     next();
   }
 });
@@ -193,7 +209,7 @@ app.use(express.static(staticPath, {
 
 // Handle Angular routing - serve index.html for all routes
 app.get('*', catchAllLimiter, (req, res) => {
-  console.log(`Request: ${req.method} ${req.url}`);
+  console.log(`Request: ${sanitizeForLog(req.method)} ${sanitizeForLog(req.url)}`);
   const indexPath = resolve(staticPath, 'index.html');
   
   // Read and substitute environment variables in index.html
