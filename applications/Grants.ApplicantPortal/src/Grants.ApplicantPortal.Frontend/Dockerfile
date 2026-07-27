@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code
 COPY . .
@@ -29,7 +29,7 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/server.js ./
 
 # Install deployment dependencies only
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 # Set environment variables
 ENV PORT=4200
