@@ -12,7 +12,7 @@ const app = express();
 // Strip CR/LF and other control characters from user-controlled values before
 // writing them to logs, to prevent log injection/forging (CWE-117).
 function sanitizeForLog(value) {
-  return String(value).replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ');
+  return String(value).replace(/[\x00-\x1F\x7F]/g, ' ');
 }
 
 // Remove server identification headers
