@@ -1,6 +1,6 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const { resolve, relative, isAbsolute } = require('node:path');
+const { resolve, relative, sep } = require('node:path');
 const rateLimit = require('express-rate-limit');
 const fs = require('node:fs');
 
@@ -40,8 +40,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiter for catch-all route serving index.html
-const catchAllLimiter = rateLimit({
+// Rate limiter for routes that hit the filesystem per request (JS bundle
+// substitution and the SPA catch-all serving index.html)
+const staticFileLimiter = rateLimit({
   windowMs: rateLimitWindow,
   max: rateLimitMax,
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
@@ -147,52 +148,63 @@ function substituteEnvironmentVariables(content) {
 const staticPath = resolve(__dirname, 'dist/frontend/browser');
 console.log(`Serving static files from: ${staticPath}`);
 
+// Build an allow-list of the actual .js files under staticPath once at startup,
+// mapping each request-style path (e.g. "/main.js") to its real absolute path.
+// Requests are matched against this known-good map instead of resolving
+// user-controlled request paths against the filesystem, so no fs call is ever
+// made with a path derived from user input (CWE-22).
+function buildJsFileAllowList(dir, base = dir) {
+  const allowList = new Map();
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = resolve(dir, entry.name);
+    if (entry.isDirectory()) {
+      for (const [key, value] of buildJsFileAllowList(fullPath, base)) {
+        allowList.set(key, value);
+      }
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      const requestPath = '/' + relative(base, fullPath).split(sep).join('/');
+      allowList.set(requestPath, fullPath);
+    }
+  }
+  return allowList;
+}
+
+const jsFileAllowList = buildJsFileAllowList(staticPath);
+
 // Custom middleware for JavaScript files that need environment variable substitution
 // This MUST come BEFORE the static file middleware
-app.get('*.js', (req, res, next) => {
-  const filePath = resolve(staticPath, req.path.substring(1));
-
+app.get('*.js', staticFileLimiter, (req, res, next) => {
   console.log(`JavaScript request: ${sanitizeForLog(req.path)}`);
 
-  // Ensure the resolved path is actually within staticPath before touching the
-  // filesystem, to prevent path traversal (CWE-22) via crafted request paths.
-  const relativePath = relative(staticPath, filePath);
-  const isWithinStaticPath = relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath);
-  if (!isWithinStaticPath) {
-    console.log('Rejected JavaScript request resolving outside static root');
+  const filePath = jsFileAllowList.get(req.path);
+  if (!filePath) {
+    console.log('Rejected JavaScript request not in known file allow-list');
     return next();
   }
 
-  console.log(`Looking for file: ${sanitizeForLog(filePath)}`);
+  console.log(`File exists, reading for substitution: ${sanitizeForLog(filePath)}`);
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading JS file:', sanitizeForLog(filePath), err);
+      return next();
+    }
 
-  if (fs.existsSync(filePath)) {
-    console.log(`File exists, reading for substitution: ${sanitizeForLog(filePath)}`);
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        console.error('Error reading JS file:', sanitizeForLog(filePath), err);
-        return next();
-      }
+    console.log(`Processing JS file for env substitution: ${sanitizeForLog(req.path)} (${data.length} characters)`);
+    const substitutedContent = substituteEnvironmentVariables(data);
 
-      console.log(`Processing JS file for env substitution: ${sanitizeForLog(req.path)} (${data.length} characters)`);
-      const substitutedContent = substituteEnvironmentVariables(data);
+    // Log if substitution occurred
+    if (substitutedContent !== data) {
+      console.log('Environment variable substitution applied to:', sanitizeForLog(req.path));
+    } else {
+      console.log('No substitutions needed for:', sanitizeForLog(req.path));
+    }
 
-      // Log if substitution occurred
-      if (substitutedContent !== data) {
-        console.log('Environment variable substitution applied to:', sanitizeForLog(req.path));
-      } else {
-        console.log('No substitutions needed for:', sanitizeForLog(req.path));
-      }
-
-      res.setHeader('Content-Type', 'application/javascript');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.send(substitutedContent);
-    });
-  } else {
-    console.log(`File does not exist: ${sanitizeForLog(filePath)}`);
-    next();
-  }
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(substitutedContent);
+  });
 });
 
 // Static file middleware - serves all other files except .js (which are handled above)
@@ -208,7 +220,7 @@ app.use(express.static(staticPath, {
 }));
 
 // Handle Angular routing - serve index.html for all routes
-app.get('*', catchAllLimiter, (req, res) => {
+app.get('*', staticFileLimiter, (req, res) => {
   console.log(`Request: ${sanitizeForLog(req.method)} ${sanitizeForLog(req.url)}`);
   const indexPath = resolve(staticPath, 'index.html');
   
