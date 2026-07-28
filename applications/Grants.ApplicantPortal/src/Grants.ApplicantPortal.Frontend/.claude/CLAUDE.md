@@ -13,37 +13,6 @@ Angular 20 SPA for BC Government grants applicants. Served by an Express.js cont
 - **Container**: Docker multi-stage (Node 22-slim), OpenShift deployment
 - **Analytics**: Matomo (`ngx-matomo-client`)
 
-## Common Commands
-
-```bash
-npm start              # Dev server at http://localhost:4200
-npm test               # Karma/Jasmine unit tests
-npm run build          # Production build (deploy config)
-npm run build:dev      # Dev build
-```
-
-## Architecture
-
-```
-src/app/
-├── core/              # Singletons: auth, guards, interceptors, key services
-│   ├── auth/          # Keycloak config
-│   ├── guards/        # auth.guard.ts — protects all authenticated routes
-│   ├── interceptors/  # auth.interceptor.ts — attaches Bearer token to requests
-│   └── services/      # applicant, workspace, error-handler services
-├── features/          # Smart (page-level) components
-│   ├── auth/          # login, callback, logout
-│   ├── applicant-info/# profile, addresses, contacts, organization, submissions
-│   ├── workspace/     # workspace selector
-│   └── payments/
-├── layout/            # Header + layout shell (presentational only)
-└── shared/            # Dumb components, directives, models, utilities
-    ├── components/    # datatable, loading-overlay, toast, user-dropdown, org-header, notifications-dropdown
-    ├── directives/    # tooltip
-    ├── models/        # TypeScript interfaces and enums
-    └── services/      # toast, table-sort
-```
-
 **Rule**: Business logic belongs in `core/services`. UI logic belongs in `features`. Reusable UI belongs in `shared`. Never import `features` from `core` or `shared`.
 
 ## Key Files
