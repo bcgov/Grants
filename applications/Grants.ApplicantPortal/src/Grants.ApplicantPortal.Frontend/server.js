@@ -116,7 +116,7 @@ function substituteEnvironmentVariables(content) {
     const value = envVars[key];
     
     // Handle regular ${VARIABLE} pattern
-    const placeholder = `\${${key}}`;
+    const placeholder = '${' + key + '}';
     const escapedPlaceholder = placeholder.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regularMatches = content.match(new RegExp(escapedPlaceholder, 'g'));
     if (regularMatches) {
