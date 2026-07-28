@@ -29,32 +29,6 @@ dotnet ef migrations add <Name> --project src/Grants.ApplicantPortal.API.Migrati
 dotnet ef database update --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web
 ```
 
-## Architecture
-
-```
-src/
-├── API.Web/                    # FastEndpoints — one folder per domain area
-│   ├── Addresses/              # Create.cs, Create.Request.cs, Create.Response.cs, Create.Validator.cs
-│   ├── Contacts/
-│   ├── Organizations/
-│   ├── Submissions/
-│   ├── Payments/
-│   └── Auth/
-├── API.UseCases/               # CQRS: Commands, Queries, Handlers
-│   ├── Addresses/
-│   │   ├── Create/             # CreateAddressCommand.cs + CreateAddressHandler.cs
-│   │   ├── Retrieve/
-│   │   └── Delete/
-│   └── ...
-├── API.Core/                   # Domain entities, interfaces, domain services
-├── API.Core.Features/          # Feature flags
-├── API.Infrastructure/         # EF DbContext, repositories, external service adapters
-├── API.Migrations/             # EF Core migrations
-├── API.Plugins/                # Plugin system
-├── API.ServiceDefaults/        # Aspire service defaults (health checks, telemetry)
-└── API.AspireHost/             # Local orchestration via .NET Aspire
-```
-
 **Rule**: Endpoints dispatch to handlers via MediatR. Handlers own business logic. Never put business logic in endpoints.
 
 ## Endpoint Pattern

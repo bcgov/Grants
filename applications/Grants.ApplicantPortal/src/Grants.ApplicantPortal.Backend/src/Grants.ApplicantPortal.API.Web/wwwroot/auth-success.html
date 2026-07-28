@@ -12,10 +12,10 @@
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
         }
         .container {
             background: white;
+            color: #333;
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
             padding: 30px;
@@ -65,7 +65,7 @@
             overflow-y: auto;
         }
         .copy-btn {
-            background: #007bff;
+            background: #0056b3;
             color: white;
             border: none;
             border-radius: 4px;
@@ -75,10 +75,10 @@
             margin-left: auto;
         }
         .copy-btn:hover {
-            background: #0056b3;
+            background: #004085;
         }
         .copy-btn.copied {
-            background: #28a745;
+            background: #1e7e34;
         }
         .user-info {
             background: #f8f9fa;
@@ -228,7 +228,7 @@
                     console.error('Fallback copy failed: ', err);
                 }
                 
-                document.body.removeChild(textArea);
+                textArea.remove();
             }
         }
 
@@ -236,7 +236,7 @@
         function createTokenSection(label, value, emoji = '??') {
             if (!value) return '';
             
-            const tokenId = label.toLowerCase().replace(/\s+/g, '-');
+            const tokenId = label.toLowerCase().replaceAll(/\s+/g, '-');
             return `
                 <div class="token-section">
                     <div class="token-label">
@@ -251,7 +251,12 @@
         // Function to create user info section
         function createUserInfoSection(userInfo) {
             if (!userInfo) return '';
-            
+
+            const emailVerifiedStatus = userInfo.emailVerified ? '? Yes' : '? No';
+            const emailVerifiedRow = userInfo.emailVerified === undefined
+                ? ''
+                : `<div class="user-detail"><span class="user-label">Email Verified:</span><span class="user-value">${emailVerifiedStatus}</span></div>`;
+
             return `
                 <div class="user-info">
                     <h3>?? User Information</h3>
@@ -259,7 +264,7 @@
                     ${userInfo.preferredUsername ? `<div class="user-detail"><span class="user-label">Username:</span><span class="user-value">${userInfo.preferredUsername}</span></div>` : ''}
                     ${userInfo.email ? `<div class="user-detail"><span class="user-label">Email:</span><span class="user-value">${userInfo.email}</span></div>` : ''}
                     ${userInfo.sub ? `<div class="user-detail"><span class="user-label">Subject ID:</span><span class="user-value">${userInfo.sub}</span></div>` : ''}
-                    ${typeof userInfo.emailVerified !== 'undefined' ? `<div class="user-detail"><span class="user-label">Email Verified:</span><span class="user-value">${userInfo.emailVerified ? '? Yes' : '? No'}</span></div>` : ''}
+                    ${emailVerifiedRow}
                 </div>
             `;
         }
@@ -280,7 +285,7 @@
 
         // Function to get query parameters
         function getQueryParams() {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(globalThis.location.search);
             return {
                 code: params.get('code'),
                 state: params.get('state'),
@@ -337,7 +342,7 @@
                         <div class="instructions">
                             <h3>?? Manual Token Exchange Required</h3>
                             <p>The automatic token exchange failed. You can use this authorization code manually:</p>
-                            <div class="code-example">curl -X POST "${window.location.origin}/auth/callback" \\<br>
+                            <div class="code-example">curl -X POST "${globalThis.location.origin}/auth/callback" \\<br>
   -H "Content-Type: application/x-www-form-urlencoded" \\<br>
   -d "code=${params.code}"</div>
                             <p><strong>Error:</strong> ${error.message}</p>
@@ -399,7 +404,7 @@
                     <h3>?? Test Your API</h3>
                     <p>Use this token to test your API endpoints:</p>
                     <div class="code-example">curl -H "Authorization: Bearer ${data.accessToken}" \\<br>
-     ${window.location.origin}/Auth/userinfo</div>
+     ${globalThis.location.origin}/Auth/userinfo</div>
                     
                     <p>Or set it as an environment variable in PowerShell:</p>
                     <div class="code-example">$env:KEYCLOAK_TOKEN = "${data.accessToken}"</div>
