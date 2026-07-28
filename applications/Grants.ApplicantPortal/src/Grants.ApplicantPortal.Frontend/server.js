@@ -10,9 +10,16 @@ const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); //
 const app = express();
 
 // Strip CR/LF and other control characters from user-controlled values before
-// writing them to logs, to prevent log injection/forging (CWE-117).
+// writing them to logs, to prevent log injection/forging (CWE-117). Filters by
+// code point instead of a control-character regex class so static analyzers
+// don't flag embedded control characters in the pattern itself.
 function sanitizeForLog(value) {
-  return String(value).replace(/[\x00-\x1F\x7F]/g, ' ');
+  let sanitized = '';
+  for (const char of String(value)) {
+    const codePoint = char.codePointAt(0);
+    sanitized += (codePoint <= 0x1F || codePoint === 0x7F) ? ' ' : char;
+  }
+  return sanitized;
 }
 
 // Remove server identification headers
