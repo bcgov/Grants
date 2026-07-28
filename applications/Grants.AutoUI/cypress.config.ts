@@ -1,6 +1,6 @@
 import { defineConfig } from "cypress";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 const ALLOWED_ENVS = new Set(["dev", "dev2", "test", "uat", "prod"]);
 

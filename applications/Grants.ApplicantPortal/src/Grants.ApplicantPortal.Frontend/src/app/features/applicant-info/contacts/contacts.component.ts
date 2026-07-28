@@ -433,10 +433,10 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
         email.indexOf('.', atIndex) > atIndex + 1 &&
         email.length <= 254 &&
         !email.includes(' ');
-      if (!isValid) {
-        this.emailValidationError = 'Please enter a valid email address';
-      } else {
+      if (isValid) {
         this.emailValidationError = null;
+      } else {
+        this.emailValidationError = 'Please enter a valid email address';
       }
     } else {
       this.emailValidationError = null;
