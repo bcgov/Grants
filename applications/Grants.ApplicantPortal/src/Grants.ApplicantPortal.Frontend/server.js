@@ -117,29 +117,31 @@ function substituteEnvironmentVariables(content) {
     
     // Handle regular ${VARIABLE} pattern
     const placeholder = `\${${key}}`;
-    const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const escapedPlaceholder = placeholder.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regularMatches = content.match(new RegExp(escapedPlaceholder, 'g'));
     if (regularMatches) {
       console.log(`Found ${regularMatches.length} regular placeholder(s) for ${key}: ${placeholder}`);
-      result = result.replace(new RegExp(escapedPlaceholder, 'g'), value);
+      result = result.replaceAll(new RegExp(escapedPlaceholder, 'g'), value);
       substitutionsMade = true;
     }
-    
+
     // Handle URL-encoded ${VARIABLE} pattern (%7B = {, %7D = })
     const urlEncodedPlaceholder = `$%7B${key}%7D`;
-    const urlMatches = content.match(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'));
+    const escapedUrlEncodedPlaceholder = urlEncodedPlaceholder.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const urlMatches = content.match(new RegExp(escapedUrlEncodedPlaceholder, 'g'));
     if (urlMatches) {
       console.log(`Found ${urlMatches.length} URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholder}`);
-      result = result.replace(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'), value);
+      result = result.replaceAll(new RegExp(escapedUrlEncodedPlaceholder, 'g'), value);
       substitutionsMade = true;
     }
-    
+
     // Handle mixed case URL encoding
     const urlEncodedPlaceholderLower = `$%7b${key}%7d`;
-    const lowerMatches = content.match(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'));
+    const escapedUrlEncodedPlaceholderLower = urlEncodedPlaceholderLower.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const lowerMatches = content.match(new RegExp(escapedUrlEncodedPlaceholderLower, 'g'));
     if (lowerMatches) {
       console.log(`Found ${lowerMatches.length} lowercase URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholderLower}`);
-      result = result.replace(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'g'), value);
+      result = result.replaceAll(new RegExp(escapedUrlEncodedPlaceholderLower, 'g'), value);
       substitutionsMade = true;
     }
   });
@@ -200,10 +202,10 @@ app.get('*.js', staticFileLimiter, (req, res, next) => {
     const substitutedContent = substituteEnvironmentVariables(data);
 
     // Log if substitution occurred
-    if (substitutedContent !== data) {
-      console.log('Environment variable substitution applied to:', sanitizeForLog(req.path));
-    } else {
+    if (substitutedContent === data) {
       console.log('No substitutions needed for:', sanitizeForLog(req.path));
+    } else {
+      console.log('Environment variable substitution applied to:', sanitizeForLog(req.path));
     }
 
     res.setHeader('Content-Type', 'application/javascript');

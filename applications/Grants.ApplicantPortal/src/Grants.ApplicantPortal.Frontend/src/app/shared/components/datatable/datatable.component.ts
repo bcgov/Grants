@@ -226,14 +226,14 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
    */
   private applySorting(resetPage: boolean = true): void {
     const sourceData = this.isSearchActive ? this.filteredData : this.data;
-    if (!this.sortConfig) {
-      this.sortedData = [...sourceData];
-    } else {
+    if (this.sortConfig) {
       this.sortedData = this.tableSortService.sortData(
         sourceData,
         this.currentSortState,
         this.sortConfig
       );
+    } else {
+      this.sortedData = [...sourceData];
     }
     
     if (resetPage) {
