@@ -40,8 +40,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiter for catch-all route serving index.html
-const catchAllLimiter = rateLimit({
+// Rate limiter for routes that hit the filesystem per request (JS bundle
+// substitution and the SPA catch-all serving index.html)
+const staticFileLimiter = rateLimit({
   windowMs: rateLimitWindow,
   max: rateLimitMax,
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
@@ -172,7 +173,7 @@ const jsFileAllowList = buildJsFileAllowList(staticPath);
 
 // Custom middleware for JavaScript files that need environment variable substitution
 // This MUST come BEFORE the static file middleware
-app.get('*.js', (req, res, next) => {
+app.get('*.js', staticFileLimiter, (req, res, next) => {
   console.log(`JavaScript request: ${sanitizeForLog(req.path)}`);
 
   const filePath = jsFileAllowList.get(req.path);
@@ -219,7 +220,7 @@ app.use(express.static(staticPath, {
 }));
 
 // Handle Angular routing - serve index.html for all routes
-app.get('*', catchAllLimiter, (req, res) => {
+app.get('*', staticFileLimiter, (req, res) => {
   console.log(`Request: ${sanitizeForLog(req.method)} ${sanitizeForLog(req.url)}`);
   const indexPath = resolve(staticPath, 'index.html');
   
