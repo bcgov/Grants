@@ -26,7 +26,9 @@ env:
   GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
   OC_CLUSTER: ${{ vars.OPENSHIFT_CLUSTER }}
   OC_REGISTRY: ${{ vars.OPENSHIFT_REGISTRY }}
-  OC_AUTH_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
+  OC_TOOLS_TOKEN: ${{ secrets.TOOLS_OPENSHIFT_TOKEN }}
+  OC_TOOLS_PROJECT: ${{ vars.TOOLS_OPENSHIFT_NAMESPACE }}
+  OC_TARGET_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
   OC_TARGET_PROJECT: ${{ vars.OPENSHIFT_NAMESPACE }}
   JFROG_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
   JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
@@ -47,7 +49,7 @@ jobs:
       run: |
         echo "Target: $TARGET_ENV"
         echo "BaseRef: $GITHUB_REF_NAME"
-        echo "Environment: $TARGET_ENV OC_TARGET_PROJECT=$OC_TARGET_PROJECT"
+        echo "Environment: $TARGET_ENV OC_TOOLS_PROJECT=$OC_TOOLS_PROJECT OC_TARGET_PROJECT=$OC_TARGET_PROJECT"
         echo "Environment: $TARGET_ENV JFROG_REPO_PATH=$JFROG_REPO_PATH"
         echo "..."
         env | sort
@@ -123,20 +125,17 @@ jobs:
         echo "Building Docker image for database migrator..."
         docker build -f applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/src/Grants.ApplicantPortal.API.Migrations/Dockerfile -t dev-applicantportal-dbmigrator applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
       working-directory: ./
-    - name: Connect to JFrog Artifactory non-interactive login using --password-stdin
+    - name: Push application images to Artifactory container registry
+      continue-on-error: true
       run: |
         echo "$JFROG_PASSWORD" | docker login -u "$JFROG_USERNAME" --password-stdin $JFROG_SERVICE
-    - name: Push application images to Artifactory container registry
-      run: |
         docker tag grants-applicant-portal-backend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend:latest
         docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-backend:latest
         docker tag grants-applicant-portal-frontend $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend:latest
         docker push $JFROG_SERVICE/$JFROG_REPO_PATH/grants-applicant-portal-frontend:latest
         docker tag dev-applicantportal-dbmigrator $JFROG_SERVICE/$JFROG_REPO_PATH/dev-applicantportal-dbmigrator:latest
         docker push $JFROG_SERVICE/$JFROG_REPO_PATH/dev-applicantportal-dbmigrator:latest
-    - name: Disconnect docker from JFrog Artifactory
-      run: |
-        docker logout
+        docker logout $JFROG_SERVICE
     - name: Install OpenShift CLI
       run: |
           curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
@@ -144,30 +143,36 @@ jobs:
           sudo mv oc /usr/local/bin
     - name: Verify OpenShift CLI installation
       run: oc version
-    - name: Connect to OpenShift API non-interactive login using current session token
+    - name: Push application images into ce395f-tools
       run: |
-        oc login --token=$OC_AUTH_TOKEN --server=$OC_CLUSTER
+        oc login --token=$OC_TOOLS_TOKEN --server=$OC_CLUSTER
         oc registry login
         docker login -u unused -p $(oc whoami -t) $OC_REGISTRY
-    - name: Push application images to OpenShift container registry
+        docker tag grants-applicant-portal-backend $OC_REGISTRY/$OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-backend:latest
+        docker push $OC_REGISTRY/$OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-backend:latest
+        docker tag grants-applicant-portal-frontend $OC_REGISTRY/$OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-frontend:latest
+        docker push $OC_REGISTRY/$OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-frontend:latest
+        docker tag dev-applicantportal-dbmigrator $OC_REGISTRY/$OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-dbmigrator:latest
+        docker push $OC_REGISTRY/$OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-dbmigrator:latest
+        docker logout $OC_REGISTRY
+    - name: Promote dbMigrator into ce395f-dev and run migrations
       run: |
-        docker tag grants-applicant-portal-backend $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-backend
-        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-backend
-        docker tag grants-applicant-portal-frontend $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend
-        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/grants-applicant-portal-frontend
-        echo "Tagging and pushing database migrator image..."
-        docker tag dev-applicantportal-dbmigrator $OC_REGISTRY/$OC_TARGET_PROJECT/dev-applicantportal-dbmigrator:latest
-        docker push $OC_REGISTRY/$OC_TARGET_PROJECT/dev-applicantportal-dbmigrator:latest
-    - name: Disconnect docker from OpenShift container registry
+        oc login --token=$OC_TARGET_TOKEN --server=$OC_CLUSTER
+        oc tag $OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-dbmigrator:latest $OC_TARGET_PROJECT/$TARGET_ENV-grants-applicant-portal-dbmigrator:latest
+        oc -n $OC_TARGET_PROJECT delete jobs $TARGET_ENV-grants-applicant-portal-dbmigrator --ignore-not-found=true
+        oc -n $OC_TARGET_PROJECT process unity-applicantportal-dbmigrator-job \
+          -p APPLICATION_GROUP=$TARGET_ENV-unity-applicant-portal \
+          -p DATABASE_SERVICE_NAME=$TARGET_ENV-unity-applicant-portal \
+          -p APPLICATION_NAME=$TARGET_ENV-grants-applicant-portal-dbmigrator \
+          -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT \
+          -p IMAGESTREAM_NAME=$TARGET_ENV-grants-applicant-portal-dbmigrator \
+          -p IMAGESTREAM_TAG=latest | oc -n $OC_TARGET_PROJECT create -f -
+        oc -n $OC_TARGET_PROJECT wait jobs/$TARGET_ENV-grants-applicant-portal-dbmigrator --for condition=complete --timeout=300s
+    - name: Promote backend/frontend into ce395f-dev and roll out
       run: |
-        docker logout
-    - name: Clean and Run dbmigrator job from project template and params file
-      run: |
-        echo "Running migration job..." 
-        oc delete jobs dev-applicantportal-dbmigrator -n $OC_TARGET_PROJECT --ignore-not-found=true
-        oc process unity-applicantportal-dbmigrator-job -n $OC_TARGET_PROJECT -p APPLICATION_GROUP=dev-unity-applicant-portal -p DATABASE_SERVICE_NAME=dev-unity-applicant-portal -p APPLICATION_NAME=dev-applicantportal-dbmigrator -p IMAGEPULL_NAMESPACE=$OC_TARGET_PROJECT -p IMAGESTREAM_NAME=dev-applicantportal-dbmigrator -p IMAGESTREAM_TAG=latest | oc create -f -
-        oc wait jobs/dev-applicantportal-dbmigrator --for condition=complete --timeout=120s -n $OC_TARGET_PROJECT
-    - name: Trigger OpenShift deployment restart
-      run: |
-        oc rollout restart statefulset dev-grants-web
-        oc rollout restart statefulset dev-grants-api
+        oc tag $OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-backend:latest $OC_TARGET_PROJECT/$TARGET_ENV-grants-applicant-portal-backend:latest
+        oc tag $OC_TOOLS_PROJECT/$TARGET_ENV-grants-applicant-portal-frontend:latest $OC_TARGET_PROJECT/$TARGET_ENV-grants-applicant-portal-frontend:latest
+        oc -n $OC_TARGET_PROJECT rollout restart statefulset $TARGET_ENV-grants-api
+        oc -n $OC_TARGET_PROJECT rollout restart statefulset $TARGET_ENV-grants-web
+        oc -n $OC_TARGET_PROJECT rollout status statefulset $TARGET_ENV-grants-api --timeout=180s
+        oc -n $OC_TARGET_PROJECT rollout status statefulset $TARGET_ENV-grants-web --timeout=180s
