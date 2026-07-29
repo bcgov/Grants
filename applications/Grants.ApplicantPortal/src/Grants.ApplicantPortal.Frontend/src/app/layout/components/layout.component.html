@@ -44,12 +44,14 @@
     </div>
 
     <!-- Sidebar Overlay for Mobile -->
-    <div
+    <button
+      type="button"
       class="sidebar-overlay"
       [class.show]="sidebarOpen"
+      aria-label="Close sidebar"
       (click)="closeSidebar()"
       *ngIf="sidebarOpen"
-    ></div>
+    ></button>
 
     <!-- Sidebar Column -->
     <div

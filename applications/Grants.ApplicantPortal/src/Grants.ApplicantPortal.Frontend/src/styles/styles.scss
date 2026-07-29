@@ -30,6 +30,11 @@
   --bc-surface-error: var(--support-surface-color-danger);    /* #F4E1E2 */
   --bc-surface-warning: var(--support-surface-color-warning); /* #FEF1D8 */
 
+  /**Badge status colors — no @bcgov/design-tokens equivalent, standardized here for reuse**/
+  --bc-badge-orange: #FF9800;      /* on-hold — pair with --bc-primary text for AA contrast */
+  --bc-badge-gray: #757575;        /* withdrawn / inactive / suspended / unknown (fallback) */
+  --bc-badge-gray-dark: #424242;   /* closed */
+
   /**Font Sizes — no token equivalents**/
   --bc-font-size-12: 0.75rem;
   --bc-font-size-13: 0.8125rem;
@@ -277,6 +282,18 @@ h3 {
     gap: 0.75rem;
     justify-content: flex-end;
   }
+}
+
+/* Reset native <dialog> UA defaults (background/border/padding) so it
+   behaves like the plain <div> Bootstrap's .modal expects, leaving the
+   .modal-backdrop sibling visible behind it. */
+dialog.modal {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  max-width: none;
+  max-height: none;
 }
 
 /* Edit Modal Pattern - shared by address/contact/etc edit modals */

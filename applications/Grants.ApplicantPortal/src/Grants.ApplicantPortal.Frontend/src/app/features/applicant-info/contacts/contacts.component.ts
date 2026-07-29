@@ -8,13 +8,10 @@ import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
-import { Contact } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
 import { 
   DatatableConfig,
-  DatatableActionEvent,
-  DatatableRowClickEvent,
-  DatatableSortEvent
+  DatatableActionEvent
 } from '../../../shared/components/datatable/datatable.models';
 import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
@@ -436,10 +433,10 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
         email.indexOf('.', atIndex) > atIndex + 1 &&
         email.length <= 254 &&
         !email.includes(' ');
-      if (!isValid) {
-        this.emailValidationError = 'Please enter a valid email address';
-      } else {
+      if (isValid) {
         this.emailValidationError = null;
+      } else {
+        this.emailValidationError = 'Please enter a valid email address';
       }
     } else {
       this.emailValidationError = null;
@@ -452,10 +449,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   onEmailChange(): void {
     this.validateEmail();
-  }
-
-  onContactClick(contact: Contact): void {
-    // TODO: Navigate to contact detail view
   }
 
   onEditContact(contact: ContactDisplay): void {
@@ -581,11 +574,6 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  // Datatable event handlers
-  onContactRowClick(event: DatatableRowClickEvent): void {
-    // TODO: Navigate to contact detail view
-  }
-
   onContactAction(event: DatatableActionEvent): void {
     const contact = event.row as ContactDisplay;
     
@@ -607,9 +595,5 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
       default:
         break;
     }
-  }
-
-  onContactSort(event: DatatableSortEvent): void {
-    // The datatable component handles sorting internally
   }
 }

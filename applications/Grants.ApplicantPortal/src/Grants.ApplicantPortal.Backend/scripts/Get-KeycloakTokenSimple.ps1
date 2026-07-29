@@ -146,7 +146,7 @@ function Test-BrowserAvailability {
     return $browsers
 }
 
-function Clean-UserSecretsOutput {
+function Format-UserSecretsOutput {
     param([string]$RawOutput)
     
     # Remove //BEGIN and //END markers that dotnet user-secrets sometimes adds
@@ -158,104 +158,124 @@ function Clean-UserSecretsOutput {
     return $cleanedOutput
 }
 
+function ConvertTo-KeycloakConfigFromSecretsJson {
+    param([string]$RawOutput)
+
+    try {
+        $cleanedOutput = Format-UserSecretsOutput $RawOutput
+        Write-Info "Cleaned secrets output, attempting to parse JSON..."
+
+        $secrets = $cleanedOutput | ConvertFrom-Json
+
+        # Build configuration from flat structure (dotnet user-secrets uses flat keys)
+        if (-not ($secrets.'Keycloak:Resource' -and $secrets.'Keycloak:Credentials:Secret' -and
+                   $secrets.'Keycloak:AuthServerUrl' -and $secrets.'Keycloak:Realm')) {
+            Write-Warning "Keycloak configuration found but incomplete"
+            $availableKeys = $secrets.PSObject.Properties.Name | Where-Object { $_ -like "Keycloak:*" }
+            Write-Info "Available Keycloak keys: $($availableKeys -join ', ')"
+            return $null
+        }
+
+        $config = @{
+            ClientId = $secrets.'Keycloak:Resource'
+            ClientSecret = $secrets.'Keycloak:Credentials:Secret'
+            KeycloakUrl = $secrets.'Keycloak:AuthServerUrl'
+            Realm = $secrets.'Keycloak:Realm'
+        }
+
+        Write-Success "Found existing configuration!"
+        Write-Host "  Client ID (Resource): $($config.ClientId)" -ForegroundColor White
+        Write-Host "  Keycloak URL: $($config.KeycloakUrl)" -ForegroundColor White
+        Write-Host "  Realm: $($config.Realm)" -ForegroundColor White
+        Write-Host "  Client Secret: [LOADED]" -ForegroundColor White
+        Write-Host ""
+
+        return $config
+    }
+    catch {
+        Write-Warning "Could not parse user secrets output as JSON: $($_.Exception.Message)"
+        Write-Info "Raw output was: $RawOutput"
+        return $null
+    }
+}
+
+function Get-KeycloakConfigFromUserSecrets {
+    param([string]$WebProjectPath)
+
+    try {
+        Write-Info "Checking for existing user secrets..."
+        Push-Location $WebProjectPath
+
+        # First check if user secrets are initialized
+        Write-Info "Running: dotnet user-secrets list --json"
+        $secretsOutput = dotnet user-secrets list --json 2>&1
+
+        # Check for common error messages
+        if ($secretsOutput -like "*No secrets configured*") {
+            Write-Info "No user secrets configured yet"
+            return $null
+        }
+
+        if ($secretsOutput -like "*error*" -and $secretsOutput -notlike "*//BEGIN*") {
+            Write-Warning "User secrets command failed: $secretsOutput"
+            Write-Info "This might be due to uninitialized secrets or path issues"
+            return $null
+        }
+
+        return ConvertTo-KeycloakConfigFromSecretsJson -RawOutput $secretsOutput
+    } catch {
+        Write-Warning "Could not load from user secrets: $($_.Exception.Message)"
+        return $null
+    } finally {
+        Pop-Location
+    }
+}
+
+function Read-KeycloakConfigInteractively {
+    Write-Host "Please provide your Keycloak configuration:" -ForegroundColor Cyan
+    Write-Host ""
+
+    $config = @{}
+
+    do {
+        $config.ClientId = Read-Host "Client ID (also called Resource in Keycloak)"
+    } while ([string]::IsNullOrWhiteSpace($config.ClientId))
+
+    do {
+        $clientSecretSecure = Read-Host "Client Secret" -AsSecureString
+        $config.ClientSecret = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($clientSecretSecure))
+    } while ([string]::IsNullOrWhiteSpace($config.ClientSecret))
+
+    do {
+        $config.KeycloakUrl = Read-Host "Keycloak URL (e.g., https://dev.loginproxy.gov.bc.ca/auth)"
+    } while ([string]::IsNullOrWhiteSpace($config.KeycloakUrl))
+
+    do {
+        $config.Realm = Read-Host "Realm (e.g., standard)"
+    } while ([string]::IsNullOrWhiteSpace($config.Realm))
+
+    return $config
+}
+
 function Get-ConfigurationInteractively {
     Write-Host ""
     Write-Host "?? Keycloak Configuration" -ForegroundColor Yellow
     Write-Host "=========================" -ForegroundColor Yellow
     Write-Host ""
-    
-    # Find the Web project path
+
     $webProjectPath = Find-WebProjectPath
-    $config = @{}
-    
+
     if ($webProjectPath) {
-        try {
-            Write-Info "Checking for existing user secrets..."
-            Push-Location $webProjectPath
-            
-            # First check if user secrets are initialized
-            Write-Info "Running: dotnet user-secrets list --json"
-            $secretsOutput = dotnet user-secrets list --json 2>&1
-            
-            # Check for common error messages
-            if ($secretsOutput -like "*No secrets configured*") {
-                Write-Info "No user secrets configured yet"
-            }
-            elseif ($secretsOutput -like "*error*" -and $secretsOutput -notlike "*//BEGIN*") {
-                Write-Warning "User secrets command failed: $secretsOutput"
-                Write-Info "This might be due to uninitialized secrets or path issues"
-            }
-            else {
-                # Clean the output and try to parse as JSON
-                try {
-                    $cleanedOutput = Clean-UserSecretsOutput $secretsOutput
-                    Write-Info "Cleaned secrets output, attempting to parse JSON..."
-                    
-                    $secrets = $cleanedOutput | ConvertFrom-Json
-                    
-                    # Build configuration from flat structure (dotnet user-secrets uses flat keys)
-                    if ($secrets.'Keycloak:Resource' -and $secrets.'Keycloak:Credentials:Secret' -and 
-                        $secrets.'Keycloak:AuthServerUrl' -and $secrets.'Keycloak:Realm') {
-                        
-                        Write-Success "Found existing configuration!"
-                        $config = @{
-                            ClientId = $secrets.'Keycloak:Resource'
-                            ClientSecret = $secrets.'Keycloak:Credentials:Secret'
-                            KeycloakUrl = $secrets.'Keycloak:AuthServerUrl'
-                            Realm = $secrets.'Keycloak:Realm'
-                        }
-                        
-                        Write-Host "  Client ID (Resource): $($config.ClientId)" -ForegroundColor White
-                        Write-Host "  Keycloak URL: $($config.KeycloakUrl)" -ForegroundColor White
-                        Write-Host "  Realm: $($config.Realm)" -ForegroundColor White
-                        Write-Host "  Client Secret: [LOADED]" -ForegroundColor White
-                        Write-Host ""
-                        
-                        return $config
-                    } else {
-                        Write-Warning "Keycloak configuration found but incomplete"
-                        $availableKeys = $secrets.PSObject.Properties.Name | Where-Object { $_ -like "Keycloak:*" }
-                        Write-Info "Available Keycloak keys: $($availableKeys -join ', ')"
-                    }
-                }
-                catch {
-                    Write-Warning "Could not parse user secrets output as JSON: $($_.Exception.Message)"
-                    Write-Info "Raw output was: $secretsOutput"
-                    Write-Info "Cleaned output was: $cleanedOutput"
-                }
-            }
-        } catch {
-            Write-Warning "Could not load from user secrets: $($_.Exception.Message)"
-        } finally {
-            Pop-Location
+        $config = Get-KeycloakConfigFromUserSecrets -WebProjectPath $webProjectPath
+        if ($config) {
+            return $config
         }
     } else {
         Write-Warning "Could not find Web project directory"
         Write-Info "Please ensure you're running from the repository root or provide configuration manually"
     }
-    
-    # Get configuration interactively
-    Write-Host "Please provide your Keycloak configuration:" -ForegroundColor Cyan
-    Write-Host ""
-    
-    do {
-        $config.ClientId = Read-Host "Client ID (also called Resource in Keycloak)"
-    } while ([string]::IsNullOrWhiteSpace($config.ClientId))
-    
-    do {
-        $clientSecretSecure = Read-Host "Client Secret" -AsSecureString
-        $config.ClientSecret = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($clientSecretSecure))
-    } while ([string]::IsNullOrWhiteSpace($config.ClientSecret))
-    
-    do {
-        $config.KeycloakUrl = Read-Host "Keycloak URL (e.g., https://dev.loginproxy.gov.bc.ca/auth)"
-    } while ([string]::IsNullOrWhiteSpace($config.KeycloakUrl))
-    
-    do {
-        $config.Realm = Read-Host "Realm (e.g., standard)"
-    } while ([string]::IsNullOrWhiteSpace($config.Realm))
-    
-    return $config
+
+    return Read-KeycloakConfigInteractively
 }
 
 function Get-ValidRedirectUris {
@@ -298,6 +318,126 @@ function Get-ValidRedirectUris {
     }
 }
 
+function Get-KeycloakAuthorizationUrl {
+    param(
+        [string]$ClientId,
+        [string]$KeycloakUrl,
+        [string]$Realm,
+        [string]$RedirectUri
+    )
+
+    $state = [System.Guid]::NewGuid().ToString()
+    return "$KeycloakUrl/realms/$Realm/protocol/openid-connect/auth?" +
+           "client_id=$ClientId&" +
+           "response_type=code&" +
+           "scope=openid profile email&" +
+           "redirect_uri=$([System.Web.HttpUtility]::UrlEncode($RedirectUri))&" +
+           "state=$state"
+}
+
+function New-BrowserDriver {
+    param([string]$BrowserName)
+
+    switch ($BrowserName) {
+        "Chrome" {
+            $chromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
+            $chromeOptions.AddArgument("--disable-web-security")
+            $chromeOptions.AddArgument("--disable-features=VizDisplayCompositor")
+            $chromeOptions.AddArgument("--window-size=1200,800")
+
+            Write-Status "Starting Chrome browser..."
+            return New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeOptions)
+        }
+        "Edge" {
+            $edgeOptions = New-Object OpenQA.Selenium.Edge.EdgeOptions
+            $edgeOptions.AddArgument("--disable-web-security")
+            $edgeOptions.AddArgument("--window-size=1200,800")
+
+            Write-Status "Starting Edge browser..."
+            return New-Object OpenQA.Selenium.Edge.EdgeDriver($edgeOptions)
+        }
+    }
+
+    return $null
+}
+
+function Wait-ForAuthorizationCode {
+    param(
+        $Driver,
+        [string]$RedirectUri,
+        [int]$TimeoutSeconds
+    )
+
+    Write-Status "Waiting for authentication..."
+
+    $startTime = Get-Date
+
+    while ((Get-Date) -lt $startTime.AddSeconds($TimeoutSeconds)) {
+        $currentUrl = $Driver.Url
+
+        # Check if we've been redirected to our callback URL
+        if ($currentUrl.StartsWith($RedirectUri)) {
+            # Extract code from URL
+            $uri = [System.Uri]$currentUrl
+            $query = [System.Web.HttpUtility]::ParseQueryString($uri.Query)
+            $authCode = $query["code"]
+
+            if ($authCode) {
+                Write-Success "Authentication completed!"
+                return $authCode
+            }
+        }
+
+        Start-Sleep -Seconds 2
+    }
+
+    return $null
+}
+
+function Resolve-BrowserAuthenticationError {
+    param(
+        $ErrorRecord,
+        [string]$ClientId,
+        [string]$ClientSecret,
+        [string]$KeycloakUrl,
+        [string]$Realm,
+        [string]$RedirectUri,
+        [int]$TimeoutSeconds
+    )
+
+    Write-Host "? Browser automation failed: $($ErrorRecord.Exception.Message)" -ForegroundColor Red
+
+    $isRedirectUriError = $ErrorRecord.Exception.Message -like "*Invalid parameter*" -or $ErrorRecord.Exception.Message -like "*redirect_uri*"
+
+    if ($isRedirectUriError) {
+        Write-Host ""
+        Write-Host "?? This appears to be a redirect URI error!" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "You need to add this redirect URI to your Keycloak client configuration:" -ForegroundColor Cyan
+        Write-Host "  Client: grants-portal-5361" -ForegroundColor White
+        Write-Host "  Redirect URI: $RedirectUri" -ForegroundColor White
+        Write-Host ""
+        Write-Host "Steps to fix:" -ForegroundColor Yellow
+        Write-Host "1. Login to Keycloak Admin Console" -ForegroundColor White
+        Write-Host "2. Go to Clients ? grants-portal-5361 ? Settings" -ForegroundColor White
+        Write-Host "3. Add '$RedirectUri' to Valid Redirect URIs" -ForegroundColor White
+        Write-Host "4. Save the configuration" -ForegroundColor White
+        Write-Host ""
+
+        # Offer to try a different redirect URI
+        $tryDifferent = Read-Host "Would you like to try a different redirect URI? (Y/n)"
+        if ($tryDifferent -eq "" -or $tryDifferent.ToLower() -eq "y") {
+            $newRedirectUri = Get-ValidRedirectUris
+            return Start-BrowserAuthentication -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $newRedirectUri -TimeoutSeconds $TimeoutSeconds
+        }
+    }
+
+    # Offer manual fallback
+    Write-Host ""
+    Write-Host "?? Falling back to manual authentication..." -ForegroundColor Yellow
+    return Get-TokenManually -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
+}
+
 function Start-BrowserAuthentication {
     param(
         [string]$ClientId,
@@ -307,11 +447,11 @@ function Start-BrowserAuthentication {
         [string]$RedirectUri,
         [int]$TimeoutSeconds
     )
-    
+
     # Check available browsers
     $browsers = Test-BrowserAvailability
     $availableBrowsers = $browsers | Where-Object { $_.Available -eq $true }
-    
+
     if ($availableBrowsers.Count -eq 0) {
         Write-Host "? No supported browsers found!" -ForegroundColor Red
         Write-Host ""
@@ -319,20 +459,20 @@ function Start-BrowserAuthentication {
         Write-Host "  - Google Chrome: https://www.google.com/chrome/" -ForegroundColor White
         Write-Host "  - Microsoft Edge: https://www.microsoft.com/edge" -ForegroundColor White
         Write-Host ""
-        
+
         # Offer manual fallback
         $useManual = Read-Host "Would you like to use manual authentication instead? (Y/n)"
         if ($useManual -eq "" -or $useManual.ToLower() -eq "y") {
             return Get-TokenManually -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
-        } else {
-            throw "No browsers available for automation"
         }
+
+        throw "No browsers available for automation"
     }
-    
+
     # Try browsers in preference order
     $browserPriority = @("Chrome", "Edge")
     $selectedBrowser = $null
-    
+
     foreach ($browserName in $browserPriority) {
         $browser = $availableBrowsers | Where-Object { $_.Name -eq $browserName }
         if ($browser) {
@@ -340,131 +480,51 @@ function Start-BrowserAuthentication {
             break
         }
     }
-    
+
     if (-not $selectedBrowser) {
         $selectedBrowser = $availableBrowsers[0]
     }
-    
+
     Write-Success "Using $($selectedBrowser.Name) browser for authentication"
-    
-    # Setup browser-specific options
+
     $driver = $null
     try {
-        switch ($selectedBrowser.Name) {
-            "Chrome" {
-                $chromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
-                $chromeOptions.AddArgument("--disable-web-security")
-                $chromeOptions.AddArgument("--disable-features=VizDisplayCompositor")
-                $chromeOptions.AddArgument("--window-size=1200,800")
-                
-                Write-Status "Starting Chrome browser..."
-                $driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeOptions)
-            }
-            "Edge" {
-                $edgeOptions = New-Object OpenQA.Selenium.Edge.EdgeOptions
-                $edgeOptions.AddArgument("--disable-web-security")
-                $edgeOptions.AddArgument("--window-size=1200,800")
-                
-                Write-Status "Starting Edge browser..."
-                $driver = New-Object OpenQA.Selenium.Edge.EdgeDriver($edgeOptions)
-            }
-        }
-        
+        $driver = New-BrowserDriver -BrowserName $selectedBrowser.Name
         $driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
-        
-        # Navigate to Keycloak authorization URL
-        $state = [System.Guid]::NewGuid().ToString()
-        $authUrl = "$KeycloakUrl/realms/$Realm/protocol/openid-connect/auth?" +
-                   "client_id=$ClientId&" +
-                   "response_type=code&" +
-                   "scope=openid profile email&" +
-                   "redirect_uri=$([System.Web.HttpUtility]::UrlEncode($RedirectUri))&" +
-                   "state=$state"
-        
+
+        $authUrl = Get-KeycloakAuthorizationUrl -ClientId $ClientId -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
+
         Write-Status "Navigating to Keycloak..."
         Write-Info "Using redirect URI: $RedirectUri"
         $driver.Navigate().GoToUrl($authUrl)
-        
+
         Write-Host ""
         Write-Host "?? Browser is open!" -ForegroundColor Green
         Write-Host "   ?? Complete your authentication in the browser" -ForegroundColor Yellow
         Write-Host "   ?? Keycloak will prompt for identity provider and credentials" -ForegroundColor Yellow
         Write-Host "   ??  Script will automatically continue when done" -ForegroundColor Yellow
         Write-Host ""
-        
-        # Wait for redirect to callback URL
-        Write-Status "Waiting for authentication..."
-        
-        $authCode = $null
-        $startTime = Get-Date
-        
-        while ((Get-Date) -lt $startTime.AddSeconds($TimeoutSeconds)) {
-            $currentUrl = $driver.Url
-            
-            # Check if we've been redirected to our callback URL
-            if ($currentUrl.StartsWith($RedirectUri)) {
-                # Extract code from URL
-                $uri = [System.Uri]$currentUrl
-                $query = [System.Web.HttpUtility]::ParseQueryString($uri.Query)
-                $authCode = $query["code"]
-                
-                if ($authCode) {
-                    Write-Success "Authentication completed!"
-                    break
-                }
-            }
-            
-            Start-Sleep -Seconds 2
-        }
-        
+
+        $authCode = Wait-ForAuthorizationCode -Driver $driver -RedirectUri $RedirectUri -TimeoutSeconds $TimeoutSeconds
+
         if (-not $authCode) {
             throw "Authentication did not complete within $TimeoutSeconds seconds"
         }
-        
+
         Write-Status "Closing browser..."
         $driver.Quit()
         $driver = $null
-        
+
         return $authCode
-        
+
     } catch {
-        Write-Host "? Browser automation failed: $($_.Exception.Message)" -ForegroundColor Red
-        
-        # Check for redirect URI error specifically
-        if ($_.Exception.Message -like "*Invalid parameter*" -or $_.Exception.Message -like "*redirect_uri*") {
-            Write-Host ""
-            Write-Host "?? This appears to be a redirect URI error!" -ForegroundColor Yellow
-            Write-Host ""
-            Write-Host "You need to add this redirect URI to your Keycloak client configuration:" -ForegroundColor Cyan
-            Write-Host "  Client: grants-portal-5361" -ForegroundColor White
-            Write-Host "  Redirect URI: $RedirectUri" -ForegroundColor White
-            Write-Host ""
-            Write-Host "Steps to fix:" -ForegroundColor Yellow
-            Write-Host "1. Login to Keycloak Admin Console" -ForegroundColor White
-            Write-Host "2. Go to Clients ? grants-portal-5361 ? Settings" -ForegroundColor White
-            Write-Host "3. Add '$RedirectUri' to Valid Redirect URIs" -ForegroundColor White
-            Write-Host "4. Save the configuration" -ForegroundColor White
-            Write-Host ""
-            
-            # Offer to try a different redirect URI
-            $tryDifferent = Read-Host "Would you like to try a different redirect URI? (Y/n)"
-            if ($tryDifferent -eq "" -or $tryDifferent.ToLower() -eq "y") {
-                $newRedirectUri = Get-ValidRedirectUris
-                return Start-BrowserAuthentication -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $newRedirectUri -TimeoutSeconds $TimeoutSeconds
-            }
-        }
-        
-        # Offer manual fallback
-        Write-Host ""
-        Write-Host "?? Falling back to manual authentication..." -ForegroundColor Yellow
-        return Get-TokenManually -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
-        
+        return Resolve-BrowserAuthenticationError -ErrorRecord $_ -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri -TimeoutSeconds $TimeoutSeconds
     } finally {
         if ($driver) {
             try {
                 $driver.Quit()
             } catch {
-                # Browser may already be closed
+                Write-Info "Browser was already closed or failed to quit cleanly: $($_.Exception.Message)"
             }
         }
     }
@@ -485,14 +545,8 @@ function Get-TokenManually {
     Write-Host ""
     
     # Generate authorization URL
-    $state = [System.Guid]::NewGuid().ToString()
-    $authUrl = "$KeycloakUrl/realms/$Realm/protocol/openid-connect/auth?" +
-               "client_id=$ClientId&" +
-               "response_type=code&" +
-               "scope=openid profile email&" +
-               "redirect_uri=$([System.Web.HttpUtility]::UrlEncode($RedirectUri))&" +
-               "state=$state"
-    
+    $authUrl = Get-KeycloakAuthorizationUrl -ClientId $ClientId -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
+
     Write-Host "1. Open this URL in your browser:" -ForegroundColor Cyan
     Write-Host $authUrl -ForegroundColor White
     Write-Host ""

@@ -51,14 +51,14 @@
         <h6 class="mb-2">PRIMARY ADDRESS</h6>
         <div class="row">
           <div class="col-md-10 col-sm-12">
-            <label class="form-label">Full Address</label>
-            <p class="address-value">
+            <label for="primary-full-address" class="form-label">Full Address</label>
+            <p id="primary-full-address" class="address-value">
               {{ getPrimaryFullAddress() }}, {{ primaryAddress.city }}, {{ primaryAddress.province }}, {{ primaryAddress.postalCode }}
             </p>
           </div>
           <div class="col-md-2 col-sm-12">
-            <label class="form-label">Type</label>
-            <p class="address-value">
+            <label for="primary-address-type" class="form-label">Type</label>
+            <p id="primary-address-type" class="address-value">
                 {{ primaryAddress.addressType }}
             </p>
           </div>
@@ -76,7 +76,6 @@
         [config]="addressesTableConfig"
         [data]="getAddressesForTable()"
         [loading]="isLoading"
-        (rowClick)="onAddressRowClick($event)"
         (actionClick)="onAddressAction($event)"
         (sort)="onAddressSort($event)"
       ></app-datatable>
@@ -85,8 +84,8 @@
 </div>
 
 <!-- Add/Edit Address Modal -->
-<div id="address-modal" data-cy="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="add-address-modal-label" [attr.aria-hidden]="!showAddAddressModal">
-  <div class="modal-dialog modal-lg" role="document">
+<dialog id="address-modal" data-cy="address-modal" class="modal fade ap-edit-modal" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="add-address-modal-label" [attr.aria-hidden]="!showAddAddressModal">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="add-address-modal-label" data-cy="add-address-modal-label">
@@ -300,7 +299,7 @@
           (click)="onSaveNewAddress()"
           [disabled]="isSavingAddress">
           @if (isSavingAddress) {
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <output class="spinner-border spinner-border-sm me-2" aria-hidden="true"></output>
             {{ isEditMode ? 'Updating...' : 'Creating...' }}
           } @else {
             {{ isEditMode ? 'Update' : 'Create' }}
@@ -309,14 +308,14 @@
       </div>
     </div>
   </div>
-</div>
+</dialog>
 
 <!-- Modal Backdrop -->
 <div class="modal-backdrop fade" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" *ngIf="showAddAddressModal"></div>
 
 <!-- Delete Confirmation Modal -->
-<div id="address-delete-modal" data-cy="address-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
-  <div class="modal-dialog modal-dialog-centered" role="document">
+<dialog id="address-delete-modal" data-cy="address-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content delete-modal">
       <div class="modal-header delete-modal-header">
         <h5 class="modal-title delete-modal-title" id="delete-address-modal-label" data-cy="delete-address-modal-label">
@@ -371,7 +370,7 @@
           (click)="onConfirmDeleteAddress()"
           [disabled]="isDeletingAddress">
           @if (isDeletingAddress) {
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <output class="spinner-border spinner-border-sm me-2" aria-hidden="true"></output>
             Removing...
           } @else {
             Remove Address
@@ -380,7 +379,7 @@
       </div>
     </div>
   </div>
-</div>
+</dialog>
 
 <!-- Delete Modal Backdrop -->
 <div class="modal-backdrop fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" *ngIf="showDeleteConfirmModal"></div>

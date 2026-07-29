@@ -1,16 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Router } from '@angular/router';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ErrorHandlerService {
   constructor(
-    private router: Router,
-    private oidcSecurityService: OidcSecurityService
+    private readonly router: Router
   ) {}
 
   /**

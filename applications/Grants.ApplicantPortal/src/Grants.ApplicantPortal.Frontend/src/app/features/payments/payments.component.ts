@@ -17,6 +17,7 @@ import { WorkspaceState } from '../../shared/models/workspace.interface';
   standalone: true,
   imports: [CommonModule, DatatableComponent],
   templateUrl: './payments.component.html',
+  styleUrls: ['./payments.component.scss'],
 })
 export class PaymentsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();

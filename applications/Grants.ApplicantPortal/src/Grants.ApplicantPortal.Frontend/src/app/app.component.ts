@@ -9,7 +9,6 @@ import { ToastComponent } from './shared/components/toast/toast.component';
   standalone: true,
   imports: [RouterOutlet, ToastComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   title = 'Grants Applicant Portal';

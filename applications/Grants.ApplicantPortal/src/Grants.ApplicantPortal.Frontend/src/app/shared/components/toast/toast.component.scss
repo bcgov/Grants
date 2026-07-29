@@ -35,7 +35,7 @@
 .toast-message {
   font-size: var(--bc-font-size-14);
   line-height: 1.4;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .toast-close {

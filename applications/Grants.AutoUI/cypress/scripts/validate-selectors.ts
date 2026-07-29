@@ -19,8 +19,8 @@
 //   2 — configuration error (frontend dir not found)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import * as fs   from 'fs';
-import * as path from 'path';
+import * as fs   from 'node:fs';
+import * as path from 'node:path';
 import { AppSelectors } from '../selectors/registry';
 
 // Path to Angular HTML templates, relative to the package.json directory
@@ -113,20 +113,9 @@ interface SelectorReport {
   };
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────
+// ── Build the diff report from extracted HTML + registry values ───────────
 
-function main(): void {
-  if (!fs.existsSync(FRONTEND_APP_DIR)) {
-    process.stderr.write(
-      `\nERROR: Angular app directory not found:\n  ${FRONTEND_APP_DIR}\n\n` +
-      `Run this script from the Grants.AutoUI package root.\n\n`,
-    );
-    process.exit(2);
-  }
-
-  const htmlMatches   = extractFromHtml(FRONTEND_APP_DIR);
-  const registry      = extractFromRegistry(AppSelectors);
-
+function buildReport(htmlMatches: HtmlMatch[], registry: RegistryExtract): SelectorReport {
   // Deduplicated set of values found in HTML
   const htmlValues = new Set(htmlMatches.map(m => m.value));
 
@@ -154,7 +143,7 @@ function main(): void {
     }
   }
 
-  const report: SelectorReport = {
+  return {
     matched,
     onlyInApp,
     onlyInRegistry,
@@ -165,49 +154,70 @@ function main(): void {
       drift:   onlyInApp.length + onlyInRegistry.length,
     },
   };
+}
 
-  // ── Structured JSON output (consumed by /sync-selectors skill) ────────────
-  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+// ── Human-readable stderr summary ──────────────────────────────────────────
 
-  // ── Human-readable stderr summary ────────────────────────────────────────
+function printSummary(report: SelectorReport): void {
   if (report.summary.drift === 0) {
     process.stderr.write(
-      `\n✓ All ${matched.length} static data-cy selectors are in sync.\n` +
-      `  Dynamic selectors (factory functions, not validated): ${registry.dynamicPaths.length}\n\n`,
+      `\n✓ All ${report.matched.length} static data-cy selectors are in sync.\n` +
+      `  Dynamic selectors (factory functions, not validated): ${report.dynamicSelectors.length}\n\n`,
     );
-    process.exit(0);
+    return;
   }
 
   process.stderr.write('\n✗ Selector drift detected:\n\n');
 
-  if (onlyInApp.length > 0) {
-    process.stderr.write(`  In app but NOT in registry (${onlyInApp.length}) — add these:\n`);
-    for (const { value, file } of onlyInApp) {
+  if (report.onlyInApp.length > 0) {
+    process.stderr.write(`  In app but NOT in registry (${report.onlyInApp.length}) — add these:\n`);
+    for (const { value, file } of report.onlyInApp) {
       process.stderr.write(`    + "${value}"  (${file})\n`);
     }
     process.stderr.write('\n');
   }
 
-  if (onlyInRegistry.length > 0) {
-    process.stderr.write(`  In registry but NOT in app (${onlyInRegistry.length}) — removed or renamed:\n`);
-    for (const value of onlyInRegistry) {
+  if (report.onlyInRegistry.length > 0) {
+    process.stderr.write(`  In registry but NOT in app (${report.onlyInRegistry.length}) — removed or renamed:\n`);
+    for (const value of report.onlyInRegistry) {
       process.stderr.write(`    - "${value}"\n`);
     }
     process.stderr.write('\n');
   }
 
-  if (registry.dynamicPaths.length > 0) {
+  if (report.dynamicSelectors.length > 0) {
     process.stderr.write(
-      `  Dynamic selectors skipped (${registry.dynamicPaths.length}): ` +
-      registry.dynamicPaths.join(', ') + '\n\n',
+      `  Dynamic selectors skipped (${report.dynamicSelectors.length}): ` +
+      report.dynamicSelectors.join(', ') + '\n\n',
     );
   }
 
   process.stderr.write(
     `  Run the /sync-selectors Claude skill to auto-fix the registry.\n\n`,
   );
+}
 
-  process.exit(1);
+// ── Main ──────────────────────────────────────────────────────────────────
+
+function main(): void {
+  if (!fs.existsSync(FRONTEND_APP_DIR)) {
+    process.stderr.write(
+      `\nERROR: Angular app directory not found:\n  ${FRONTEND_APP_DIR}\n\n` +
+      `Run this script from the Grants.AutoUI package root.\n\n`,
+    );
+    process.exit(2);
+  }
+
+  const htmlMatches = extractFromHtml(FRONTEND_APP_DIR);
+  const registry     = extractFromRegistry(AppSelectors);
+  const report       = buildReport(htmlMatches, registry);
+
+  // ── Structured JSON output (consumed by /sync-selectors skill) ────────────
+  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+
+  printSummary(report);
+
+  process.exit(report.summary.drift === 0 ? 0 : 1);
 }
 
 main();

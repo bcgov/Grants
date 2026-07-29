@@ -1,0 +1,11 @@
+// Payment status badges. The generic badge shape lives in
+// datatable.component.scss; this maps this domain's status values to the
+// shared --bc-badge-* tokens (styles.scss). ::ng-deep is required because
+// <app-datatable> renders the badge markup in its own view — plain :host
+// styles can't reach into a child component's DOM.
+:host ::ng-deep {
+  .status-badge {
+    &.status-grant-approved { background-color: var(--bc-bg-success); } // 'Fully Paid'
+    &.status-inactive { background-color: var(--bc-badge-gray); } // fallbackClass
+  }
+}

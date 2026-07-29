@@ -55,10 +55,7 @@ export class TableSortService {
     const currentState = this.getSortState(tableId);
     let newDirection: SortDirection;
 
-    if (!currentState || currentState.column !== column) {
-      // First click on this column or different column
-      newDirection = 'asc';
-    } else {
+    if (currentState?.column === column) {
       // Cycle through states for the same column
       switch (currentState.direction) {
         case 'asc':
@@ -72,6 +69,9 @@ export class TableSortService {
           newDirection = 'asc';
           break;
       }
+    } else {
+      // First click on this column or different column
+      newDirection = 'asc';
     }
 
     const newState: SortState = { column, direction: newDirection };
@@ -108,7 +108,7 @@ export class TableSortService {
    * Gets the appropriate sort icon class for a column
    */
   getSortIcon(column: string, sortState: SortState | null): string {
-    if (!sortState || sortState.column !== column) {
+    if (sortState?.column !== column) {
       return 'fa-sort'; // Default unsorted icon
     }
 
@@ -134,7 +134,7 @@ export class TableSortService {
    * Gets the sort direction text for accessibility
    */
   getSortAriaLabel(column: string, sortState: SortState | null): string {
-    if (!sortState || sortState.column !== column) {
+    if (sortState?.column !== column) {
       return `Sort ${column} ascending`;
     }
 
@@ -172,7 +172,7 @@ export class TableSortService {
 
     // Handle different data types
     if (typeof a === 'string' && typeof b === 'string') {
-      return a.toLowerCase().localeCompare(b.toLowerCase());
+      return this.compareStrings(a, b);
     }
 
     if (typeof a === 'number' && typeof b === 'number') {
@@ -180,13 +180,28 @@ export class TableSortService {
     }
 
     if (typeof a === 'boolean' && typeof b === 'boolean') {
-      return a === b ? 0 : a ? 1 : -1;
+      return this.compareBooleans(a, b);
     }
 
-    // Handle dates
+    // Try date comparison, then default to string comparison
+    return this.compareDatesOrStrings(a, b);
+  }
+
+  private compareStrings(a: string, b: string): number {
+    return a.toLowerCase().localeCompare(b.toLowerCase());
+  }
+
+  private compareBooleans(a: boolean, b: boolean): number {
+    if (a === b) {
+      return 0;
+    }
+    return a ? 1 : -1;
+  }
+
+  private compareDatesOrStrings(a: any, b: any): number {
     const aDate = new Date(a);
     const bDate = new Date(b);
-    if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+    if (!Number.isNaN(aDate.getTime()) && !Number.isNaN(bDate.getTime())) {
       return aDate.getTime() - bDate.getTime();
     }
 
