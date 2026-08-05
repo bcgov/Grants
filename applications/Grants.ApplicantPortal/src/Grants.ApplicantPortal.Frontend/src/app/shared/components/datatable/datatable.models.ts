@@ -2,7 +2,7 @@ export interface DatatableColumn {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'text' | 'date' | 'dateUtc' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean';
+  type?: 'text' | 'date' | 'dateUtc' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean' | 'link';
   cssClass?: string;
   width?: string;
   booleanFalseBlank?: boolean;
@@ -37,7 +37,7 @@ export interface DatatableConfig {
   disabledActionsField?: string; // Field name to check if actions should render as disabled (shows X icon)
   disabledActionsTooltip?: string; // Tooltip text for disabled action rows
   disabledActionsTooltipField?: string; // Field name on row data for per-row disabled tooltip (overrides disabledActionsTooltip)
-  linkConfig?: DatatableLinkConfig; // When set with chevron, renders an <a> tag instead of a button
+  linkConfig?: DatatableLinkConfig; // When set with chevron or a 'link' column, renders an <a> tag instead of a button/plain text
   badgeConfig?: DatatableBadgeConfig;
   rowClickable?: boolean;
   responsive?: boolean;
