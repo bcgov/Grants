@@ -5,7 +5,7 @@
 // styles can't reach into a child component's DOM.
 :host ::ng-deep {
   .status-badge {
-    &.status-grant-approved { background-color: var(--bc-bg-success); } // 'Fully Paid'
+    &.status-paid { background-color: var(--bc-bg-success); } // 'Fully Paid' or 'Paid'
     &.status-inactive { background-color: var(--bc-badge-gray); } // fallbackClass
   }
 }

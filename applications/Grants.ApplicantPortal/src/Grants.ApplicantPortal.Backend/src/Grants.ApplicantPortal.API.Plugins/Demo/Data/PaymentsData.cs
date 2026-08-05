@@ -29,7 +29,7 @@ public static class PaymentsData
           referenceNo = "DEMO-2025-0003",
           amount = 152.34m,
           paymentDate = (string?)"2025-03-24 18:11:35.328",
-          paymentStatus = "L1Pending"
+          paymentStatus = "Fully Paid"
         },
         new
         {
@@ -38,7 +38,7 @@ public static class PaymentsData
           referenceNo = "DEMO-2025-0002",
           amount = 1111.11m,
           paymentDate = (string?)"2025-03-24 18:11:35.327",
-          paymentStatus = "L2Pending"
+          paymentStatus = "Paid"
         }
       }
     };
