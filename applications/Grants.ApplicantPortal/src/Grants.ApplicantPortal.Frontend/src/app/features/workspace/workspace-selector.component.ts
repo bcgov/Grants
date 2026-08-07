@@ -32,7 +32,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
   showProviderSelection = false;
   showNoApplicationsMessage = false;
   private returnUrl: string = '/app/applicant-info';
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly workspaceService: WorkspaceService,
@@ -132,7 +132,7 @@ export class WorkspaceSelectorComponent implements OnInit, OnDestroy {
       // Auto-select if only one workspace with one provider
       if (state.availableWorkspaces.length === 1) {
         const workspace = state.availableWorkspaces[0];
-        if (workspace.providers && workspace.providers.length === 1) {
+        if (workspace.providers?.length === 1) {
           this.autoSelectSingleWorkspaceWithProvider(workspace, workspace.providers[0]);
         } else {
           this.autoSelectSingleWorkspace(workspace);

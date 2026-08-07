@@ -12,7 +12,6 @@ import { DatatableComponent } from '../../../shared/components/datatable/datatab
 import { 
   DatatableConfig,
   DatatableActionEvent,
-  DatatableRowClickEvent,
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
 import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
@@ -422,11 +421,6 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       && this.newAddress.city && this.newAddress.city.trim().length > 0
       && this.newAddress.province && this.newAddress.province.trim().length > 0
       && this.newAddress.postalCode && this.newAddress.postalCode.trim().length > 0);
-  }
-
-  // Datatable event handlers
-  onAddressRowClick(event: DatatableRowClickEvent): void {
-    // TODO: Navigate to address detail view
   }
 
   onAddressAction(event: DatatableActionEvent): void {

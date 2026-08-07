@@ -21,7 +21,7 @@ export class WorkspaceService {
     tenantEmail: null
   };
 
-  private workspaceState$ = new BehaviorSubject<WorkspaceState>({
+  private readonly workspaceState$ = new BehaviorSubject<WorkspaceState>({
     selectedWorkspace: null,
     selectedProvider: null,
     selectedProviderName: null,
@@ -31,8 +31,8 @@ export class WorkspaceService {
     ...this.defaultOrgState
   });
 
-  private changingWorkspace$ = new BehaviorSubject<boolean>(false);
-  private workspaceProviderMemory = new Map<string, string>(); // workspace.pluginId -> last selected provider
+  private readonly changingWorkspace$ = new BehaviorSubject<boolean>(false);
+  private readonly workspaceProviderMemory = new Map<string, string>(); // workspace.pluginId -> last selected provider
 
   constructor(
     private readonly http: HttpClient,

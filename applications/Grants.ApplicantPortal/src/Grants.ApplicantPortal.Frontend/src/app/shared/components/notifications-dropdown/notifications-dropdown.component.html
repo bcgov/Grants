@@ -6,9 +6,9 @@
     [class.has-notifications]="unreadCount > 0"
     (click)="toggleDropdown()"
     [attr.aria-expanded]="isOpen"
-    aria-label="Notifications"
   >
-    <i class="fas fa-bell fa-lg"></i>
+    <i class="fas fa-bell fa-lg" aria-hidden="true"></i>
+    <span class="visually-hidden">Notifications</span>
     @if (unreadCount > 0) {
       <span class="notification-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
     }
@@ -16,7 +16,7 @@
 
   <!-- Dropdown Panel -->
   @if (isOpen) {
-    <div class="notifications-panel" role="dialog" aria-label="Notifications">
+    <dialog class="notifications-panel" aria-label="Notifications" open>
       <!-- Header -->
       <div class="notifications-header">
         <span class="notifications-title">Notifications</span>
@@ -67,6 +67,6 @@
           }
         }
       </div>
-    </div>
+    </dialog>
   }
 </div>

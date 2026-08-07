@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private readonly refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   /**
    * Tracks the last time we redirected to /login due to a 401.
@@ -24,8 +24,8 @@ export class AuthInterceptor implements HttpInterceptor {
   private static readonly AUTH_FAILURE_COOLDOWN_MS = 10_000; // 10 seconds
 
   constructor(
-    private oidcSecurityService: OidcSecurityService,
-    private router: Router
+    private readonly oidcSecurityService: OidcSecurityService,
+    private readonly router: Router
   ) {}
 
   intercept(
@@ -90,43 +90,7 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!this.isRefreshing) {
-      this.isRefreshing = true;
-      this.refreshTokenSubject.next(null);
-
-      return this.oidcSecurityService.forceRefreshSession().pipe(
-        switchMap((result) => {
-          this.isRefreshing = false;
-          
-          if (result.isAuthenticated && result.accessToken) {
-            this.refreshTokenSubject.next(result.accessToken);
-            // Retry the original request with new token
-            const authRequest = this.addTokenHeader(request, result.accessToken);
-            return next.handle(authRequest).pipe(
-              catchError((retryError: HttpErrorResponse) => {
-                // If the retried request ALSO returns 401, do NOT attempt another
-                // refresh cycle — the problem is server-side, not token-related.
-                if (retryError.status === 401) {
-                  console.error('Retried request still returned 401 after token refresh — API authorization issue, not a token issue.');
-                  this.safeRedirectToLogin();
-                }
-                return throwError(() => retryError);
-              })
-            );
-          } else {
-            // Refresh failed, redirect to login
-            this.safeRedirectToLogin();
-            return throwError(() => new Error('Token refresh failed'));
-          }
-        }),
-        catchError((error) => {
-          this.isRefreshing = false;
-          console.error('Force refresh session error:', error);
-          this.safeRedirectToLogin();
-          return throwError(() => error);
-        })
-      );
-    } else {
+    if (this.isRefreshing) {
       // If already refreshing, wait for a non-null token from the refresh subject
       return this.refreshTokenSubject.pipe(
         // Skip the initial null value — wait for the refresh to complete
@@ -138,6 +102,42 @@ export class AuthInterceptor implements HttpInterceptor {
         })
       );
     }
+
+    this.isRefreshing = true;
+    this.refreshTokenSubject.next(null);
+
+    return this.oidcSecurityService.forceRefreshSession().pipe(
+      switchMap((result) => {
+        this.isRefreshing = false;
+
+        if (result.isAuthenticated && result.accessToken) {
+          this.refreshTokenSubject.next(result.accessToken);
+          // Retry the original request with new token
+          const authRequest = this.addTokenHeader(request, result.accessToken);
+          return next.handle(authRequest).pipe(
+            catchError((retryError: HttpErrorResponse) => {
+              // If the retried request ALSO returns 401, do NOT attempt another
+              // refresh cycle — the problem is server-side, not token-related.
+              if (retryError.status === 401) {
+                console.error('Retried request still returned 401 after token refresh — API authorization issue, not a token issue.');
+                this.safeRedirectToLogin();
+              }
+              return throwError(() => retryError);
+            })
+          );
+        } else {
+          // Refresh failed, redirect to login
+          this.safeRedirectToLogin();
+          return throwError(() => new Error('Token refresh failed'));
+        }
+      }),
+      catchError((error) => {
+        this.isRefreshing = false;
+        console.error('Force refresh session error:', error);
+        this.safeRedirectToLogin();
+        return throwError(() => error);
+      })
+    );
   }
 
   private shouldSkipToken(url: string): boolean {

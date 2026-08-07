@@ -1,13 +1,26 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const { resolve } = require('path');
+const { resolve, relative, sep } = require('node:path');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs');
+const fs = require('node:fs');
 
 const rateLimitMax = process.env.RATE_LIMIT_MAX || 1000;
 const rateLimitWindow = process.env.RATE_LIMIT_WINDOW_MS || (10 * 60 * 1000); // 10 mins
 
 const app = express();
+
+// Strip CR/LF and other control characters from user-controlled values before
+// writing them to logs, to prevent log injection/forging (CWE-117). Filters by
+// code point instead of a control-character regex class so static analyzers
+// don't flag embedded control characters in the pattern itself.
+function sanitizeForLog(value) {
+  let sanitized = '';
+  for (const char of String(value)) {
+    const codePoint = char.codePointAt(0);
+    sanitized += (codePoint <= 0x1F || codePoint === 0x7F) ? ' ' : char;
+  }
+  return sanitized;
+}
 
 // Remove server identification headers
 app.disable('x-powered-by');
@@ -30,12 +43,13 @@ app.set('trust proxy', 1);
 
 // Global request logging middleware
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] ${sanitizeForLog(req.method)} ${sanitizeForLog(req.url)}`);
   next();
 });
 
-// Rate limiter for catch-all route serving index.html
-const catchAllLimiter = rateLimit({
+// Rate limiter for routes that hit the filesystem per request (JS bundle
+// substitution and the SPA catch-all serving index.html)
+const staticFileLimiter = rateLimit({
   windowMs: rateLimitWindow,
   max: rateLimitMax,
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
@@ -102,30 +116,32 @@ function substituteEnvironmentVariables(content) {
     const value = envVars[key];
     
     // Handle regular ${VARIABLE} pattern
-    const placeholder = `\${${key}}`;
-    const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const placeholder = '${' + key + '}';
+    const escapedPlaceholder = placeholder.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regularMatches = content.match(new RegExp(escapedPlaceholder, 'g'));
     if (regularMatches) {
       console.log(`Found ${regularMatches.length} regular placeholder(s) for ${key}: ${placeholder}`);
-      result = result.replace(new RegExp(escapedPlaceholder, 'g'), value);
+      result = result.replaceAll(new RegExp(escapedPlaceholder, 'g'), value);
       substitutionsMade = true;
     }
-    
+
     // Handle URL-encoded ${VARIABLE} pattern (%7B = {, %7D = })
     const urlEncodedPlaceholder = `$%7B${key}%7D`;
-    const urlMatches = content.match(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+    const escapedUrlEncodedPlaceholder = urlEncodedPlaceholder.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const urlMatches = content.match(new RegExp(escapedUrlEncodedPlaceholder, 'g'));
     if (urlMatches) {
       console.log(`Found ${urlMatches.length} URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholder}`);
-      result = result.replace(new RegExp(urlEncodedPlaceholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+      result = result.replaceAll(new RegExp(escapedUrlEncodedPlaceholder, 'g'), value);
       substitutionsMade = true;
     }
-    
+
     // Handle mixed case URL encoding
     const urlEncodedPlaceholderLower = `$%7b${key}%7d`;
-    const lowerMatches = content.match(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+    const escapedUrlEncodedPlaceholderLower = urlEncodedPlaceholderLower.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const lowerMatches = content.match(new RegExp(escapedUrlEncodedPlaceholderLower, 'g'));
     if (lowerMatches) {
       console.log(`Found ${lowerMatches.length} lowercase URL-encoded placeholder(s) for ${key}: ${urlEncodedPlaceholderLower}`);
-      result = result.replace(new RegExp(urlEncodedPlaceholderLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+      result = result.replaceAll(new RegExp(escapedUrlEncodedPlaceholderLower, 'g'), value);
       substitutionsMade = true;
     }
   });
@@ -141,42 +157,63 @@ function substituteEnvironmentVariables(content) {
 const staticPath = resolve(__dirname, 'dist/frontend/browser');
 console.log(`Serving static files from: ${staticPath}`);
 
+// Build an allow-list of the actual .js files under staticPath once at startup,
+// mapping each request-style path (e.g. "/main.js") to its real absolute path.
+// Requests are matched against this known-good map instead of resolving
+// user-controlled request paths against the filesystem, so no fs call is ever
+// made with a path derived from user input (CWE-22).
+function buildJsFileAllowList(dir, base = dir) {
+  const allowList = new Map();
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = resolve(dir, entry.name);
+    if (entry.isDirectory()) {
+      for (const [key, value] of buildJsFileAllowList(fullPath, base)) {
+        allowList.set(key, value);
+      }
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      const requestPath = '/' + relative(base, fullPath).split(sep).join('/');
+      allowList.set(requestPath, fullPath);
+    }
+  }
+  return allowList;
+}
+
+const jsFileAllowList = buildJsFileAllowList(staticPath);
+
 // Custom middleware for JavaScript files that need environment variable substitution
 // This MUST come BEFORE the static file middleware
-app.get('*.js', (req, res, next) => {
-  const filePath = resolve(staticPath, req.path.substring(1));
-  
-  console.log(`JavaScript request: ${req.path}`);
-  console.log(`Looking for file: ${filePath}`);
-  
-  if (fs.existsSync(filePath)) {
-    console.log(`File exists, reading for substitution: ${filePath}`);
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        console.error('Error reading JS file:', filePath, err);
-        return next();
-      }
-      
-      console.log(`Processing JS file for env substitution: ${req.path} (${data.length} characters)`);
-      const substitutedContent = substituteEnvironmentVariables(data);
-      
-      // Log if substitution occurred
-      if (substitutedContent !== data) {
-        console.log('Environment variable substitution applied to:', req.path);
-      } else {
-        console.log('No substitutions needed for:', req.path);
-      }
-      
-      res.setHeader('Content-Type', 'application/javascript');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.send(substitutedContent);
-    });
-  } else {
-    console.log(`File does not exist: ${filePath}`);
-    next();
+app.get('*.js', staticFileLimiter, (req, res, next) => {
+  console.log(`JavaScript request: ${sanitizeForLog(req.path)}`);
+
+  const filePath = jsFileAllowList.get(req.path);
+  if (!filePath) {
+    console.log('Rejected JavaScript request not in known file allow-list');
+    return next();
   }
+
+  console.log(`File exists, reading for substitution: ${sanitizeForLog(filePath)}`);
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading JS file:', sanitizeForLog(filePath), err);
+      return next();
+    }
+
+    console.log(`Processing JS file for env substitution: ${sanitizeForLog(req.path)} (${data.length} characters)`);
+    const substitutedContent = substituteEnvironmentVariables(data);
+
+    // Log if substitution occurred
+    if (substitutedContent === data) {
+      console.log('No substitutions needed for:', sanitizeForLog(req.path));
+    } else {
+      console.log('Environment variable substitution applied to:', sanitizeForLog(req.path));
+    }
+
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(substitutedContent);
+  });
 });
 
 // Static file middleware - serves all other files except .js (which are handled above)
@@ -192,8 +229,8 @@ app.use(express.static(staticPath, {
 }));
 
 // Handle Angular routing - serve index.html for all routes
-app.get('*', catchAllLimiter, (req, res) => {
-  console.log(`Request: ${req.method} ${req.url}`);
+app.get('*', staticFileLimiter, (req, res) => {
+  console.log(`Request: ${sanitizeForLog(req.method)} ${sanitizeForLog(req.url)}`);
   const indexPath = resolve(staticPath, 'index.html');
   
   // Read and substitute environment variables in index.html

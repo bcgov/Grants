@@ -17,9 +17,16 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     .search-result-item {
+      display: block;
+      width: 100%;
       padding: 12px 16px;
-      cursor: pointer;
+      background: none;
+      border: none;
       border-bottom: 1px solid var(--bc-gray-50);
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
 
       &:hover {
         background-color: var(--bc-gray-30);
@@ -105,6 +112,18 @@
   &:focus {
     border-color: #dc3545 !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+  }
+}
+
+/* Orgbook status badges. The generic badge shape lives in
+   datatable.component.scss; this maps this domain's status values to the
+   shared --bc-badge-* tokens (styles.scss). ::ng-deep is required because
+   <app-datatable> renders the badge markup in its own view — plain :host
+   styles can't reach into a child component's DOM. */
+:host ::ng-deep {
+  .status-badge {
+    &.status-active { background-color: var(--bc-blue); }
+    &.status-inactive, &.status-suspended, &.status-unknown { background-color: var(--bc-badge-gray); } // status-unknown is the fallbackClass
   }
 }
 

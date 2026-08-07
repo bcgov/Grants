@@ -8,31 +8,7 @@ BC Government grants management platform.
 
 ## Structure
 
-```text
-applications/
-├── Grants.ApplicantPortal/            # Full-stack grant applicant portal
-│   ├── src/
-│   │   ├── Grants.ApplicantPortal.Frontend/   # Angular 20 SPA
-│   │   │   └── .claude/                       # Claude Code context for frontend
-│   │   └── Grants.ApplicantPortal.Backend/    # .NET 9 Web API
-│   │       └── .claude/                       # Claude Code context for backend
-│   └── docker-compose.yml                     # Full stack via Docker
-└── Grants.AutoUI/                     # Cypress E2E test suite
-documentation/                         # Architecture decisions and guides
-```
-
-## Stack
-
-| Layer | Technology |
-| --- | --- |
-| Frontend | Angular 20, TypeScript, standalone components, Keycloak OIDC, BC Gov Bootstrap v5 |
-| Backend | .NET 9, FastEndpoints, MediatR (CQRS), Ardalis.Result, FluentValidation |
-| Database | PostgreSQL 17, Entity Framework Core migrations |
-| Cache | Redis 7 |
-| Auth | Keycloak (OIDC/OAuth2) |
-| Quality | SonarCloud (bcgov org) |
-| CI | GitHub Actions |
-| Deployment | OpenShift (BC Government) |
+Two apps under `applications/`: `Grants.ApplicantPortal` (full-stack portal, frontend+backend) and `Grants.AutoUI` (Cypress E2E). Use `ls`/`Glob` to check current layout before assuming — don't rely on a hardcoded tree here.
 
 ## Quick Start
 
@@ -50,36 +26,11 @@ docker-compose up --build
 
 ## Frontend
 
-```bash
-cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend
-npm start          # dev server at http://localhost:4200
-npm test           # Karma/Jasmine unit tests
-npm run build      # production build
-```
-
-Claude Code skills: `/new-feature`, `/new-shared-component`, `/new-service`, `/api-call`, `/env-check`
-
-Full context: [Frontend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/CLAUDE.md)
+`cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend` — [Frontend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Frontend/.claude/CLAUDE.md) loads automatically when working here; treat it as ground truth for commands, skills, and architecture over anything summarized in this file.
 
 ## Backend
 
-```bash
-cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
-dotnet run --project src/Grants.ApplicantPortal.API.Web                    # API at https://localhost:7000
-dotnet test                                                                 # all test suites
-dotnet test tests/Grants.ApplicantPortal.API.UnitTests                     # unit tests only
-dotnet test tests/Grants.ApplicantPortal.API.IntegrationTests              # integration (real DB)
-dotnet test tests/Grants.ApplicantPortal.API.FunctionalTests               # HTTP-level tests
-dotnet test --filter "FullyQualifiedName~CreateAddressHandlerTests"        # single test class
-
-# EF migrations (from Grants.ApplicantPortal.Backend/)
-dotnet ef migrations add <Name> --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web
-dotnet ef database update --project src/Grants.ApplicantPortal.API.Migrations --startup-project src/Grants.ApplicantPortal.API.Web
-```
-
-Claude Code skills: `/new-endpoint`, `/new-use-case`, `/new-migration`, `/run-tests`
-
-Full context: [Backend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/CLAUDE.md)
+`cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend` — [Backend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/.claude/CLAUDE.md) loads automatically when working here; treat it as ground truth for commands, skills, and architecture over anything summarized in this file.
 
 ## Orchestrated Workflows (start here for most tasks)
 
@@ -91,17 +42,9 @@ Full context: [Backend CLAUDE.md](applications/Grants.ApplicantPortal/src/Grants
 | `/refactor` | Target path + goal | Understand → plan → implement → verify nothing broke → AutoUI guard → document → summary |
 | `/onboard` | Optional: `frontend` / `backend` | Codebase tour + patterns explanation + personalised cheat sheet |
 
-## Sub-agents (used automatically by orchestrators)
+## Sub-agents
 
-| Agent | Specialisation |
-| --- | --- |
-| `backend-developer` | .NET 9, FastEndpoints, CQRS, EF Core |
-| `frontend-developer` | Angular 20, standalone components, Keycloak |
-| `test-guardian` | Runs suites, diagnoses failures, writes missing tests |
-| `security-reviewer` | Auth gaps, OWASP, secrets, injection (read-only) |
-| `code-reviewer` | Architecture rules, naming conventions (read-only) |
-| `autoui-guardian` | Cypress E2E self-healing: fixes broken specs and stubs new ones for new features |
-| `auto-documenter` | Keeps `documentation/auto/` and architecture docs in sync after code changes |
+Specializations are defined in `.claude/agents/*.md` — read the frontmatter there for the current list, don't assume it's static.
 
 ## Git Workflow
 
@@ -119,19 +62,7 @@ All orchestrated skills (`/implement-ticket`, `/fix-bug`) will ask for the ticke
 
 ## AutoUI
 
-Cypress E2E suite: `applications/Grants.AutoUI/`. Targets deployed environments — tests do **not** run against localhost.
-
-```bash
-cd applications/Grants.AutoUI
-npm run cy:open:dev    # interactive Cypress UI against dev
-npm run cy:run:dev     # headless run against dev
-npm run cy:run:test    # headless run against test
-npm run validate:selectors   # validate registry.ts against Angular data-cy attributes
-```
-
-Available `ENV` values: `dev`, `dev2`, `test`, `uat`, `prod` (configs in `cypress/config/<env>.json`).
-
-`autoui-guardian` manages selector sync and spec maintenance as part of every orchestrated workflow (`/implement-ticket`, `/fix-bug`, `/refactor`).
+Cypress E2E suite: `applications/Grants.AutoUI/`. Targets deployed environments — tests do **not** run against localhost. [AutoUI CLAUDE.md](applications/Grants.AutoUI/CLAUDE.md) loads automatically when working here; treat it as ground truth for commands over anything summarized in this file.
 
 Run `/sync-selectors` explicitly after changing any `data-cy` attribute in Angular templates — it detects drift and heals `cypress/selectors/registry.ts` without touching spec logic.
 
