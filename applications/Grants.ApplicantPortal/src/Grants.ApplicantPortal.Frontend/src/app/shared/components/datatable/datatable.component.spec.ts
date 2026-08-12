@@ -178,6 +178,119 @@ describe('DatatableComponent', () => {
     });
   });
 
+  describe('getRowLink', () => {
+    it('returns null when no linkConfig is set', () => {
+      component.config.linkConfig = undefined;
+      expect(component.getRowLink({ linkId: 'abc' })).toBeNull();
+    });
+
+    it('returns null when the row is missing the link field value', () => {
+      component.config.linkConfig = { baseUrl: 'https://chefs.example.com/form/', linkField: 'linkId' };
+      expect(component.getRowLink({ linkId: '' })).toBeNull();
+      expect(component.getRowLink({})).toBeNull();
+    });
+
+    it('returns baseUrl concatenated with the row link field value', () => {
+      component.config.linkConfig = { baseUrl: 'https://chefs.example.com/form/', linkField: 'linkId' };
+      expect(component.getRowLink({ linkId: 'abc-123' })).toBe('https://chefs.example.com/form/abc-123');
+    });
+  });
+
+  describe("column.type === 'link' rendering", () => {
+    const LINK_CONFIG: DatatableConfig = {
+      tableId: 'link-table',
+      columns: [{ key: 'title', label: 'Submission', sortable: false, type: 'link' }],
+      actionsType: 'none',
+      linkConfig: { baseUrl: 'https://chefs.example.com/form/', linkField: 'linkId' },
+      // getDisplayData() only applies its default pageSize during ngOnInit; since these
+      // tests swap in a fresh config object post-init, pageSize must be set explicitly
+      // or the pagination slice collapses to an empty array.
+      pageSize: 10,
+    };
+
+    function render(config: DatatableConfig, data: any[]): void {
+      component.config = { ...config };
+      component.data = data;
+      fixture.detectChanges();
+    }
+
+    // A row-clickable table is the realistic scenario where an unstopped keydown
+    // on the link would otherwise bubble up to the <tr> and fire onRowClick.
+    function expectRowClickNotEmittedFor(link: HTMLAnchorElement): void {
+      let emitted: any;
+      component.rowClick.subscribe((e) => (emitted = e));
+
+      link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      link.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      link.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+
+      expect(emitted).toBeUndefined();
+    }
+
+    describe('desktop table', () => {
+      it('renders an <a> tag with the correct href and link text when a link is available', () => {
+        render(LINK_CONFIG, [{ title: 'Grant Application', linkId: 'abc-123' }]);
+
+        const link = fixture.nativeElement.querySelector('a.datatable-cell-link');
+        expect(link).withContext('anchor should render').not.toBeNull();
+        expect(link.getAttribute('href')).toBe('https://chefs.example.com/form/abc-123');
+        expect(link.textContent.trim()).toBe('Grant Application');
+      });
+
+      it('renders plain text (no anchor) when linkConfig cannot resolve a link', () => {
+        render({ ...LINK_CONFIG, linkConfig: undefined }, [{ title: 'Grant Application', linkId: 'abc-123' }]);
+
+        expect(fixture.nativeElement.querySelector('a.datatable-cell-link')).toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('Grant Application');
+      });
+
+      it('renders an em dash when the cell value is null', () => {
+        render(LINK_CONFIG, [{ title: null, linkId: 'abc-123' }]);
+
+        expect(fixture.nativeElement.querySelector('a.datatable-cell-link')).toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('—');
+      });
+
+      it('stops click and Enter/Space keydown from bubbling to the row', () => {
+        render({ ...LINK_CONFIG, rowClickable: true }, [{ title: 'Grant Application', linkId: 'abc-123' }]);
+
+        const link = fixture.nativeElement.querySelector('a.datatable-cell-link');
+        expectRowClickNotEmittedFor(link);
+      });
+    });
+
+    describe('mobile card view', () => {
+      beforeEach(() => {
+        component.isMobile = true;
+      });
+
+      it('renders an <a> tag with an external-link icon when a link is available', () => {
+        render(LINK_CONFIG, [{ title: 'Grant Application', linkId: 'abc-123' }]);
+
+        const link = fixture.nativeElement.querySelector('a.datatable-cell-link');
+        expect(link).withContext('anchor should render').not.toBeNull();
+        expect(link.getAttribute('href')).toBe('https://chefs.example.com/form/abc-123');
+        expect(link.classList).toContain('datatable-cell-link-mobile');
+        expect(link.querySelector('i.fa-external-link-alt')).not.toBeNull();
+        expect(link.textContent.trim()).toBe('Grant Application');
+      });
+
+      it('renders plain text (no anchor) when linkConfig cannot resolve a link', () => {
+        render({ ...LINK_CONFIG, linkConfig: undefined }, [{ title: 'Grant Application', linkId: 'abc-123' }]);
+
+        expect(fixture.nativeElement.querySelector('a.datatable-cell-link')).toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('Grant Application');
+      });
+
+      it('stops click and Enter/Space keydown from bubbling to the card', () => {
+        render({ ...LINK_CONFIG, rowClickable: true }, [{ title: 'Grant Application', linkId: 'abc-123' }]);
+
+        const link = fixture.nativeElement.querySelector('a.datatable-cell-link');
+        expectRowClickNotEmittedFor(link);
+      });
+    });
+  });
+
   it('cleans up subscriptions on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
