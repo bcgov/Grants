@@ -51,7 +51,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       displayField: 'paymentStatus',
       badgeClassPrefix: 'status-badge',
       badgeClasses: {
-        'Fully Paid': 'status-grant-approved',
+        'Fully Paid': 'status-paid',
+        'Paid': 'status-paid'
       },
       displayLabels: {
         'Fully Paid': 'Paid',
