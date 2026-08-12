@@ -90,16 +90,15 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: (response) => {
           this.linkSource = response.linkSource;
-          // Set linkConfig on datatable so the submission column renders as an <a> tag
-          if (this.linkSource) {
-            this.submissionsTableConfig = {
-              ...this.submissionsTableConfig,
-              linkConfig: {
-                baseUrl: this.linkSource,
-                linkField: 'linkId'
-              }
-            };
-          }
+          // Set linkConfig on datatable so the submission column renders as an <a> tag;
+          // clear it when there's no linkSource so a stale baseUrl from a prior
+          // plugin/provider doesn't leak into this load.
+          this.submissionsTableConfig = {
+            ...this.submissionsTableConfig,
+            linkConfig: this.linkSource
+              ? { baseUrl: this.linkSource, linkField: 'linkId' }
+              : undefined
+          };
           let submissionsArray = response.submissionsData;
           
           if (!Array.isArray(submissionsArray)) {
