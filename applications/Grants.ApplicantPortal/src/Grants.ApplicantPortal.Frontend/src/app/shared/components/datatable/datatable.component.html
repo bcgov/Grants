@@ -127,6 +127,25 @@
                         —
                       }
                     </div>
+                  } @else if (column.type === 'link') {
+                    @if (getCellValue(row, column) == null) {
+                      —
+                    } @else if (getRowLink(row)) {
+                      <a
+                        [href]="getRowLink(row)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="datatable-cell-link"
+                        [attr.data-cy]="'datatable-row-' + idSuffix + '-' + i + '-' + column.key"
+                        (click)="$event.stopPropagation()"
+                        (keydown.enter)="$event.stopPropagation()"
+                        (keydown.space)="$event.stopPropagation()"
+                      >
+                        {{ getCellValue(row, column) }}
+                      </a>
+                    } @else {
+                      {{ getCellValue(row, column) }}
+                    }
                   } @else {
                     @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) }}
@@ -288,6 +307,26 @@
                     }
                   } @else {
                     —
+                  }
+                } @else if (column.type === 'link') {
+                  @if (getCellValue(row, column) == null) {
+                    —
+                  } @else if (getRowLink(row)) {
+                    <a
+                      [href]="getRowLink(row)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="datatable-cell-link datatable-cell-link-mobile"
+                      [attr.data-cy]="'datatable-card-row-' + idSuffix + '-' + i + '-' + column.key"
+                      (click)="$event.stopPropagation()"
+                      (keydown.enter)="$event.stopPropagation()"
+                      (keydown.space)="$event.stopPropagation()"
+                    >
+                      <span>{{ getCellValue(row, column) }}</span>
+                      <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                    </a>
+                  } @else {
+                    {{ getCellValue(row, column) }}
                   }
                 } @else {
                   @if (getCellValue(row, column) != null) {

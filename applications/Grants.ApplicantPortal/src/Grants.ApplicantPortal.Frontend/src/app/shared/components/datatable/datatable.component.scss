@@ -119,8 +119,14 @@
             border-top: 1px solid var(--bc-gray-50) !important;
 
             &.name-column, &.submission-type-column { font-weight: 500 !important; }
-            &.email-link, &.email-column { 
+            &.email-link, &.email-column {
               color: var(--bc-blue) !important;
+              &:hover { text-decoration: underline; }
+            }
+
+            .datatable-cell-link {
+              color: var(--bc-blue) !important;
+              text-decoration: none;
               &:hover { text-decoration: underline; }
             }
             &.title-column { font-style: italic; }
@@ -314,6 +320,25 @@
 
         .email-link {
           color: var(--bc-blue);
+        }
+
+        .datatable-cell-link {
+          color: var(--bc-blue);
+          text-decoration: none;
+          &:hover { text-decoration: underline; }
+        }
+
+        .datatable-cell-link-mobile {
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 6px;
+          text-decoration: none;
+
+          i {
+            font-size: var(--bc-font-size-12);
+            flex-shrink: 0;
+          }
         }
       }
     }

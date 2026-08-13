@@ -6,10 +6,7 @@ import {
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
-import { 
-  DatatableConfig,
-  DatatableActionEvent
-} from '../../../shared/components/datatable/datatable.models';
+import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 @Component({
   selector: 'app-applicant-info-submissions',
@@ -38,10 +35,10 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     columns: [
       { key: 'referenceNo', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
       { key: 'submissionTime', label: 'Submitted', sortable: true, type: 'date', cssClass: 'submission-date-column' },
-      { key: 'type', label: 'Submission Title', sortable: true, cssClass: 'submission-type-column' },
-      { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' }      
+      { key: 'type', label: 'Submission', sortable: true, type: 'link', cssClass: 'submission-type-column' },
+      { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' }
     ],
-    actionsType: 'chevron',
+    actionsType: 'none',
     badgeConfig: {
       field: 'status',
       displayField: 'status',
@@ -93,16 +90,15 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: (response) => {
           this.linkSource = response.linkSource;
-          // Set linkConfig on datatable so chevrons render as <a> tags
-          if (this.linkSource) {
-            this.submissionsTableConfig = {
-              ...this.submissionsTableConfig,
-              linkConfig: {
-                baseUrl: this.linkSource,
-                linkField: 'linkId'
-              }
-            };
-          }
+          // Set linkConfig on datatable so the submission column renders as an <a> tag;
+          // clear it when there's no linkSource so a stale baseUrl from a prior
+          // plugin/provider doesn't leak into this load.
+          this.submissionsTableConfig = {
+            ...this.submissionsTableConfig,
+            linkConfig: this.linkSource
+              ? { baseUrl: this.linkSource, linkField: 'linkId' }
+              : undefined
+          };
           let submissionsArray = response.submissionsData;
           
           if (!Array.isArray(submissionsArray)) {
@@ -126,13 +122,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     this.destroy$.complete();
   }
 
-  onSubmissionClick(submission: SubmissionsData): void {
-    if (this.linkSource && submission.linkId) {
-      const url = `${this.linkSource}${submission.linkId}`;
-      globalThis.open(url, '_blank', 'noopener,noreferrer');
-    }
-  }
-
   getStatusClass(status: string): string {
     switch (status) {
       case 'In progress':
@@ -143,12 +132,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
         return 'status-declined';
       default:
         return '';
-    }
-  }
-
-  onSubmissionAction(event: DatatableActionEvent): void {
-    if (event.action === 'view') {
-      this.onSubmissionClick(event.row);
     }
   }
 }
