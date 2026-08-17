@@ -28,7 +28,7 @@ public static class SubmissionsData
     {
       submissions = new[]
       {
-        // Scenario: full data — renewal link plus multiple related links
+        // Scenario: full data — renewal link plus multiple related links, no applicant message
         new
         {
           id = "a1234e56-789a-bc01-23de-f4567890ab12",
@@ -136,7 +136,7 @@ public static class SubmissionsData
           submissionTime = "2025-05-16T20:57:37.29Z",
           referenceNo = "D5678E90",
           type = "STEM Education Excellence Initiative",
-          status = "Under Review",
+          status = "Approved",
           renewalLink = (SubmissionLink?)new SubmissionLink(
             "https://demo-forms.example.com/app/form/renew?f=stem-education",
             "Renew STEM Education Excellence Initiative",
@@ -187,7 +187,7 @@ public static class SubmissionsData
           submissionTime = "2025-06-10T16:50:22.115Z",
           referenceNo = "D7890E12",
           type = "Rural Broadband Access Project",
-          status = "Submitted",
+          status = "Under Review",
           renewalLink = (SubmissionLink?)null,
           relatedLinks = new[]
           {

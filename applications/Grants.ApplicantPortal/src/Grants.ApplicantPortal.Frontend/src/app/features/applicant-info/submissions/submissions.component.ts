@@ -153,12 +153,8 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   onSubmissionAction(event: DatatableActionEvent): void {
     const submission = event.row as SubmissionsData;
 
-    switch (event.action) {
-      case 'viewRelatedLinks':
-        this.onViewRelatedLinks(submission);
-        break;
-      default:
-        break;
+    if (event.action === 'viewRelatedLinks') {
+      this.onViewRelatedLinks(submission);
     }
   }
 

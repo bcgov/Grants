@@ -42,7 +42,7 @@
       <div class="modal-body">
         @if (selectedSubmission) {
           <div class="mb-3" data-cy="related-links-modal-applicant-message">
-            <label class="form-label fw-bold">Applicant Message</label>
+            <div class="form-label fw-bold">Applicant Message</div>
             <p class="mb-0">{{ selectedSubmission.applicantMessage || '—' }}</p>
           </div>
           <div class="mb-3 d-flex align-items-center" data-cy="related-links-modal-eligible-for-renewal">
@@ -55,12 +55,13 @@
                 data-cy="related-links-modal-eligible-for-renewal-toggle"
                 class="form-check-input"
                 [checked]="selectedSubmission.eligibleForRenewal"
+                [attr.aria-checked]="selectedSubmission.eligibleForRenewal"
                 disabled
               />
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-bold">Renewal Link</label>
+            <div class="form-label fw-bold">Renewal Link</div>
             @if (selectedSubmission.renewalLink) {
               <p class="mb-0">
                 <a
@@ -77,7 +78,7 @@
             }
           </div>
           <div class="mb-0">
-            <label class="form-label fw-bold">Related Links</label>
+            <div class="form-label fw-bold">Related Links</div>
             @if (selectedSubmission.relatedLinks && selectedSubmission.relatedLinks.length > 0) {
               <ul class="list-unstyled mb-0">
                 @for (link of selectedSubmission.relatedLinks; track link.uri) {
