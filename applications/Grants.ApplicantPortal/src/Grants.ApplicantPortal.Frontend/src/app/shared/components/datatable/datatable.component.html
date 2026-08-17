@@ -220,7 +220,11 @@
                               [attr.data-cy]="'datatable-action-' + idSuffix + '-' + i + '-' + action.action"
                               (click)="onActionClick(action.action, row, i, $event); closeDropdown(dropdownToggle)"
                             >
-                              <i class="fas {{ action.icon }} me-2"></i>
+                              @if (action.iconSrc) {
+                                <img [src]="action.iconSrc" alt="" class="action-icon me-2" />
+                              } @else {
+                                <i class="fas {{ action.icon }} me-2"></i>
+                              }
                               {{ action.label }}
                             </button>
                           </li>
@@ -375,7 +379,11 @@
                     [attr.data-cy]="'datatable-card-action-' + idSuffix + '-' + i + '-' + action.action"
                     (click)="onActionClick(action.action, row, i, $event)"
                   >
-                    <i class="fas {{ action.icon }} me-1"></i>
+                    @if (action.iconSrc) {
+                      <img [src]="action.iconSrc" alt="" class="action-icon me-1" />
+                    } @else {
+                      <i class="fas {{ action.icon }} me-1"></i>
+                    }
                     {{ action.label }}
                   </button>
                 }

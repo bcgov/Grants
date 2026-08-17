@@ -21,5 +21,20 @@ public record SubmissionResponse(
     DateTime SubmissionTime,
     string ReferenceNo,
     string Type,
-    string Status
+    string Status,
+    SubmissionLinkResponse? RenewalLink,
+    IReadOnlyList<SubmissionLinkResponse> RelatedLinks,
+    string? ApplicantMessage,
+    bool EligibleForRenewal
+);
+
+/// <summary>
+/// A published link (renewal or related) attached to a submission.
+/// RelatedLinks are ordered by Order asc, with Order == -1 sorted last.
+/// </summary>
+public record SubmissionLinkResponse(
+    string Uri,
+    string Title,
+    string Description,
+    int Order
 );
