@@ -6,7 +6,7 @@ import {
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
-import { DatatableConfig } from '../../../shared/components/datatable/datatable.models';
+import { DatatableConfig, DatatableActionEvent } from '../../../shared/components/datatable/datatable.models';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 @Component({
   selector: 'app-applicant-info-submissions',
@@ -27,6 +27,9 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   isLoading = true;
   error: string | null = null;
 
+  showRelatedLinksModal = false;
+  selectedSubmission: SubmissionsData | null = null;
+
   // Datatable configuration
   submissionsTableConfig: DatatableConfig = {
     tableId: 'submissions-table',
@@ -38,7 +41,11 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       { key: 'type', label: 'Submission', sortable: true, type: 'link', cssClass: 'submission-type-column' },
       { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' }
     ],
-    actionsType: 'none',
+    actionsType: 'dropdown',
+    actionItems: [
+      { label: 'View Related Links', icon: 'fa-link', iconSrc: 'images/icons/si_link-fill.svg', action: 'viewRelatedLinks' }
+    ],
+    actionsVisibilityField: 'hasRelatedLinks',
     badgeConfig: {
       field: 'status',
       displayField: 'status',
@@ -84,6 +91,8 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     this.isLoading = true;
     this.error = null;
     this.submissionsData = [];
+    this.showRelatedLinksModal = false;
+    this.selectedSubmission = null;
 
     this.applicantInfoService.getSubmissionsInfo(this.pluginId, this.provider)
       .pipe(takeUntil(this.destroy$))
@@ -105,7 +114,14 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
             submissionsArray = submissionsArray ? [submissionsArray] : [];
           }
           
-          this.submissionsData = submissionsArray;
+          this.submissionsData = submissionsArray.map((submission) => ({
+            ...submission,
+            hasRelatedLinks: !!(
+              submission.renewalLink ||
+              (submission.relatedLinks?.length ?? 0) > 0 ||
+              submission.applicantMessage
+            )
+          }));
           this.isLoading = false;
         },
         error: (error) => {
@@ -133,5 +149,26 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       default:
         return '';
     }
+  }
+
+  onSubmissionAction(event: DatatableActionEvent): void {
+    const submission = event.row as SubmissionsData;
+
+    if (event.action === 'viewRelatedLinks') {
+      this.onViewRelatedLinks(submission);
+    }
+  }
+
+  onViewRelatedLinks(submission: SubmissionsData): void {
+    if (!submission.hasRelatedLinks) {
+      return;
+    }
+    this.selectedSubmission = submission;
+    this.showRelatedLinksModal = true;
+  }
+
+  onCloseRelatedLinksModal(): void {
+    this.showRelatedLinksModal = false;
+    this.selectedSubmission = null;
   }
 }

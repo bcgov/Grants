@@ -20,6 +20,7 @@ export interface DatatableBadgeConfig {
 export interface DatatableActionItem {
   label: string;
   icon: string;
+  iconSrc?: string; // Optional image icon (e.g. 'images/icons/foo.svg') — takes precedence over the Font Awesome `icon` class
   action: string;
   cssClass?: string;
 }

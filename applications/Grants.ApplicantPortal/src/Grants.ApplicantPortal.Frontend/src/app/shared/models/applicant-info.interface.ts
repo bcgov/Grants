@@ -74,6 +74,14 @@ export interface OrganizationData {
   allowEdit?: boolean;
 }
 
+export interface SubmissionLink {
+  uri: string;
+  title: string;
+  /** Only rendered in the UI for related links — not shown for the renewal link. */
+  description: string;
+  order: number;
+}
+
 export interface SubmissionsData {
   id: string;
   linkId: string;
@@ -82,6 +90,16 @@ export interface SubmissionsData {
   referenceNo: string;
   type: string;
   status: string;
+  /** Nullable — only present when eligible for renewal and a Published Renewal link exists. */
+  renewalLink?: SubmissionLink | null;
+  /** Always present, may be empty. Ordered by `order` asc, with order === -1 sorted last. */
+  relatedLinks?: SubmissionLink[];
+  /** Derived client-side: true when renewalLink, a non-empty relatedLinks, or applicantMessage is present. Does not consider eligibleForRenewal alone, since there would be nothing to view. */
+  hasRelatedLinks?: boolean;
+  /** Nullable free-text feedback for this submission. */
+  applicantMessage?: string | null;
+  /** Renewal eligibility, independent of whether a Published Renewal link exists. */
+  eligibleForRenewal?: boolean;
 }
 
 export interface SubmissionsResponse {
