@@ -4,7 +4,8 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 /// A published link (renewal or related) attached to a submission.
 /// Field names match the Unity API SUBMISSIONINFO contract (uri, title,
 /// description, order). RelatedLinks are ordered by Order asc, with
-/// Order == -1 sorted last.
+/// Order == -1 sorted last. Description is only shown in the UI for
+/// related links — the renewal link's description is not displayed.
 /// </summary>
 public sealed record SubmissionLink(string Uri, string Title, string Description, int Order);
 
@@ -41,7 +42,7 @@ public static class SubmissionsData
           renewalLink = (SubmissionLink?)new SubmissionLink(
             "https://demo-forms.example.com/app/form/renew?f=community-health",
             "Renew Community Health Initiative",
-            "Start your renewal application for this grant program.",
+            "",
             0),
           relatedLinks = new[]
           {
@@ -109,7 +110,7 @@ public static class SubmissionsData
           renewalLink = (SubmissionLink?)new SubmissionLink(
             "https://demo-forms.example.com/app/form/renew?f=digital-community",
             "Renew Digital Community Program",
-            "Start your renewal application for this grant program.",
+            "",
             0),
           relatedLinks = Array.Empty<SubmissionLink>(),
           applicantMessage = (string?)"You are eligible to renew this grant. Please use the renewal link above to start your application.",
@@ -140,7 +141,7 @@ public static class SubmissionsData
           renewalLink = (SubmissionLink?)new SubmissionLink(
             "https://demo-forms.example.com/app/form/renew?f=stem-education",
             "Renew STEM Education Excellence Initiative",
-            "Start your renewal application for this grant program.",
+            "",
             0),
           relatedLinks = new[]
           {

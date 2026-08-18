@@ -117,8 +117,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
             hasRelatedLinks: !!(
               submission.renewalLink ||
               (submission.relatedLinks?.length ?? 0) > 0 ||
-              submission.applicantMessage ||
-              submission.eligibleForRenewal
+              submission.applicantMessage
             )
           }));
           this.isLoading = false;

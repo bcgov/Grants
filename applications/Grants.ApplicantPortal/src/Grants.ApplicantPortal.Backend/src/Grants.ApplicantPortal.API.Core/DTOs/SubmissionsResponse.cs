@@ -31,6 +31,8 @@ public record SubmissionResponse(
 /// <summary>
 /// A published link (renewal or related) attached to a submission.
 /// RelatedLinks are ordered by Order asc, with Order == -1 sorted last.
+/// Description is only shown in the UI for related links — the renewal
+/// link's description is not displayed.
 /// </summary>
 public record SubmissionLinkResponse(
     string Uri,

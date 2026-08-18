@@ -139,14 +139,14 @@ describe('SubmissionsComponent', () => {
       expect(component.submissionsData[0].hasRelatedLinks).toBeTrue();
     });
 
-    it('marks hasRelatedLinks true when only eligibleForRenewal is true', () => {
+    it('marks hasRelatedLinks false when only eligibleForRenewal is true and there is nothing to view', () => {
       applicantInfoServiceSpy.getSubmissionsInfo.and.returnValue(
         of(makeResponse({
-          submissionsData: [makeSubmission({ renewalLink: null, relatedLinks: [], applicantMessage: null })],
+          submissionsData: [makeSubmission({ renewalLink: null, relatedLinks: [], applicantMessage: null, eligibleForRenewal: true })],
         }))
       );
       fixture.detectChanges();
-      expect(component.submissionsData[0].hasRelatedLinks).toBeTrue();
+      expect(component.submissionsData[0].hasRelatedLinks).toBeFalse();
     });
 
     it('closes the modal and clears the selection', () => {

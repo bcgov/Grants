@@ -77,6 +77,7 @@ export interface OrganizationData {
 export interface SubmissionLink {
   uri: string;
   title: string;
+  /** Only rendered in the UI for related links — not shown for the renewal link. */
   description: string;
   order: number;
 }
@@ -93,7 +94,7 @@ export interface SubmissionsData {
   renewalLink?: SubmissionLink | null;
   /** Always present, may be empty. Ordered by `order` asc, with order === -1 sorted last. */
   relatedLinks?: SubmissionLink[];
-  /** Derived client-side: true when renewalLink, a non-empty relatedLinks, applicantMessage, or eligibleForRenewal is present/true. */
+  /** Derived client-side: true when renewalLink, a non-empty relatedLinks, or applicantMessage is present. Does not consider eligibleForRenewal alone, since there would be nothing to view. */
   hasRelatedLinks?: boolean;
   /** Nullable free-text feedback for this submission. */
   applicantMessage?: string | null;

@@ -70,9 +70,6 @@
                   rel="noopener noreferrer"
                 >{{ selectedSubmission.renewalLink.title || selectedSubmission.renewalLink.uri }}</a>
               </p>
-              @if (selectedSubmission.renewalLink.description) {
-                <p class="mb-0 text-muted">{{ selectedSubmission.renewalLink.description }}</p>
-              }
             } @else {
               <p class="mb-0">—</p>
             }
