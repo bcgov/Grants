@@ -97,6 +97,17 @@ export const AppSelectors = {
     noAddressesMessage: '[data-cy="no-addresses-message"]',
   },
 
+  // ── Submissions — Related Links modal (/app/applicant-info) ──────────────
+  SubmissionsModal: {
+    modal:                    '[data-cy="related-links-modal"]',
+    modalLabel:               '[data-cy="related-links-modal-label"]',
+    modalCloseBtn:            '[data-cy="related-links-modal-close-btn"]',
+    applicantMessage:         '[data-cy="related-links-modal-applicant-message"]',
+    eligibleForRenewal:       '[data-cy="related-links-modal-eligible-for-renewal"]',
+    eligibleForRenewalToggle: '[data-cy="related-links-modal-eligible-for-renewal-toggle"]',
+    closeFooterBtn:           '[data-cy="related-links-modal-close-footer-btn"]',
+  },
+
   // ── Addresses (/app/applicant-info) ──────────────────────────────────────
   Addresses: {
     addBtn:           '[data-cy="address-add-btn"]',

@@ -291,6 +291,61 @@ describe('DatatableComponent', () => {
     });
   });
 
+  describe('dropdown action icon rendering', () => {
+    const ACTION_CONFIG: DatatableConfig = {
+      tableId: 'action-table',
+      columns: [{ key: 'name', label: 'Name', sortable: false }],
+      actionsType: 'dropdown',
+      actionItems: [
+        { label: 'With Image', icon: 'fa-link', iconSrc: 'images/icons/foo.svg', action: 'withImage' },
+        { label: 'Without Image', icon: 'fa-star', action: 'withoutImage' },
+      ],
+      pageSize: 10,
+    };
+
+    function render(data: any[]): void {
+      component.config = { ...ACTION_CONFIG };
+      component.data = data;
+      fixture.detectChanges();
+    }
+
+    describe('desktop table', () => {
+      beforeEach(() => {
+        component.isMobile = false;
+      });
+
+      it('renders an <img> for an action with iconSrc, and a Font Awesome icon as fallback when absent', () => {
+        render([{ name: 'Row 1' }]);
+
+        const withImage = fixture.nativeElement.querySelector('[data-cy="datatable-action-test-0-withImage"]');
+        expect(withImage.querySelector('img.action-icon')?.getAttribute('src')).toBe('images/icons/foo.svg');
+        expect(withImage.querySelector('i.fa-link')).toBeNull();
+
+        const withoutImage = fixture.nativeElement.querySelector('[data-cy="datatable-action-test-0-withoutImage"]');
+        expect(withoutImage.querySelector('img.action-icon')).toBeNull();
+        expect(withoutImage.querySelector('i.fa-star')).not.toBeNull();
+      });
+    });
+
+    describe('mobile card view', () => {
+      beforeEach(() => {
+        component.isMobile = true;
+      });
+
+      it('renders an <img> for an action with iconSrc, and a Font Awesome icon as fallback when absent', () => {
+        render([{ name: 'Row 1' }]);
+
+        const withImage = fixture.nativeElement.querySelector('[data-cy="datatable-card-action-test-0-withImage"]');
+        expect(withImage.querySelector('img.action-icon')?.getAttribute('src')).toBe('images/icons/foo.svg');
+        expect(withImage.querySelector('i.fa-link')).toBeNull();
+
+        const withoutImage = fixture.nativeElement.querySelector('[data-cy="datatable-card-action-test-0-withoutImage"]');
+        expect(withoutImage.querySelector('img.action-icon')).toBeNull();
+        expect(withoutImage.querySelector('i.fa-star')).not.toBeNull();
+      });
+    });
+  });
+
   it('cleans up subscriptions on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });

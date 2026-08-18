@@ -91,6 +91,8 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     this.isLoading = true;
     this.error = null;
     this.submissionsData = [];
+    this.showRelatedLinksModal = false;
+    this.selectedSubmission = null;
 
     this.applicantInfoService.getSubmissionsInfo(this.pluginId, this.provider)
       .pipe(takeUntil(this.destroy$))
