@@ -153,9 +153,15 @@ public static class AddressesData
 
       var addresses = _addressesByProviderProfile[key];
 
+      // A type group with no flagged primary has one inferred on read. Persist that decision
+      // instead of leaving it to be recomputed: otherwise the next address added to the same
+      // group is newer, wins the inference, and silently takes the primary slot.
+      var isPrimary = addressRequest.IsPrimary ||
+                      !TypeGroupHasFlaggedPrimary(provider, addresses, addressRequest.AddressType);
+
       // If this is being set as primary, only demote the existing stored addresses of the SAME
       // address type — every other address type keeps its own primary address.
-      if (addressRequest.IsPrimary)
+      if (isPrimary)
       {
         for (var i = 0; i < addresses.Count; i++)
         {
@@ -180,7 +186,7 @@ public static class AddressesData
         Province = addressRequest.Province,
         PostalCode = addressRequest.PostalCode,
         Country = addressRequest.Country ?? "",
-        IsPrimary = addressRequest.IsPrimary,
+        IsPrimary = isPrimary,
         IsEditable = true,
         ReferenceNo = ""
       };
@@ -412,6 +418,25 @@ public static class AddressesData
   /// </summary>
   private static bool IsSameAddressType(string? left, string? right)
     => AddressTypeKey.AreSame(left, right);
+
+  /// <summary>
+  /// Reports whether any address of the given type already carries an explicit primary flag,
+  /// across the demo defaults and the stored addresses alike — the same set the read path
+  /// resolves over. Unflagged addresses do not count: a group whose primary is only inferred
+  /// is exactly the case that needs the flag written down.
+  /// </summary>
+  private static bool TypeGroupHasFlaggedPrimary(
+    string provider,
+    List<AddressInfo> storedAddresses,
+    string addressType)
+  {
+    var nonMaterializedDefaults = GetDefaultAddresses(provider)
+      .Where(d => !storedAddresses.Any(s => string.Equals(s.Id, d.Id, StringComparison.OrdinalIgnoreCase)));
+
+    return nonMaterializedDefaults
+      .Concat(storedAddresses)
+      .Any(a => a.IsPrimary && IsSameAddressType(a.AddressType, addressType));
+  }
 
   /// <summary>
   /// Guarantees exactly one primary address per address type.

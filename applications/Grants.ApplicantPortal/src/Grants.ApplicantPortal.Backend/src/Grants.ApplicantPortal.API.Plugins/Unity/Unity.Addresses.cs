@@ -25,10 +25,16 @@ public partial class UnityPlugin
       // Generate a new address ID for the Unity system
       var newAddressId = Guid.NewGuid();
 
+      // A type group with no flagged primary has one inferred on read. Persist that decision
+      // instead of leaving it to be recomputed: otherwise the next address added to the same
+      // group is newer, wins the inference, and silently takes the primary slot.
+      addressRequest = await PromoteWhenTypeGroupHasNoPrimary(addressRequest, profileContext, cancellationToken);
+
       // 🔥 STEP 1: Update cache optimistically with the new address
       await UpdateAddressCacheOptimistically(newAddressId, addressRequest, profileContext, cancellationToken);
 
-      // 🔥 STEP 2: Send command to Unity via message queue
+      // 🔥 STEP 2: Send command to Unity via message queue — carries the same IsPrimary the
+      // cache was patched with, so the flag survives the next hydration from Unity.
       await FireAddressCreateMessage(newAddressId, addressRequest, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin optimistically created address - ID: {AddressId}, Type: {AddressType}, Street: {Street}",
@@ -547,6 +553,61 @@ public partial class UnityPlugin
   /// </summary>
   private static bool IsSameAddressType(JsonElement address, string? addressType)
     => AddressTypeKey.AreSame(ReadAddressTypeValue(address), addressType);
+
+  /// <summary>
+  /// Marks a new address as primary when no address of its type is flagged yet, so the primary
+  /// the reader would infer anyway is written down. Requests that already ask for primary, and
+  /// groups that already have one, are returned untouched.
+  /// </summary>
+  private async Task<CreateAddressRequest> PromoteWhenTypeGroupHasNoPrimary(
+      CreateAddressRequest addressRequest,
+      ProfileContext profileContext,
+      CancellationToken cancellationToken)
+  {
+    if (addressRequest.IsPrimary || await TypeGroupHasFlaggedPrimary(addressRequest.AddressType, profileContext, cancellationToken))
+    {
+      return addressRequest;
+    }
+
+    logger.LogInformation(
+        "No primary address exists for type {AddressType} on ProfileId {ProfileId} — the new address is created as that type's primary",
+        addressRequest.AddressType, profileContext.ProfileId);
+
+    return addressRequest with { IsPrimary = true };
+  }
+
+  /// <summary>
+  /// Reads the cache and reports whether any address of the given type already carries an
+  /// explicit isPrimary flag. Unflagged addresses do not count: a group whose primary is only
+  /// inferred is exactly the case that needs the flag written down.
+  /// </summary>
+  private async Task<bool> TypeGroupHasFlaggedPrimary(
+      string addressType,
+      ProfileContext profileContext,
+      CancellationToken cancellationToken)
+  {
+    var cached = await pluginCacheService.TryGetAsync<ProfileData>(
+        profileContext.ProfileId, PluginId, $"{profileContext.Provider}:ADDRESSINFO", cancellationToken);
+
+    if (cached?.Data is not JsonElement root ||
+        !root.TryGetProperty("addresses", out var addresses) ||
+        addresses.ValueKind != JsonValueKind.Array)
+    {
+      return false;
+    }
+
+    foreach (var address in addresses.EnumerateArray())
+    {
+      if (IsSameAddressType(address, addressType) &&
+          address.TryGetProperty("isPrimary", out var isPrimary) &&
+          isPrimary.ValueKind == JsonValueKind.True)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /// <summary>
   /// Finds the address type of the address with the given ID, or null when it is not cached.
