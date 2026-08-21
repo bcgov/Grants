@@ -225,7 +225,7 @@
                               } @else {
                                 <i class="fas {{ action.icon }} me-2"></i>
                               }
-                              {{ action.label }}
+                              {{ getActionLabel(row, action) }}
                             </button>
                           </li>
                         }
@@ -384,7 +384,7 @@
                     } @else {
                       <i class="fas {{ action.icon }} me-1"></i>
                     }
-                    {{ action.label }}
+                    {{ getActionLabel(row, action) }}
                   </button>
                 }
               } @else {
