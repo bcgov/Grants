@@ -48,6 +48,29 @@ public class AddressTypeKeyTests
     AddressTypeKey.AreSame(left, right).Should().BeTrue();
   }
 
+  /// <summary>
+  /// The option Key travels to the client and comes back on create and edit, where it is used
+  /// to group addresses, so it has to already be a normalized key. The property initializer
+  /// that guarantees this is easy to drop in a refactor, which is what these pin.
+  /// </summary>
+  [Theory]
+  [InlineData("  Mailing  ", "Mailing")]
+  [InlineData("", AddressTypeKey.Unknown)]
+  [InlineData("   ", AddressTypeKey.Unknown)]
+  public void AddressTypeOption_NormalizesItsKeyOnConstruction(string key, string expected)
+  {
+    new AddressTypeOption(key, "Mailing address").Key.Should().Be(expected);
+  }
+
+  [Fact]
+  public void AddressTypeOption_LeavesTheLabelUntouched()
+  {
+    var option = new AddressTypeOption("  mailing  ", "  Mailing address  ");
+
+    option.Key.Should().Be("mailing");
+    option.Label.Should().Be("  Mailing address  ");
+  }
+
   [Fact]
   public void AreSame_DoesNotGroupDifferentTypesTogether()
   {
