@@ -94,6 +94,9 @@ export const AppSelectors = {
     primaryContactInfo: '[data-cy="primary-contact-info"]',
     noPrimaryContact:   '[data-cy="no-primary-contact"]',
     primaryAddressInfo: '[data-cy="primary-address-info"]',
+    // Factory — one block per address type, keyed by the lowercased type
+    // (the component builds data-cy as 'primary-address-' + slot.idKey)
+    primaryAddressBlock: (typeKey: string) => `[data-cy="primary-address-${typeKey.toLowerCase()}"]`,
     noAddressesMessage: '[data-cy="no-addresses-message"]',
   },
 

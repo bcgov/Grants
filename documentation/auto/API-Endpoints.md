@@ -111,21 +111,37 @@ Returns the list of available role options (key/label pairs) defined by the plug
 | DELETE | `/Addresses/{AddressId}/{PluginId}/{Provider}` | ✅ | Delete an existing address |
 | PATCH | `/Addresses/{AddressId}/{PluginId}/{Provider}/set-primary` | ✅ | Set an address as primary |
 
+#### Primary addresses are scoped by address type
+
+An applicant holds **one primary address per address type** (e.g. Physical, Mailing), not
+one primary overall. An address always has exactly one type, and exclusivity is enforced
+only within that type group — so a Primary Physical and a Primary Mailing coexist.
+
+All four mutation endpoints therefore return `primaryAddressIdsByType`, a map of address
+type to that type's primary address id, replacing the former scalar `primaryAddressId`.
+The map is always present and is `{}` when nothing can be resolved. Keys are compared
+case-insensitively and are not restricted to a fixed set.
+
+A type group with no explicitly flagged primary **infers** one (the most recently created
+address of that type), so any type with at least one address always resolves a primary.
+
 ### Create Address
 
 Creates a new address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
 
 For UNITY, an `ADDRESS_CREATE_COMMAND` message is published to RabbitMQ after the local cache is updated.
 
-**Response:** `{ addressId, primaryAddressId }`
+**Response:** `{ addressId, primaryAddressIdsByType }`
 
 ### Update Address
 
-Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
+Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (Guid).
+
+Request validation mirrors Create: `addressType` (max 50), `street` (max 200), `city` (max 100), `province` (max 50) and `postalCode` (max 20) must be present, and `street2` (max 200), `unit` (max 50) and `country` (max 100) are length-checked when supplied. `AddressId`, `PluginId` and `Provider` must be present. Unlike Create, `applicantId` is **not** required — the route does not carry it, and ownership is resolved from the JWT.
 
 For UNITY, an `ADDRESS_EDIT_COMMAND` message is published.
 
-**Response:** `{ addressId, message, primaryAddressId }`
+**Response:** `{ addressId, message, primaryAddressIdsByType }`
 
 ### Delete Address
 
@@ -133,15 +149,17 @@ Deletes an address by `AddressId`. This endpoint expects a **JSON request body**
 
 For UNITY, an `ADDRESS_DELETE_COMMAND` message is published.
 
-**Response:** `{ addressId, message, primaryAddressId }`
+**Response:** `{ addressId, message, primaryAddressIdsByType }`
 
 ### Set Address as Primary
 
-Sets an address as the primary address for the profile.
+Sets an address as the primary address **for its own address type**. The type is derived from the target address itself, not supplied by the caller, so only that type group is re-flagged — primaries of other address types are left untouched.
+
+The request carries no body. `AddressId` must be a non-empty Guid — the route constraint rejects a non-Guid, but an all-zero Guid is caught here — and `PluginId` and `Provider` must be present and at most 50 characters, since both become Redis cache-key components.
 
 For UNITY, an `ADDRESS_SET_PRIMARY_COMMAND` message is published.
 
-**Response:** `{ addressId, message, primaryAddressId }`
+**Response:** `{ addressId, message, primaryAddressIdsByType }`
 
 ---
 
