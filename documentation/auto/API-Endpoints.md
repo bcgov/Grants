@@ -135,9 +135,9 @@ For UNITY, an `ADDRESS_CREATE_COMMAND` message is published to RabbitMQ after th
 
 ### Update Address
 
-Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (Guid).
+Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
 
-Request validation mirrors Create: `addressType` (max 50), `street` (max 200), `city` (max 100), `province` (max 50) and `postalCode` (max 20) must be present, and `street2` (max 200), `unit` (max 50) and `country` (max 100) are length-checked when supplied. `AddressId`, `PluginId` and `Provider` must be present. Unlike Create, `applicantId` is **not** required — the route does not carry it, and ownership is resolved from the JWT.
+Request validation mirrors Create: `addressType` (max 50), `street` (max 200), `city` (max 100), `province` (max 50) and `postalCode` (max 20) must be present, and `street2` (max 200), `unit` (max 50) and `country` (max 100) are length-checked when supplied. `AddressId`, `ApplicantId`, `PluginId` and `Provider` must be present — `applicantId` is forwarded to Unity in `ADDRESS_EDIT_COMMAND`, so it cannot be omitted.
 
 For UNITY, an `ADDRESS_EDIT_COMMAND` message is published.
 

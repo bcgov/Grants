@@ -355,6 +355,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   private buildPrimaryAddressSlots(): PrimaryAddressSlot[] {
     const slots: PrimaryAddressSlot[] = [];
     const seen = new Set<string>();
+    const usedIdKeys = new Set<string>();
     const typeKeys = [
       ...this.addressTypes.map(type => type.key),
       ...this.addresses.map(address => address.addressType)
@@ -372,7 +373,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
       slots.push({
         typeKey,
-        idKey: normalized.replaceAll(/\s+/g, '-'),
+        idKey: this.buildIdKey(normalized, usedIdKeys),
         label,
         heading: `Primary ${label} Address`.toUpperCase(),
         address: this.primaryAddressesByType.get(normalized) ?? null
@@ -380,6 +381,34 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     return slots;
+  }
+
+  /**
+   * Slugifies a normalized type key for use in element ids, data-cy values and the @for track
+   * key. Slugging is lossy — "Home Office" and "Home-Office" both reduce to "home-office" — so
+   * a counter is appended on collision. Duplicate track keys are a runtime error in Angular,
+   * and duplicate ids would break the label/control pairing.
+   *
+   * NOTE: the Cypress selector registry mirrors this transformation in
+   * `Landing.primaryAddressBlock` (applications/Grants.AutoUI/cypress/selectors/registry.ts).
+   * Changing the slug rule here without updating that factory silently breaks E2E selectors —
+   * `npm run validate:selectors` cannot catch it, because dynamic factory entries are skipped.
+   */
+  private buildIdKey(normalizedTypeKey: string, usedIdKeys: Set<string>): string {
+    // Split on runs of non-alphanumerics rather than replace-then-trim: dropping the empty
+    // leading and trailing segments removes the need for an anchored trim expression, which
+    // backtracks super-linearly on dash-heavy input.
+    const slug = normalizedTypeKey.split(/[^a-z0-9]+/).filter(Boolean).join('-') || 'unknown';
+
+    let idKey = slug;
+    let suffix = 2;
+
+    while (usedIdKeys.has(idKey)) {
+      idKey = `${slug}-${suffix++}`;
+    }
+
+    usedIdKeys.add(idKey);
+    return idKey;
   }
 
   /** Keeps the per-row action labels in sync with the loaded address types. */

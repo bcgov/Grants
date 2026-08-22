@@ -564,7 +564,17 @@ public partial class UnityPlugin
       ProfileContext profileContext,
       CancellationToken cancellationToken)
   {
-    if (addressRequest.IsPrimary || await TypeGroupHasFlaggedPrimary(addressRequest.AddressType, profileContext, cancellationToken))
+    if (addressRequest.IsPrimary)
+    {
+      return addressRequest;
+    }
+
+    // Only promote on a cache we could actually read. Treating an absent or malformed cache as
+    // "no primary" would rewrite the request to primary and publish that to Unity, replacing a
+    // primary that exists there simply because the cache had expired.
+    var groupState = await ReadTypeGroupPrimaryState(addressRequest.AddressType, profileContext, cancellationToken);
+
+    if (groupState != TypeGroupPrimaryState.NoFlaggedPrimary)
     {
       return addressRequest;
     }
@@ -577,11 +587,27 @@ public partial class UnityPlugin
   }
 
   /// <summary>
+  /// What the cache can tell us about an address type group's primary.
+  /// </summary>
+  private enum TypeGroupPrimaryState
+  {
+    /// <summary>The cache is missing or not in the expected shape — nothing can be concluded.</summary>
+    Unknown,
+
+    /// <summary>The cache was read and an address of this type carries an explicit isPrimary flag.</summary>
+    HasFlaggedPrimary,
+
+    /// <summary>The cache was read and no address of this type is flagged.</summary>
+    NoFlaggedPrimary
+  }
+
+  /// <summary>
   /// Reads the cache and reports whether any address of the given type already carries an
   /// explicit isPrimary flag. Unflagged addresses do not count: a group whose primary is only
-  /// inferred is exactly the case that needs the flag written down.
+  /// inferred is exactly the case that needs the flag written down. An unreadable cache returns
+  /// <see cref="TypeGroupPrimaryState.Unknown"/> so callers do not mistake it for an empty group.
   /// </summary>
-  private async Task<bool> TypeGroupHasFlaggedPrimary(
+  private async Task<TypeGroupPrimaryState> ReadTypeGroupPrimaryState(
       string addressType,
       ProfileContext profileContext,
       CancellationToken cancellationToken)
@@ -593,7 +619,10 @@ public partial class UnityPlugin
         !root.TryGetProperty("addresses", out var addresses) ||
         addresses.ValueKind != JsonValueKind.Array)
     {
-      return false;
+      logger.LogDebug(
+          "No usable cached ADDRESSINFO for ProfileId {ProfileId} — leaving the requested IsPrimary untouched",
+          profileContext.ProfileId);
+      return TypeGroupPrimaryState.Unknown;
     }
 
     foreach (var address in addresses.EnumerateArray())
@@ -602,11 +631,11 @@ public partial class UnityPlugin
           address.TryGetProperty("isPrimary", out var isPrimary) &&
           isPrimary.ValueKind == JsonValueKind.True)
       {
-        return true;
+        return TypeGroupPrimaryState.HasFlaggedPrimary;
       }
     }
 
-    return false;
+    return TypeGroupPrimaryState.NoFlaggedPrimary;
   }
 
   /// <summary>

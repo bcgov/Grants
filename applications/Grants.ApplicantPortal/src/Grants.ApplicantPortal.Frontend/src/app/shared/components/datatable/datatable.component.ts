@@ -427,7 +427,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
    * declares a `labelField`, the value of that field on the row wins; otherwise
    * the static `label` from the config is used.
    */
-  getActionLabel(row: any, action: DatatableActionItem): string {
+  getActionLabel(row: Record<string, unknown>, action: DatatableActionItem): string {
     if (!action.labelField) {
       return action.label;
     }

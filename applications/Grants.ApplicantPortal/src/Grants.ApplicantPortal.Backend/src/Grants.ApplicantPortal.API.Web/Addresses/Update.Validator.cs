@@ -50,6 +50,13 @@ public class UpdateAddressValidator : Validator<UpdateAddressRequest>
       .MaximumLength(100)
       .When(x => !string.IsNullOrEmpty(x.Country));
 
+    // Required exactly as on Create: HandleAsync forwards this straight into EditAddressCommand
+    // and the Unity plugin publishes it in ADDRESS_EDIT_COMMAND, so an omitted value would send
+    // Guid.Empty downstream rather than being resolved from the authenticated profile.
+    RuleFor(x => x.ApplicantId)
+      .NotEmpty()
+      .WithMessage("ApplicantId is required.");
+
     RuleFor(x => x.PluginId)
       .NotEmpty()
       .WithMessage("PluginId is required.")
