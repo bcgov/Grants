@@ -97,8 +97,8 @@
           }
 
           &.actions-column {
-            width: 40px;
-            padding-right: 24px !important;
+            width: 32px;
+            padding-right: 12px !important;
           }
         }
       }
@@ -119,8 +119,14 @@
             border-top: 1px solid var(--bc-gray-50) !important;
 
             &.name-column, &.submission-type-column { font-weight: 500 !important; }
-            &.email-link, &.email-column { 
+            &.email-link, &.email-column {
               color: var(--bc-blue) !important;
+              &:hover { text-decoration: underline; }
+            }
+
+            .datatable-cell-link {
+              color: var(--bc-blue) !important;
+              text-decoration: none;
               &:hover { text-decoration: underline; }
             }
             &.title-column { font-style: italic; }
@@ -128,11 +134,11 @@
 
             &.actions-column {
               text-align: center !important;
-              padding-right: 24px !important;
+              padding-right: 12px !important;
 
               .btn {
                 color: var(--bc-blue) !important;
-                padding: 8px 12px !important;
+                padding: 8px !important;
                 border-radius: 4px;
                 transition: all 0.2s ease;
                 background-color: transparent !important;
@@ -152,6 +158,7 @@
                   align-items: center;
                   &:hover { background-color: var(--bc-gray-30) !important; }
                   i { width: 16px; font-size: var(--bc-font-size-12) !important; }
+                  img.action-icon { width: 14px; height: 14px; }
                 }
               }
             }
@@ -314,6 +321,25 @@
 
         .email-link {
           color: var(--bc-blue);
+        }
+
+        .datatable-cell-link {
+          color: var(--bc-blue);
+          text-decoration: none;
+          &:hover { text-decoration: underline; }
+        }
+
+        .datatable-cell-link-mobile {
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 6px;
+          text-decoration: none;
+
+          i {
+            font-size: var(--bc-font-size-12);
+            flex-shrink: 0;
+          }
         }
       }
     }

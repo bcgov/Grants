@@ -14,3 +14,103 @@
     ></app-datatable>
   </div>
 </div>
+
+<!-- Related Links Modal -->
+<dialog
+  id="related-links-modal"
+  data-cy="related-links-modal"
+  class="modal fade ap-edit-modal"
+  [class.show]="showRelatedLinksModal"
+  [style.display]="showRelatedLinksModal ? 'block' : 'none'"
+  tabindex="-1"
+  aria-labelledby="related-links-modal-label"
+  [attr.aria-hidden]="!showRelatedLinksModal"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="related-links-modal-label" data-cy="related-links-modal-label">Related Links</h5>
+        <button
+          type="button"
+          id="related-links-modal-close-btn"
+          data-cy="related-links-modal-close-btn"
+          class="btn-close"
+          (click)="onCloseRelatedLinksModal()"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        @if (selectedSubmission) {
+          <div class="mb-3" data-cy="related-links-modal-applicant-message">
+            <div class="form-label fw-bold">Applicant Message</div>
+            <p class="mb-0">{{ selectedSubmission.applicantMessage || '—' }}</p>
+          </div>
+          <div class="mb-3 d-flex align-items-center" data-cy="related-links-modal-eligible-for-renewal">
+            <label class="form-label fw-bold mb-0 me-2" for="eligible-for-renewal-toggle">Eligible for Renewal</label>
+            <div class="form-check form-switch mb-0">
+              <input
+                type="checkbox"
+                role="switch"
+                id="eligible-for-renewal-toggle"
+                data-cy="related-links-modal-eligible-for-renewal-toggle"
+                class="form-check-input"
+                [checked]="selectedSubmission.eligibleForRenewal"
+                [attr.aria-checked]="selectedSubmission.eligibleForRenewal"
+                disabled
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-label fw-bold">Renewal Link</div>
+            @if (selectedSubmission.renewalLink) {
+              <p class="mb-0">
+                <a
+                  [href]="selectedSubmission.renewalLink.uri"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >{{ selectedSubmission.renewalLink.title || selectedSubmission.renewalLink.uri }}</a>
+              </p>
+            } @else {
+              <p class="mb-0">—</p>
+            }
+          </div>
+          <div class="mb-0">
+            <div class="form-label fw-bold">Related Links</div>
+            @if (selectedSubmission.relatedLinks && selectedSubmission.relatedLinks.length > 0) {
+              <ul class="list-unstyled mb-0">
+                @for (link of selectedSubmission.relatedLinks; track link.uri) {
+                  <li class="mb-2">
+                    <a [href]="link.uri" target="_blank" rel="noopener noreferrer">{{ link.title || link.uri }}</a>
+                    @if (link.description) {
+                      <p class="mb-0 text-muted">{{ link.description }}</p>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="mb-0">No related links.</p>
+            }
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          id="related-links-modal-close-footer-btn"
+          data-cy="related-links-modal-close-footer-btn"
+          class="btn btn-secondary"
+          (click)="onCloseRelatedLinksModal()"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<div
+  class="modal-backdrop fade"
+  [class.show]="showRelatedLinksModal"
+  [style.display]="showRelatedLinksModal ? 'block' : 'none'"
+  *ngIf="showRelatedLinksModal"
+></div>
