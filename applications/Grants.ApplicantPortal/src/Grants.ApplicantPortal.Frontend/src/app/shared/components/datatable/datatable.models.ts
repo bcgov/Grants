@@ -19,6 +19,8 @@ export interface DatatableBadgeConfig {
 
 export interface DatatableActionItem {
   label: string;
+  /** Optional row field holding a per-row label — falls back to `label` when absent/empty. */
+  labelField?: string;
   icon: string;
   iconSrc?: string; // Optional image icon (e.g. 'images/icons/foo.svg') — takes precedence over the Font Awesome `icon` class
   action: string;

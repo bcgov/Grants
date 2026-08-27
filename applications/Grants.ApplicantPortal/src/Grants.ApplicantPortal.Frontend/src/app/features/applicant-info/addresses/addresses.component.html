@@ -46,23 +46,33 @@
           </div>
         </div>
       </div>
-      } @else if (primaryAddress) {
+      } @else if (addresses.length > 0) {
       <div id="primary-address-info" data-cy="primary-address-info" class="primary-address-info">
-        <h6 class="mb-2">PRIMARY ADDRESS</h6>
-        <div class="row">
-          <div class="col-md-10 col-sm-12">
-            <label for="primary-full-address" class="form-label">Full Address</label>
-            <p id="primary-full-address" class="address-value">
-              {{ getPrimaryFullAddress() }}, {{ primaryAddress.city }}, {{ primaryAddress.province }}, {{ primaryAddress.postalCode }}
-            </p>
+        @for (slot of primaryAddressSlots; track slot.idKey) {
+          <div [id]="'primary-address-' + slot.idKey" [attr.data-cy]="'primary-address-' + slot.idKey">
+            <h6 class="mb-2">{{ slot.heading }}</h6>
+            @if (slot.address) {
+              <div class="row">
+                <div class="col-md-10 col-sm-12">
+                  <label [for]="'primary-full-address-' + slot.idKey" class="form-label">Full Address</label>
+                  <p [id]="'primary-full-address-' + slot.idKey" class="address-value">
+                    {{ slot.address.fullAddress }}, {{ slot.address.city }}, {{ slot.address.province }}, {{ slot.address.postalCode }}
+                  </p>
+                </div>
+                <div class="col-md-2 col-sm-12">
+                  <label [for]="'primary-address-type-' + slot.idKey" class="form-label">Type</label>
+                  <p [id]="'primary-address-type-' + slot.idKey" class="address-value">
+                      {{ slot.address.addressType }}
+                  </p>
+                </div>
+              </div>
+            } @else {
+              <div class="no-primary-address text-center text-muted">
+                <p>No primary {{ slot.label }} address found.</p>
+              </div>
+            }
           </div>
-          <div class="col-md-2 col-sm-12">
-            <label for="primary-address-type" class="form-label">Type</label>
-            <p id="primary-address-type" class="address-value">
-                {{ primaryAddress.addressType }}
-            </p>
-          </div>
-        </div>
+        }
       </div>
       } @else {
       <div id="no-addresses-message" data-cy="no-addresses-message" class="no-primary-address text-center text-muted">
@@ -146,7 +156,7 @@
                   name="isPrimary"
                   [disabled]="isSavingAddress">
                 <label for="address-is-primary" class="form-check-label">
-                  Set as Primary Address
+                  {{ primaryCheckboxLabel }}
                 </label>
               </div>
             </div>
@@ -311,7 +321,9 @@
 </dialog>
 
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showAddAddressModal" [style.display]="showAddAddressModal ? 'block' : 'none'" *ngIf="showAddAddressModal"></div>
+@if (showAddAddressModal) {
+  <div class="modal-backdrop fade show"></div>
+}
 
 <!-- Delete Confirmation Modal -->
 <dialog id="address-delete-modal" data-cy="address-delete-modal" class="modal fade ap-delete-modal" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="delete-address-modal-label" [attr.aria-hidden]="!showDeleteConfirmModal">
@@ -382,4 +394,6 @@
 </dialog>
 
 <!-- Delete Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showDeleteConfirmModal" [style.display]="showDeleteConfirmModal ? 'block' : 'none'" *ngIf="showDeleteConfirmModal"></div>
+@if (showDeleteConfirmModal) {
+  <div class="modal-backdrop fade show"></div>
+}

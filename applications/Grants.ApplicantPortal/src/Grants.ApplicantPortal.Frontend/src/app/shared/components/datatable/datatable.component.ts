@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
-import { 
-  DatatableConfig, 
+import {
+  DatatableConfig,
+  DatatableActionItem,
   DatatableColumn,
   DatatableRowClickEvent,
   DatatableActionEvent,
@@ -419,6 +420,19 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   get pagerPages(): number[] {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  /**
+   * Resolves the label to show for an action on a given row. When the action
+   * declares a `labelField`, the value of that field on the row wins; otherwise
+   * the static `label` from the config is used.
+   */
+  getActionLabel(row: Record<string, unknown>, action: DatatableActionItem): string {
+    if (!action.labelField) {
+      return action.label;
+    }
+    const rowLabel = this.getNestedProperty(row, action.labelField);
+    return rowLabel ? String(rowLabel) : action.label;
   }
 
   shouldShowActions(row: any): boolean {

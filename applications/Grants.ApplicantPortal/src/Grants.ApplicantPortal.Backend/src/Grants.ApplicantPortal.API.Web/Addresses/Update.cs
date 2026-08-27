@@ -80,7 +80,7 @@ public class Update(IMediator _mediator)
       {
         AddressId = result.Value.AddressId,
         Message = "Address updated successfully",
-        PrimaryAddressId = result.Value.PrimaryAddressId
+        PrimaryAddressIdsByType = result.Value.PrimaryAddressIdsByType
       };
       return;
     }

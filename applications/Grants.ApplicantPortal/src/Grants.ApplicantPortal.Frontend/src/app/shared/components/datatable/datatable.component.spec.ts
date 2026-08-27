@@ -346,6 +346,41 @@ describe('DatatableComponent', () => {
     });
   });
 
+  describe('per-row action labels (labelField)', () => {
+    const LABEL_CONFIG: DatatableConfig = {
+      tableId: 'label-table',
+      columns: [{ key: 'name', label: 'Name', sortable: false }],
+      actionsType: 'dropdown',
+      actionItems: [
+        { label: 'Set as primary', labelField: 'rowLabel', icon: 'fa-home', action: 'setAsPrimary' },
+      ],
+      pageSize: 10,
+    };
+
+    function render(data: any[]): void {
+      component.config = { ...LABEL_CONFIG };
+      component.data = data;
+      component.isMobile = false;
+      fixture.detectChanges();
+    }
+
+    it('renders the row value of labelField instead of the static label', () => {
+      render([{ name: 'Row 1', rowLabel: 'Set as primary Mailing address' }]);
+
+      const action = fixture.nativeElement.querySelector('[data-cy="datatable-action-test-0-setAsPrimary"]');
+      expect(action.textContent.trim()).toBe('Set as primary Mailing address');
+    });
+
+    it('falls back to the static label when the row field is empty or the action has no labelField', () => {
+      render([{ name: 'Row 1', rowLabel: '' }]);
+
+      const action = fixture.nativeElement.querySelector('[data-cy="datatable-action-test-0-setAsPrimary"]');
+      expect(action.textContent.trim()).toBe('Set as primary');
+      expect(component.getActionLabel({ name: 'Row 1' }, { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' }))
+        .toBe('Edit');
+    });
+  });
+
   it('cleans up subscriptions on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
