@@ -146,6 +146,19 @@
                     } @else {
                       {{ getCellValue(row, column) }}
                     }
+                  } @else if (column.type === 'action-link') {
+                    @if (getCellValue(row, column) == null) {
+                      —
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 datatable-cell-action"
+                        [attr.data-cy]="'datatable-row-' + idSuffix + '-' + i + '-' + column.key"
+                        (click)="onCellAction(column, row, $event)"
+                      >
+                        {{ getCellValue(row, column) }}
+                      </button>
+                    }
                   } @else {
                     @if (getCellValue(row, column) != null) {
                       {{ getCellValue(row, column) }}
@@ -225,7 +238,7 @@
                               } @else {
                                 <i class="fas {{ action.icon }} me-2"></i>
                               }
-                              {{ action.label }}
+                              {{ getActionLabel(row, action) }}
                             </button>
                           </li>
                         }
@@ -332,6 +345,20 @@
                   } @else {
                     {{ getCellValue(row, column) }}
                   }
+                } @else if (column.type === 'action-link') {
+                  @if (getCellValue(row, column) == null) {
+                    —
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-link p-0 datatable-cell-action-mobile"
+                      [attr.data-cy]="'datatable-card-row-' + idSuffix + '-' + i + '-' + column.key"
+                      [attr.aria-label]="getActionLinkAriaLabel(row, column)"
+                      (click)="onCellAction(column, row, $event)"
+                    >
+                      <i class="fas fa-download" aria-hidden="true"></i>
+                    </button>
+                  }
                 } @else {
                   @if (getCellValue(row, column) != null) {
                     {{ getCellValue(row, column) }}
@@ -384,7 +411,7 @@
                     } @else {
                       <i class="fas {{ action.icon }} me-1"></i>
                     }
-                    {{ action.label }}
+                    {{ getActionLabel(row, action) }}
                   </button>
                 }
               } @else {

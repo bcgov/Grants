@@ -45,10 +45,10 @@ public class CreateAddressHandler(
         logger.LogInformation("Successfully created address {AddressId} for ProfileId: {ProfileId}",
           result.Value, request.ProfileId);
 
-        var primaryId = await PrimaryAddressResolver.GetPrimaryAddressIdAsync(
+        var primaryIdsByType = await PrimaryAddressResolver.GetPrimaryAddressIdsByTypeAsync(
             pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
 
-        return new AddressMutationResult(result.Value, primaryId);
+        return new AddressMutationResult(result.Value, primaryIdsByType);
       }
 
       logger.LogWarning("Failed to create address for ProfileId: {ProfileId}. Status: {Status}",

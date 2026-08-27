@@ -72,9 +72,12 @@ public class ProfileDataRetrievalService(
     }
     catch (Exception ex)
     {
+      // Log the full exception detail (message, plugin name, downstream status, ids) for
+      // server-side diagnostics only. The returned Result must stay generic — it is relayed
+      // verbatim to the HTTP client and must never leak internal plugin/infrastructure details.
       logger.LogError(ex, "Error retrieving {DataType} data for ProfileId: {ProfileId}, PluginId: {PluginId}, Provider: {Provider}",
           key, profileId, pluginId, provider);
-      return Result.Error($"Failed to retrieve {key.ToLowerInvariant()} data: {ex.Message}");
+      return Result.Error("Unable to retrieve the requested data. Please try again later.");
     }
   }
 }

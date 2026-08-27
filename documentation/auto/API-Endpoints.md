@@ -1,5 +1,7 @@
 # API Endpoints Reference
 
+<!-- Last updated: auto-generated — do not edit manually -->
+
 Complete reference for all REST endpoints in the Grants Applicant Portal API. All endpoints use [FastEndpoints](https://fast-endpoints.com/) and JWT Bearer authentication via Keycloak unless otherwise noted.
 
 ---
@@ -111,21 +113,37 @@ Returns the list of available role options (key/label pairs) defined by the plug
 | DELETE | `/Addresses/{AddressId}/{PluginId}/{Provider}` | ✅ | Delete an existing address |
 | PATCH | `/Addresses/{AddressId}/{PluginId}/{Provider}/set-primary` | ✅ | Set an address as primary |
 
+#### Primary addresses are scoped by address type
+
+An applicant holds **one primary address per address type** (e.g. Physical, Mailing), not
+one primary overall. An address always has exactly one type, and exclusivity is enforced
+only within that type group — so a Primary Physical and a Primary Mailing coexist.
+
+All four mutation endpoints therefore return `primaryAddressIdsByType`, a map of address
+type to that type's primary address id, replacing the former scalar `primaryAddressId`.
+The map is always present and is `{}` when nothing can be resolved. Keys are compared
+case-insensitively and are not restricted to a fixed set.
+
+A type group with no explicitly flagged primary **infers** one (the most recently created
+address of that type), so any type with at least one address always resolves a primary.
+
 ### Create Address
 
 Creates a new address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
 
 For UNITY, an `ADDRESS_CREATE_COMMAND` message is published to RabbitMQ after the local cache is updated.
 
-**Response:** `{ addressId, primaryAddressId }`
+**Response:** `{ addressId, primaryAddressIdsByType }`
 
 ### Update Address
 
 Updates an existing address. Required fields: `addressType`, `street`, `city`, `province`, `postalCode`. Optional: `street2`, `unit`, `country`, `isPrimary`. The request body also includes `applicantId` (required, Guid).
 
+Request validation mirrors Create: `addressType` (max 50), `street` (max 200), `city` (max 100), `province` (max 50) and `postalCode` (max 20) must be present, and `street2` (max 200), `unit` (max 50) and `country` (max 100) are length-checked when supplied. `AddressId`, `ApplicantId`, `PluginId` and `Provider` must be present — `applicantId` is forwarded to Unity in `ADDRESS_EDIT_COMMAND`, so it cannot be omitted.
+
 For UNITY, an `ADDRESS_EDIT_COMMAND` message is published.
 
-**Response:** `{ addressId, message, primaryAddressId }`
+**Response:** `{ addressId, message, primaryAddressIdsByType }`
 
 ### Delete Address
 
@@ -133,15 +151,17 @@ Deletes an address by `AddressId`. This endpoint expects a **JSON request body**
 
 For UNITY, an `ADDRESS_DELETE_COMMAND` message is published.
 
-**Response:** `{ addressId, message, primaryAddressId }`
+**Response:** `{ addressId, message, primaryAddressIdsByType }`
 
 ### Set Address as Primary
 
-Sets an address as the primary address for the profile.
+Sets an address as the primary address **for its own address type**. The type is derived from the target address itself, not supplied by the caller, so only that type group is re-flagged — primaries of other address types are left untouched.
+
+The request carries no body. `AddressId` must be a non-empty Guid — the route constraint rejects a non-Guid, but an all-zero Guid is caught here — and `PluginId` and `Provider` must be present and at most 50 characters, since both become Redis cache-key components.
 
 For UNITY, an `ADDRESS_SET_PRIMARY_COMMAND` message is published.
 
-**Response:** `{ addressId, message, primaryAddressId }`
+**Response:** `{ addressId, message, primaryAddressIdsByType }`
 
 ---
 
@@ -165,8 +185,27 @@ For UNITY, an `ORGANIZATION_EDIT_COMMAND` message is published.
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/Submissions/{PluginId}/{Provider}` | ✅ | Retrieve submissions with automatic cache hydration |
+| GET | `/Submissions/{PluginId}/{Provider}/{SubmissionId:Guid}/Form` | ✅ | Retrieve a single submission's form.io schema and data |
+
+### Retrieve Submissions
 
 Read-only. Returns cached submission data for the profile/plugin/provider combination.
+
+### Retrieve Submission Form
+
+Retrieves the form.io form definition (`schema`) and submission data (`data`) for a single submission, for client-side rendering and PDF rasterization by the frontend. Unlike the other `Retrieve*` endpoints, this data is **never pre-seeded/eagerly hydrated** — it is only fetched and cached (segmented per profile+plugin+provider+submission, key `SUBMISSIONFORM`) the first time this endpoint is actually called for a given submission. Cache stampede protection applies as usual.
+
+**Route parameters:** `PluginId`, `Provider`, `SubmissionId` (Guid, required)
+
+**Ownership check:** Before fetching form content, the handler (`RetrieveSubmissionFormQueryHandler`) first re-retrieves the caller's own submissions list (`SUBMISSIONINFO`, the same data backing `GET /Submissions/{PluginId}/{Provider}`) and confirms the requested `SubmissionId` is present in it. This prevents an authenticated user from retrieving another profile's submission form by guessing/enumerating `SubmissionId` values. If the submission is not found in the caller's own list, the endpoint returns `403 Forbidden`.
+
+**Sourcing:**
+- **DEMO** — returns a static mock form.io fixture (`Demo/Data/SubmissionFormData.cs`).
+- **UNITY** — calls the Unity profile endpoint with an additional `SubmissionId` query parameter. This upstream call is currently stubbed/unreachable in dev/test environments; a failed or unreachable call is caught and surfaced as a generic `Result.Error` (never an unhandled exception or leaked internal detail).
+
+**Response:** `{ profileId, pluginId, provider, submissionId, data: { schema, data }, populatedAt, cacheStatus, cacheStore }`
+
+**Response codes:** `200` success, `400` invalid request or plugin validation failed, `401` unauthorized, `403` forbidden (submission not owned by caller), `404` not found, `422` unprocessable entity (invalid data)
 
 ---
 
@@ -229,6 +268,10 @@ All `Retrieve*` (GET) endpoints follow the same pattern:
 2. If not cached, call the plugin to fetch/populate data
 3. Store in cache and return
 4. Cache stampede protection prevents concurrent hydration for the same key
+
+`GET /Submissions/{PluginId}/{Provider}/{SubmissionId:Guid}/Form` follows this same cache-aside pattern but, unlike every other `Retrieve*` endpoint, its data (`SUBMISSIONFORM`) is never eagerly/pre-seeded — it is only populated the first time a caller actually requests that specific submission's form.
+
+Errors from the shared `ProfileDataRetrievalService` (used by all `Retrieve*` handlers) are always returned as a generic message (`"Unable to retrieve the requested data. Please try again later."`); the underlying exception detail is logged server-side only and never relayed to the client.
 
 ### Write Operations + Messaging
 

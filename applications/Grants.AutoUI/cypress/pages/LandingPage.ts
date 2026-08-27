@@ -36,6 +36,14 @@ class LandingPage {
     return cy.get(AppSelectors.Landing.submissionsTable);
   }
 
+  // TODO (AB#34070): the "Submission Type" column is now a per-row
+  // 'action-link' button (view/download PDF) instead of a plain <a> link.
+  // Its data-cy is a dynamic, per-row binding (no static registry entry —
+  // see cypress/e2e/submissionPdfDownload.cy.ts for details), so no getter
+  // is added here yet. Once a factory selector exists in registry.ts (e.g.
+  // Submissions.actionLinkCell(rowIndex)), add a getter/method here rather
+  // than hardcoding the selector in a spec.
+
   // ── Contacts ─────────────────────────────────────────────────────────────
   get addContactButton() {
     return cy.get(AppSelectors.Landing.addContactButton);
