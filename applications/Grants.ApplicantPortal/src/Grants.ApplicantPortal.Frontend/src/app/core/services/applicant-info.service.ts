@@ -3,12 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError, timer } from 'rxjs';
 import { map, retry, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import {
-  BackendResponse,  
+  BackendResponse,
   OrganizationData,
   SubmissionsResponse,
   PaymentsResponse,
   PluginEventDto,
   PluginEventsResponse,
+  AddressMutationRequest,
+  AddressMutationResponse,
+  AddressTypesResponse,
 } from '../../shared/models/applicant-info.interface';
 import { environment } from '../../../environments/environment';
 
@@ -395,9 +398,9 @@ export class ApplicantInfoService {
     addressId: string,
     pluginId: string,
     provider: string
-  ): Observable<any> {
+  ): Observable<AddressMutationResponse> {
     const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}/set-primary`;
-    return this.http.patch<any>(url, {}).pipe(
+    return this.http.patch<AddressMutationResponse>(url, {}).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to set address as primary:', error);
@@ -409,9 +412,9 @@ export class ApplicantInfoService {
   /**
    * Fetches available address types for a workspace
    */
-  getAddressTypes(pluginId: string): Observable<any> {
+  getAddressTypes(pluginId: string): Observable<AddressTypesResponse> {
     const url = `${this.baseUrl}/Addresses/${pluginId}/types`;
-    return this.http.get<any>(url).pipe(
+    return this.http.get<AddressTypesResponse>(url).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to fetch address types:', error);
@@ -426,21 +429,10 @@ export class ApplicantInfoService {
   createAddress(
     pluginId: string,
     provider: string,
-    addressData: {
-      applicantId?: string;
-      addressType: string;
-      street: string;
-      city: string;
-      province: string;
-      postalCode: string;
-      isPrimary: boolean;
-      street2?: string;
-      unit?: string;
-      country?: string;
-    }
-  ): Observable<any> {
+    addressData: AddressMutationRequest
+  ): Observable<AddressMutationResponse> {
     const url = `${this.baseUrl}/Addresses/${pluginId}/${provider}`;
-    return this.http.post<any>(url, addressData).pipe(
+    return this.http.post<AddressMutationResponse>(url, addressData).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to create address:', error);
@@ -457,10 +449,10 @@ export class ApplicantInfoService {
     pluginId: string,
     provider: string,
     applicantId?: string
-  ): Observable<any> {
+  ): Observable<AddressMutationResponse> {
     const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}`;
     const options = applicantId ? { body: { applicantId } } : {};
-    return this.http.delete<any>(url, options).pipe(
+    return this.http.delete<AddressMutationResponse>(url, options).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to delete address:', error);
@@ -476,20 +468,10 @@ export class ApplicantInfoService {
     addressId: string,
     pluginId: string,
     provider: string,
-    addressData: {
-      addressType: string;
-      street: string;
-      city: string;
-      province: string;
-      postalCode: string;
-      isPrimary: boolean;
-      street2?: string;
-      unit?: string;
-      country?: string;
-    }
-  ): Observable<any> {
+    addressData: AddressMutationRequest
+  ): Observable<AddressMutationResponse> {
     const url = `${this.baseUrl}/Addresses/${addressId}/${pluginId}/${provider}`;
-    return this.http.put<any>(url, addressData).pipe(
+    return this.http.put<AddressMutationResponse>(url, addressData).pipe(
       retry({ count: 1, delay: 1000 }),
       catchError((error) => {
         console.error('Failed to update address:', error);

@@ -77,7 +77,7 @@ public class Create(IMediator _mediator)
       Response = new CreateAddressResponse
       {
         AddressId = result.Value.AddressId,
-        PrimaryAddressId = result.Value.PrimaryAddressId
+        PrimaryAddressIdsByType = result.Value.PrimaryAddressIdsByType
       };
       return;
     }

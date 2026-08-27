@@ -45,10 +45,10 @@ public class EditAddressHandler(
         logger.LogInformation("Successfully edited address {AddressId} for ProfileId: {ProfileId}",
           request.AddressId, request.ProfileId);
 
-        var primaryId = await PrimaryAddressResolver.GetPrimaryAddressIdAsync(
+        var primaryIdsByType = await PrimaryAddressResolver.GetPrimaryAddressIdsByTypeAsync(
             pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
 
-        return new AddressMutationResult(request.AddressId, primaryId);
+        return new AddressMutationResult(request.AddressId, primaryIdsByType);
       }
 
       logger.LogWarning("Failed to edit address {AddressId} for ProfileId: {ProfileId}. Status: {Status}",
