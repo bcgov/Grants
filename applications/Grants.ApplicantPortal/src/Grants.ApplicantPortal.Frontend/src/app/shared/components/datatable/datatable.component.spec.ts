@@ -384,4 +384,114 @@ describe('DatatableComponent', () => {
   it('cleans up subscriptions on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
+
+  describe("column.type === 'action-link' rendering", () => {
+    const ACTION_LINK_CONFIG: DatatableConfig = {
+      tableId: 'action-link-table',
+      columns: [{ key: 'type', label: 'Submission', sortable: false, type: 'action-link' }],
+      actionsType: 'none',
+      actionLinkConfig: { ariaLabelField: 'type', ariaLabelPrefix: 'Download PDF for' },
+      pageSize: 10,
+    };
+
+    function render(config: DatatableConfig, data: any[]): void {
+      component.config = { ...config };
+      component.data = data;
+      fixture.detectChanges();
+    }
+
+    describe('desktop table', () => {
+      beforeEach(() => {
+        component.isMobile = false;
+      });
+
+      it('renders a text button with the cell value', () => {
+        render(ACTION_LINK_CONFIG, [{ type: 'Grant Application' }]);
+
+        const button = fixture.nativeElement.querySelector('button.datatable-cell-action');
+        expect(button).withContext('action-link button should render').not.toBeNull();
+        expect(button.textContent.trim()).toBe('Grant Application');
+      });
+
+      it('renders an em dash when the cell value is null', () => {
+        render(ACTION_LINK_CONFIG, [{ type: null }]);
+
+        expect(fixture.nativeElement.querySelector('button.datatable-cell-action')).toBeNull();
+        expect(fixture.nativeElement.textContent).toContain('—');
+      });
+
+      it('emits cellAction with the column and row when clicked', () => {
+        render(ACTION_LINK_CONFIG, [{ type: 'Grant Application' }]);
+        let emitted: any;
+        component.cellAction.subscribe((e) => (emitted = e));
+
+        const button = fixture.nativeElement.querySelector('button.datatable-cell-action') as HTMLButtonElement;
+        button.click();
+
+        expect(emitted).toBeDefined();
+        expect(emitted.column.key).toBe('type');
+        expect(emitted.row).toEqual({ type: 'Grant Application' });
+      });
+
+      it('stops the click from bubbling to the row', () => {
+        render({ ...ACTION_LINK_CONFIG, rowClickable: true }, [{ type: 'Grant Application' }]);
+        let rowClickEmitted: any;
+        component.rowClick.subscribe((e) => (rowClickEmitted = e));
+
+        const button = fixture.nativeElement.querySelector('button.datatable-cell-action') as HTMLButtonElement;
+        button.click();
+
+        expect(rowClickEmitted).toBeUndefined();
+      });
+    });
+
+    describe('mobile card view', () => {
+      beforeEach(() => {
+        component.isMobile = true;
+      });
+
+      it('renders an icon-only download button with an aria-label built from ariaLabelField', () => {
+        render(ACTION_LINK_CONFIG, [{ type: 'Grant Application' }]);
+
+        const button = fixture.nativeElement.querySelector('button.datatable-cell-action-mobile');
+        expect(button).withContext('mobile action-link button should render').not.toBeNull();
+        expect(button.getAttribute('aria-label')).toBe('Download PDF for Grant Application');
+        expect(button.querySelector('i.fa-download')).not.toBeNull();
+        expect(button.querySelector('i').getAttribute('aria-hidden')).toBe('true');
+      });
+
+      it('emits cellAction with the column and row when clicked', () => {
+        render(ACTION_LINK_CONFIG, [{ type: 'Grant Application' }]);
+        let emitted: any;
+        component.cellAction.subscribe((e) => (emitted = e));
+
+        const button = fixture.nativeElement.querySelector('button.datatable-cell-action-mobile') as HTMLButtonElement;
+        button.click();
+
+        expect(emitted).toBeDefined();
+        expect(emitted.column.key).toBe('type');
+        expect(emitted.row).toEqual({ type: 'Grant Application' });
+      });
+    });
+  });
+
+  describe('getActionLinkAriaLabel', () => {
+    it('falls back to the cell value when ariaLabelField is not configured', () => {
+      component.config = {
+        tableId: 'fallback-table',
+        columns: [{ key: 'type', label: 'Submission', type: 'action-link' }],
+      };
+      const label = component.getActionLinkAriaLabel({ type: 'Grant Application' }, component.config.columns[0]);
+      expect(label).toBe('Download PDF for Grant Application');
+    });
+
+    it('falls back to the prefix alone when no label value is available', () => {
+      component.config = {
+        tableId: 'fallback-table',
+        columns: [{ key: 'type', label: 'Submission', type: 'action-link' }],
+      };
+      const label = component.getActionLinkAriaLabel({ type: null }, component.config.columns[0]);
+      expect(label).toBe('Download PDF for');
+    });
+  });
 });
