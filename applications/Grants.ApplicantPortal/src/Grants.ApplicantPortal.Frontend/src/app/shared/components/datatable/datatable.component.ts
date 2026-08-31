@@ -9,6 +9,7 @@ import {
   DatatableColumn,
   DatatableRowClickEvent,
   DatatableActionEvent,
+  DatatableCellActionEvent,
   DatatableSortEvent
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
@@ -30,6 +31,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   @Output() rowClick = new EventEmitter<DatatableRowClickEvent>();
   @Output() actionClick = new EventEmitter<DatatableActionEvent>();
+  @Output() cellAction = new EventEmitter<DatatableCellActionEvent>();
   @Output() sort = new EventEmitter<DatatableSortEvent>();
   @Output() dataChange = new EventEmitter<any[]>(); // Emit sorted data
 
@@ -188,6 +190,18 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
   onActionClick(actionType: string, row: any, index: number, event: Event): void {
     event.stopPropagation();
     this.actionClick.emit({ action: actionType, row, index });
+  }
+
+  onCellAction(column: DatatableColumn, row: any, event: Event): void {
+    event.stopPropagation();
+    this.cellAction.emit({ column, row });
+  }
+
+  getActionLinkAriaLabel(row: any, column: DatatableColumn): string {
+    const config = this.config.actionLinkConfig;
+    const prefix = config?.ariaLabelPrefix || 'Download PDF for';
+    const labelValue = config?.ariaLabelField ? row[config.ariaLabelField] : this.getCellValue(row, column);
+    return labelValue ? `${prefix} ${labelValue}` : prefix;
   }
 
   getRowLink(row: any): string | null {

@@ -6,6 +6,8 @@ The Grants Applicant Portal enforces **server-side resource ownership validation
 
 ---
 
+> Updated: `GET /Submissions/{PluginId}/{Provider}/{SubmissionId:Guid}/Form` introduces a second, read-side ownership check that is **not** implemented via `IResourceOwnershipValidator` (that service remains scoped to the write-operation flow described below). Instead, `RetrieveSubmissionFormQueryHandler` performs an ad hoc check inline: it re-fetches the caller's own `SUBMISSIONINFO` list and confirms the requested `SubmissionId` is present before ever fetching `SUBMISSIONFORM` (which can contain applicant PII/financial figures). A miss returns `Result.Forbidden()`, same as the validator-based flow. This is a narrower, single-purpose variant of the same "verify ownership before returning/mutating a client-supplied ID" principle, applied to a GET endpoint rather than a write operation.
+
 ## Problem Statement
 
 All write endpoints accept client-supplied IDs (`applicantId`, `contactId`, `addressId`, `organizationId`) in the request body or route. Without server-side validation, an authenticated user could:

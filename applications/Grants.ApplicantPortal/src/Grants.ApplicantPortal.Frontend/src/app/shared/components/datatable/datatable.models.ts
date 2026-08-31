@@ -2,7 +2,7 @@ export interface DatatableColumn {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'text' | 'date' | 'dateUtc' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean' | 'link';
+  type?: 'text' | 'date' | 'dateUtc' | 'currency' | 'badge' | 'email' | 'phone' | 'boolean' | 'link' | 'action-link';
   cssClass?: string;
   width?: string;
   booleanFalseBlank?: boolean;
@@ -32,6 +32,13 @@ export interface DatatableLinkConfig {
   linkField: string;   // Field on the row containing the link id to append
 }
 
+export interface DatatableActionLinkConfig {
+  /** Field on the row used to build a human-readable aria-label for the mobile icon-only button (e.g. row['type']). */
+  ariaLabelField?: string;
+  /** Prefix used ahead of the ariaLabelField value, e.g. "Download PDF for" -> "Download PDF for Grant Application". */
+  ariaLabelPrefix?: string;
+}
+
 export interface DatatableConfig {
   columns: DatatableColumn[];
   actionsType?: 'chevron' | 'dropdown' | 'none';
@@ -41,6 +48,7 @@ export interface DatatableConfig {
   disabledActionsTooltip?: string; // Tooltip text for disabled action rows
   disabledActionsTooltipField?: string; // Field name on row data for per-row disabled tooltip (overrides disabledActionsTooltip)
   linkConfig?: DatatableLinkConfig; // When set with chevron or a 'link' column, renders an <a> tag instead of a button/plain text
+  actionLinkConfig?: DatatableActionLinkConfig; // Config for 'action-link' columns (aria-label for the mobile icon button)
   badgeConfig?: DatatableBadgeConfig;
   rowClickable?: boolean;
   responsive?: boolean;
@@ -70,6 +78,11 @@ export interface DatatableActionEvent {
   action: string;
   row: any;
   index: number;
+}
+
+export interface DatatableCellActionEvent {
+  column: DatatableColumn;
+  row: any;
 }
 
 export interface DatatableSortEvent {

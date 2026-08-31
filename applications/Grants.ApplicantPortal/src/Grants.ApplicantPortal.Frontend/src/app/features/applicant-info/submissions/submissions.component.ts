@@ -1,17 +1,19 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   SubmissionsData,
 } from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
-import { DatatableConfig, DatatableActionEvent } from '../../../shared/components/datatable/datatable.models';
+import { DatatableConfig, DatatableActionEvent, DatatableCellActionEvent } from '../../../shared/components/datatable/datatable.models';
+import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { SubmissionPdfService } from '../../../core/services/submission-pdf.service';
+import { ToastService } from '../../../shared/services/toast.service';
 @Component({
   selector: 'app-applicant-info-submissions',
   standalone: true,
-  imports: [CommonModule, DatatableComponent],
+  imports: [DatatableComponent, LoadingOverlayComponent],
   templateUrl: './submissions.component.html',
   styleUrls: ['./submissions.component.scss'],
 })
@@ -26,9 +28,17 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   linkSource?: string;
   isLoading = true;
   error: string | null = null;
+  isGeneratingPdf = false;
 
   showRelatedLinksModal = false;
   selectedSubmission: SubmissionsData | null = null;
+
+  // Mobile responsive detection — follows the same matchMedia convention as DatatableComponent.
+  isMobile = false;
+  private mobileQuery!: MediaQueryList;
+  private readonly mobileQueryHandler = (e: MediaQueryListEvent): void => {
+    this.isMobile = e.matches;
+  };
 
   // Datatable configuration
   submissionsTableConfig: DatatableConfig = {
@@ -38,7 +48,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
     columns: [
       { key: 'referenceNo', label: 'Confirmation No', sortable: true, cssClass: 'date-column' },
       { key: 'submissionTime', label: 'Submitted', sortable: true, type: 'date', cssClass: 'submission-date-column' },
-      { key: 'type', label: 'Submission', sortable: true, type: 'link', cssClass: 'submission-type-column' },
+      { key: 'type', label: 'Submission', sortable: true, type: 'action-link', cssClass: 'submission-type-column' },
       { key: 'status', label: 'Status', sortable: true, type: 'badge', cssClass: 'status-column' }
     ],
     actionsType: 'dropdown',
@@ -46,6 +56,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       { label: 'View Related Links', icon: 'fa-link', iconSrc: 'images/icons/si_link-fill.svg', action: 'viewRelatedLinks' }
     ],
     actionsVisibilityField: 'hasRelatedLinks',
+    actionLinkConfig: { ariaLabelField: 'type', ariaLabelPrefix: 'Download PDF for' },
     badgeConfig: {
       field: 'status',
       displayField: 'status',
@@ -67,19 +78,27 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   };
 
   constructor(
-    private readonly applicantInfoService: ApplicantInfoService
+    private readonly applicantInfoService: ApplicantInfoService,
+    private readonly submissionPdfService: SubmissionPdfService,
+    private readonly toastService: ToastService
   ) {}
 
   ngOnInit(): void {
     if (this.pluginId && this.provider) {
       this.loadSubmissions();
     }
+
+    if (globalThis.window !== undefined) {
+      this.mobileQuery = globalThis.matchMedia('(max-width: 768px)');
+      this.isMobile = this.mobileQuery.matches;
+      this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     const pluginIdChanged = changes['pluginId'] && !changes['pluginId'].firstChange;
     const providerChanged = changes['provider'] && !changes['provider'].firstChange;
-    
+
     if (pluginIdChanged || providerChanged) {
       if (this.pluginId && this.provider) {
         this.loadSubmissions();
@@ -99,15 +118,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: (response) => {
           this.linkSource = response.linkSource;
-          // Set linkConfig on datatable so the submission column renders as an <a> tag;
-          // clear it when there's no linkSource so a stale baseUrl from a prior
-          // plugin/provider doesn't leak into this load.
-          this.submissionsTableConfig = {
-            ...this.submissionsTableConfig,
-            linkConfig: this.linkSource
-              ? { baseUrl: this.linkSource, linkField: 'linkId' }
-              : undefined
-          };
           let submissionsArray = response.submissionsData;
           
           if (!Array.isArray(submissionsArray)) {
@@ -124,8 +134,8 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
           }));
           this.isLoading = false;
         },
-        error: (error) => {
-          console.error('SubmissionsComponent - Error loading submissions:', error);
+        error: () => {
+          this.toastService.error('Failed to load submissions data.');
           this.error = 'Failed to load submissions data';
           this.submissionsData = [];
           this.isLoading = false;
@@ -134,6 +144,7 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.mobileQuery?.removeEventListener('change', this.mobileQueryHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -156,6 +167,33 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
 
     if (event.action === 'viewRelatedLinks') {
       this.onViewRelatedLinks(submission);
+    }
+  }
+
+  async onCellAction(event: DatatableCellActionEvent): Promise<void> {
+    if (event.column.key !== 'type') {
+      return;
+    }
+    const submission = event.row as SubmissionsData;
+    await this.generateSubmissionPdf(submission);
+  }
+
+  private async generateSubmissionPdf(submission: SubmissionsData): Promise<void> {
+    if (this.isGeneratingPdf || !this.pluginId || !this.provider) {
+      return;
+    }
+
+    this.isGeneratingPdf = true;
+    try {
+      if (this.isMobile) {
+        await this.submissionPdfService.downloadSubmissionPdf(this.pluginId, this.provider, submission.id);
+      } else {
+        await this.submissionPdfService.viewSubmissionPdf(this.pluginId, this.provider, submission.id);
+      }
+    } catch {
+      this.toastService.error('Unable to generate PDF for this submission.');
+    } finally {
+      this.isGeneratingPdf = false;
     }
   }
 

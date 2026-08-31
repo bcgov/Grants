@@ -14,6 +14,13 @@ public partial class UnityPlugin
 {
     public async Task<ProfileData> PopulateProfileAsync(ProfilePopulationMetadata metadata, CancellationToken cancellationToken = default)
     {
+        // SUBMISSIONFORM requires an additional submission id and is cached per-submission,
+        // so it is handled separately from the generic provider/key population flow below.
+        if (metadata.Key.Equals(SubmissionFormKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return await PopulateSubmissionFormAsync(metadata, cancellationToken);
+        }
+
         var cacheSegment = $"{metadata.Provider}:{metadata.Key}";
 
         return await pluginCacheService.GetOrFetchAsync<ProfileData>(
@@ -104,6 +111,7 @@ public partial class UnityPlugin
           "ORGINFO" => "ORGINFO",
           "SUBMISSIONINFO" => "SUBMISSIONINFO",
           "PAYMENTINFO" => "PAYMENTINFO",
+          "SUBMISSIONFORM" => "SUBMISSIONFORMDATA",
         _ => key?.ToUpperInvariant() ?? string.Empty
     };
 }

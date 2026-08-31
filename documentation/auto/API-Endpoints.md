@@ -1,5 +1,7 @@
 # API Endpoints Reference
 
+<!-- Last updated: auto-generated — do not edit manually -->
+
 Complete reference for all REST endpoints in the Grants Applicant Portal API. All endpoints use [FastEndpoints](https://fast-endpoints.com/) and JWT Bearer authentication via Keycloak unless otherwise noted.
 
 ---
@@ -183,8 +185,27 @@ For UNITY, an `ORGANIZATION_EDIT_COMMAND` message is published.
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/Submissions/{PluginId}/{Provider}` | ✅ | Retrieve submissions with automatic cache hydration |
+| GET | `/Submissions/{PluginId}/{Provider}/{SubmissionId:Guid}/Form` | ✅ | Retrieve a single submission's form.io schema and data |
+
+### Retrieve Submissions
 
 Read-only. Returns cached submission data for the profile/plugin/provider combination.
+
+### Retrieve Submission Form
+
+Retrieves the form.io form definition (`schema`) and submission data (`data`) for a single submission, for client-side rendering and PDF rasterization by the frontend. Unlike the other `Retrieve*` endpoints, this data is **never pre-seeded/eagerly hydrated** — it is only fetched and cached (segmented per profile+plugin+provider+submission, key `SUBMISSIONFORM`) the first time this endpoint is actually called for a given submission. Cache stampede protection applies as usual.
+
+**Route parameters:** `PluginId`, `Provider`, `SubmissionId` (Guid, required)
+
+**Ownership check:** Before fetching form content, the handler (`RetrieveSubmissionFormQueryHandler`) first re-retrieves the caller's own submissions list (`SUBMISSIONINFO`, the same data backing `GET /Submissions/{PluginId}/{Provider}`) and confirms the requested `SubmissionId` is present in it. This prevents an authenticated user from retrieving another profile's submission form by guessing/enumerating `SubmissionId` values. If the submission is not found in the caller's own list, the endpoint returns `403 Forbidden`.
+
+**Sourcing:**
+- **DEMO** — returns a static mock form.io fixture (`Demo/Data/SubmissionFormData.cs`).
+- **UNITY** — calls the Unity profile endpoint with an additional `SubmissionId` query parameter. This upstream call is currently stubbed/unreachable in dev/test environments; a failed or unreachable call is caught and surfaced as a generic `Result.Error` (never an unhandled exception or leaked internal detail).
+
+**Response:** `{ profileId, pluginId, provider, submissionId, data: { schema, data }, populatedAt, cacheStatus, cacheStore }`
+
+**Response codes:** `200` success, `400` invalid request or plugin validation failed, `401` unauthorized, `403` forbidden (submission not owned by caller), `404` not found, `422` unprocessable entity (invalid data)
 
 ---
 
@@ -247,6 +268,10 @@ All `Retrieve*` (GET) endpoints follow the same pattern:
 2. If not cached, call the plugin to fetch/populate data
 3. Store in cache and return
 4. Cache stampede protection prevents concurrent hydration for the same key
+
+`GET /Submissions/{PluginId}/{Provider}/{SubmissionId:Guid}/Form` follows this same cache-aside pattern but, unlike every other `Retrieve*` endpoint, its data (`SUBMISSIONFORM`) is never eagerly/pre-seeded — it is only populated the first time a caller actually requests that specific submission's form.
+
+Errors from the shared `ProfileDataRetrievalService` (used by all `Retrieve*` handlers) are always returned as a generic message (`"Unable to retrieve the requested data. Please try again later."`); the underlying exception detail is logged server-side only and never relayed to the client.
 
 ### Write Operations + Messaging
 
