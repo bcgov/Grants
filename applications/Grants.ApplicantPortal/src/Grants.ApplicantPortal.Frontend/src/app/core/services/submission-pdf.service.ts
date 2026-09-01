@@ -25,15 +25,16 @@ interface SubmissionFormEnvelope {
 
 /**
  * Fetches the form.io schema + submission data for a single submission, and opens the
- * `SubmissionPrintComponent` route in a new tab so it can be rendered as real, visible DOM and
- * handed to the browser's native print-to-PDF (`window.print()`) — matching how the sibling
- * Unity/UGM system already does this for the same kind of form.io data. This replaces a previous
- * pipeline that rendered the form off-screen, rasterized it with html2canvas, and reassembled the
- * raster into a jsPDF document; that approach produced multi-page PDFs that were tens-to-hundreds
- * of MB and took seconds-to-minutes to generate, because it screenshotted the whole form as one
- * giant image and re-embedded that same image once per page. Rendering the real DOM and letting
- * the browser's own print engine (or its "Save as PDF") produce the output is near-instant and
- * vector/text-quality, with no raster size blowup.
+ * `SubmissionPrintComponent` route in a new tab so it can be rendered as real, visible DOM,
+ * ready for the applicant to hand to the browser's native print-to-PDF (`window.print()`, via
+ * that page's Print button) — matching how the sibling Unity/UGM system already does this for the
+ * same kind of form.io data. This replaces a previous pipeline that rendered the form off-screen,
+ * rasterized it with html2canvas, and reassembled the raster into a jsPDF document; that approach
+ * produced multi-page PDFs that were tens-to-hundreds of MB and took seconds-to-minutes to
+ * generate, because it screenshotted the whole form as one giant image and re-embedded that same
+ * image once per page. Rendering the real DOM and letting the browser's own print engine (or its
+ * "Save as PDF") produce the output is near-instant and vector/text-quality, with no raster size
+ * blowup.
  */
 @Injectable({
   providedIn: 'root',
@@ -64,12 +65,12 @@ export class SubmissionPdfService {
 
   /**
    * Opens the submission's print-ready page in a new browser tab, where `SubmissionPrintComponent`
-   * fetches the form itself, renders it as real DOM, and calls `window.print()` once it settles —
-   * the browser's own print dialog then lets the applicant choose "Save as PDF" (or an actual
-   * printer). The tab is opened synchronously, before any `await`, so it stays inside the click's
-   * user-gesture context — most browsers treat a `window.open` issued after an `await` (i.e. no
-   * longer synchronously inside the event handler) as not user-initiated and silently block it as
-   * a popup.
+   * fetches the form and renders it as real DOM. Printing itself is deferred to the applicant
+   * clicking that page's Print button, which then lets them choose "Save as PDF" (or an actual
+   * printer) from the browser's own print dialog. The tab is opened synchronously, before any
+   * `await`, so it stays inside the click's user-gesture context — most browsers treat a
+   * `window.open` issued after an `await` (i.e. no longer synchronously inside the event handler)
+   * as not user-initiated and silently block it as a popup.
    *
    * Rejects only when the popup itself was blocked (`window.open` returns `null`) — that's the one
    * failure mode this method can actually detect synchronously. A failure to fetch/render the

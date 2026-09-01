@@ -30,11 +30,12 @@ interface FormioComponentSchema {
 }
 
 /**
- * Renders a single submission as a real, visible, print-ready page and hands it to the browser's
- * own print engine (`window.print()`) instead of rasterizing it with html2canvas + jsPDF. Opened
- * as its own tab (via `SubmissionPdfService.viewSubmissionPdf`/`downloadSubmissionPdf`) outside the
- * main app shell — same pattern as the sibling Unity/UGM system uses for the same form.io data, and
- * mirrors how `workspace-selector` is routed outside `LayoutComponent` in `app.routes.ts`.
+ * Renders a single submission as a real, visible, print-ready page, letting the applicant hand it
+ * to the browser's own print engine (`window.print()`, via the page's Print button) instead of
+ * rasterizing it with html2canvas + jsPDF. Opened as its own tab (via
+ * `SubmissionPdfService.viewSubmissionPdf`) outside the main app shell — same pattern as the
+ * sibling Unity/UGM system uses for the same form.io data, and mirrors how `workspace-selector` is
+ * routed outside `LayoutComponent` in `app.routes.ts`.
  *
  * `fetchSubmissionForm` is unchanged from the old pipeline. Everything downstream of it (the CHEFS
  * `htmlelement` tag patch, submission-data application, interactive-chrome stripping) is ported here
@@ -160,6 +161,12 @@ export class SubmissionPrintComponent implements OnInit, OnDestroy {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to render submission for printing', error);
+      // A later step (form.ready, applySubmissionData) can fail after Formio.createForm already
+      // succeeded — without this, the partially-created instance and its listeners would stay
+      // alive for as long as this tab remains open, since ngOnDestroy (which also does this)
+      // only fires on Angular-level destruction, not when the user just closes the browser tab.
+      this.formInstance?.destroy?.(true);
+      this.formInstance = null;
       this.hasError = true;
       this.isLoading = false;
     }
