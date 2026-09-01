@@ -43,6 +43,17 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
 
+  // Submission print route (protected but outside main layout — opened in its own tab and
+  // handed to the browser's native print-to-PDF via window.print(), see SubmissionPdfService)
+  {
+    path: 'submission-print/:pluginId/:provider/:submissionId',
+    loadComponent: () =>
+      import('./features/submission-print/submission-print.component').then(
+        (m) => m.SubmissionPrintComponent
+      ),
+    canActivate: [authGuard],
+  },
+
   // Protected routes under 'app' path
   {
     path: 'app',
