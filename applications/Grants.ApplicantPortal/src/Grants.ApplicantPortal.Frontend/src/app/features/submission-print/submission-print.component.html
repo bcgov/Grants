@@ -1,0 +1,27 @@
+<div class="submission-print-page">
+  @if (isLoading) {
+    <div class="submission-print-loading" data-cy="submission-print-loading">
+      <div class="spinner"></div>
+      <p>Preparing your submission for printing…</p>
+    </div>
+  }
+  @if (hasError) {
+    <div class="submission-print-error" data-cy="submission-print-error">
+      <p>We were unable to load this submission. Please close this tab and try again.</p>
+    </div>
+  }
+  @if (!isLoading && !hasError) {
+    <div class="submission-print-toolbar no-print">
+      <button
+        type="button"
+        class="btn btn-primary"
+        data-cy="submission-print-button"
+        (click)="printSubmission()"
+      >
+        <i class="fa fa-print" aria-hidden="true"></i>
+        Print / Save as PDF
+      </button>
+    </div>
+  }
+  <div #formContainer class="submission-print-container" [class.d-none]="isLoading || hasError"></div>
+</div>

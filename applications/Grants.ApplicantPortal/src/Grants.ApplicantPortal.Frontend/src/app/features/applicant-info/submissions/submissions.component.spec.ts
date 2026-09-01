@@ -55,12 +55,8 @@ describe('SubmissionsComponent', () => {
     ]);
     applicantInfoServiceSpy.getSubmissionsInfo.and.returnValue(of(makeResponse()));
 
-    submissionPdfServiceSpy = jasmine.createSpyObj<SubmissionPdfService>('SubmissionPdfService', [
-      'viewSubmissionPdf',
-      'downloadSubmissionPdf',
-    ]);
+    submissionPdfServiceSpy = jasmine.createSpyObj<SubmissionPdfService>('SubmissionPdfService', ['viewSubmissionPdf']);
     submissionPdfServiceSpy.viewSubmissionPdf.and.returnValue(Promise.resolve());
-    submissionPdfServiceSpy.downloadSubmissionPdf.and.returnValue(Promise.resolve());
 
     toastServiceSpy = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'warning', 'info']);
 
@@ -354,36 +350,21 @@ describe('SubmissionsComponent', () => {
       component.onCellAction({ column: { key: 'status', label: 'Status' }, row: submission } as DatatableCellActionEvent);
 
       expect(submissionPdfServiceSpy.viewSubmissionPdf).not.toHaveBeenCalled();
-      expect(submissionPdfServiceSpy.downloadSubmissionPdf).not.toHaveBeenCalled();
     });
 
-    it('calls viewSubmissionPdf on desktop', async () => {
+    it('calls viewSubmissionPdf', async () => {
       fixture.detectChanges();
-      component.isMobile = false;
       const submission = component.submissionsData[0];
 
       await component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
 
       expect(submissionPdfServiceSpy.viewSubmissionPdf).toHaveBeenCalledWith('plugin-1', 'provider-1', submission.id);
-      expect(submissionPdfServiceSpy.downloadSubmissionPdf).not.toHaveBeenCalled();
-    });
-
-    it('calls downloadSubmissionPdf on mobile', async () => {
-      fixture.detectChanges();
-      component.isMobile = true;
-      const submission = component.submissionsData[0];
-
-      await component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
-
-      expect(submissionPdfServiceSpy.downloadSubmissionPdf).toHaveBeenCalledWith('plugin-1', 'provider-1', submission.id);
-      expect(submissionPdfServiceSpy.viewSubmissionPdf).not.toHaveBeenCalled();
     });
 
     it('sets isGeneratingPdf while the PDF is being generated and clears it afterward', async () => {
       let resolveView!: () => void;
       submissionPdfServiceSpy.viewSubmissionPdf.and.returnValue(new Promise((resolve) => (resolveView = resolve)));
       fixture.detectChanges();
-      component.isMobile = false;
       const submission = component.submissionsData[0];
 
       const actionPromise = component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
@@ -395,19 +376,18 @@ describe('SubmissionsComponent', () => {
       expect(component.isGeneratingPdf).toBeFalse();
     });
 
-    it('shows a toast error and clears isGeneratingPdf when the PDF service rejects', async () => {
+    it('shows a toast error and clears isGeneratingPdf when the popup is blocked', async () => {
       // callFake (not returnValue) so the rejected promise is created only once the spy is
       // actually invoked — avoids a spurious unhandled-rejection race in the test harness.
       submissionPdfServiceSpy.viewSubmissionPdf.and.callFake(async () => {
         throw new Error('boom');
       });
       fixture.detectChanges();
-      component.isMobile = false;
       const submission = component.submissionsData[0];
 
       await component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
 
-      expect(toastServiceSpy.error).toHaveBeenCalledWith('Unable to generate PDF for this submission.');
+      expect(toastServiceSpy.error).toHaveBeenCalledWith('Unable to open the print tab — check if your browser blocked the popup.');
       expect(component.isGeneratingPdf).toBeFalse();
     });
 
@@ -415,7 +395,6 @@ describe('SubmissionsComponent', () => {
       let resolveView!: () => void;
       submissionPdfServiceSpy.viewSubmissionPdf.and.returnValue(new Promise((resolve) => (resolveView = resolve)));
       fixture.detectChanges();
-      component.isMobile = false;
       const submission = component.submissionsData[0];
 
       component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
@@ -423,29 +402,6 @@ describe('SubmissionsComponent', () => {
 
       expect(submissionPdfServiceSpy.viewSubmissionPdf).toHaveBeenCalledTimes(1);
       resolveView();
-    });
-  });
-
-  // ── isMobile (matchMedia convention) ────────────────────────────────────────
-
-  describe('isMobile', () => {
-    it('initializes from matchMedia on init and updates on change, then cleans up on destroy', () => {
-      const listeners: Array<(e: MediaQueryListEvent) => void> = [];
-      const mockMediaQueryList = {
-        matches: true,
-        addEventListener: (_: string, listener: (e: MediaQueryListEvent) => void) => listeners.push(listener),
-        removeEventListener: jasmine.createSpy('removeEventListener'),
-      } as unknown as MediaQueryList;
-      spyOn(globalThis, 'matchMedia').and.returnValue(mockMediaQueryList);
-
-      fixture.detectChanges();
-      expect(component.isMobile).toBeTrue();
-
-      listeners[0]({ matches: false } as MediaQueryListEvent);
-      expect(component.isMobile).toBeFalse();
-
-      component.ngOnDestroy();
-      expect(mockMediaQueryList.removeEventListener).toHaveBeenCalled();
     });
   });
 });
