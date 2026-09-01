@@ -1,4 +1,4 @@
-﻿using Grants.ApplicantPortal.API.Core.Services;
+using Grants.ApplicantPortal.API.Core.Services;
 using Grants.ApplicantPortal.API.UseCases.Security;
 using Microsoft.Extensions.DependencyInjection;
 

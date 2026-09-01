@@ -92,6 +92,54 @@ describe('authGuard', () => {
     expect(routerSpy.navigate).not.toHaveBeenCalled();
   });
 
+  it('allows activation when authenticated and accessing submission-print, with no workspace selected', async () => {
+    Object.defineProperty(authServiceSpy, 'isAuthenticated$', { get: () => of(true) });
+    // A submission-print tab is a fresh page load — it always starts with empty workspace
+    // state (the default from beforeEach) — and the guard must let it through anyway, since
+    // that route is self-contained (reads pluginId/provider/submissionId from the URL) and
+    // never touches WorkspaceService.
+
+    const result = await runGuard(
+      authServiceSpy,
+      workspaceServiceSpy,
+      routerSpy,
+      '/submission-print/plugin-1/prov-1/sub-1'
+    );
+
+    expect(result).toBeTrue();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(workspaceServiceSpy.getAvailableWorkspaces).not.toHaveBeenCalled();
+  });
+
+  it('does NOT bypass workspace selection for an unrelated route that merely carries "/submission-print/" in a query param', async () => {
+    Object.defineProperty(authServiceSpy, 'isAuthenticated$', { get: () => of(true) });
+    // Regression guard: the submission-print exemption must match the URL's path only, not the
+    // full state.url string (which includes the query string) — otherwise a route like
+    // /app/applicant-info?returnUrl=/submission-print/x/y/z would wrongly skip the mandatory
+    // workspace-selection check just because that substring appears in a query param.
+
+    const noWorkspaceState: WorkspaceState = {
+      ...defaultWorkspaceState,
+      availableWorkspaces: [{ pluginId: 'p1', description: 'Workspace 1', features: [], providers: [] }],
+      isWorkspaceSelected: false,
+      isProviderSelected: false,
+    };
+    Object.defineProperty(workspaceServiceSpy, 'currentWorkspaceState$', {
+      get: () => of(noWorkspaceState),
+    });
+    workspaceServiceSpy.isWorkspaceSelectionRequired.and.returnValue(true);
+
+    const result = await runGuard(
+      authServiceSpy,
+      workspaceServiceSpy,
+      routerSpy,
+      '/app/applicant-info?returnUrl=/submission-print/plugin-1/prov-1/sub-1'
+    );
+
+    expect(result).toBeFalse();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/workspace-selector'], jasmine.anything());
+  });
+
   it('allows activation when authenticated and workspace + provider are selected', async () => {
     Object.defineProperty(authServiceSpy, 'isAuthenticated$', { get: () => of(true) });
 

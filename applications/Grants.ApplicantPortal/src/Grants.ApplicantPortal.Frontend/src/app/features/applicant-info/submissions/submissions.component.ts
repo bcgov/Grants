@@ -33,13 +33,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   showRelatedLinksModal = false;
   selectedSubmission: SubmissionsData | null = null;
 
-  // Mobile responsive detection — follows the same matchMedia convention as DatatableComponent.
-  isMobile = false;
-  private mobileQuery!: MediaQueryList;
-  private readonly mobileQueryHandler = (e: MediaQueryListEvent): void => {
-    this.isMobile = e.matches;
-  };
-
   // Datatable configuration
   submissionsTableConfig: DatatableConfig = {
     tableId: 'submissions-table',
@@ -86,12 +79,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     if (this.pluginId && this.provider) {
       this.loadSubmissions();
-    }
-
-    if (globalThis.window !== undefined) {
-      this.mobileQuery = globalThis.matchMedia('(max-width: 768px)');
-      this.isMobile = this.mobileQuery.matches;
-      this.mobileQuery.addEventListener('change', this.mobileQueryHandler);
     }
   }
 
@@ -144,7 +131,6 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.mobileQuery?.removeEventListener('change', this.mobileQueryHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -185,13 +171,11 @@ export class SubmissionsComponent implements OnInit, OnChanges, OnDestroy {
 
     this.isGeneratingPdf = true;
     try {
-      if (this.isMobile) {
-        await this.submissionPdfService.downloadSubmissionPdf(this.pluginId, this.provider, submission.id);
-      } else {
-        await this.submissionPdfService.viewSubmissionPdf(this.pluginId, this.provider, submission.id);
-      }
+      await this.submissionPdfService.viewSubmissionPdf(this.pluginId, this.provider, submission.id);
     } catch {
-      this.toastService.error('Unable to generate PDF for this submission.');
+      // The only failure viewSubmissionPdf can report here is a blocked popup — a failure to
+      // fetch/render the submission itself happens inside the new tab and surfaces there.
+      this.toastService.error('Unable to open the print tab — check if your browser blocked the popup.');
     } finally {
       this.isGeneratingPdf = false;
     }
