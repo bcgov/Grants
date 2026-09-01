@@ -1,0 +1,849 @@
+<title>Redis in the Unity Bridge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#EDEFEA; --paper-raised:#FFFFFF; --paper-sunken:#E3E6DE;
+    --ink:#15201B; --ink-soft:#4B5A50; --line:rgba(21,32,27,.14);
+    --accent-cache:#B5651D; --accent-cache-soft:#F1E1CC;
+    --accent-queue:#1F6F72; --accent-queue-soft:#DCEDEC;
+    --accent-ok:#3E7D46; --accent-ok-soft:#E1EEE0;
+    --accent-err:#A73A3A; --accent-err-soft:#F4DEDD;
+    --font-display:'Fraunces',Georgia,serif;
+    --font-body:'IBM Plex Sans',-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0F1512; --paper-raised:#171F1A; --paper-sunken:#131A16;
+      --ink:#E7EDE6; --ink-soft:#9FB0A4; --line:rgba(231,237,230,.16);
+      --accent-cache:#E0954F; --accent-cache-soft:#3A2A18;
+      --accent-queue:#56B7B9; --accent-queue-soft:#163130;
+      --accent-ok:#74C17E; --accent-ok-soft:#1C3020;
+      --accent-err:#E38080; --accent-err-soft:#3A2222;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0F1512; --paper-raised:#171F1A; --paper-sunken:#131A16;
+    --ink:#E7EDE6; --ink-soft:#9FB0A4; --line:rgba(231,237,230,.16);
+    --accent-cache:#E0954F; --accent-cache-soft:#3A2A18;
+    --accent-queue:#56B7B9; --accent-queue-soft:#163130;
+    --accent-ok:#74C17E; --accent-ok-soft:#1C3020;
+    --accent-err:#E38080; --accent-err-soft:#3A2222;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0; color:var(--ink);}
+  p{margin:0 0 1em; max-width:64ch;}
+  a{color:var(--accent-queue);}
+  :focus-visible{outline:2px solid var(--accent-queue); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} }
+
+  .eyebrow{
+    font-family:var(--font-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-soft); display:flex; align-items:center; gap:.6em; margin-bottom:.9em;
+  }
+  .eyebrow .num{color:var(--accent-cache); font-weight:600;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:4.5rem 6vw 3.5rem; max-width:1280px; margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .hero h1{font-size:clamp(2.3rem,4.4vw,3.6rem); font-weight:600; max-width:16ch;}
+  .hero .lede{font-family:var(--font-body); font-size:1.12rem; color:var(--ink-soft); max-width:62ch; margin-top:1.1rem;}
+  .facts{display:flex; flex-wrap:wrap; gap:.6rem; margin:2rem 0 2.6rem; padding:0; list-style:none;}
+  .facts li{
+    font-family:var(--font-mono); font-size:.78rem; background:var(--paper-raised);
+    border:1px solid var(--line); border-radius:999px; padding:.45em 1em; color:var(--ink);
+  }
+  .facts strong{color:var(--accent-queue);}
+
+  /* ---------- Layout ---------- */
+  .layout{max-width:1280px; margin:0 auto; display:grid; grid-template-columns:200px 1fr; gap:0 4vw; padding:0 6vw;}
+  nav.toc{padding-top:3.2rem;}
+  nav.toc ol{list-style:none; margin:0; padding:0; position:sticky; top:1.6rem; display:flex; flex-direction:column; gap:.5rem;}
+  nav.toc a{
+    display:block; text-decoration:none; color:var(--ink-soft); font-size:.82rem;
+    font-family:var(--font-mono); padding:.3em 0; border-left:2px solid transparent; padding-left:.8em;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible{color:var(--ink); border-left-color:var(--accent-cache);}
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    nav.toc{display:none;}
+  }
+
+  main{padding-top:1rem;}
+  section{padding:3.6rem 0; border-bottom:1px solid var(--line);}
+  section:last-of-type{border-bottom:none;}
+  section h2{font-size:clamp(1.5rem,2.6vw,2rem); font-weight:600; max-width:22ch; margin-bottom:1.1rem;}
+  section > .eyebrow{margin-bottom:.5rem;}
+
+  .cols{display:grid; grid-template-columns:1.1fr .9fr; gap:2.5rem; align-items:start;}
+  @media (max-width:800px){ .cols{grid-template-columns:1fr;} }
+
+  /* ---------- Figures ---------- */
+  figure{margin:1.8rem 0; padding:1.4rem 1.4rem 1.1rem; background:var(--paper-raised);
+    border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto;}
+  figure svg{display:block; width:100%; height:auto; min-width:520px; color:var(--ink);}
+  figcaption{font-size:.85rem; color:var(--ink-soft); margin-top:.9rem; max-width:70ch;}
+
+  /* ---------- Code ---------- */
+  pre{
+    background:var(--paper-sunken); border:1px solid var(--line); border-radius:var(--radius);
+    padding:1rem 1.2rem; overflow-x:auto; margin:1.2rem 0;
+  }
+  code,pre,kbd{font-family:var(--font-mono); font-size:.83rem;}
+  code.inline, .k{
+    font-family:var(--font-mono); font-size:.86em; background:var(--paper-sunken);
+    border:1px solid var(--line); border-radius:4px; padding:.08em .38em;
+  }
+  pre code{background:none; border:none; padding:0; font-size:.83rem; line-height:1.55;}
+
+  /* ---------- Tables ---------- */
+  .twrap{overflow-x:auto; margin:1.3rem 0;}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:.9rem;}
+  th,td{text-align:left; padding:.6em .8em; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:500;}
+  td code{white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+
+  /* ---------- Callouts ---------- */
+  .callout{
+    border-radius:var(--radius); padding:1rem 1.2rem; margin:1.3rem 0; font-size:.92rem;
+    border:1px solid; max-width:70ch;
+  }
+  .callout p{margin:0; max-width:none;}
+  .callout.cache{background:var(--accent-cache-soft); border-color:var(--accent-cache); color:var(--ink);}
+  .callout.err{background:var(--accent-err-soft); border-color:var(--accent-err); color:var(--ink);}
+  .callout.ok{background:var(--accent-ok-soft); border-color:var(--accent-ok); color:var(--ink);}
+  .callout .tag{font-family:var(--font-mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:.4em; opacity:.8;}
+  .callout.tbd{background:var(--paper-sunken); border-color:var(--ink-soft); border-style:dashed;}
+
+  /* ---------- TBD / proposed treatment ---------- */
+  .badge-tbd{
+    display:inline-flex; align-items:center; gap:.5em; font-family:var(--font-mono); font-size:.72rem;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+    border:1.5px dashed var(--ink-soft); border-radius:999px; padding:.35em 1em; margin-bottom:1.1rem;
+  }
+  .badge-tbd::before{content:"◌"; color:var(--accent-err);}
+  section.proposed{border-top:1.5px dashed var(--ink-soft); padding-top:3.2rem;}
+  ul.open-qs{list-style:none; margin:1.2rem 0; padding:0; display:grid; gap:.6rem;}
+  ul.open-qs li{
+    max-width:66ch; padding:.7em .95em; border:1px dashed var(--line); border-radius:8px;
+    background:var(--paper-sunken); font-size:.92rem;
+  }
+  ul.open-qs li::before{content:"? "; font-family:var(--font-mono); color:var(--accent-err); font-weight:600;}
+
+  /* ---------- Steps ---------- */
+  ol.steps{list-style:none; margin:1.2rem 0; padding:0; counter-reset:step;}
+  ol.steps li{counter-increment:step; display:flex; gap:.9em; margin-bottom:.8em; max-width:66ch;}
+  ol.steps li::before{
+    content:counter(step); font-family:var(--font-mono); font-size:.78rem; flex:none;
+    width:1.6em; height:1.6em; border-radius:50%; border:1px solid var(--accent-queue); color:var(--accent-queue);
+    display:flex; align-items:center; justify-content:center; margin-top:.1em;
+  }
+
+  ul.plain{margin:1.1rem 0; padding-left:1.2em;}
+  ul.plain li{margin-bottom:.5em; max-width:64ch;}
+
+  .swatch{display:inline-block; width:.75em; height:.75em; border-radius:2px; margin-right:.45em; vertical-align:-.05em;}
+
+  footer{padding:3rem 6vw 4rem; max-width:1280px; margin:0 auto;}
+  footer .eyebrow{margin-bottom:1rem;}
+  footer ul{list-style:none; margin:0; padding:0; display:grid; gap:.4rem; font-family:var(--font-mono); font-size:.78rem; color:var(--ink-soft);}
+</style>
+
+<header class="hero">
+  <p class="eyebrow"><span class="num">§</span> Engineering briefing · Applicant Portal × Unity plugin</p>
+  <h1>Redis in the Unity bridge</h1>
+  <p class="lede">How the Applicant Portal reads, writes, and reconciles Unity Grant Manager data through a Redis cache sitting between two very different integration paths — a synchronous REST read, and an asynchronous, queued write with its own ack/nack loop.</p>
+
+  <ul class="facts">
+    <li><strong>60&nbsp;min / 15&nbsp;min</strong> cache TTL (absolute / sliding, configured)</li>
+    <li><strong>30s</strong> outbox publish poll</li>
+    <li><strong>15s</strong> inbox ack poll</li>
+    <li><strong>5&nbsp;min</strong> ack timeout</li>
+    <li><strong>60s</strong> timeout sweep</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 1000 430" role="img" aria-label="Frontend calls the Portal API, which checks or patches Redis. Redis sits between the read lane to Unity's REST API above and the write lane through the outbox, RabbitMQ, and Unity below.">
+      <defs>
+        <marker id="arrow-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+        <marker id="arrow-cache" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-cache)"/>
+        </marker>
+        <marker id="arrow-queue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-queue)"/>
+        </marker>
+      </defs>
+
+      <!-- Row A: read lane -->
+      <rect x="410" y="30" width="180" height="60" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="500" y="55" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Unity REST API</text>
+      <text x="500" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".65">/applicant-profiles/profile</text>
+
+      <!-- Row B: core -->
+      <rect x="20" y="185" width="140" height="70" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="90" y="225" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Frontend</text>
+
+      <rect x="210" y="185" width="150" height="70" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="285" y="220" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Portal API</text>
+      <text x="285" y="236" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".65">validate first</text>
+
+      <rect x="410" y="185" width="180" height="70" rx="9" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.6"/>
+      <text x="500" y="216" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="600" fill="currentColor">Redis Cache</text>
+      <text x="500" y="234" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".7">profile:{id}:UNITY:…</text>
+
+      <!-- Row C: write lane -->
+      <rect x="410" y="340" width="180" height="60" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="500" y="365" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Outbox</text>
+      <text x="500" y="382" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".65">Postgres · Pending row</text>
+
+      <rect x="640" y="340" width="160" height="60" rx="9" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.6"/>
+      <text x="720" y="375" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">RabbitMQ</text>
+
+      <rect x="850" y="340" width="130" height="60" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="915" y="375" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Unity</text>
+
+      <!-- Arrows -->
+      <line x1="160" y1="220" x2="205" y2="220" stroke="currentColor" stroke-opacity=".6" marker-end="url(#arrow-n)"/>
+
+      <line x1="360" y1="220" x2="405" y2="220" stroke="var(--accent-cache)" stroke-width="1.6" marker-end="url(#arrow-cache)"/>
+      <text x="382" y="205" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--accent-cache)">1 · check / patch</text>
+
+      <line x1="470" y1="185" x2="470" y2="92" stroke="currentColor" stroke-opacity=".55" stroke-dasharray="4 3" marker-end="url(#arrow-n)"/>
+      <text x="458" y="140" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".75">MISS → fetch</text>
+
+      <line x1="530" y1="92" x2="530" y2="185" stroke="currentColor" stroke-opacity=".55" marker-end="url(#arrow-n)"/>
+      <text x="542" y="140" text-anchor="start" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".75">store (TTL)</text>
+
+      <line x1="500" y1="255" x2="500" y2="337" stroke="var(--accent-cache)" stroke-width="1.6" marker-end="url(#arrow-cache)"/>
+      <text x="512" y="298" text-anchor="start" font-family="IBM Plex Mono" font-size="10" fill="var(--accent-cache)">2 · enqueue command</text>
+
+      <line x1="590" y1="370" x2="636" y2="370" stroke="var(--accent-queue)" stroke-width="1.6" marker-end="url(#arrow-queue)"/>
+      <text x="613" y="356" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--accent-queue)">3 · poll 30s</text>
+
+      <line x1="800" y1="370" x2="846" y2="370" stroke="currentColor" stroke-opacity=".6" marker-end="url(#arrow-n)"/>
+      <text x="823" y="356" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".75">4 · consume</text>
+
+      <text x="915" y="418" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="currentColor" opacity=".65">ack flows back through RabbitMQ — see §06</text>
+    </svg>
+    <figcaption><strong>One cache, two lanes.</strong> Reads check Redis and fall back to Unity's REST API on a miss (top). Writes patch Redis immediately, then queue a command for Unity to process on its own schedule (bottom) — the UI never waits on step 3 or 4.</figcaption>
+  </figure>
+</header>
+
+<div class="layout">
+  <nav class="toc" aria-label="Sections">
+    <ol>
+      <li><a href="#overview">01 · The two lanes</a></li>
+      <li><a href="#reading">02 · Reading profile data</a></li>
+      <li><a href="#writing">03 · Commands that patch the cache</a></li>
+      <li><a href="#sending">04 · Sending it to Unity</a></li>
+      <li><a href="#transportack">05 · Transport-level ack/nack</a></li>
+      <li><a href="#acknack">06 · Business ack/nack + invalidation</a></li>
+      <li><a href="#validation">07 · Upfront validation</a></li>
+      <li><a href="#config">08 · Config cheat-sheet</a></li>
+      <li><a href="#resilience">09 · Resilience internals</a></li>
+      <li><a href="#tbd">TBD · Push invalidation</a></li>
+      <li><a href="#discussion">For the room</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="overview">
+      <p class="eyebrow"><span class="num">01</span> The two lanes</p>
+      <h2>Two ways in, one cache in the middle</h2>
+      <div class="cols">
+        <div>
+          <p>Everything the Unity plugin does falls into one of two shapes, and Redis plays a different role in each.</p>
+          <p><strong>Reads</strong> — providers, contacts, addresses, organizations, submissions, payments — go straight to Unity's single <code class="inline">/api/app/applicant-profiles/profile</code> endpoint the first time, and to Redis every time after that.</p>
+          <p><strong>Writes</strong> — create/edit/delete a contact or address, set either as primary, edit the organization — never call Unity synchronously at all. The plugin patches Redis, drops a command in a transactional outbox, and a background job ships it to RabbitMQ. Unity confirms later, asynchronously.</p>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>Reads</th><th>Writes</th></tr></thead>
+            <tbody>
+              <tr><td>Synchronous REST call on a miss</td><td>Asynchronous — outbox + RabbitMQ</td></tr>
+              <tr><td>Redis: <em>source of truth once warm</em></td><td>Redis: <em>optimistic guess</em>, unconfirmed</td></tr>
+              <tr><td>Cache written by the read itself</td><td>Cache written before Unity even sees the command</td></tr>
+              <tr><td>No compensation needed</td><td>Compensated on FAILED / timeout — see §06</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 style="font-size:1.05rem;margin:1.8rem 0 .3rem;">Why UNITY does it the hard way</h3>
+      <p>The plugin system ships a second implementation — <code class="inline">DEMO</code> — as a self-contained mock. Comparing the two is the fastest way to see exactly what the outbox/inbox machinery buys UNITY:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th></th><th>DEMO</th><th>UNITY</th></tr></thead>
+          <tbody>
+            <tr><td>Write path</td><td>Direct — in-memory store, then Redis</td><td>Optimistic — patch Redis, then queue a command</td></tr>
+            <tr><td>External system</td><td>None</td><td>Real Unity instance over RabbitMQ</td></tr>
+            <tr><td>Ack / nack round-trip?</td><td>Not needed — writes are synchronous</td><td>Full round-trip via the inbox</td></tr>
+            <tr><td>Can a write silently fail later?</td><td>No</td><td>Yes — that's exactly what §06 compensates for</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The asymmetry is the point: DEMO can afford a direct write because it <em>is</em> the source of truth. UNITY isn't — Unity Grant Manager is — so every optimistic patch is a promise that has to be either confirmed or walked back.</p>
+    </section>
+
+    <section id="reading">
+      <p class="eyebrow"><span class="num">02</span> Reads</p>
+      <h2>Reading profile data: cache-aside, on demand</h2>
+      <p>Every read-shaped call funnels through <code class="inline">UnityPlugin.PopulateProfileAsync</code>, which delegates entirely to a shared, plugin-agnostic <code class="inline">IPluginCacheService.GetOrFetchAsync</code>.</p>
+
+      <ol class="steps">
+        <li>Build the cache segment from the request: <code class="inline">{Provider}:{Key}</code> — e.g. <code class="inline">DGP:CONTACTINFO</code>.</li>
+        <li>Check Redis for that key first. A <strong>hit</strong> deserializes, stamps <code class="inline">CacheStatus: HIT</code> for diagnostics, and returns — no network call to Unity at all.</li>
+        <li>A <strong>corrupt or null</strong> cache entry is logged, evicted, and treated as a miss rather than surfaced to the caller — the read never fails just because the cache went bad.</li>
+        <li>On a genuine <strong>miss</strong>, call Unity's REST endpoint with <code class="inline">TenantId</code>, <code class="inline">Key</code>, <code class="inline">ProfileId</code>, <code class="inline">Subject</code>; strip the internal <code class="inline">dataType</code> wrapper; store the result in Redis with the configured TTL before returning it.</li>
+      </ol>
+
+      <div class="twrap">
+        <table>
+          <caption style="text-align:left;font-family:var(--font-mono);font-size:.72rem;color:var(--ink-soft);margin-bottom:.5rem;">cache key format</caption>
+          <tbody>
+            <tr><td style="font-family:var(--font-mono);white-space:nowrap;">pattern</td><td><code class="inline">{CacheKeyPrefix}{profileId}:{pluginId}:{provider}:{key}</code></td></tr>
+            <tr><td style="font-family:var(--font-mono);white-space:nowrap;">example</td><td><code class="inline">profile:019b4788-…:UNITY:DGP:CONTACTINFO</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:1.05rem;margin:1.6rem 0 .3rem;">Default settings</h3>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Code default<br><code class="inline">ProfileCacheOptions.cs</code></th><th>Configured<br><code class="inline">appsettings.json</code></th></tr></thead>
+          <tbody>
+            <tr><td>CacheKeyPrefix</td><td><code class="inline">profile:</code></td><td><code class="inline">profile:</code></td></tr>
+            <tr><td>CacheExpiryMinutes <span style="color:var(--ink-soft);">(absolute)</span></td><td>30</td><td><strong>60</strong></td></tr>
+            <tr><td>SlidingExpiryMinutes</td><td>10</td><td><strong>15</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout cache">
+        <span class="tag">Worth a question in the room</span>
+        <p>The class default and the shipped config don't agree. <code class="inline">appsettings.json</code> wins at runtime — 60&nbsp;min absolute / 15&nbsp;min sliding — so the 30/10 baked into <code class="inline">ProfileCacheOptions.cs</code> only applies if configuration is ever stripped out for an environment. Confirm that's the intended per-environment behavior.</p>
+      </div>
+
+      <p style="margin-top:1.4rem;"><strong>One exception:</strong> <code class="inline">SUBMISSIONFORMDATA</code> (the PDF source data) goes through the same cache-aside method but is fetched <em>on-demand only</em> — never pre-seeded like the rest — and scoped per submission ID, so it adds one cache entry per submission a user actually opens, not per profile load.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 520" role="img" aria-label="Request goes to the cache check. A hit deserializes and returns directly. A miss calls the Unity REST API, strips the dataType wrapper, writes the cache with a TTL, then both paths converge on the same return.">
+          <defs>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <rect x="250" y="20" width="200" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="350" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">GetOrFetchAsync(key)</text>
+
+          <rect x="250" y="110" width="200" height="50" rx="9" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.5"/>
+          <text x="350" y="140" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Check Redis</text>
+
+          <rect x="40" y="220" width="240" height="50" rx="8" fill="var(--accent-ok-soft)" stroke="var(--accent-ok)" stroke-width="1.4"/>
+          <text x="160" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">Deserialize cached JSON</text>
+
+          <rect x="420" y="220" width="240" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="540" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">Call Unity REST API</text>
+
+          <rect x="420" y="300" width="240" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="540" y="330" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">Strip dataType wrapper</text>
+
+          <rect x="420" y="380" width="240" height="50" rx="9" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.5"/>
+          <text x="540" y="410" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">Write cache (TTL)</text>
+
+          <rect x="250" y="460" width="200" height="50" rx="8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="350" y="490" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Return ProfileData</text>
+
+          <line x1="350" y1="70" x2="350" y2="107" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a2)"/>
+          <line x1="250" y1="135" x2="160" y2="217" stroke="var(--accent-ok)" stroke-width="1.5" marker-end="url(#a2)"/>
+          <text x="185" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--accent-ok)">HIT</text>
+          <line x1="450" y1="135" x2="540" y2="217" stroke="var(--accent-cache)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a2)"/>
+          <text x="515" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--accent-cache)">MISS</text>
+          <line x1="540" y1="270" x2="540" y2="297" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a2)"/>
+          <line x1="540" y1="350" x2="540" y2="377" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a2)"/>
+          <line x1="160" y1="270" x2="300" y2="457" stroke="currentColor" stroke-opacity=".55" marker-end="url(#a2)"/>
+          <line x1="540" y1="430" x2="400" y2="457" stroke="currentColor" stroke-opacity=".55" marker-end="url(#a2)"/>
+        </svg>
+        <figcaption>The cache-aside read: a hit returns in one hop; a miss makes one call to Unity, cleans the envelope, and warms the cache before returning — every subsequent read for that segment is a hit until the TTL lapses.</figcaption>
+      </figure>
+    </section>
+
+    <section id="writing">
+      <p class="eyebrow"><span class="num">03</span> Writes, part 1</p>
+      <h2>Commands that update the cache: patch first, ask later</h2>
+      <p>Every write endpoint — create/edit/delete a contact or address, set either as primary, edit the organization — runs the same two-step pattern before Unity is even told:</p>
+      <ol class="steps">
+        <li>Patch the cached JSON in place. <code class="inline">PatchCachedProfileDataAsync</code> reads the current cache, applies a targeted transform, and writes it back — a no-op if nothing's cached yet, so it never fabricates a segment from nothing.</li>
+        <li>Fire the matching command onto the outbox (§04). The handler returns success to the caller <em>immediately</em> — the applicant sees their edit in the UI before Unity has even received it.</li>
+      </ol>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Operation</th><th>Cache patch</th><th>Primary-flag rule</th></tr></thead>
+          <tbody>
+            <tr><td>Contact create</td><td>Append to <code class="inline">contacts[]</code></td><td>New primary clears <code class="inline">isPrimary</code> on the rest</td></tr>
+            <tr><td>Contact edit</td><td>Replace in <code class="inline">contacts[]</code></td><td>Same as create, on the new value</td></tr>
+            <tr><td>Contact set-primary</td><td>Toggle across <code class="inline">contacts[]</code></td><td>Target → <code class="inline">true</code>, everyone else → <code class="inline">false</code></td></tr>
+            <tr><td>Contact delete</td><td>Remove from <code class="inline">contacts[]</code></td><td>If it was primary, auto-promote the most recent remaining contact</td></tr>
+            <tr><td>Address create / edit</td><td>Append / replace in <code class="inline">addresses[]</code></td><td>Only addresses of the <em>same type</em> are demoted</td></tr>
+            <tr><td>Address set-primary</td><td>Toggle within the type group</td><td>Other address types keep their own primary untouched</td></tr>
+            <tr><td>Address delete</td><td>Remove from <code class="inline">addresses[]</code></td><td>Auto-promotes within the same type group only</td></tr>
+            <tr><td>Organization edit</td><td>Patch the <code class="inline">OrganizationInfo</code> object</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <pre><code>// Unity.Addresses.cs — CreateAddressAsync (abbreviated)
+var newAddressId = Guid.NewGuid();
+
+// STEP 1: update cache optimistically
+await UpdateAddressCacheOptimistically(newAddressId, addressRequest, ctx, ct);
+
+// STEP 2: fire the command — same IsPrimary the cache was patched with,
+// so the flag survives the next hydration from Unity
+await FireAddressCreateMessage(newAddressId, addressRequest, ctx, ct);
+
+return Result&lt;Guid&gt;.Success(newAddressId);</code></pre>
+
+      <p>A smaller guard worth knowing about: when a new address's type group has <em>no</em> flagged primary yet, the plugin promotes it before patching — otherwise the next read would infer a primary anyway, and the inferred one would silently lose that status the moment a newer address in the same group arrived.</p>
+
+      <div class="callout ok">
+        <span class="tag">Self-healing by design</span>
+        <p>The cache is only ever an <em>optimistic</em> guess. When its TTL lapses — 60&nbsp;min absolute / 15&nbsp;min sliding, configured — the next read is a guaranteed miss, which re-fetches from Unity and reconciles any drift. Even without a single failure or nack, the system corrects itself on a clock.</p>
+      </div>
+
+      <h3 style="font-size:1.05rem;margin:1.8rem 0 .3rem;">Answering "what's primary now?" without asking Unity</h3>
+      <p>An address mutation endpoint has to return the applicant's current primaries in its response — and it does that by reading the same optimistically-patched cache back, via <code class="inline">PrimaryAddressResolver</code>, never by calling Unity. One applicant can hold one primary <em>per address type</em>, so the resolver groups by type and, within each group:</p>
+      <ol class="steps">
+        <li>The address explicitly flagged <code class="inline">isPrimary: true</code> wins.</li>
+        <li>If none is flagged, the most recently created address in that group is inferred as primary.</li>
+        <li>If nothing has a <code class="inline">creationTime</code> either, it falls back to the first address in the group.</li>
+      </ol>
+      <p>This is exactly why §03's patch routines always write <code class="inline">isPrimary: false</code> explicitly on the addresses they demote — even when the cached entry didn't carry the property at all. A test locks this in: <code class="inline">CreateAddress_WritesIsPrimaryFalse_EvenWhenTheCachedEntryLacksTheProperty</code>. Skip that write and step&nbsp;1 above finds no flagged winner, falls through to inference, and a stale entry can end up "primary" again by accident.</p>
+    </section>
+
+    <section id="sending">
+      <p class="eyebrow"><span class="num">04</span> Writes, part 2</p>
+      <h2>Sending the command to Unity</h2>
+      <p>The fire step wraps the change as a <code class="inline">PluginDataMessage</code> and hands it to <code class="inline">IMessagePublisher</code>, which writes a <code class="inline">Pending</code> row to the transactional <code class="inline">OutboxMessage</code> table — in the same request, not to RabbitMQ directly.</p>
+
+      <pre><code>{
+  "messageId": "f6a7b8c9-d0e1-2345-f012-3456789abcde",
+  "messageType": "PluginDataMessage",
+  "correlationId": "profile-019b4788-d7a7-7c40-b25e-98a361adbbfc",
+  "pluginId": "UNITY",
+  "dataType": "ADDRESS_SET_PRIMARY_COMMAND",
+  "data": {
+    "action": "SetAddressAsPrimary",
+    "addressId": "BBD12E34-6789-0ABC-DEF1-234567890ABC",
+    "profileId": "019b4788-d7a7-7c40-b25e-98a361adbbfc",
+    "provider": "DGP",
+    "subject": "Abad@idir"
+  }
+}</code></pre>
+
+      <p><code class="inline">OutboxProcessorJob</code> polls every <strong>30s</strong>, publishes to exchange <code class="inline">grants.messaging</code> with routing key <code class="inline">commands.unity.plugindata</code>, and sets the AMQP <code class="inline">MessageId</code> to the outbox row's own <code class="inline">MessageId</code> — the value Unity is expected to echo back in its acknowledgment so the two sides can be joined.</p>
+
+      <p>That routing key isn't configured anywhere — it's derived, every time, from the message itself:</p>
+      <pre><code>// GenerateRoutingKey(messageType, pluginId)
+prefix = pluginId.ToLowerInvariant();                 // "unity"
+suffix = messageType.ToLowerInvariant()
+                     .Replace("message", "");          // "PluginDataMessage" → "plugindata"
+return $"commands.{prefix}.{suffix}";                  // "commands.unity.plugindata"</code></pre>
+      <p>Which is also why <code class="inline">.MessageType</code> conventionally ends in <code class="inline">…Message</code> across the codebase — <code class="inline">PluginDataMessage</code>, <code class="inline">MessageAcknowledgment</code> is the deliberate exception (it ends in the un-suffixed <code class="inline">grants.{plugin}.acknowledgment</code> pattern instead, generated by the ack publisher, not this job). Add a new command type and its routing key just falls out — no registry entry required.</p>
+
+      <figure>
+        <svg viewBox="0 0 900 250" role="img" aria-label="Outbox message lifecycle: Pending to Processing to Published to Acknowledged. Processing can fail permanently after retries are exhausted. Published can time out after five minutes, but a late acknowledgment still closes it out.">
+          <defs>
+            <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <rect x="20" y="40" width="140" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".6"/>
+          <text x="90" y="70" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">Pending</text>
+
+          <rect x="200" y="40" width="140" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".6"/>
+          <text x="270" y="70" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">Processing</text>
+
+          <rect x="380" y="40" width="140" height="50" rx="8" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.4"/>
+          <text x="450" y="70" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">Published</text>
+
+          <rect x="560" y="40" width="180" height="50" rx="9" fill="var(--accent-ok-soft)" stroke="var(--accent-ok)" stroke-width="1.6"/>
+          <text x="650" y="70" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">Acknowledged</text>
+
+          <rect x="200" y="170" width="140" height="50" rx="8" fill="var(--accent-err-soft)" stroke="var(--accent-err)" stroke-width="1.4"/>
+          <text x="270" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">Failed</text>
+
+          <rect x="380" y="170" width="140" height="50" rx="8" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.4"/>
+          <text x="450" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">TimedOut</text>
+
+          <line x1="160" y1="65" x2="196" y2="65" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a3)"/>
+          <line x1="340" y1="65" x2="376" y2="65" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a3)"/>
+          <line x1="520" y1="65" x2="556" y2="65" stroke="var(--accent-ok)" stroke-width="1.5" marker-end="url(#a3)"/>
+          <text x="538" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--accent-ok)">SUCCESS ack</text>
+
+          <line x1="270" y1="90" x2="270" y2="167" stroke="var(--accent-err)" stroke-width="1.4" marker-end="url(#a3)"/>
+          <text x="282" y="130" text-anchor="start" font-family="IBM Plex Mono" font-size="9.5" fill="var(--accent-err)">retries exhausted</text>
+
+          <line x1="450" y1="90" x2="450" y2="167" stroke="var(--accent-cache)" stroke-width="1.4" marker-end="url(#a3)"/>
+          <text x="462" y="130" text-anchor="start" font-family="IBM Plex Mono" font-size="9.5" fill="var(--accent-cache)">no ack ≥5 min</text>
+
+          <path d="M450,170 L650,90" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-dasharray="4 3" marker-end="url(#a3)"/>
+          <text x="560" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".75">late ack — still honored</text>
+        </svg>
+        <figcaption>The outbox message lifecycle. <code class="inline">Failed</code> and <code class="inline">TimedOut</code> are the two paths that trigger compensation (§06); a late ack after a timeout is still processed — see the note below.</figcaption>
+      </figure>
+    </section>
+
+    <section id="transportack">
+      <p class="eyebrow"><span class="num">05</span> A layer most people skip past</p>
+      <h2>Transport-level ack/nack: not the same ack/nack</h2>
+      <p>"Ack/nack" actually happens <em>twice</em>, at two unrelated layers, and it's easy to conflate them. §06 covers the business one — Unity's <code class="inline">SUCCESS</code>/<code class="inline">FAILED</code> verdict on a command it already received. This layer is lower: the AMQP protocol's own <code class="inline">BasicAck</code>/<code class="inline">BasicNack</code>, decided by <code class="inline">RabbitMQConsumer</code> the instant <em>any</em> message — command or acknowledgment — arrives off the wire, before a single byte of it has been interpreted as a plugin message.</p>
+
+      <p>The consumer runs with <code class="inline">prefetchCount: 1</code> (one message in flight at a time, no pipelining) and <code class="inline">autoAck: false</code> — it decides deliberately, every time:</p>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Condition</th><th>Broker call</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>Body exceeds <code class="inline">MaxMessageSize</code></td><td><code class="inline">BasicNack(requeue: false)</code></td><td>Dropped — a malformed giant payload can't loop forever</td></tr>
+            <tr><td>Body isn't valid JSON</td><td><code class="inline">BasicNack(requeue: false)</code></td><td>Dropped — redelivering unparseable bytes would never succeed</td></tr>
+            <tr><td>Stored as <code class="inline">InboxMessage</code> successfully</td><td><code class="inline">BasicAck</code></td><td>Removed from the queue — durably ours now, <code class="inline">InboxProcessorJob</code> takes it from here</td></tr>
+            <tr><td>Inbox write fails (e.g. DB unavailable)</td><td><code class="inline">BasicNack(requeue: true)</code></td><td>Put back on the queue for redelivery</td></tr>
+            <tr><td>Any other unexpected exception</td><td><code class="inline">BasicNack(requeue: true)</code></td><td>Put back — assumed transient</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Duplicate protection lives one layer up from this, deliberately: <code class="inline">_inboxRepository.AddAsync</code> checks <code class="inline">MessageId</code> before the row is written, so a message redelivered after a requeue — or a genuine duplicate from Unity — is recognized and doesn't get processed twice by <code class="inline">InboxProcessorJob</code>. The AMQP layer's only job is "did this arrive intact," not "have I seen this before."</p>
+
+      <div class="callout cache">
+        <span class="tag">Worth a question in the room</span>
+        <p>The requeue-on-failure path has no visible cap or dead-letter routing in this consumer's own setup. If the database were down long enough, a message could requeue and redeliver indefinitely rather than eventually landing somewhere for manual inspection. Worth confirming whether a dead-letter exchange or TTL is configured on the queue itself (outside this code) to bound that.</p>
+      </div>
+    </section>
+
+    <section id="acknack">
+      <p class="eyebrow"><span class="num">06</span> Closing the loop</p>
+      <h2>Business-level ack / nack and cache invalidation</h2>
+      <p>Once a message clears the transport layer above, <code class="inline">InboxProcessorJob</code> (every <strong>15s</strong>) reads its <em>payload</em> to find out what Unity actually said. For a <code class="inline">MessageAcknowledgment</code> — routing key <code class="inline">grants.unity.acknowledgment</code> — the status is <code class="inline">SUCCESS</code>, <code class="inline">FAILED</code>, or <code class="inline">PROCESSING</code>:</p>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Ack status</th><th>Outbox effect</th><th>Cache effect</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="swatch" style="background:var(--accent-ok)"></span><code class="inline">SUCCESS</code></td>
+              <td>Marked <code class="inline">Acknowledged</code></td>
+              <td>None — the optimistic patch from §03 was correct</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background:var(--accent-err)"></span><code class="inline">FAILED</code></td>
+              <td>Marked <code class="inline">Acknowledged</code>, <code class="inline">PluginEvent</code> recorded (<code class="inline">InboxRejection</code>)</td>
+              <td><strong>Invalidated</strong> — the exact segment the command touched</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background:var(--ink-soft)"></span><code class="inline">PROCESSING</code></td>
+              <td>Logged, left untouched</td>
+              <td>None — waiting for a final answer</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background:var(--accent-cache)"></span><em>no ack in 5 min</em></td>
+              <td>Marked <code class="inline">TimedOut</code>, <code class="inline">PluginEvent</code> recorded (<code class="inline">AckTimeout</code>)</td>
+              <td><strong>Invalidated</strong> — same compensation as a FAILED ack</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The cache segment to clear isn't guessed — it's resolved from the command's own <code class="inline">dataType</code> via <code class="inline">UnityCommandMetadataProvider.GetCacheSegment()</code>, e.g. <code class="inline">ADDRESS_EDIT_COMMAND → ADDRESSINFO</code>. The next read for that profile/provider is a guaranteed miss, so it goes back to Unity for the truth instead of continuing to serve the guess that turned out wrong.</p>
+
+      <figure>
+        <svg viewBox="0 0 900 460" role="img" aria-label="Unity publishes an acknowledgment to RabbitMQ, which lands in the inbox and is processed every 15 seconds into three outcomes: success does nothing, processing waits, and failed invalidates the Redis cache segment. Separately, an outbox timeout job checks every 60 seconds for messages with no acknowledgment in 5 minutes and applies the same compensation.">
+          <defs>
+            <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="a4e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-err)"/>
+            </marker>
+          </defs>
+
+          <rect x="20" y="180" width="260" height="50" rx="8" fill="none" stroke="var(--accent-cache)" stroke-width="1.4"/>
+          <text x="150" y="210" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">OutboxTimeoutJob</text>
+          <line x1="150" y1="230" x2="150" y2="258" stroke="var(--accent-cache)" stroke-width="1.4" marker-end="url(#a4)"/>
+          <text x="150" y="285" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="currentColor" style="max-width:200px">poll 60s</text>
+          <rect x="20" y="295" width="260" height="70" rx="8" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.2"/>
+          <text x="150" y="320" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor">no ack ≥5 min →</text>
+          <text x="150" y="336" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor">same PluginEvent +</text>
+          <text x="150" y="352" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor">cache invalidation</text>
+
+          <rect x="360" y="20" width="180" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="450" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Unity</text>
+
+          <rect x="360" y="100" width="180" height="50" rx="9" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.5"/>
+          <text x="450" y="130" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">RabbitMQ (ack)</text>
+
+          <rect x="360" y="180" width="180" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="450" y="210" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">Inbox (Pending)</text>
+
+          <rect x="360" y="260" width="180" height="50" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="450" y="290" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="currentColor">InboxProcessorJob</text>
+
+          <rect x="60" y="340" width="200" height="50" rx="8" fill="var(--accent-ok-soft)" stroke="var(--accent-ok)" stroke-width="1.5"/>
+          <text x="160" y="370" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">SUCCESS</text>
+
+          <rect x="350" y="340" width="200" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="450" y="370" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="currentColor">PROCESSING</text>
+
+          <rect x="640" y="340" width="200" height="50" rx="8" fill="var(--accent-err-soft)" stroke="var(--accent-err)" stroke-width="1.6"/>
+          <text x="740" y="370" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">FAILED</text>
+
+          <rect x="620" y="400" width="240" height="50" rx="9" fill="var(--accent-err-soft)" stroke="var(--accent-err)" stroke-width="1.6"/>
+          <text x="740" y="430" text-anchor="middle" font-family="IBM Plex Sans" font-size="11.5" font-weight="600" fill="currentColor">invalidate cache segment</text>
+
+          <line x1="450" y1="70" x2="450" y2="97" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a4)"/>
+          <line x1="450" y1="150" x2="450" y2="177" stroke="var(--accent-queue)" stroke-width="1.4" marker-end="url(#a4)"/>
+          <line x1="450" y1="230" x2="450" y2="257" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a4)"/>
+
+          <line x1="400" y1="310" x2="180" y2="337" stroke="var(--accent-ok)" stroke-width="1.4" marker-end="url(#a4)"/>
+          <line x1="450" y1="310" x2="450" y2="337" stroke="currentColor" stroke-opacity=".55" marker-end="url(#a4)"/>
+          <line x1="500" y1="310" x2="720" y2="337" stroke="var(--accent-err)" stroke-width="1.6" marker-end="url(#a4e)"/>
+
+          <line x1="740" y1="390" x2="740" y2="397" stroke="var(--accent-err)" stroke-width="1.6" marker-end="url(#a4e)"/>
+        </svg>
+        <figcaption>The return trip. Only <code class="inline">FAILED</code> and an ack timeout reach into Redis; <code class="inline">SUCCESS</code> and <code class="inline">PROCESSING</code> leave the optimistic patch exactly as it was.</figcaption>
+      </figure>
+
+      <div class="callout err">
+        <span class="tag">Late-ack safety</span>
+        <p>If Unity's ack shows up <em>after</em> the timeout job already fired, it's still processed — <code class="inline">TimedOut → Acknowledged</code> is a valid transition. The cache was already invalidated by the timeout, so the late answer can't re-confirm stale data; the next read simply fetches fresh state either way.</p>
+      </div>
+
+      <p>On the user-visible side, every recorded event shows up at <code class="inline">GET /Events/UNITY/{Provider}</code> with a friendly message built from the same metadata provider (e.g. <em>"address update"</em> for <code class="inline">ADDRESS_EDIT_COMMAND</code>), and the applicant can dismiss it via the acknowledge endpoints. The message is deliberately soft — <em>"…your data may revert on next refresh"</em> — because that's exactly what just happened.</p>
+    </section>
+
+    <section id="validation">
+      <p class="eyebrow"><span class="num">07</span> The gate</p>
+      <h2>Upfront validation: nothing touches the cache until it passes</h2>
+      <p>FastEndpoints runs the request's FluentValidation validator <em>before</em> <code class="inline">HandleAsync</code> ever executes. A bad request never reaches the plugin — it never patches Redis, and it never gets queued to Unity. Validation is the only gate in the entire pipeline; nothing downstream re-checks the shape of the data before it's optimistically written and published.</p>
+
+      <pre><code>public class UpdateAddressValidator : Validator&lt;UpdateAddressRequest&gt;
+{
+  public UpdateAddressValidator()
+  {
+    RuleFor(x =&gt; x.AddressId).NotEmpty();
+    RuleFor(x =&gt; x.AddressType).NotEmpty().MaximumLength(50);
+    RuleFor(x =&gt; x.Street).NotEmpty().MaximumLength(200);
+    RuleFor(x =&gt; x.City).NotEmpty().MaximumLength(100);
+    RuleFor(x =&gt; x.Province).NotEmpty().MaximumLength(50);
+    RuleFor(x =&gt; x.PostalCode).NotEmpty().MaximumLength(20);
+
+    // Required exactly as on Create: HandleAsync forwards this straight into
+    // EditAddressCommand, and the Unity plugin publishes it in
+    // ADDRESS_EDIT_COMMAND — an omitted value would send Guid.Empty downstream
+    // rather than being resolved from the authenticated profile.
+    RuleFor(x =&gt; x.ApplicantId).NotEmpty();
+  }
+}</code></pre>
+
+      <div class="callout cache">
+        <span class="tag">Why this one rule matters</span>
+        <p>Skip the <code class="inline">ApplicantId</code> check and <code class="inline">Guid.Empty</code> doesn't just fail quietly — it gets written into the optimistic cache patch <em>and</em> published to Unity inside <code class="inline">ADDRESS_EDIT_COMMAND</code>, because nothing between the endpoint and the outbox re-validates it. Upfront validation isn't a formality here; it's the only place this class of bug can be caught before it becomes visible state in two systems.</p>
+      </div>
+    </section>
+
+    <section id="config">
+      <p class="eyebrow"><span class="num">08</span> Reference</p>
+      <h2>Config &amp; defaults cheat-sheet</h2>
+      <div class="cols">
+        <div class="twrap">
+          <table>
+            <thead><tr><th colspan="2">Cache</th></tr></thead>
+            <tbody>
+              <tr><td>CacheKeyPrefix</td><td><code class="inline">profile:</code></td></tr>
+              <tr><td>CacheExpiryMinutes (absolute)</td><td>60</td></tr>
+              <tr><td>SlidingExpiryMinutes</td><td>15</td></tr>
+            </tbody>
+          </table>
+          <table style="margin-top:1.4rem;">
+            <thead><tr><th colspan="2">Outbox</th></tr></thead>
+            <tbody>
+              <tr><td>PollingIntervalSeconds</td><td>30</td></tr>
+              <tr><td>MaxRetries</td><td>3–5</td></tr>
+              <tr><td>AckTimeoutMinutes</td><td>5</td></tr>
+              <tr><td>AckTimeoutPollingIntervalSeconds</td><td>60</td></tr>
+              <tr><td>RetentionDays</td><td>7–14</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th colspan="2">Inbox</th></tr></thead>
+            <tbody>
+              <tr><td>PollingIntervalSeconds</td><td>15</td></tr>
+              <tr><td>MaxRetries</td><td>3</td></tr>
+              <tr><td>RetentionDays</td><td>7–14</td></tr>
+            </tbody>
+          </table>
+          <table style="margin-top:1.4rem;">
+            <thead><tr><th colspan="2">Routing keys</th></tr></thead>
+            <tbody>
+              <tr><td>Commands out</td><td><code class="inline">commands.unity.plugindata</code></td></tr>
+              <tr><td>Acks in</td><td><code class="inline">grants.unity.acknowledgment</code></td></tr>
+              <tr><td>Exchange</td><td><code class="inline">grants.messaging</code> (topic)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="resilience">
+      <p class="eyebrow"><span class="num">09</span> Under the hood</p>
+      <h2>What keeps the two background jobs from tripping over each other</h2>
+      <p><code class="inline">OutboxProcessorJob</code> and <code class="inline">OutboxTimeoutJob</code> both run on every pod, on their own Quartz schedule, with <code class="inline">[DisallowConcurrentExecution]</code> guarding each job against overlapping <em>itself</em> — but nothing stops two pods from firing the same job at the same moment. Three mechanisms handle the rest:</p>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Mechanism</th><th>What it prevents</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Distributed lock</strong> per job key (<code class="inline">outbox-processor</code>, <code class="inline">outbox-timeout</code>), 5-minute duration, renewed every 2 minutes mid-batch</td><td>Two pods processing the same batch of pending/timed-out messages at once</td></tr>
+            <tr><td><strong>Job circuit breaker</strong> — <code class="inline">ShouldExecute</code> gates the whole run; failures back off 15s → 30s → 60s → 120s → 300s (capped)</td><td>A down Redis or Postgres turning into a tight retry loop and a flood of identical error logs</td></tr>
+            <tr><td><strong>Status re-check on the timeout path</strong> — <code class="inline">GetCurrentStatusAsync</code> reads straight from the database (no tracked entity) immediately before compensating</td><td>The race below</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>That third one is the subtle case worth walking through out loud: <code class="inline">OutboxTimeoutJob</code> loads a batch of messages that <em>were</em> <code class="inline">Published</code> and older than the cutoff — but between that load and actually acting on a given message, <code class="inline">InboxProcessorJob</code> could process a genuine late ack for the very same message on another pod. Without a re-check, the timeout job would invalidate a cache segment that the ack had just correctly left alone (or double-invalidate one already handled). The guard is one extra untracked read:</p>
+
+      <pre><code>// OutboxTimeoutJob.ProcessTimedOutMessage
+var currentStatus = await _outboxRepository.GetCurrentStatusAsync(message.Id, ct);
+if (currentStatus != OutboxMessageStatus.Published)
+{
+    // an ack landed concurrently — this message isn't ours to time out
+    return;
+}</code></pre>
+
+      <p>It's a small guard, but it's the difference between "the ack/nack loop is eventually consistent" and "the ack/nack loop is eventually consistent, except during the exact window two jobs are both looking at the same row."</p>
+    </section>
+
+    <section id="tbd" class="proposed">
+      <span class="badge-tbd">TBD · proposed, not yet built</span>
+      <h2>Server-initiated invalidation: let Unity tell us when to forget</h2>
+      <p>Every invalidation covered so far is <em>reactive</em> — it fires in response to something the Portal itself did (a write that came back <code class="inline">FAILED</code>, or timed out). There's no path today for Unity to say <em>"something changed on my side, independent of anything you asked for"</em> — a case worker edits the applicant's contact info directly inside Unity, say, with the Portal never involved. The proposal: let Unity publish a lightweight event for exactly that, and treat it the same way §06 already treats a failed ack — just invalidate.</p>
+
+      <p>The extension point already exists and is already shaped for this. <code class="inline">UnityPluginMessageHandler.HandleIncomingDataAsync</code> — the same method routed to by the transport in §05/§06 — already has stub cases for this exact shape of message (<code class="inline">PROFILE_UPDATE</code>, <code class="inline">STATUS_UPDATE</code>), each currently just a log line and a <code class="inline">// TODO</code>. This proposal is about filling one of those in for real, not building new plumbing.</p>
+
+      <figure>
+        <svg viewBox="0 0 760 480" role="img" aria-label="Unity publishes an event over the existing acknowledgment queue. It lands in the inbox and is routed by the existing inbox processor job to a new handler case, which invalidates the affected cache segment. Separately, and using no new code, the user's next login triggers the existing cache-aside read, which is now a guaranteed miss and fetches fresh data.">
+          <defs>
+            <marker id="a5s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="a5d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-err)"/>
+            </marker>
+          </defs>
+
+          <text x="20" y="12" font-family="IBM Plex Mono" font-size="10" letter-spacing=".08em" fill="currentColor" opacity=".55">EXISTING — UNCHANGED</text>
+          <rect x="20" y="20" width="130" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="85" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="currentColor">Unity</text>
+
+          <rect x="210" y="20" width="170" height="50" rx="9" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.5"/>
+          <text x="295" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">RabbitMQ</text>
+          <line x1="150" y1="45" x2="206" y2="45" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a5s)"/>
+          <text x="178" y="32" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".75">publish event</text>
+
+          <rect x="210" y="110" width="170" height="50" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="295" y="140" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" fill="currentColor">Inbox (Pending)</text>
+          <line x1="295" y1="70" x2="295" y2="107" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a5s)"/>
+
+          <rect x="210" y="200" width="170" height="50" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="295" y="230" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="currentColor">InboxProcessorJob</text>
+          <line x1="295" y1="160" x2="295" y2="197" stroke="currentColor" stroke-opacity=".6" marker-end="url(#a5s)"/>
+
+          <text x="170" y="282" font-family="IBM Plex Mono" font-size="10" letter-spacing=".08em" fill="var(--accent-err)">PROPOSED — NEW</text>
+          <rect x="170" y="290" width="250" height="60" rx="8" fill="none" stroke="var(--accent-err)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="295" y="315" text-anchor="middle" font-family="IBM Plex Sans" font-size="11.5" fill="currentColor">new dataType case in</text>
+          <text x="295" y="331" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">HandleIncomingDataAsync</text>
+          <line x1="295" y1="250" x2="295" y2="287" stroke="var(--accent-err)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a5d)"/>
+
+          <rect x="170" y="390" width="250" height="60" rx="8" fill="var(--accent-err-soft)" stroke="var(--accent-err)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="295" y="415" text-anchor="middle" font-family="IBM Plex Sans" font-size="11.5" font-weight="600" fill="currentColor">invalidate cache</text>
+          <text x="295" y="431" text-anchor="middle" font-family="IBM Plex Sans" font-size="11.5" fill="currentColor">segment(s) for the profile</text>
+          <line x1="295" y1="350" x2="295" y2="387" stroke="var(--accent-err)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a5d)"/>
+
+          <text x="470" y="336" font-family="IBM Plex Mono" font-size="10" letter-spacing=".08em" fill="currentColor" opacity=".55">EXISTING — UNCHANGED</text>
+          <rect x="470" y="345" width="270" height="110" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-dasharray="2 3"/>
+          <text x="605" y="373" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="currentColor">User's next login</text>
+          <text x="605" y="393" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor">→ §02 cache-aside read</text>
+          <text x="605" y="411" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor">→ guaranteed MISS</text>
+          <text x="605" y="429" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor">→ fresh fetch from Unity</text>
+          <line x1="420" y1="420" x2="466" y2="400" stroke="currentColor" stroke-opacity=".5" stroke-dasharray="3 3" marker-end="url(#a5s)"/>
+          <text x="440" y="380" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".7">no new code here</text>
+        </svg>
+        <figcaption>Solid boxes and the outcome on the right are unchanged infrastructure. The only genuinely new work (dashed, red) is one dispatch case and one invalidate call — the "user gets updated info on next login" behavior falls straight out of the cache-aside read that §02 already does.</figcaption>
+      </figure>
+
+      <div class="callout tbd">
+        <span class="tag">The core insight</span>
+        <p>This isn't a "refresh on login" feature. It's one delete. Because every profile read is already cache-aside (§02), invalidating a segment is enough — the next time <em>anything</em> reads it, that read is a guaranteed miss and re-fetches from Unity. In practice that next read happens shortly after the applicant's next login, when the frontend re-populates their contacts/addresses/etc. — so "updated info on next login" is a consequence of existing behavior, not a new code path to build.</p>
+      </div>
+
+      <p style="margin-top:1.6rem;">Open questions before this gets built:</p>
+      <ul class="open-qs">
+        <li>What does Unity actually send — a specific segment that changed (e.g. <code class="inline">CONTACTINFO</code> only), or a profile-level "something changed, refresh everything"?</li>
+        <li><code class="inline">IDistributedCache</code> has no wildcard or pattern delete. A profile-level event can't invalidate "everything for this profile" in one call — it has to loop a fixed list of known segments (<code class="inline">CONTACTINFO</code>, <code class="inline">ADDRESSINFO</code>, <code class="inline">ORGINFO</code>, <code class="inline">SUBMISSIONINFO</code>, <code class="inline">PAYMENTINFO</code>) via <code class="inline">IProfileCacheInvalidationService</code>, one call per segment.</li>
+        <li>What's the <code class="inline">dataType</code> and payload shape? Reuse the already-stubbed <code class="inline">PROFILE_UPDATE</code> / <code class="inline">STATUS_UPDATE</code>, or define a dedicated <code class="inline">CACHE_INVALIDATE</code> — and does the payload carry <code class="inline">profileId</code> + <code class="inline">provider</code> the same way every outbound command already does?</li>
+        <li>Should it raise anything user-visible? Wiring it through <code class="inline">PluginEventService.RecordAsync</code> (§06) at <code class="inline">Info</code> severity — "your information was recently updated" — costs one call, but a silent invalidation may be the better UX for a change the applicant didn't initiate themselves.</li>
+        <li>No new infrastructure is needed on the routing side — Unity publishes to the same exchange with a routing key like <code class="inline">grants.unity.datachange</code>, which the Portal's existing <code class="inline">grants.*.#</code> queue binding already picks up.</li>
+      </ul>
+    </section>
+
+    <section id="discussion">
+      <p class="eyebrow">For the room</p>
+      <h2>Discussion prompts</h2>
+      <ul class="plain">
+        <li>The code-level cache TTL default (30&nbsp;min / 10&nbsp;min) and the shipped config (60&nbsp;min / 15&nbsp;min) disagree — is that split intentional per environment, or should the class default match production?</li>
+        <li><code class="inline">UnityPluginMessageHandler</code>'s <code class="inline">SUCCESS</code> and <code class="inline">PROCESSING</code> branches are still logging-only stubs (<code class="inline">// TODO: update cache, notify user, etc.</code>) — anything Unity-specific worth adding beyond what the generic inbox path already does?</li>
+        <li>A <code class="inline">PROCESSING</code> ack is currently a no-op — should it push out the ack-timeout window for genuinely long-running commands, instead of racing the same 5-minute clock?</li>
+        <li>Late acks are handled safely today because the cache was already invalidated by the timeout — worth confirming Unity's own retry/redelivery semantics can't produce a late ack for a command it's also about to retry.</li>
+        <li>The AMQP-level requeue-on-failure path (§05) has no visible cap in this consumer — is there a dead-letter exchange or TTL configured on the queue itself to stop an indefinite requeue loop during a prolonged database outage?</li>
+        <li>The transport-level ack (§05) and the business-level ack (§06) are easy to conflate in conversation — is it worth renaming one of them in code or docs (e.g. "delivery ack" vs "processing ack") to keep them distinct when this comes up in incident reviews?</li>
+        <li>For the proposed push-invalidation event (TBD) — does Unity have a reliable trigger point to publish it from (e.g. a save handler in their own UI), or would it need polling/change-detection on their side that doesn't exist yet?</li>
+        <li>If the answer above is "profile-level, not granular," is looping five known segments per event acceptable, or does it push us toward giving <code class="inline">IPluginCacheService</code> an actual pattern-delete (which means moving off the generic <code class="inline">IDistributedCache</code> abstraction toward something Redis-specific)?</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p class="eyebrow">Source, for cross-reference</p>
+  <ul>
+    <li>Unity.Profile.cs — read/cache-aside entry point</li>
+    <li>Unity.Addresses.cs / Unity.Contacts.cs / Unity.Organizations.cs — optimistic writes</li>
+    <li>Unity.CacheHelpers.cs — PatchCachedProfileDataAsync, RebuildWithArray/Object</li>
+    <li>PluginCacheService.cs — shared GetOrFetchAsync / SetAsync / InvalidateAsync</li>
+    <li>InboxProcessorJob.cs — ack routing, RecordAckFailureEventAsync</li>
+    <li>OutboxProcessorJob.cs / OutboxTimeoutJob.cs — locking, circuit breaker, race guard</li>
+    <li>RabbitMQConsumer.cs — AMQP-level BasicAck/BasicNack decisions</li>
+    <li>PluginEventService.cs — PluginEvent persistence + cache compensation</li>
+    <li>UnityCommandMetadataProvider.cs — dataType → cache segment mapping</li>
+    <li>PrimaryAddressResolver.cs — resolving "current primary" straight from cache</li>
+    <li>documentation/architecture/Unity-Integration.md · Messaging-Plugin-Integration-Guide.md</li>
+  </ul>
+</footer>
