@@ -30,7 +30,8 @@ defaults:
 jobs:
   cypress:
     name: Cypress E2E — ${{ inputs.env_name }}
-    runs-on: ubuntu-latest
+    runs-on:
+      group: Larger Runners - OpenShift Static-IP
 
     steps:
       - name: Checkout
