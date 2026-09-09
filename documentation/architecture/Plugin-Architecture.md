@@ -232,8 +232,8 @@ Request → ProfileResolutionMiddleware
 
 ## Related Documentation
 
-- [API Endpoints](API-Endpoints.md) — Complete endpoint reference
+- [API Endpoints](../auto/API-Endpoints.md) — Complete endpoint reference
 - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) — Outbox/inbox messaging pattern
 - [Resource Ownership Validation](Resource-Ownership-Validation.md) — IDOR prevention and ownership enforcement
 - [Unity Integration](Unity-Integration.md) — Unity-specific integration details
-- [UNITY RabbitMQ Integration Spec](UNITY-RabbitMQ-Integration-Spec.md) — External system consumer contract
+- [UNITY RabbitMQ Integration Spec](../integration-specs/UNITY-RabbitMQ-Integration-Spec.md) — External system consumer contract

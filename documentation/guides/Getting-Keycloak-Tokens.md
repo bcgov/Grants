@@ -1,35 +1,10 @@
-# Getting Personal Keycloak Tokens
+# Getting Personal Keycloak Tokens (IDIR/BCeID) for API Testing
 
-This guide s### Authentication Issues
+This guide shows how to obtain a JWT token from BC Government's Keycloak SSO using your **IDIR** or **BCeID** account, so you can call protected Portal API endpoints as yourself.
 
-- Check if your account has access to the realm
-- Ensure you're using the correct Keycloak environment
-- Verify your user account is properly configured
+## Your Keycloak Configuration
 
-Your personal JWT token will now work perfectly with your API endpoints! 🎉ow to obtain JWT tokens from your Keycloak SSO for API testing with your user account.
-
-## 🔧 **Your Keycloak Configuration**
-
-Based on your configuration (replace with your actual values):
-
-```json
-{
-  "Keycloak": {
-    "AuthServerUrl": "https://your-keycloak-server.com/auth",
-    "Realm": "your-realm",
-    "Resource": "your-client-id",
-    "Credentials": {
-      "Secret": "your-client-secret-here"
-    }
-  }
-}
-```eycloak Tokens (IDIR/BCeID) for API Testing
-
-This guide shows how to obtain JWT tokens from BC Government's Keycloak SSO using your **IDIR** or **BCeID** account for API testing.
-
-## ?? **Your Keycloak Configuration**
-
-Based on your secrets.json:
+Your realm and client come from configuration (see [Secrets Management](Secrets-Management.md) for where each value lives). Replace the placeholders below with your actual values:
 
 ```json
 {
@@ -44,14 +19,14 @@ Based on your secrets.json:
 }
 ```
 
-## ?? **Important Note**
+## Important Note
 
 Your client (`your-client-id`) is a **confidential client**, not a service account. This means:
-- ? **Client Credentials Flow** won't work for user authentication
-- ? **Authorization Code Flow** with browser login is required
-- ? You must authenticate with your **IDIR** or **BCeID** account
+- **Client Credentials Flow will not work** for user authentication — it authenticates the client, not you.
+- **Authorization Code Flow with a browser login is required.**
+- You must authenticate with your **IDIR** or **BCeID** account.
 
-## ?? **Method 1: Authorization Code Flow (Recommended)**
+## Method 1: Authorization Code Flow (Recommended)
 
 This is the standard way to get a personal token with user authentication.
 
@@ -125,7 +100,7 @@ curl -X POST "https://your-keycloak-server.com/auth/realms/your-realm/protocol/o
   -d "redirect_uri=http://localhost:8080/callback"
 ```
 
-## ?? **Method 2: Using Refresh Token**
+## Method 2: Using Refresh Token
 
 Once you have tokens, you can use the refresh token to get new access tokens without re-authenticating:
 
@@ -144,23 +119,26 @@ Once you have tokens, you can use the refresh token to get new access tokens wit
    refresh_token: [YOUR_REFRESH_TOKEN]
    ```
 
-## ??? **Method 3: Automated PowerShell Scripts**
+## Method 3: Automated PowerShell Scripts
 
 For easier automation, use the PowerShell scripts:
 
 ```powershell
 # Setup configuration (one-time)
+
 .\scripts\setup-dev-secrets.ps1
 
 # Get token automatically
+
 $password = Read-Host -AsSecureString -Prompt "Enter IDIR password"
 .\scripts\Get-KeycloakTokenSimple.ps1 -Username "your-idir-username" -Password $password -IdentityProvider "IDIR"
 
 # Use the token
+
 curl -H "Authorization: Bearer $env:KEYCLOAK_TOKEN" https://localhost:7000/Auth/userinfo
 ```
 
-## ??? **Method 4: Streamlined Browser Method**
+## Method 4: Streamlined Browser Method
 
 For easier testing, you can use a simple HTML page to handle the redirect:
 
@@ -309,10 +287,12 @@ Once you have your JWT token, test it with your API:
 
 ```bash
 # Test the UserInfo endpoint
+
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
      https://localhost:7000/Auth/userinfo
 
 # Test a protected profile endpoint
+
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
      https://localhost:7000/api/profiles/123
 ```
@@ -368,29 +348,36 @@ Your JWT token will contain claims specific to your IDIR/BCeID account. Decode i
 ## 🚨 **Troubleshooting**
 
 ### "Client not enabled to retrieve service account"
+
 - ✅ **Correct**: This confirms you need user authentication (not service account)
 - ✅ **Solution**: Use the browser-based authorization code flow above
 
 ### "Invalid redirect URI"
+
 - Make sure the `redirect_uri` in your token request exactly matches what you used in the authorization URL
 - BC Government Keycloak may have strict redirect URI validation
 
 ### "Invalid client"
+
 - Double-check your client_id and client_secret in your configuration
 - Ensure you're using the correct Keycloak server
 
 ### Authentication Issues
+
 - Try both IDIR and BCeID if one doesn't work
 - Check if your account has access to the specified realm
 - Ensure you're using the correct Keycloak environment
 
 ### Configuration Not Found
+
 ```bash
 # Check your user secrets
+
 cd src/Grants.ApplicantPortal.API.Web
 dotnet user-secrets list
 
 # Or check environment variables
+
 echo $KEYCLOAK_CLIENT_ID
 ```
 

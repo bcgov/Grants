@@ -1,0 +1,668 @@
+<title>Applicant Portal Orientation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#EDEFEA; --paper-raised:#FFFFFF; --paper-sunken:#E3E6DE;
+    --ink:#15201B; --ink-soft:#4B5A50; --line:rgba(21,32,27,.14);
+    --accent-cache:#B5651D; --accent-cache-soft:#F1E1CC;
+    --accent-queue:#1F6F72; --accent-queue-soft:#DCEDEC;
+    --accent-ok:#3E7D46; --accent-ok-soft:#E1EEE0;
+    --accent-err:#A73A3A; --accent-err-soft:#F4DEDD;
+    --font-display:'Fraunces',Georgia,serif;
+    --font-body:'IBM Plex Sans',-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0F1512; --paper-raised:#171F1A; --paper-sunken:#131A16;
+      --ink:#E7EDE6; --ink-soft:#9FB0A4; --line:rgba(231,237,230,.16);
+      --accent-cache:#E0954F; --accent-cache-soft:#3A2A18;
+      --accent-queue:#56B7B9; --accent-queue-soft:#163130;
+      --accent-ok:#74C17E; --accent-ok-soft:#1C3020;
+      --accent-err:#E38080; --accent-err-soft:#3A2222;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0F1512; --paper-raised:#171F1A; --paper-sunken:#131A16;
+    --ink:#E7EDE6; --ink-soft:#9FB0A4; --line:rgba(231,237,230,.16);
+    --accent-cache:#E0954F; --accent-cache-soft:#3A2A18;
+    --accent-queue:#56B7B9; --accent-queue-soft:#163130;
+    --accent-ok:#74C17E; --accent-ok-soft:#1C3020;
+    --accent-err:#E38080; --accent-err-soft:#3A2222;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0; color:var(--ink);}
+  p{margin:0 0 1em; max-width:64ch;}
+  a{color:var(--accent-queue);}
+  :focus-visible{outline:2px solid var(--accent-queue); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} }
+
+  .eyebrow{
+    font-family:var(--font-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-soft); display:flex; align-items:center; gap:.6em; margin-bottom:.9em;
+  }
+  .eyebrow .num{color:var(--accent-cache); font-weight:600;}
+
+  .hero{
+    padding:4.5rem 6vw 3.5rem; max-width:1280px; margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .hero h1{font-size:clamp(2.3rem,4.4vw,3.6rem); font-weight:600; max-width:16ch;}
+  .hero .lede{font-family:var(--font-body); font-size:1.12rem; color:var(--ink-soft); max-width:62ch; margin-top:1.1rem;}
+  .facts{display:flex; flex-wrap:wrap; gap:.6rem; margin:2rem 0 2.6rem; padding:0; list-style:none;}
+  .facts li{
+    font-family:var(--font-mono); font-size:.78rem; background:var(--paper-raised);
+    border:1px solid var(--line); border-radius:999px; padding:.45em 1em; color:var(--ink);
+  }
+  .facts strong{color:var(--accent-queue);}
+
+  .layout{max-width:1280px; margin:0 auto; display:grid; grid-template-columns:210px 1fr; gap:0 4vw; padding:0 6vw;}
+  nav.toc{padding-top:3.2rem;}
+  nav.toc ol{list-style:none; margin:0; padding:0; position:sticky; top:1.6rem; display:flex; flex-direction:column; gap:.5rem;}
+  nav.toc a{
+    display:block; text-decoration:none; color:var(--ink-soft); font-size:.82rem;
+    font-family:var(--font-mono); padding:.3em 0; border-left:2px solid transparent; padding-left:.8em;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible{color:var(--ink); border-left-color:var(--accent-cache);}
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    nav.toc{display:none;}
+  }
+
+  main{padding-top:1rem;}
+  section{padding:3.6rem 0; border-bottom:1px solid var(--line);}
+  section:last-of-type{border-bottom:none;}
+  section h2{font-size:clamp(1.5rem,2.6vw,2rem); font-weight:600; max-width:24ch; margin-bottom:1.1rem;}
+  section h3{font-size:1.05rem; margin:1.8rem 0 .3rem;}
+  section > .eyebrow{margin-bottom:.5rem;}
+
+  figure{margin:1.8rem 0; padding:1.4rem 1.4rem 1.1rem; background:var(--paper-raised);
+    border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto;}
+  figure svg{display:block; width:100%; height:auto; min-width:520px; color:var(--ink);}
+  figcaption{font-size:.85rem; color:var(--ink-soft); margin-top:.9rem; max-width:70ch;}
+
+  pre{
+    background:var(--paper-sunken); border:1px solid var(--line); border-radius:var(--radius);
+    padding:1rem 1.2rem; overflow-x:auto; margin:1.2rem 0;
+  }
+  code,pre,kbd{font-family:var(--font-mono); font-size:.83rem;}
+  code.inline{
+    font-family:var(--font-mono); font-size:.86em; background:var(--paper-sunken);
+    border:1px solid var(--line); border-radius:4px; padding:.08em .38em;
+  }
+  pre code{background:none; border:none; padding:0; font-size:.83rem; line-height:1.55;}
+
+  .twrap{overflow-x:auto; margin:1.3rem 0;}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:.9rem;}
+  th,td{text-align:left; padding:.6em .8em; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:500;}
+  tbody th{text-transform:none; letter-spacing:0; font-size:.83rem; color:var(--ink);}
+  td code{white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+
+  .callout{
+    border-radius:var(--radius); padding:1rem 1.2rem; margin:1.3rem 0; font-size:.92rem;
+    border:1px solid; max-width:70ch;
+  }
+  .callout p{margin:0; max-width:none;}
+  .callout p + p{margin-top:.7em;}
+  .callout.cache{background:var(--accent-cache-soft); border-color:var(--accent-cache); color:var(--ink);}
+  .callout.err{background:var(--accent-err-soft); border-color:var(--accent-err); color:var(--ink);}
+  .callout.ok{background:var(--accent-ok-soft); border-color:var(--accent-ok); color:var(--ink);}
+  .callout.queue{background:var(--accent-queue-soft); border-color:var(--accent-queue); color:var(--ink);}
+  .callout .tag{font-family:var(--font-mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:.4em; opacity:.8;}
+
+  ol.steps{list-style:none; margin:1.2rem 0; padding:0; counter-reset:step;}
+  ol.steps li{counter-increment:step; display:flex; gap:.9em; margin-bottom:.8em; max-width:66ch;}
+  ol.steps li::before{
+    content:counter(step); font-family:var(--font-mono); font-size:.78rem; flex:none;
+    width:1.6em; height:1.6em; border-radius:50%; border:1px solid var(--accent-queue); color:var(--accent-queue);
+    display:flex; align-items:center; justify-content:center; margin-top:.1em;
+  }
+
+  ul.plain{margin:1.1rem 0; padding-left:1.2em;}
+  ul.plain li{margin-bottom:.5em; max-width:66ch;}
+
+  dl.glossary{margin:1.3rem 0; display:grid; grid-template-columns:auto 1fr; gap:.55rem 1.4rem; max-width:76ch;}
+  dl.glossary dt{font-family:var(--font-mono); font-size:.82rem; color:var(--accent-cache); white-space:nowrap;}
+  dl.glossary dd{margin:0; font-size:.93rem;}
+  @media (max-width:640px){ dl.glossary{grid-template-columns:1fr; gap:.15rem 0;} dl.glossary dd{margin-bottom:.7rem;} }
+
+  footer{padding:3rem 6vw 4rem; max-width:1280px; margin:0 auto;}
+  footer .eyebrow{margin-bottom:1rem;}
+  footer ul{list-style:none; margin:0; padding:0; display:grid; gap:.4rem; font-family:var(--font-mono); font-size:.78rem; color:var(--ink-soft);}
+</style>
+
+<header class="hero">
+  <p class="eyebrow"><span class="num">§</span> Engineering briefing · Start here</p>
+  <h1>Applicant Portal, from zero</h1>
+  <p class="lede">What this system is, what it owns, how a single request travels from an applicant's browser all the way to Unity Grant Manager — and the handful of conventions that explain nine tenths of the code you're about to read. Written to be read end to end in one sitting, before you open your first file.</p>
+
+  <ul class="facts">
+    <li><strong>2</strong> apps — portal + E2E suite</li>
+    <li><strong>9</strong> backend projects</li>
+    <li><strong>5</strong> local containers</li>
+    <li><strong>4200</strong> frontend</li>
+    <li><strong>5100</strong> API</li>
+    <li><strong>2</strong> plugins — DEMO, UNITY</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 1000 300" role="img" aria-label="The applicant's browser runs the Angular SPA, which calls the Portal API. The API keeps its own Postgres database for portal-owned records and reaches Unity Grant Manager for applicant data, through a Redis cache for reads and RabbitMQ for writes. Keycloak sits above as the identity provider for both the SPA and the API.">
+      <defs>
+        <marker id="o-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+        <marker id="o-arrow-q" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-queue)"/>
+        </marker>
+        <marker id="o-arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-cache)"/>
+        </marker>
+      </defs>
+
+      <rect x="380" y="18" width="240" height="52" rx="8" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.5"/>
+      <text x="500" y="41" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Keycloak (BC Gov SSO)</text>
+      <text x="500" y="59" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".7">IDIR · BCeID · BC Services Card</text>
+
+      <rect x="20" y="130" width="150" height="70" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="95" y="160" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Browser</text>
+      <text x="95" y="178" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".65">Angular 20 SPA</text>
+
+      <rect x="230" y="130" width="180" height="70" rx="8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <text x="320" y="160" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Portal API</text>
+      <text x="320" y="178" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".65">.NET 9 · FastEndpoints</text>
+
+      <rect x="230" y="235" width="180" height="52" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+      <text x="320" y="258" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">Postgres</text>
+      <text x="320" y="275" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity=".65">profiles · outbox · inbox · events</text>
+
+      <rect x="470" y="130" width="150" height="70" rx="9" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.6"/>
+      <text x="545" y="160" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Redis</text>
+      <text x="545" y="178" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity=".7">profile:… segments</text>
+
+      <rect x="680" y="130" width="150" height="70" rx="9" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.6"/>
+      <text x="755" y="170" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">RabbitMQ</text>
+
+      <rect x="860" y="112" width="120" height="106" rx="8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <text x="920" y="152" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="currentColor">Unity</text>
+      <text x="920" y="170" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".8">Grant</text>
+      <text x="920" y="186" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".8">Manager</text>
+
+      <line x1="170" y1="165" x2="226" y2="165" stroke="currentColor" stroke-opacity=".6" marker-end="url(#o-arrow)"/>
+      <text x="198" y="152" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".7">JWT</text>
+
+      <line x1="320" y1="200" x2="320" y2="232" stroke="currentColor" stroke-opacity=".55" marker-end="url(#o-arrow)"/>
+      <line x1="410" y1="165" x2="466" y2="165" stroke="var(--accent-cache)" stroke-width="1.6" marker-end="url(#o-arrow-c)"/>
+      <line x1="620" y1="150" x2="856" y2="138" stroke="currentColor" stroke-opacity=".55" stroke-dasharray="4 3" marker-end="url(#o-arrow)"/>
+      <text x="735" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".7">REST reads — only on a cache miss</text>
+      <line x1="620" y1="184" x2="676" y2="180" stroke="var(--accent-queue)" stroke-width="1.6" marker-end="url(#o-arrow-q)"/>
+      <line x1="830" y1="176" x2="856" y2="182" stroke="var(--accent-queue)" stroke-width="1.6" marker-end="url(#o-arrow-q)"/>
+      <text x="755" y="216" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--accent-queue)">queued writes + acks</text>
+
+      <line x1="95" y1="130" x2="392" y2="70" stroke="var(--accent-queue)" stroke-width="1.3" stroke-dasharray="3 3" marker-end="url(#o-arrow-q)"/>
+      <line x1="330" y1="130" x2="472" y2="70" stroke="var(--accent-queue)" stroke-width="1.3" stroke-dasharray="3 3" marker-end="url(#o-arrow-q)"/>
+    </svg>
+    <figcaption><strong>The whole system on one page.</strong> The Portal owns very little applicant data of its own — Postgres holds profiles, messaging state, and events. Everything an applicant actually sees about their grants lives in Unity Grant Manager, reached through a Redis cache for reads and a queue for writes.</figcaption>
+  </figure>
+</header>
+
+<div class="layout">
+  <nav class="toc" aria-label="Sections">
+    <ol>
+      <li><a href="#what">01 · What this is</a></li>
+      <li><a href="#map">02 · The repo map</a></li>
+      <li><a href="#request">03 · One request, end to end</a></li>
+      <li><a href="#backend">04 · Backend conventions</a></li>
+      <li><a href="#frontend">05 · Frontend conventions</a></li>
+      <li><a href="#plugins">06 · The plugin seam</a></li>
+      <li><a href="#running">07 · Get it running</a></li>
+      <li><a href="#tests">08 · Tests</a></li>
+      <li><a href="#ship">09 · Shipping a change</a></li>
+      <li><a href="#glossary">10 · Glossary</a></li>
+      <li><a href="#gotchas">Gotchas</a></li>
+      <li><a href="#next">Where to go next</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="what">
+      <p class="eyebrow"><span class="num">01</span> Orientation</p>
+      <h2>What the Applicant Portal is — and what it deliberately isn't</h2>
+      <p>The Applicant Portal is the applicant-facing half of BC Government grants administration. An applicant signs in with a BC Gov identity, sees the grant submissions they've made, tracks status, keeps their own contact and address details current, and views payments. Staff-side grant administration is <em>not</em> here — that lives in Unity Grant Manager, a separate system owned by another team.</p>
+      <p>That split is the single most important thing to internalise, because it explains most of the architecture:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">The Portal owns</th><th scope="col">Unity owns</th></tr></thead>
+          <tbody>
+            <tr><td>The applicant's login-to-profile mapping (<code class="inline">Profile</code>)</td><td>Applicants, applications, submissions, payments — the real records</td></tr>
+            <tr><td>Messaging state — outbox, inbox, plugin events</td><td>The authoritative answer to "is this data valid?"</td></tr>
+            <tr><td>A cache of Unity's answers, in Redis</td><td>Whether a write the Portal sent actually succeeded</td></tr>
+            <tr><td>The UI, and the rules about what a user may see</td><td>Business rules about grants themselves</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>So the Portal is mostly an <strong>integration and presentation layer over someone else's system of record</strong>. It has a database, but almost nothing applicant-visible lives in it. When you catch yourself asking "where is this stored?", the answer is usually "it isn't — we asked Unity and cached the reply."</p>
+      <div class="callout queue">
+        <span class="tag">The one idea to carry forward</span>
+        <p>Reads from Unity are synchronous and cached. Writes to Unity are asynchronous and <em>optimistic</em> — the Portal updates its cache, tells the user "done," and only finds out later whether Unity agreed. Nearly everything that looks like unusual complexity in the backend exists to make that safe.</p>
+      </div>
+    </section>
+
+    <section id="map">
+      <p class="eyebrow"><span class="num">02</span> The map</p>
+      <h2>Two applications, nine backend projects</h2>
+      <p>Two applications live under <code class="inline">applications/</code>. Everything else at the repo root is documentation, compliance, or licence material.</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Path</th><th scope="col">What it is</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code class="inline">Grants.ApplicantPortal/</code></th><td>The product — frontend and backend, plus the <code class="inline">docker-compose.yml</code> that runs the whole stack locally</td></tr>
+            <tr><th scope="row"><code class="inline">Grants.AutoUI/</code></th><td>Cypress E2E suite. Targets <em>deployed</em> environments — it does not run against localhost</td></tr>
+            <tr><th scope="row"><code class="inline">dev-env.ps1</code></th><td>PowerShell wrapper over docker-compose: <code class="inline">start</code>, <code class="inline">stop</code>, <code class="inline">logs</code>, <code class="inline">rebuild</code>, <code class="inline">clean</code></td></tr>
+            <tr><th scope="row"><code class="inline">documentation/</code></th><td>What you're reading. §<a href="#next">Where to go next</a> maps the rest of it</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The backend, in dependency order</h3>
+      <p>The backend follows Clean Architecture: dependencies point inward, and <code class="inline">API.Core</code> at the centre references nothing. When you're unsure which project a type belongs in, that's the test — would it still compile if the outer layer were deleted?</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Project</th><th scope="col">References</th><th scope="col">Holds</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code class="inline">API.Core</code></th><td>nothing</td><td>Entities, DTOs, caching and plugin abstractions</td></tr>
+            <tr><th scope="row"><code class="inline">API.Core.Features</code></th><td>Core</td><td>Feature-level contracts shared across use cases</td></tr>
+            <tr><th scope="row"><code class="inline">API.UseCases</code></th><td>Core.Features</td><td>MediatR commands, queries, and their handlers — the business logic</td></tr>
+            <tr><th scope="row"><code class="inline">API.Infrastructure</code></th><td>Core.Features, UseCases</td><td>EF Core <code class="inline">AppDbContext</code>, repositories, Redis, RabbitMQ, background jobs</td></tr>
+            <tr><th scope="row"><code class="inline">API.Plugins</code></th><td>Core, Core.Features, Infrastructure</td><td><code class="inline">DEMO</code> and <code class="inline">UNITY</code> implementations, <code class="inline">PluginRegistry</code></td></tr>
+            <tr><th scope="row"><code class="inline">API.Web</code></th><td>Infrastructure, Plugins, UseCases, ServiceDefaults</td><td>FastEndpoints, middleware, auth policies, startup</td></tr>
+            <tr><th scope="row"><code class="inline">API.Migrations</code></th><td>Infrastructure, Core</td><td>EF Core migrations — the target project for <code class="inline">dotnet ef</code></td></tr>
+            <tr><th scope="row"><code class="inline">API.ServiceDefaults</code></th><td>nothing</td><td>Shared telemetry, health check, and resilience defaults</td></tr>
+            <tr><th scope="row"><code class="inline">API.AspireHost</code></th><td>Web</td><td>.NET Aspire orchestration for local multi-service runs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="request">
+      <p class="eyebrow"><span class="num">03</span> The path</p>
+      <h2>One request, end to end</h2>
+      <p>Follow a single realistic action — an applicant edits their mailing address — and you'll have touched nearly every layer in the system. This is the walkthrough worth doing on day one with the files open beside you.</p>
+
+      <figure>
+        <svg viewBox="0 0 940 560" role="img" aria-label="A request leaves an Angular feature component through api.service.ts and the auth interceptor, crosses the dev proxy or Express server, then passes the API middleware chain in order: exception handling, no-cache headers, request logging, health checks, FastEndpoints, HTTPS redirection, CORS, authentication, authorization, and finally profile resolution. It reaches the endpoint, which validates and dispatches through MediatR to a handler, which calls the UNITY plugin. The plugin patches the Redis segment, writes a pending outbox row, and the user receives a 200.">
+          <defs>
+            <marker id="r-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="r-arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-cache)"/>
+            </marker>
+            <marker id="r-arrow-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-ok)"/>
+            </marker>
+          </defs>
+
+          <text x="20" y="16" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".08em" fill="currentColor" opacity=".55">FRONTEND</text>
+          <rect x="20" y="26" width="240" height="46" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="140" y="46" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">address form component</text>
+          <text x="140" y="62" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".65">features/applicant-info</text>
+
+          <rect x="20" y="96" width="240" height="46" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="140" y="116" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">api.service.ts</text>
+          <text x="140" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".65">every backend call goes here</text>
+
+          <rect x="20" y="166" width="240" height="46" rx="8" fill="var(--accent-queue-soft)" stroke="var(--accent-queue)" stroke-width="1.4"/>
+          <text x="140" y="186" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">auth.interceptor.ts</text>
+          <text x="140" y="202" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".7">attaches Bearer token</text>
+
+          <rect x="20" y="236" width="240" height="46" rx="8" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-dasharray="4 3"/>
+          <text x="140" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">dev proxy / server.js</text>
+          <text x="140" y="272" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".65">/api to backend:5100</text>
+
+          <line x1="140" y1="72" x2="140" y2="93" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+          <line x1="140" y1="142" x2="140" y2="163" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+          <line x1="140" y1="212" x2="140" y2="233" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+
+          <text x="330" y="16" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".08em" fill="currentColor" opacity=".55">API MIDDLEWARE — IN ORDER</text>
+          <rect x="330" y="26" width="270" height="256" rx="9" fill="var(--paper-sunken)" stroke="currentColor" stroke-opacity=".35"/>
+          <text x="346" y="50" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">exception handler / HSTS</text>
+          <text x="346" y="74" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">no-cache response headers</text>
+          <text x="346" y="98" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">Serilog request logging</text>
+          <text x="346" y="122" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">health checks /healthz</text>
+          <text x="346" y="146" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">FastEndpoints + Swagger</text>
+          <text x="346" y="170" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">HTTPS redirection</text>
+          <text x="346" y="194" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">CORS "AllowFrontend"</text>
+          <text x="346" y="218" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">authentication (JWT)</text>
+          <text x="346" y="242" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">authorization (policies)</text>
+          <text x="346" y="266" font-family="IBM Plex Mono" font-size="10.5" font-weight="600" fill="var(--accent-queue)">profile resolution</text>
+
+          <line x1="260" y1="259" x2="326" y2="259" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+
+          <text x="660" y="16" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".08em" fill="currentColor" opacity=".55">BACKEND</text>
+          <rect x="660" y="26" width="260" height="60" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="790" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="currentColor">UpdateAddress endpoint</text>
+          <text x="790" y="68" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity=".65">validator runs BEFORE HandleAsync</text>
+
+          <rect x="660" y="110" width="260" height="60" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="790" y="134" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">MediatR handler</text>
+          <text x="790" y="152" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".65">returns Result&lt;T&gt;</text>
+
+          <rect x="660" y="194" width="260" height="60" rx="8" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+          <text x="790" y="218" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">UNITY plugin</text>
+          <text x="790" y="236" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".65">resolved from PluginRegistry</text>
+
+          <line x1="600" y1="120" x2="656" y2="62" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+          <line x1="790" y1="86" x2="790" y2="107" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+          <line x1="790" y1="170" x2="790" y2="191" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+
+          <rect x="600" y="320" width="220" height="56" rx="9" fill="var(--accent-cache-soft)" stroke="var(--accent-cache)" stroke-width="1.5"/>
+          <text x="710" y="344" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="currentColor">patch Redis segment</text>
+          <text x="710" y="361" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".7">optimistic — not yet confirmed</text>
+
+          <rect x="600" y="400" width="220" height="56" rx="8" fill="none" stroke="var(--accent-queue)" stroke-width="1.5"/>
+          <text x="710" y="424" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="currentColor">outbox row (Pending)</text>
+          <text x="710" y="441" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity=".7">shipped later by a background job</text>
+
+          <rect x="600" y="480" width="220" height="50" rx="8" fill="var(--accent-ok-soft)" stroke="var(--accent-ok)" stroke-width="1.5"/>
+          <text x="710" y="510" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="currentColor">200 OK to the user</text>
+
+          <line x1="790" y1="254" x2="730" y2="317" stroke="var(--accent-cache)" stroke-width="1.5" marker-end="url(#r-arrow-c)"/>
+          <line x1="710" y1="376" x2="710" y2="397" stroke="currentColor" stroke-opacity=".6" marker-end="url(#r-arrow)"/>
+          <line x1="710" y1="456" x2="710" y2="477" stroke="var(--accent-ok)" stroke-width="1.4" marker-end="url(#r-arrow-o)"/>
+
+          <text x="330" y="400" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="currentColor">Unity never appears</text>
+          <text x="330" y="418" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="currentColor">on this path.</text>
+          <text x="330" y="444" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".75">The user's 200 is returned</text>
+          <text x="330" y="460" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".75">before Unity has seen the</text>
+          <text x="330" y="476" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".75">command at all. The return</text>
+          <text x="330" y="492" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".75">trip is a separate lifecycle —</text>
+          <text x="330" y="508" font-family="IBM Plex Sans" font-size="11" fill="currentColor" opacity=".75">see the Redis briefing.</text>
+        </svg>
+        <figcaption>An address edit, from click to <code class="inline">200 OK</code>. Two things surprise most newcomers: validation runs <em>before</em> the handler (FastEndpoints wires it up), and the response is sent before the external system is involved at all.</figcaption>
+      </figure>
+
+      <h3>The same path, as a checklist of files</h3>
+      <ol class="steps">
+        <li><strong>Route guard.</strong> <code class="inline">core/guards/auth.guard.ts</code> keeps unauthenticated users out; they land on <code class="inline">/login</code>, which starts the Keycloak OIDC redirect.</li>
+        <li><strong>The call.</strong> The component calls a typed method on <code class="inline">api.service.ts</code> — never <code class="inline">HttpClient</code> directly. <code class="inline">core/interceptors/auth.interceptor.ts</code> adds <code class="inline">Authorization: Bearer &lt;token&gt;</code>.</li>
+        <li><strong>Getting to the API.</strong> Locally the Angular dev server proxies <code class="inline">/api</code>; in a container <code class="inline">server.js</code> does it when <code class="inline">ENABLE_API_PROXY=true</code>.</li>
+        <li><strong>Middleware.</strong> The order lives in one file — <code class="inline">API.Web/Configurations/MiddlewareConfig.cs</code>. Its last step, <code class="inline">ProfileResolutionMiddleware</code>, turns the JWT into a Portal <code class="inline">Profile</code> and stashes it on <code class="inline">HttpContext.Items</code>.</li>
+        <li><strong>Endpoint.</strong> <code class="inline">API.Web/Addresses/</code>. It validates, reads the profile via <code class="inline">GetRequiredProfile()</code>, dispatches through MediatR, and maps the <code class="inline">Result</code> to a status code. No business logic.</li>
+        <li><strong>Handler.</strong> <code class="inline">API.UseCases/Addresses/…</code>. Owns the logic, returns <code class="inline">Result&lt;T&gt;</code>, and reaches the outside world through an interface — it doesn't know Unity exists.</li>
+        <li><strong>Plugin.</strong> <code class="inline">API.Plugins/Unity/</code>. Patches the Redis segment, writes an outbox row, returns success. Background jobs take it from there.</li>
+      </ol>
+
+      <div class="callout cache">
+        <span class="tag">Where profile resolution bites</span>
+        <p><code class="inline">ProfileResolutionMiddleware</code> deliberately <em>swallows</em> its own failures — it logs and continues without a profile rather than failing the request. A handler that assumes a profile is present therefore fails further downstream, with a much less obvious error. Read the profile through <code class="inline">GetRequiredProfile()</code> so the failure is explicit and close to the cause.</p>
+      </div>
+    </section>
+
+    <section id="backend">
+      <p class="eyebrow"><span class="num">04</span> Conventions</p>
+      <h2>Backend: four patterns explain almost everything</h2>
+
+      <h3>1 · FastEndpoints, not controllers</h3>
+      <p>There is no MVC controller anywhere. Each endpoint is a class in <code class="inline">API.Web/&lt;Domain&gt;/</code>, and it arrives as a set of four files:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">File</th><th scope="col">Contains</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code class="inline">&lt;Action&gt;.cs</code></th><td>The endpoint — route, auth policy, summary, and a single <code class="inline">_mediator.Send()</code></td></tr>
+            <tr><th scope="row"><code class="inline">&lt;Action&gt;.Request.cs</code></th><td>Request record, including the <code class="inline">Route</code> constant</td></tr>
+            <tr><th scope="row"><code class="inline">&lt;Action&gt;.Response.cs</code></th><td>Response record</td></tr>
+            <tr><th scope="row"><code class="inline">&lt;Action&gt;.Validator.cs</code></th><td>FluentValidation rules — run automatically, before the handler</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2 · CQRS through MediatR</h3>
+      <p>Endpoints dispatch; handlers decide. Commands and queries live in <code class="inline">API.UseCases/&lt;Domain&gt;/&lt;Action&gt;/</code> next to their handler. Business logic inside an endpoint class is a bug in the making, not a shortcut.</p>
+
+      <h3>3 · <code class="inline">Result&lt;T&gt;</code> everywhere</h3>
+      <p>Handlers don't throw for expected failures and don't return HTTP concerns. They return an Ardalis <code class="inline">Result&lt;T&gt;</code>, and the endpoint translates it:</p>
+      <pre><code>result.IsSuccess         -->  200 / 201 with result.Value
+ResultStatus.NotFound    -->  SendNotFoundAsync()
+ResultStatus.Forbidden   -->  SendForbiddenAsync()
+ResultStatus.Invalid     -->  AddError() + SendErrorsAsync(422)
+result.Errors.Any()      -->  AddError() + SendErrorsAsync(400)</code></pre>
+
+      <h3>4 · Validation is the only gate</h3>
+      <p>Worth stating plainly, because it has bitten people: <strong>nothing downstream re-validates the shape of a request.</strong> A value that clears the validator is written into the optimistic cache patch and published to Unity as-is. The validator isn't ceremony — it's the boundary.</p>
+
+      <div class="callout ok">
+        <span class="tag">Auth default</span>
+        <p>Authenticated endpoints use the <code class="inline">RequireAuthenticatedUser</code> policy; the named constants live in <code class="inline">API.Web/Auth/AuthPolicies.cs</code>. Anonymous endpoints are the exception and should be obviously so — health, plugin discovery, the OAuth callback.</p>
+      </div>
+    </section>
+
+    <section id="frontend">
+      <p class="eyebrow"><span class="num">05</span> Conventions</p>
+      <h2>Frontend: standalone components and one import rule</h2>
+      <p>Angular 20, standalone components throughout — no <code class="inline">NgModule</code> for features. Routes in <code class="inline">app.routes.ts</code> lazy-load with <code class="inline">loadComponent</code>. Styling is the BC Gov Bootstrap 5 theme plus SCSS.</p>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Folder</th><th scope="col">Holds</th><th scope="col">May import</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code class="inline">core/</code></th><td>Services, guards, interceptors, auth config, models — the business logic</td><td>core, shared</td></tr>
+            <tr><th scope="row"><code class="inline">features/</code></th><td>One folder per page area: <code class="inline">applicant-info</code>, <code class="inline">payments</code>, <code class="inline">workspace</code>, <code class="inline">submission-print</code>, <code class="inline">auth</code></td><td>core, shared, its own feature</td></tr>
+            <tr><th scope="row"><code class="inline">shared/</code></th><td>Reusable presentational components, directives, types</td><td>shared only</td></tr>
+            <tr><th scope="row"><code class="inline">layout/</code></th><td>App shell — header, footer, navigation</td><td>core, shared</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The rule that keeps this honest: <strong><code class="inline">core</code> and <code class="inline">shared</code> never import from <code class="inline">features</code>.</strong> If a shared component seems to need feature knowledge, that knowledge belongs in a core service or an input, not an import.</p>
+
+      <h3>The routes you'll actually use</h3>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Route</th><th scope="col">Purpose</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code class="inline">/login</code>, <code class="inline">/logout</code></th><td>Keycloak OIDC entry and exit</td></tr>
+            <tr><th scope="row"><code class="inline">/auth/callback</code></th><td>OIDC redirect target — the PKCE flow completes here</td></tr>
+            <tr><th scope="row"><code class="inline">/workspace-selector</code></th><td>Choosing which provider/workspace to act in</td></tr>
+            <tr><th scope="row"><code class="inline">/app</code></th><td>Authenticated shell — children are <code class="inline">applicant-info</code> and <code class="inline">payments</code></td></tr>
+            <tr><th scope="row"><code class="inline">/submission-print/:pluginId/:provider/:submissionId</code></th><td>Print/PDF view of a submission, generated client-side</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout cache">
+        <span class="tag">If you change a <code class="inline">data-cy</code> attribute</span>
+        <p>The Cypress suite selects on <code class="inline">data-cy</code> attributes through a shared registry (<code class="inline">cypress/selectors/registry.ts</code>). Renaming one silently breaks E2E specs that no local test run will catch, because those specs target deployed environments. Run <code class="inline">/sync-selectors</code> after touching them.</p>
+      </div>
+    </section>
+
+    <section id="plugins">
+      <p class="eyebrow"><span class="num">06</span> The seam</p>
+      <h2>Plugins: how the Portal stays ignorant of Unity</h2>
+      <p>No handler references Unity. External systems sit behind a plugin abstraction, resolved at runtime from <code class="inline">PluginRegistry</code> — initialised once at startup in <code class="inline">MiddlewareConfig</code>, which logs how many plugins are registered, configured, and enabled. Two ship today:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Plugin</th><th scope="col">What it is</th><th scope="col">Why you care</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code class="inline">DEMO</code></th><td>A self-contained mock — an in-memory store that <em>is</em> its own source of truth</td><td>Lets you develop and demo the whole portal with no external dependency, and it's the clean reference for what the abstraction actually requires</td></tr>
+            <tr><th scope="row"><code class="inline">UNITY</code></th><td>The real integration — REST reads, queued writes, ack/nack, cache compensation</td><td>Every piece of apparent complexity in the messaging layer exists for this plugin</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Almost every route is shaped <code class="inline">/&lt;Domain&gt;/{PluginId}/{Provider}/…</code>. Two identifiers, two different jobs:</p>
+      <dl class="glossary">
+        <dt>PluginId</dt><dd>Which integration to route through — <code class="inline">UNITY</code> or <code class="inline">DEMO</code>.</dd>
+        <dt>Provider</dt><dd>Which grant program or tenant <em>within</em> that system, e.g. <code class="inline">DGP</code>. Discovered per plugin via <code class="inline">GET /Plugins/{PluginId}/providers</code>.</dd>
+      </dl>
+      <div class="callout queue">
+        <span class="tag">Read this next, seriously</span>
+        <p>How the UNITY plugin reads, writes, caches, and reconciles is covered in depth in the companion briefing, <a href="Redis-Unity-Bridge.html">Redis in the Unity bridge</a>. It's the other half of this document. Come back to it once the material above feels familiar — most bugs that reach the team live in the territory it describes.</p>
+      </div>
+    </section>
+
+    <section id="running">
+      <p class="eyebrow"><span class="num">07</span> Setup</p>
+      <h2>Get it running</h2>
+      <p>One command brings up the whole stack — frontend, backend, Postgres, Redis, Redis Commander — from <code class="inline">applications/Grants.ApplicantPortal/</code>:</p>
+      <pre><code>cd applications/Grants.ApplicantPortal
+docker-compose up --build
+
+# or, from applications/
+.\dev-env.ps1 start      # also: stop | logs [service] | rebuild | clean</code></pre>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Service</th><th scope="col">Local address</th><th scope="col">Notes</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Frontend</th><td><code class="inline">http://localhost:4200</code></td><td>Angular SPA served by Express</td></tr>
+            <tr><th scope="row">Backend API</th><td><code class="inline">http://localhost:5100</code></td><td>Swagger UI is served from the same host</td></tr>
+            <tr><th scope="row">Redis Commander</th><td><code class="inline">http://localhost:8081</code></td><td>Inspect cached profile segments directly — invaluable when debugging</td></tr>
+            <tr><th scope="row">PostgreSQL</th><td><code class="inline">localhost:5434</code></td><td><code class="inline">postgres</code> / <code class="inline">localdev</code> / database <code class="inline">GrantsDB</code></td></tr>
+            <tr><th scope="row">Redis</th><td><code class="inline">localhost:6379</code></td><td>Reachable directly too, if you prefer <code class="inline">redis-cli</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Running the API on its own, outside Docker, from <code class="inline">src/Grants.ApplicantPortal.Backend/</code>:</p>
+      <pre><code>dotnet run --project src/Grants.ApplicantPortal.API.Web
+
+# migrations live in API.Migrations, started via API.Web
+dotnet ef migrations add &lt;Name&gt; \
+  --project src/Grants.ApplicantPortal.API.Migrations \
+  --startup-project src/Grants.ApplicantPortal.API.Web</code></pre>
+
+      <div class="callout err">
+        <span class="tag">Two setup steps that aren't optional</span>
+        <p><strong>Secrets.</strong> The Keycloak client secret and connection strings are never in source control — user secrets locally, environment variables in deployed environments. Work through <a href="../guides/Secrets-Management.md">Secrets Management</a> before your first run, or authentication simply won't initialise.</p>
+        <p><strong>A token for API testing.</strong> To call protected endpoints outside the browser you need a real JWT for your own IDIR/BCeID account — the client-credentials flow will not work for this client. <a href="../guides/Getting-Keycloak-Tokens.md">Getting Keycloak Tokens</a> walks through the browser-based authorization code flow.</p>
+      </div>
+
+      <p>Migrations and seeding on startup are both configuration-gated (<code class="inline">Database:RunMigrationsOnStartup</code>, <code class="inline">Database:SeedDataOnStartup</code>). In Development, with migrations off, startup falls back to <code class="inline">EnsureCreated</code> — which is why a dev database can exist with no migration history.</p>
+    </section>
+
+    <section id="tests">
+      <p class="eyebrow"><span class="num">08</span> Verification</p>
+      <h2>Five test suites, and which to reach for</h2>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Suite</th><th scope="col">Where</th><th scope="col">Use it when</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Unit (xUnit)</th><td><code class="inline">tests/API.UnitTests</code></td><td>Handler logic in isolation, repositories mocked. Most of your tests belong here</td></tr>
+            <tr><th scope="row">Integration (xUnit)</th><td><code class="inline">tests/API.IntegrationTests</code></td><td>Real database — never mock the DB in this suite</td></tr>
+            <tr><th scope="row">Functional (xUnit)</th><td><code class="inline">tests/API.FunctionalTests</code></td><td>HTTP-level, against the running app — routing, auth, serialisation</td></tr>
+            <tr><th scope="row">Frontend (Karma/Jasmine)</th><td><code class="inline">*.spec.ts</code> beside each source file</td><td>Components and services via <code class="inline">TestBed</code></td></tr>
+            <tr><th scope="row">E2E (Cypress)</th><td><code class="inline">applications/Grants.AutoUI</code></td><td>Real user journeys — <strong>against deployed environments only</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>dotnet test                                            # all backend suites
+dotnet test tests/Grants.ApplicantPortal.API.UnitTests # one suite
+ng test                                                # frontend
+ng test --include='**/foo.component.spec.ts'           # one spec
+
+# AutoUI — pick an environment explicitly; there is no localhost target
+npm run cy:open:dev      # interactive
+npm run cy:run:test      # headless</code></pre>
+      <div class="callout cache">
+        <span class="tag">The E2E trap</span>
+        <p>Cypress specs run against <code class="inline">dev</code>, <code class="inline">dev2</code>, <code class="inline">test</code>, <code class="inline">uat</code>, or <code class="inline">prod</code> — never your local stack. A green local build tells you nothing about whether you broke a spec, and a spec failure can reflect environment data rather than your change. Check <code class="inline">CONTRIBUTING.md</code> before weakening any assertion: some are deliberately strict, such as payments data being required in non-production login flows.</p>
+      </div>
+    </section>
+
+    <section id="ship">
+      <p class="eyebrow"><span class="num">09</span> Process</p>
+      <h2>Shipping a change</h2>
+      <p>Branches flow <code class="inline">dev</code> → <code class="inline">test</code> → <code class="inline">main</code>. Every branch and commit carries its Azure Boards ticket number, so history stays traceable to the work item.</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Kind of change</th><th scope="col">Branch</th><th scope="col">Base</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Feature / enhancement</th><td><code class="inline">feature/AB#&lt;ticket&gt;-&lt;short-slug&gt;</code></td><td><code class="inline">dev</code></td></tr>
+            <tr><th scope="row">Bug fix</th><td><code class="inline">bugfix/AB#&lt;ticket&gt;-&lt;short-slug&gt;</code></td><td><code class="inline">dev</code></td></tr>
+            <tr><th scope="row">Hotfix</th><td><code class="inline">hotfix/AB#&lt;ticket&gt;-&lt;short-slug&gt;</code></td><td><code class="inline">test</code> or <code class="inline">main</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Commit messages start with the ticket: <code class="inline">AB#12345 add address validation</code>. Keep changes small and focused, and prefer explicit assertions over broad waits when you touch tests — both are house rules from <code class="inline">CONTRIBUTING.md</code>.</p>
+      <p>Code quality is tracked in SonarCloud, which analyses branches and pull requests; the <a href="../guides/unity-grants-sonarcloud-readme.md">SonarCloud guide</a> covers what gates a PR and how to read a report.</p>
+    </section>
+
+    <section id="glossary">
+      <p class="eyebrow"><span class="num">10</span> Vocabulary</p>
+      <h2>Words this team uses precisely</h2>
+      <p>Most onboarding confusion is vocabulary, not architecture. These all mean something specific here:</p>
+      <dl class="glossary">
+        <dt>Profile</dt><dd>The Portal's own record of a signed-in applicant, created on first authenticated request by <code class="inline">ProfileResolutionMiddleware</code>. It is <em>not</em> the applicant's grant data.</dd>
+        <dt>ProfileId</dt><dd>The Portal-side GUID for that profile. Every cache key is scoped by it.</dd>
+        <dt>Subject</dt><dd>The OIDC <code class="inline">sub</code> (with its issuer) identifying the login itself. One real applicant can have several — see the applicant-merging note in the Unity integration doc.</dd>
+        <dt>Provider</dt><dd>A grant program or tenant inside the external system, e.g. <code class="inline">DGP</code>.</dd>
+        <dt>Segment</dt><dd>One slice of cached profile data: <code class="inline">CONTACTINFO</code>, <code class="inline">ADDRESSINFO</code>, <code class="inline">ORGINFO</code>, <code class="inline">SUBMISSIONINFO</code>, <code class="inline">PAYMENTINFO</code>. Caching, invalidation, and compensation all work per segment.</dd>
+        <dt>dataType</dt><dd>A message's own type discriminator, e.g. <code class="inline">ADDRESS_EDIT_COMMAND</code>. It's also what maps a failed command back to the segment that must be invalidated.</dd>
+        <dt>Outbox / Inbox</dt><dd>Postgres tables that give transactional guarantees around RabbitMQ: outbound commands are written in the request's transaction and shipped by a job; inbound messages are stored durably before being processed.</dd>
+        <dt>PluginEvent</dt><dd>A recorded, user-surfaceable occurrence — typically "a write you made didn't stick." Applicants see these and can dismiss them.</dd>
+        <dt>AutoUI</dt><dd>The Cypress E2E suite. Never a local test run.</dd>
+      </dl>
+    </section>
+
+    <section id="gotchas">
+      <p class="eyebrow">Hard-won</p>
+      <h2>Things that surprise people in week one</h2>
+      <ul class="plain">
+        <li><strong>A successful write doesn't mean Unity accepted it.</strong> The <code class="inline">200</code> means "cached and queued." Confirmation, or compensation, happens seconds to minutes later.</li>
+        <li><strong>Stale data is often correct behaviour.</strong> The cache is an optimistic guess with a TTL; a read that looks wrong may be a patch that was never confirmed. Redis Commander plus the plugin-events endpoint usually tells the story faster than a debugger.</li>
+        <li><strong>Nothing re-validates after the validator.</strong> If a bad value reaches the plugin, it reaches both Redis and Unity.</li>
+        <li><strong>Profile resolution fails quietly.</strong> Missing-profile symptoms appear downstream, not at the middleware that caused them.</li>
+        <li><strong>Class defaults and shipped configuration disagree in places</strong> — cache TTLs being the known case. <code class="inline">appsettings.json</code> wins at runtime, so don't reason from the C# default alone.</li>
+        <li><strong>"Ack" is two unrelated things.</strong> AMQP delivery acks and Unity's business verdict on a command are different layers. Say which you mean, especially in incident reviews.</li>
+        <li><strong>E2E specs can't be validated locally.</strong> Selector changes are the classic silent breakage.</li>
+        <li><strong>The Portal trusts Unity's scoping.</strong> Ownership checks confirm that an id appears in what Unity returned for the caller — which makes Unity's applicant-merging behaviour part of the Portal's trust boundary.</li>
+      </ul>
+    </section>
+
+    <section id="next">
+      <p class="eyebrow">Reading order</p>
+      <h2>Where to go next</h2>
+      <p>Roughly this order. The first two pay off immediately.</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th scope="col">Read</th><th scope="col">For</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><a href="Redis-Unity-Bridge.html">Redis in the Unity bridge</a></th><td>The other half of this briefing — cache-aside reads, optimistic writes, outbox/inbox, ack/nack, compensation</td></tr>
+            <tr><th scope="row"><a href="../architecture/Plugin-Architecture.md">Plugin Architecture</a></th><td>The abstraction every integration sits behind, and how to add one</td></tr>
+            <tr><th scope="row"><a href="../architecture/Authentication.md">Authentication</a></th><td>Keycloak OIDC, claims, and policy wiring end to end</td></tr>
+            <tr><th scope="row"><a href="../architecture/Unity-Integration.md">Unity Integration</a></th><td>The external contract in detail, including applicant merging</td></tr>
+            <tr><th scope="row"><a href="../architecture/Resource-Ownership-Validation.md">Resource Ownership Validation</a></th><td>How the Portal decides you're allowed to see a record</td></tr>
+            <tr><th scope="row"><a href="../auto/API-Endpoints.md">API Endpoints</a></th><td>The generated route reference — auto-maintained, so it's the current truth</td></tr>
+            <tr><th scope="row"><a href="../architecture/Messaging-Plugin-Integration-Guide.md">Messaging Plugin Integration Guide</a></th><td>The deep reference behind the messaging layer</td></tr>
+            <tr><th scope="row"><a href="../README.md">documentation/README.md</a></th><td>Which folder owns what, and where a new doc belongs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p class="eyebrow">Source, for cross-reference</p>
+  <ul>
+    <li>API.Web/Configurations/MiddlewareConfig.cs — full middleware order, plugin registry init, DB seeding</li>
+    <li>API.Web/Middleware/ProfileResolutionMiddleware.cs — JWT to Profile, and its swallow-on-failure behaviour</li>
+    <li>API.Web/Auth/AuthPolicies.cs — named policy constants</li>
+    <li>API.Web/Extensions/HttpContextExtensions.cs — GetRequiredProfile()</li>
+    <li>API.Plugins/PluginRegistry.cs · ProfilePluginFactory.cs — plugin resolution</li>
+    <li>API.Infrastructure/Data/AppDbContext.cs — EF Core model</li>
+    <li>Frontend src/app/app.routes.ts · api.service.ts · core/guards · core/interceptors</li>
+    <li>applications/Grants.ApplicantPortal/docker-compose.yml · applications/dev-env.ps1</li>
+    <li>applications/Grants.AutoUI/cypress — E2E specs and the selector registry</li>
+    <li>CLAUDE.md at the repo root, plus the frontend and backend .claude/CLAUDE.md files</li>
+  </ul>
+</footer>

@@ -99,4 +99,4 @@ Contributions to this project are welcome! Follow these guidelines when contribu
 
 ## License
 
-This project is licensed under the terms of the [MIT license](/LICENSE.md).
+This project is licensed under the terms of the [MIT license](../../LICENSE).

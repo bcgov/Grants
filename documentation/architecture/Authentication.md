@@ -5,7 +5,7 @@ This implementation adds JWT Bearer token authentication using Keycloak as the i
 
 ## Configuration
 
-### Secrets Management ??
+### Secrets Management
 **Important**: Sensitive configuration values are managed through user secrets for development and environment variables for production. Never commit secrets to source control.
 
 ### Local Development Setup
@@ -352,8 +352,8 @@ Clients obtain tokens from your Keycloak server:
 
 ## Documentation
 
-- [Secrets Management Guide](Secrets-Management.md) - Comprehensive guide for managing sensitive configuration
-- [Adding Authorization Policies](Adding-Authorization-Policies.md) - Guide for extending authorization
+- [Secrets Management Guide](../guides/Secrets-Management.md) - Comprehensive guide for managing sensitive configuration
+- [Adding Authorization Policies](../guides/Adding-Authorization-Policies.md) - Guide for extending authorization
 
 ## Team Setup
 
@@ -381,4 +381,4 @@ If authentication isn't working:
 4. Ensure Keycloak server is accessible
 5. Verify client configuration in Keycloak matches your settings
 
-For detailed troubleshooting, see the [Secrets Management Guide](Secrets-Management.md)
+For detailed troubleshooting, see the [Secrets Management Guide](../guides/Secrets-Management.md)
