@@ -8,7 +8,7 @@ A full-stack application for managing grant applications, built with Angular fro
 
 | Component | Technology | Port | Description |
 |-----------|------------|------|-------------|
-| **Frontend** | Angular 20 SPA | 4000 | User interface and application logic |
+| **Frontend** | Angular 20 SPA | 4200 | User interface and application logic |
 | **Backend** | .NET 9 Web API | 5100 | REST API and business logic |
 | **Database** | PostgreSQL 17 | 5434 | Primary data storage |
 | **Cache** | Redis 7 | 6379 | Session and caching layer |
@@ -35,7 +35,7 @@ cd Grants/applications/Grants.ApplicantPortal
 docker-compose up --build
 
 # Access applications:
-# Frontend: http://localhost:4000
+# Frontend: http://localhost:4200
 # Backend API: http://localhost:5100
 # Redis Commander: http://localhost:8081
 ```
@@ -61,7 +61,7 @@ docker-compose up postgres
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `4000` | Frontend server port |
+| `PORT` | `4200` | Frontend server port |
 | `ENABLE_API_PROXY` | `true` | Enable reverse proxy for Docker deployment |
 | `BACKEND_SERVICE_URL` | `http://backend:5100` | Backend service URL for Docker networking |
 
@@ -113,8 +113,7 @@ src/
 docker-compose.yml                     # Stack orchestration
 ```
 
-## 🳠Docker Compose Services
-
+## Docker Compose Services
 ### Production-Ready Stack
 
 ```yaml
@@ -164,7 +163,7 @@ npm start
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Frontend | <http://localhost:4000> | Main application |
+| Frontend | <http://localhost:4200> | Main application |
 | Backend API | <http://localhost:5100> | API documentation/health |
 | Redis Commander | <http://localhost:8081> | Cache management |
 | PostgreSQL | localhost:5434 | Database access |
