@@ -121,11 +121,12 @@ Once you have tokens, you can use the refresh token to get new access tokens wit
 
 ## Method 3: Automated PowerShell Scripts
 
-For easier automation, use the PowerShell scripts:
+For easier automation, use the PowerShell scripts (run from the backend folder so the relative `.\scripts\...` paths resolve):
 
 ```powershell
-# Setup configuration (one-time)
+cd applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend
 
+# Setup configuration (one-time)
 .\scripts\setup-dev-secrets.ps1
 
 # Get token automatically
