@@ -26,9 +26,9 @@ This project provides a grants application system with the following features:
 
     .github                    - GitHub Actions
     applications/              - Application Root
-    ├── Grants.ApplicantPortal/ - Applicant Information solution
-    ├── Grants.AutoUI/          - Automated User Interface testing
-    ├── Grants.Tools/           - DevOps tools
+    ├── Grants.ApplicantPortal/ - Applicant Information solution (frontend + backend)
+    ├── Grants.AutoUI/          - Automated User Interface testing (Cypress)
+    └── dev-env.ps1             - Local docker-compose helper
     documentation/             - Solution documentation and assets
     COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
     LICENSE                    - License
@@ -36,4 +36,6 @@ This project provides a grants application system with the following features:
 
 ## Documentation
 
+- **New to the project? [Applicant Portal, from zero](documentation/handover/Applicant-Portal-Orientation.html)** — a single read-through orientation to the system, its conventions, and local setup
+- [Documentation index](documentation/README.md) — architecture, guides, integration specs, ADRs
 - [Application Readme](applications/README.md)

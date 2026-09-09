@@ -126,12 +126,14 @@ This is exactly the schema+data pair the Portal team was originally given as the
 
 | Scenario | Expected UNITY behavior |
 |---|---|
-| Submission exists and belongs to the caller | `200 OK` with the envelope above. |
-| `SubmissionId` doesn't exist, or doesn't belong to `ProfileId`/`Subject` | **Do not** return `200` with empty/null `schema`/`data`. Return `404` (not found) or `403` (forbidden). |
+| Submission exists and belongs to the caller (including a sibling `Subject`/`ProfileId` that Unity has merged as the same applicant — see [Unity-Integration.md § Applicant Merging](../architecture/Unity-Integration.md#applicant-merging-across-oidc-subjects-root-filtering)) | `200 OK` with the envelope above. |
+| `SubmissionId` doesn't exist, or belongs to a genuinely different applicant (not merged with the caller's) | **Do not** return `200` with empty/null `schema`/`data`. Return `404` (not found) or `403` (forbidden). |
 | Submission's form type doesn't support PDF generation / no schema available | `4xx` (e.g. `404` or `422`) — the Portal surfaces this to the applicant as "PDF unavailable for this submission." |
 | Transient failure | Standard `5xx` — the Portal will retry (2 attempts) per its existing resilience config, matching all other calls to this endpoint. |
 
 **Defense in depth:** The Portal already performs its own local check — before calling this endpoint, it confirms the requested `SubmissionId` is present in the caller's own cached `SUBMISSIONINFO` list for that profile/tenant, and rejects the request locally (`403`) if not. UNITY should still independently validate `SubmissionId` ownership rather than relying solely on the Portal's check, since PII/financial data is at stake.
+
+> **⚠️ Provisional, pending Unity confirmation:** the Portal's local check is only as strict as what UNITY's `SUBMISSIONINFO` response includes for the caller's `Subject`. If UNITY's applicant-merging/root-filtering now includes sibling-sub submissions in that list (see [Unity-Integration.md](../architecture/Unity-Integration.md#applicant-merging-across-oidc-subjects-root-filtering)), the Portal's local check will pass for those too — this needs to be intentional on UNITY's side, since the Portal has no independent way to tell "legitimately merged applicant" apart from "over-broad match."
 
 ---
 
@@ -158,7 +160,8 @@ The Portal caches this response **on-demand only** — i.e. only when an applica
 - [ ] `GET .../profile?...&Key=SUBMISSIONFORMDATA&SubmissionId=<valid-id>` returns `200` with the envelope shape in §3.
 - [ ] `schema` is a valid form.io form definition (renders in form.io without errors).
 - [ ] `data` is `{ "data": { ...fields matching the schema's component keys... } }` — **not** flattened.
-- [ ] A `SubmissionId` belonging to a different applicant returns `403`/`404`, not `200`.
+- [ ] A `SubmissionId` belonging to a genuinely different (non-merged) applicant returns `403`/`404`, not `200`.
+- [ ] A `SubmissionId` belonging to a sibling `Subject` that UNITY has merged as the same applicant returns `200` (confirm this is the intended behavior with the UNITY team).
 - [ ] An invalid/unknown `SubmissionId` returns `404`.
 - [ ] Response time is consistent with the Portal's other profile-data calls (typically < 100ms per [Unity-Integration.md § Performance](../architecture/Unity-Integration.md#performance)).
 

@@ -259,7 +259,7 @@ All write operations (create, edit, delete, set-primary) enforce **server-side r
 - **`403 Forbidden`** — The resource does not belong to the authenticated user (IDOR prevention)
 - **`400 Bad Request`** — The resource is not editable (e.g., linked to a submitted application)
 
-This validation is fail-closed: if the user's cached profile data cannot be loaded, the request is rejected. See [Resource Ownership Validation](Resource-Ownership-Validation.md) for implementation details.
+This validation is fail-closed: if the user's cached profile data cannot be loaded, the request is rejected. See [Resource Ownership Validation](../architecture/Resource-Ownership-Validation.md) for implementation details.
 
 ### Cache Hydration
 
@@ -281,14 +281,14 @@ All write endpoints (Create, Update, Delete, SetAsPrimary) follow this pattern:
 3. The external system processes the command and sends an acknowledgment
 4. If the ack fails or times out, a PluginEvent is recorded and the cache is invalidated
 
-See [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) for the full messaging lifecycle.
+See [Messaging Plugin Integration Guide](../architecture/Messaging-Plugin-Integration-Guide.md) for the full messaging lifecycle.
 
 ---
 
 ## Related Documentation
 
-- [Authentication](Authentication.md) — JWT/Keycloak configuration
-- [Plugin Architecture](Plugin-Architecture.md) — Plugin system design
-- [Resource Ownership Validation](Resource-Ownership-Validation.md) — IDOR prevention and ownership enforcement
-- [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) — RabbitMQ outbox/inbox pattern
-- [API Access Patterns](API-Access-Patterns.md) — Frontend and direct API usage
+- [Authentication](../architecture/Authentication.md) — JWT/Keycloak configuration
+- [Plugin Architecture](../architecture/Plugin-Architecture.md) — Plugin system design
+- [Resource Ownership Validation](../architecture/Resource-Ownership-Validation.md) — IDOR prevention and ownership enforcement
+- [Messaging Plugin Integration Guide](../architecture/Messaging-Plugin-Integration-Guide.md) — RabbitMQ outbox/inbox pattern
+- [API Access Patterns](../architecture/API-Access-Patterns.md) — Frontend and direct API usage
