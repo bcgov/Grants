@@ -6,6 +6,10 @@ The Grants Applicant Portal enforces **server-side resource ownership validation
 
 ---
 
+> Updated: `GET /Submissions/{PluginId}/{Provider}/{SubmissionId:Guid}/Form` introduces a second, read-side ownership check that is **not** implemented via `IResourceOwnershipValidator` (that service remains scoped to the write-operation flow described below). Instead, `RetrieveSubmissionFormQueryHandler` performs an ad hoc check inline: it re-fetches the caller's own `SUBMISSIONINFO` list and confirms the requested `SubmissionId` is present before ever fetching `SUBMISSIONFORM` (which can contain applicant PII/financial figures). A miss returns `Result.Forbidden()`, same as the validator-based flow. This is a narrower, single-purpose variant of the same "verify ownership before returning/mutating a client-supplied ID" principle, applied to a GET endpoint rather than a write operation.
+>
+> **⚠️ Unity applicant merging (provisional, pending Unity confirmation):** Unity now merges applicant records across different OIDC subjects belonging to the same real-world applicant (e.g. two different login methods), and its "root filtering" can cause `SUBMISSIONINFO` for one `Subject` to include submissions originally created under a *different, sibling* `Subject`/`ProfileId` of the same merged applicant — see [Unity-Integration.md § Applicant Merging Across OIDC Subjects](Unity-Integration.md#applicant-merging-across-oidc-subjects-root-filtering). Because `RetrieveSubmissionFormQueryHandler`'s check is simply "is this id present in whatever Unity returned for my `Subject`," this check will now pass for those sibling submissions too. That is very likely intentional (the caller genuinely is the same applicant), but it means "the caller's own `SUBMISSIONINFO` list" is no longer a strict single-sub boundary — it is whatever Unity decides to merge. The Portal has no independent way to distinguish "legitimately merged sibling" from "Unity bug/over-broad merge"; it fully trusts Unity's response.
+
 ## Problem Statement
 
 All write endpoints accept client-supplied IDs (`applicantId`, `contactId`, `addressId`, `organizationId`) in the request body or route. Without server-side validation, an authenticated user could:
@@ -41,7 +45,7 @@ Request → ProfileResolutionMiddleware (JWT → ProfileId)
 | **Cache-based validation** | Profile data is already cached by `IPluginCacheService`; no additional API calls needed |
 | **Fail-closed** | If cache is empty and hydration fails, the request is rejected |
 | **Hydration fallback** | If cached data is missing, attempts to populate from the plugin before rejecting |
-| **Profile-scoped cache keys** | Cache keys include `profileId` (from JWT), making cross-user data access impossible at the cache level |
+| **Profile-scoped cache keys** | Cache keys include `profileId` (from JWT), making cross-user data access impossible at the cache level *for data the Portal itself scopes*. Note: this guarantee is only as strong as what Unity puts inside a given `profileId`'s cached response — Unity's applicant-merging/root-filtering behavior can intentionally include a sibling sub's data in that response (see the note above and [Unity-Integration.md](Unity-Integration.md#applicant-merging-across-oidc-subjects-root-filtering)), so "profile-scoped" no longer implies "single-sub-scoped" in all cases |
 
 ---
 
@@ -125,8 +129,19 @@ If `isEditable` is missing from the cached data, it defaults to `true` (backward
 
 ---
 
+## Open Design Question: Submission/Application Write Endpoints
+
+There is currently **no write (create/edit/delete) endpoint for submissions or applications** — only the read-side check described in the note at the top of this document. Before one is built, an explicit decision is needed on how it should treat Unity's applicant-merging behavior:
+
+- **Option A** — trust Unity's merged list the same way the read path does today (a user authenticated under one sub of a merged applicant could update a submission created under a sibling sub).
+- **Option B** — add a Portal-side guard that only allows writes to submissions fetched under the *exact* `Subject` used to authenticate the current request, rejecting merged-in siblings even though they're readable.
+
+This is a product/security decision, not just an implementation detail — confirm with the Unity team what guarantees `SUBMISSIONINFO`/any future write endpoint actually provides before choosing.
+
+---
+
 ## Related Documentation
 
-- [API Endpoints](API-Endpoints.md) — Endpoint reference with authorization details
+- [API Endpoints](../auto/API-Endpoints.md) — Endpoint reference with authorization details
 - [Plugin Architecture](Plugin-Architecture.md) — Plugin system design and request flow
 - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) — Outbox/inbox messaging pattern

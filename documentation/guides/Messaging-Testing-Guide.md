@@ -1,6 +1,6 @@
 # Testing the Messaging System - End-to-End Examples
 
-## ?? **Quick Test Scenarios**
+## Quick Test Scenarios
 
 ### **1. Plugin Sending Message (Outbound)**
 
@@ -62,9 +62,10 @@ Simulate external system sending acknowledgment via RabbitMQ:
 }
 ```
 
-## ?? **Monitoring Database Activity**
+## Monitoring Database Activity
 
 ### **Check Outbound Messages**
+
 ```sql
 -- See all outbound messages
 SELECT 
@@ -85,6 +86,7 @@ ORDER BY CreatedAt DESC;
 ```
 
 ### **Check Inbound Messages**
+
 ```sql
 -- See all inbound messages
 SELECT 
@@ -103,7 +105,7 @@ WHERE MessageType = 'MessageAcknowledgment'
 ORDER BY ReceivedAt DESC;
 ```
 
-## ?? **Manual Testing Steps**
+## Manual Testing Steps
 
 ### **Step 1: Test Outbound Flow**
 
@@ -163,9 +165,10 @@ INSERT INTO InboxMessages (
 );
 ```
 
-## ?? **Expected Log Output**
+## Expected Log Output
 
 ### **Outbound Processing**
+
 ```
 [INF] Demo plugin successfully populated profile for ProfileId: 123e4567-e89b-12d3-a456-426614174000
 [DBG] Published ProfileUpdatedMessage for 123e4567-e89b-12d3-a456-426614174000
@@ -175,6 +178,7 @@ INSERT INTO InboxMessages (
 ```
 
 ### **Inbound Processing**
+
 ```
 [DBG] Received message ack-123e4567... of type MessageAcknowledgment with routing key grants.demo.acknowledgment
 [DBG] Successfully stored message ack-123e4567... in inbox
@@ -184,9 +188,10 @@ INSERT INTO InboxMessages (
 [INF] Demo plugin received acknowledgment for message 123e4567... with status SUCCESS
 ```
 
-## ?? **Configuration for Testing**
+## Configuration for Testing
 
 ### **Development Settings (appsettings.Development.json)**
+
 ```json
 {
   "Messaging": {
@@ -213,4 +218,4 @@ INSERT INTO InboxMessages (
 }
 ```
 
-This gives you a complete testing framework to verify the entire messaging flow! ??
+Together these steps exercise the full messaging flow — endpoint, outbox, RabbitMQ, inbox, and cache compensation.

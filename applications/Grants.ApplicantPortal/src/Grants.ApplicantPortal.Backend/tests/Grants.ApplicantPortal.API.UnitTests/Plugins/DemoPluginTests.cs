@@ -21,8 +21,9 @@ public class DemoPluginTests
             CacheExpiryMinutes = 60,
             SlidingExpiryMinutes = 15
         });
+        var pluginCacheService = new PluginCacheService(cache, cacheOptions, NullLogger<PluginCacheService>.Instance);
 
-        _sut = new DemoPlugin(NullLogger<DemoPlugin>.Instance, cache, cacheOptions);
+        _sut = new DemoPlugin(NullLogger<DemoPlugin>.Instance, cache, cacheOptions, pluginCacheService);
     }
 
     [Fact]

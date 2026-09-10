@@ -4,13 +4,19 @@
       <h3 class="mb-0 ap-pad-10">Submissions</h3>
     </div>
   </div>
-  <div class="card-body">
+  <div class="card-body position-relative">
+    <app-loading-overlay
+      [isVisible]="isGeneratingPdf"
+      message="Generating PDF..."
+      [showMessage]="true">
+    </app-loading-overlay>
     <app-datatable
       idSuffix="submissions"
       [config]="submissionsTableConfig"
       [data]="submissionsData || []"
       [loading]="isLoading"
       (actionClick)="onSubmissionAction($event)"
+      (cellAction)="onCellAction($event)"
     ></app-datatable>
   </div>
 </div>
@@ -108,9 +114,10 @@
   </div>
 </dialog>
 
-<div
-  class="modal-backdrop fade"
-  [class.show]="showRelatedLinksModal"
-  [style.display]="showRelatedLinksModal ? 'block' : 'none'"
-  *ngIf="showRelatedLinksModal"
-></div>
+@if (showRelatedLinksModal) {
+  <div
+    class="modal-backdrop fade"
+    [class.show]="showRelatedLinksModal"
+    [style.display]="showRelatedLinksModal ? 'block' : 'none'"
+  ></div>
+}

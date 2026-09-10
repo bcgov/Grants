@@ -4,8 +4,10 @@ import { of, throwError } from 'rxjs';
 
 import { SubmissionsComponent } from './submissions.component';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
+import { SubmissionPdfService } from '../../../core/services/submission-pdf.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { SubmissionsData, SubmissionsResponse } from '../../../shared/models/applicant-info.interface';
-import { DatatableActionEvent } from '../../../shared/components/datatable/datatable.models';
+import { DatatableActionEvent, DatatableCellActionEvent } from '../../../shared/components/datatable/datatable.models';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -44,6 +46,8 @@ describe('SubmissionsComponent', () => {
   let component: SubmissionsComponent;
   let fixture: ComponentFixture<SubmissionsComponent>;
   let applicantInfoServiceSpy: jasmine.SpyObj<ApplicantInfoService>;
+  let submissionPdfServiceSpy: jasmine.SpyObj<SubmissionPdfService>;
+  let toastServiceSpy: jasmine.SpyObj<ToastService>;
 
   beforeEach(async () => {
     applicantInfoServiceSpy = jasmine.createSpyObj<ApplicantInfoService>('ApplicantInfoService', [
@@ -51,9 +55,18 @@ describe('SubmissionsComponent', () => {
     ]);
     applicantInfoServiceSpy.getSubmissionsInfo.and.returnValue(of(makeResponse()));
 
+    submissionPdfServiceSpy = jasmine.createSpyObj<SubmissionPdfService>('SubmissionPdfService', ['viewSubmissionPdf']);
+    submissionPdfServiceSpy.viewSubmissionPdf.and.returnValue(Promise.resolve());
+
+    toastServiceSpy = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'warning', 'info']);
+
     await TestBed.configureTestingModule({
       imports: [SubmissionsComponent],
-      providers: [{ provide: ApplicantInfoService, useValue: applicantInfoServiceSpy }],
+      providers: [
+        { provide: ApplicantInfoService, useValue: applicantInfoServiceSpy },
+        { provide: SubmissionPdfService, useValue: submissionPdfServiceSpy },
+        { provide: ToastService, useValue: toastServiceSpy },
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
@@ -73,11 +86,11 @@ describe('SubmissionsComponent', () => {
   // column has been removed — users open the CHEFS form from the link instead.
 
   describe('submissionsTableConfig', () => {
-    it('renders the submission column as a link with the "Submission" label', () => {
+    it('renders the submission column as an action-link with the "Submission" label', () => {
       fixture.detectChanges();
       const submissionColumn = component.submissionsTableConfig.columns.find((c) => c.key === 'type');
       expect(submissionColumn?.label).toBe('Submission');
-      expect(submissionColumn?.type).toBe('link');
+      expect(submissionColumn?.type).toBe('action-link');
     });
 
     it('renders a dropdown actions column with a "View Related Links" action', () => {
@@ -258,19 +271,9 @@ describe('SubmissionsComponent', () => {
       expect(component.isLoading).toBeFalse();
     });
 
-    it('wires linkConfig to the CHEFS baseUrl and linkId field when linkSource is present', () => {
+    it('captures linkSource from the response without wiring it into the datatable (no longer a navigable link)', () => {
       fixture.detectChanges();
-      expect(component.submissionsTableConfig.linkConfig).toEqual({
-        baseUrl: 'https://chefs.example.com/form/',
-        linkField: 'linkId',
-      });
-    });
-
-    it('does not set linkConfig when linkSource is absent', () => {
-      applicantInfoServiceSpy.getSubmissionsInfo.and.returnValue(
-        of(makeResponse({ linkSource: undefined }))
-      );
-      fixture.detectChanges();
+      expect(component.linkSource).toBe('https://chefs.example.com/form/');
       expect(component.submissionsTableConfig.linkConfig).toBeUndefined();
     });
 
@@ -334,6 +337,71 @@ describe('SubmissionsComponent', () => {
 
     it('returns an empty string for an unknown status', () => {
       expect(component.getStatusClass('Unknown')).toBe('');
+    });
+  });
+
+  // ── PDF generation (cellAction) ────────────────────────────────────────────
+
+  describe('onCellAction / generateSubmissionPdf', () => {
+    it('ignores cellAction events for columns other than "type"', () => {
+      fixture.detectChanges();
+      const submission = component.submissionsData[0];
+
+      component.onCellAction({ column: { key: 'status', label: 'Status' }, row: submission } as DatatableCellActionEvent);
+
+      expect(submissionPdfServiceSpy.viewSubmissionPdf).not.toHaveBeenCalled();
+    });
+
+    it('calls viewSubmissionPdf', async () => {
+      fixture.detectChanges();
+      const submission = component.submissionsData[0];
+
+      await component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
+
+      expect(submissionPdfServiceSpy.viewSubmissionPdf).toHaveBeenCalledWith('plugin-1', 'provider-1', submission.id);
+    });
+
+    it('sets isGeneratingPdf while the PDF is being generated and clears it afterward', async () => {
+      let resolveView!: () => void;
+      submissionPdfServiceSpy.viewSubmissionPdf.and.returnValue(new Promise((resolve) => (resolveView = resolve)));
+      fixture.detectChanges();
+      const submission = component.submissionsData[0];
+
+      const actionPromise = component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
+      expect(component.isGeneratingPdf).toBeTrue();
+
+      resolveView();
+      await actionPromise;
+
+      expect(component.isGeneratingPdf).toBeFalse();
+    });
+
+    it('shows a toast error and clears isGeneratingPdf when the popup is blocked', async () => {
+      // callFake (not returnValue) so the rejected promise is created only once the spy is
+      // actually invoked — avoids a spurious unhandled-rejection race in the test harness.
+      submissionPdfServiceSpy.viewSubmissionPdf.and.callFake(async () => {
+        throw new Error('boom');
+      });
+      fixture.detectChanges();
+      const submission = component.submissionsData[0];
+
+      await component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
+
+      expect(toastServiceSpy.error).toHaveBeenCalledWith('Unable to open the print tab — check if your browser blocked the popup.');
+      expect(component.isGeneratingPdf).toBeFalse();
+    });
+
+    it('does not start a new PDF generation while one is already in flight', () => {
+      let resolveView!: () => void;
+      submissionPdfServiceSpy.viewSubmissionPdf.and.returnValue(new Promise((resolve) => (resolveView = resolve)));
+      fixture.detectChanges();
+      const submission = component.submissionsData[0];
+
+      component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
+      component.onCellAction({ column: { key: 'type', label: 'Submission' }, row: submission } as DatatableCellActionEvent);
+
+      expect(submissionPdfServiceSpy.viewSubmissionPdf).toHaveBeenCalledTimes(1);
+      resolveView();
     });
   });
 });

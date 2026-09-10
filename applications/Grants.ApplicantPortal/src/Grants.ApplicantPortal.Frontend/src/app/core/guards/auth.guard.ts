@@ -23,6 +23,21 @@ export const authGuard: CanActivateFn = (route, state) => {
         return of(true);
       }
 
+      // submission-print is self-contained — it reads pluginId/provider/submissionId directly
+      // from the route and calls the backend with them, never touching WorkspaceService — so it
+      // doesn't need a workspace pre-selected. Opened as a fresh tab (see
+      // SubmissionPdfService.viewSubmissionPdf), it would otherwise always hit the
+      // workspace-selection-required branch below (a brand-new tab always starts with empty
+      // workspace state) and get redirected through /workspace-selector, whose returnUrl
+      // sanitizer only allows /app/ URLs and silently falls back to the default applicant-info
+      // page for anything else — which looked like the new tab had just duplicated the original.
+      // Checked against the path only (before any `?`), not the raw `state.url` — a query param
+      // on an unrelated route (e.g. `?returnUrl=/submission-print/...`) must not match this.
+      const path = state.url.split('?')[0];
+      if (path.startsWith('/submission-print/')) {
+        return of(true);
+      }
+
       // Check workspace selection
       return workspaceService.currentWorkspaceState$.pipe(
         take(1),

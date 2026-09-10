@@ -733,7 +733,7 @@ The two existing plugins use different strategies intentionally:
 | **Has `IPluginMessageHandler`?** | Yes (logs only, scaffolding) | Yes (handles acks from external system) |
 | **Ack/Nack flow?** | Not needed (writes are synchronous) | Full round-trip via inbox |
 | **External system?** | None | Real Unity instance + RabbitMQ |
-| **`primaryContactId` / `primaryAddressId` in responses?** | Yes — resolved from Redis cache | Yes — resolved from optimistically-patched cache |
+| **`primaryContactId` / `primaryAddressIdsByType` in responses?** | Yes — resolved from Redis cache | Yes — resolved from optimistically-patched cache |
 
 ---
 

@@ -3,7 +3,11 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 import { ApplicantInfoService } from './applicant-info.service';
 import { environment } from '../../../environments/environment';
-import { BackendResponse, PluginEventsResponse } from '../../shared/models/applicant-info.interface';
+import {
+  AddressMutationRequest,
+  BackendResponse,
+  PluginEventsResponse,
+} from '../../shared/models/applicant-info.interface';
 
 const BASE = environment.apiUrl;
 
@@ -197,6 +201,37 @@ describe('ApplicantInfoService', () => {
 
       const req = httpMock.expectOne(`${BASE}/Addresses/plugin-1/prov-1`);
       expect(req.request.method).toBe('POST');
+      req.flush({});
+    });
+  });
+
+  describe('updateAddress', () => {
+    const addressData: AddressMutationRequest = {
+      addressType: 'Mailing',
+      street: '1 Main St',
+      city: 'Victoria',
+      province: 'BC',
+      postalCode: 'V1A 1A1',
+      isPrimary: true,
+    };
+
+    it('sends PUT request to /Addresses/:addressId/:pluginId/:provider with the payload', () => {
+      service.updateAddress('addr-1', 'plugin-1', 'prov-1', addressData).subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/Addresses/addr-1/plugin-1/prov-1`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(addressData);
+      req.flush({});
+    });
+  });
+
+  describe('setAddressAsPrimary', () => {
+    it('sends PATCH request to /Addresses/:addressId/:pluginId/:provider/set-primary', () => {
+      service.setAddressAsPrimary('addr-1', 'plugin-1', 'prov-1').subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/Addresses/addr-1/plugin-1/prov-1/set-primary`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({});
       req.flush({});
     });
   });

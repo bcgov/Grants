@@ -27,6 +27,7 @@
     "angular-auth-oidc-client": "^19.0.2",
     "express": "^4.21.2",
     "express-rate-limit": "^8.0.1",
+    "formiojs": "^4.21.7",
     "http-proxy-middleware": "^2.0.9",
     "ngx-matomo-client": "^8.0.0",
     "rxjs": "~7.8.2",

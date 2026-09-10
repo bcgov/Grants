@@ -13,9 +13,10 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo;
 public partial class DemoPlugin(
     ILogger<DemoPlugin> logger,
     IDistributedCache distributedCache,
-    IOptions<ProfileCacheOptions> cacheOptions) : IProfilePlugin, 
-  IContactManagementPlugin, 
-  IAddressManagementPlugin, 
+    IOptions<ProfileCacheOptions> cacheOptions,
+    IPluginCacheService pluginCacheService) : IProfilePlugin,
+  IContactManagementPlugin,
+  IAddressManagementPlugin,
   IOrganizationManagementPlugin
 {
   private readonly IOptions<ProfileCacheOptions> _cacheOptions = cacheOptions;

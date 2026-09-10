@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { take, takeUntil } from 'rxjs/operators';
@@ -8,15 +7,22 @@ import { ApplicantService } from '../../../core/services/applicant.service';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ApplicantInfo } from '../../../shared/models/applicant.interface';
+import {
+  Address,
+  AddressMutationRequest,
+  AddressMutationResponse,
+  AddressTypeOption,
+  PrimaryAddressIdsByType
+} from '../../../shared/models/applicant-info.interface';
 import { DatatableComponent } from '../../../shared/components/datatable/datatable.component';
-import { 
+import {
   DatatableConfig,
   DatatableActionEvent,
   DatatableSortEvent
 } from '../../../shared/components/datatable/datatable.models';
 import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
-interface AddressDisplay {
+export interface AddressDisplay {
   id: string;
   addressType: string;
   street: string;
@@ -31,13 +37,34 @@ interface AddressDisplay {
   disabledTooltip: string;
   referenceNo: string;
   fullAddress: string;
+  /** Per-row label for the "set as primary" action, e.g. "Set as primary Mailing address". */
+  setPrimaryLabel: string;
 }
+
+/** One rendered primary-address block — one per known address type. */
+export interface PrimaryAddressSlot {
+  /** Raw type key as it arrives from the API (e.g. "Physical"). */
+  typeKey: string;
+  /** Lowercase, dash-separated key used to build unique element ids. */
+  idKey: string;
+  /** Human readable type label. */
+  label: string;
+  /** Heading text for the block, e.g. "PRIMARY MAILING ADDRESS". */
+  heading: string;
+  /** Primary address for this type, or null when the applicant has none. */
+  address: AddressDisplay | null;
+}
+
+/**
+ * Type pre-selected in the add-address form. Purely a form default — no primary
+ * address logic keys off this value.
+ */
+const DEFAULT_ADDRESS_TYPE = 'Physical';
 
 @Component({
   selector: 'app-addresses',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     DatatableComponent,
     TooltipDirective,
@@ -58,7 +85,10 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
   applicantInfo: ApplicantInfo | null = null;
   addresses: AddressDisplay[] = [];
-  primaryAddress: AddressDisplay | null = null;
+  /** Primary address per address type, keyed by the lowercase type key. */
+  primaryAddressesByType = new Map<string, AddressDisplay>();
+  /** One slot per known address type — drives the primary address blocks. */
+  primaryAddressSlots: PrimaryAddressSlot[] = [];
 
   // Modal properties
   showAddAddressModal = false;
@@ -77,7 +107,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   editingAddressId: string | null = null;
 
   newAddress: Partial<AddressDisplay> = {
-    addressType: 'Physical',
+    addressType: DEFAULT_ADDRESS_TYPE,
     street: '',
     street2: '',
     unit: '',
@@ -92,7 +122,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   isLoading = true;
   isHydratingAddresses = false;
   error: string | null = null;
-  addressTypes: { key: string; label: string }[] = [];
+  addressTypes: AddressTypeOption[] = [];
 
   // Datatable configuration
   addressesTableConfig: DatatableConfig = {
@@ -108,7 +138,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     ],
     actionsType: 'dropdown',
     actionItems: [
-      { label: 'Set as primary', icon: 'fa-home', action: 'setAsPrimary' },
+      { label: 'Set as primary', labelField: 'setPrimaryLabel', icon: 'fa-home', action: 'setAsPrimary' },
       { label: 'Edit', icon: 'fa-pencil-alt', action: 'edit' },
       { label: 'Delete', icon: 'fa-trash', action: 'delete', cssClass: 'text-danger' }
     ],    
@@ -175,8 +205,9 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     this.applicantInfoService.getAddressTypes(this.pluginId).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (response: any) => {
+      next: (response) => {
         this.addressTypes = response?.types ?? [];
+        this.refreshPrimaryAddresses();
       },
       error: (error) => {
         console.error('Failed to load address types:', error);
@@ -185,6 +216,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           { key: 'Physical', label: 'Physical' },
           { key: 'Mailing', label: 'Mailing' }
         ];
+        this.refreshPrimaryAddresses();
       }
     });
   }
@@ -203,7 +235,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         next: (result) => {
           this.isLoading = false;
           this.addresses = this.processAddressesData(result.addressesData || []);
-          this.primaryAddress = this.addresses.find(addr => addr.isPrimary) || null;
+          this.refreshPrimaryAddresses();
           this.updateActionsVisibility();
         },
         error: (error) => {
@@ -214,17 +246,18 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private processAddressesData(addresses: any[]): AddressDisplay[] {
+  private processAddressesData(addresses: Partial<Address>[]): AddressDisplay[] {
     return addresses.map(addr => {
       const street = addr.street ?? '';
       const street2 = addr.street2 ?? '';
       const unit = addr.unit ?? '';
 
-      const addressParts = [street, street2, unit].filter(Boolean).join(', ');
+      const addressParts = AddressesComponent.joinAddressParts(street, street2, unit);
+      const addressType = addr.addressType ?? 'Unknown';
 
       return {
         id: addr.id ?? '00000000-0000-0000-0000-000000000000',
-        addressType: addr.addressType ?? 'Unknown',
+        addressType,
         street,
         street2,
         unit,
@@ -236,12 +269,13 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         isEditable: addr.isEditable ?? false,
         disabledTooltip: this.getDisabledTooltip(addr),
         referenceNo: addr.referenceNo ?? '',
-        fullAddress: addressParts
+        fullAddress: addressParts,
+        setPrimaryLabel: this.buildSetPrimaryLabel(addressType)
       };
     });
   }
 
-  private getDisabledTooltip(address: any): string {
+  private getDisabledTooltip(address: { isEditable?: boolean }): string {
     if (address.isEditable) {
       return '';
     }
@@ -252,21 +286,172 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Uses the server-returned primaryAddressId to set the primary flag
-   * on all addresses and update the primaryAddress reference.
+   * Applies the server-returned per-type primary map to the loaded addresses.
+   *
+   * For every type present in the map the matching address becomes primary and
+   * every other address *of that same type* is cleared. Addresses whose type is
+   * absent from the map are left untouched, so setting a primary for one type
+   * never wipes the primary of another.
    */
-  private applyPrimaryFromResponse(primaryAddressId: string | null | undefined): void {
-    if (primaryAddressId == null) {
-      return;
+  private applyPrimaryFromResponse(primaryAddressIdsByType: PrimaryAddressIdsByType | null | undefined): void {
+    const primaryIdByType = this.normalizePrimaryMap(primaryAddressIdsByType);
+
+    if (primaryIdByType.size > 0) {
+      this.addresses = this.addresses.map(address => {
+        const primaryIdForType = primaryIdByType.get(this.normalizeTypeKey(address.addressType));
+
+        // Type not covered by the response — leave this address exactly as it is.
+        if (primaryIdForType === undefined) {
+          return address;
+        }
+
+        return { ...address, isPrimary: address.id.toLowerCase() === primaryIdForType };
+      });
     }
 
-    const normalizedPrimaryId = primaryAddressId.toLowerCase();
+    this.refreshPrimaryAddresses();
+  }
 
-    this.addresses = this.addresses.map(a => ({
-      ...a,
-      isPrimary: a.id.toLowerCase() === normalizedPrimaryId
-    }));
-    this.primaryAddress = this.addresses.find(a => a.isPrimary) ?? null;
+  /** Lowercases both type keys and ids so comparisons are case-insensitive. */
+  private normalizePrimaryMap(
+    primaryAddressIdsByType: PrimaryAddressIdsByType | null | undefined
+  ): Map<string, string> {
+    const normalized = new Map<string, string>();
+
+    for (const [typeKey, addressId] of Object.entries(primaryAddressIdsByType ?? {})) {
+      if (typeKey && addressId) {
+        normalized.set(this.normalizeTypeKey(typeKey), addressId.toLowerCase());
+      }
+    }
+
+    return normalized;
+  }
+
+  private normalizeTypeKey(typeKey: string): string {
+    return (typeKey ?? '').trim().toLowerCase();
+  }
+
+  /** Recomputes the per-type primary map, the rendered slots and per-row labels. */
+  private refreshPrimaryAddresses(): void {
+    // Relabel first so the slots below reference the current row objects.
+    this.refreshSetPrimaryLabels();
+
+    const byType = new Map<string, AddressDisplay>();
+
+    for (const address of this.addresses) {
+      if (address.isPrimary) {
+        byType.set(this.normalizeTypeKey(address.addressType), address);
+      }
+    }
+
+    this.primaryAddressesByType = byType;
+    this.primaryAddressSlots = this.buildPrimaryAddressSlots();
+  }
+
+  /**
+   * Builds one slot per known address type: every type configured for the
+   * workspace plus any type already present on the applicant's addresses.
+   */
+  private buildPrimaryAddressSlots(): PrimaryAddressSlot[] {
+    const slots: PrimaryAddressSlot[] = [];
+    const seen = new Set<string>();
+    const usedIdKeys = new Set<string>();
+    const typeKeys = [
+      ...this.addressTypes.map(type => type.key),
+      ...this.addresses.map(address => address.addressType)
+    ];
+
+    for (const typeKey of typeKeys) {
+      const normalized = this.normalizeTypeKey(typeKey);
+
+      if (!normalized || seen.has(normalized)) {
+        continue;
+      }
+      seen.add(normalized);
+
+      const label = this.getTypeLabel(typeKey);
+
+      slots.push({
+        typeKey,
+        idKey: this.buildIdKey(normalized, usedIdKeys),
+        label,
+        heading: `Primary ${label} Address`.toUpperCase(),
+        address: this.primaryAddressesByType.get(normalized) ?? null
+      });
+    }
+
+    return slots;
+  }
+
+  /**
+   * Slugifies a normalized type key for use in element ids, data-cy values and the @for track
+   * key. Slugging is lossy — "Home Office" and "Home-Office" both reduce to "home-office" — so
+   * a counter is appended on collision. Duplicate track keys are a runtime error in Angular,
+   * and duplicate ids would break the label/control pairing.
+   *
+   * NOTE: the Cypress selector registry mirrors this transformation in
+   * `Landing.primaryAddressBlock` (applications/Grants.AutoUI/cypress/selectors/registry.ts).
+   * Changing the slug rule here without updating that factory silently breaks E2E selectors —
+   * `npm run validate:selectors` cannot catch it, because dynamic factory entries are skipped.
+   */
+  private buildIdKey(normalizedTypeKey: string, usedIdKeys: Set<string>): string {
+    // Split on runs of non-alphanumerics rather than replace-then-trim: dropping the empty
+    // leading and trailing segments removes the need for an anchored trim expression, which
+    // backtracks super-linearly on dash-heavy input.
+    const slug = normalizedTypeKey.split(/[^a-z0-9]+/).filter(Boolean).join('-') || 'unknown';
+
+    let idKey = slug;
+    let suffix = 2;
+
+    while (usedIdKeys.has(idKey)) {
+      idKey = `${slug}-${suffix++}`;
+    }
+
+    usedIdKeys.add(idKey);
+    return idKey;
+  }
+
+  /** Keeps the per-row action labels in sync with the loaded address types. */
+  private refreshSetPrimaryLabels(): void {
+    let changed = false;
+
+    const relabelled = this.addresses.map(address => {
+      const setPrimaryLabel = this.buildSetPrimaryLabel(address.addressType);
+
+      if (setPrimaryLabel === address.setPrimaryLabel) {
+        return address;
+      }
+
+      changed = true;
+      return { ...address, setPrimaryLabel };
+    });
+
+    if (changed) {
+      this.addresses = relabelled;
+    }
+  }
+
+  private buildSetPrimaryLabel(addressType: string): string {
+    const label = this.getTypeLabel(addressType);
+    return label ? `Set as primary ${label} address` : 'Set as primary';
+  }
+
+  /** Resolves the display label for a type key, matched case-insensitively. */
+  private getTypeLabel(typeKey: string): string {
+    const normalized = this.normalizeTypeKey(typeKey);
+
+    if (!normalized) {
+      return '';
+    }
+
+    const match = this.addressTypes.find(type => this.normalizeTypeKey(type.key) === normalized);
+    return match?.label || typeKey;
+  }
+
+  /** Label for the "set as primary" checkbox, driven by the selected type. */
+  get primaryCheckboxLabel(): string {
+    const label = this.getTypeLabel(this.newAddress.addressType ?? '');
+    return label ? `Set as Primary ${label} Address` : 'Set as Primary Address';
   }
 
   // Event handlers
@@ -293,10 +478,10 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     this.isSavingAddress = true;
     this.saveAddressError = null;
 
-    const payload: any = {
+    const payload: AddressMutationRequest = {
       ...(this.isEditMode && this.editingAddressId ? { addressId: this.editingAddressId } : {}),
       applicantId: this.applicantId,
-      addressType: this.newAddress.addressType ?? 'Physical',
+      addressType: this.newAddress.addressType ?? DEFAULT_ADDRESS_TYPE,
       street: this.newAddress.street ?? '',
       street2: this.newAddress.street2 ?? '',
       unit: this.newAddress.unit ?? '',
@@ -327,19 +512,17 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
         this.isSavingAddress = false;
         this.showAddAddressModal = false;
 
-        const responseId = response?.addressId ?? response?.id;
+        const responseId = response?.addressId;
 
         if (!this.isEditMode && !responseId) {
           this.saveAddressError = 'Address was saved but the server did not return a valid address ID. Please refresh and try again.';
           return;
         }
 
-        const addressId = this.isEditMode ? this.editingAddressId! : responseId;
+        const addressId = (this.isEditMode ? this.editingAddressId : responseId) ?? '';
         const street = payload.street;
-        const street2 = payload.street2;
-        const unit = payload.unit;
-
-        const effectiveIsEditable = response?.isEditable ?? true;
+        const street2 = payload.street2 ?? '';
+        const unit = payload.unit ?? '';
 
         const savedAddress: AddressDisplay = {
           id: addressId,
@@ -350,12 +533,18 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           city: payload.city,
           province: payload.province,
           postalCode: payload.postalCode,
-          country: payload.country,
-          isPrimary: addressId.toLowerCase() === response?.primaryAddressId?.toLowerCase(),
-          isEditable: effectiveIsEditable,
-          disabledTooltip: this.getDisabledTooltip({ ...response, isEditable: effectiveIsEditable }),
-          referenceNo: response?.referenceNo ?? '',
-          fullAddress: [street, street2, unit].filter(Boolean).join(', ')
+          country: payload.country ?? '',
+          // applyPrimaryFromResponse below re-derives this from the per-type map, so the
+          // requested value only stands when the server resolved no primary for this type.
+          isPrimary: payload.isPrimary,
+          // The mutation endpoints return only the address id and the per-type primary map.
+          // A row the applicant just saved is editable by definition, so there is no disabled
+          // tooltip, and no reference number exists until the external system assigns one.
+          isEditable: true,
+          disabledTooltip: '',
+          referenceNo: '',
+          fullAddress: AddressesComponent.joinAddressParts(street, street2, unit),
+          setPrimaryLabel: this.buildSetPrimaryLabel(payload.addressType)
         };
 
         if (this.isEditMode && this.editingAddressId) {
@@ -366,9 +555,9 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
           this.addresses = [...this.addresses, savedAddress];
         }
 
-        this.applyPrimaryFromResponse(response?.primaryAddressId);
+        this.applyPrimaryFromResponse(response?.primaryAddressIdsByType);
 
-        const addressLabel = [payload.street, payload.city].filter(Boolean).join(', ');
+        const addressLabel = AddressesComponent.buildAddressLabel(payload);
         this.toastService.success(
           this.isEditMode
             ? `Address "${addressLabel}" has been updated.`
@@ -401,7 +590,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
     if (!this.isEditMode) {
       this.newAddress = {
-        addressType: 'Physical',
+        addressType: DEFAULT_ADDRESS_TYPE,
         street: '',
         street2: '',
         unit: '',
@@ -494,7 +683,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     ).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (response: any) => {
+      next: (response: AddressMutationResponse) => {
         const deletedId = this.addressToDelete!.id;
         this.isDeletingAddress = false;
         this.showDeleteConfirmModal = false;
@@ -502,7 +691,7 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
         this.addresses = this.addresses.filter(a => a.id !== deletedId);
 
-        this.applyPrimaryFromResponse(response?.primaryAddressId);
+        this.applyPrimaryFromResponse(response?.primaryAddressIdsByType);
 
         this.toastService.success('Address has been deleted.');
       },
@@ -534,12 +723,17 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     )
     .pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: (response: any) => {
-        this.applyPrimaryFromResponse(response?.primaryAddressId);
-        const addressLabel = [address.street, address.city].filter(Boolean).join(', ');
-        this.toastService.success(`"${addressLabel}" has been set as the primary address.`);
+      next: (response: AddressMutationResponse) => {
+        this.applyPrimaryFromResponse(response?.primaryAddressIdsByType);
+        const addressLabel = AddressesComponent.buildAddressLabel(address);
+        const typeLabel = this.getTypeLabel(address.addressType);
+        this.toastService.success(
+          typeLabel
+            ? `"${addressLabel}" has been set as the primary ${typeLabel} address.`
+            : `"${addressLabel}" has been set as the primary address.`
+        );
       },
-      error: (error: any) => {
+      error: (error: unknown) => {
         console.error('Failed to set address as primary:', error);
       }
     });
@@ -550,13 +744,13 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
     // This event is emitted for any additional logic you might need
   }
 
-  private formatFullAddress(address: AddressDisplay): string {
-    const parts = [address.street, address.street2, address.unit].filter(Boolean);
-    return parts.join(', ') || address.fullAddress || '';
+  /** Joins the street-line parts of an address, skipping the blank ones. */
+  private static joinAddressParts(...parts: (string | undefined)[]): string {
+    return parts.filter(Boolean).join(', ');
   }
 
-  getPrimaryFullAddress(): string {
-    if (!this.primaryAddress) return '';
-    return this.formatFullAddress(this.primaryAddress);
+  /** Short "street, city" label used in save and delete confirmation toasts. */
+  private static buildAddressLabel(address: { street?: string; city?: string }): string {
+    return AddressesComponent.joinAddressParts(address.street, address.city);
   }
 }

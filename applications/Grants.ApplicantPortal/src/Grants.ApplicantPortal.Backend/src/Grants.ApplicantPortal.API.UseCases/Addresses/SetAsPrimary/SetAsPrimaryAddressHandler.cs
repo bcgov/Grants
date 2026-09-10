@@ -32,10 +32,10 @@ public class SetAsPrimaryAddressHandler(
         logger.LogInformation("Successfully set address {AddressId} as primary for ProfileId: {ProfileId}",
           request.AddressId, request.ProfileId);
 
-        var primaryId = await PrimaryAddressResolver.GetPrimaryAddressIdAsync(
+        var primaryIdsByType = await PrimaryAddressResolver.GetPrimaryAddressIdsByTypeAsync(
             pluginCacheService, request.ProfileId, request.PluginId, request.Provider, cancellationToken);
 
-        return new AddressMutationResult(request.AddressId, primaryId);
+        return new AddressMutationResult(request.AddressId, primaryIdsByType);
       }
 
       logger.LogWarning("Failed to set address {AddressId} as primary for ProfileId: {ProfileId}. Status: {Status}",
@@ -43,6 +43,9 @@ public class SetAsPrimaryAddressHandler(
 
       if (result.Status == ResultStatus.NotFound)
         return Result<AddressMutationResult>.NotFound();
+
+      if (result.Status == ResultStatus.Forbidden)
+        return Result<AddressMutationResult>.Forbidden();
 
       return Result<AddressMutationResult>.Invalid(result.ValidationErrors);
     }

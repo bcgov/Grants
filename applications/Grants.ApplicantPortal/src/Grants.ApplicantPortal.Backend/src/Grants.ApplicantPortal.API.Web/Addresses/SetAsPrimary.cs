@@ -61,7 +61,7 @@ public class SetAsPrimary(IMediator _mediator)
       {
         AddressId = result.Value.AddressId,
         Message = "Address set as primary successfully",
-        PrimaryAddressId = result.Value.PrimaryAddressId
+        PrimaryAddressIdsByType = result.Value.PrimaryAddressIdsByType
       };
       return;
     }

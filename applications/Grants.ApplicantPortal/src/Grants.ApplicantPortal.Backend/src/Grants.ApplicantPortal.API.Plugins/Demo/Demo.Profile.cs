@@ -14,6 +14,14 @@ public partial class DemoPlugin
     logger.LogInformation("Demo plugin retrieving profile data for ProfileId: {ProfileId}, Provider: {Provider}, Key: {Key}",
         metadata.ProfileId, metadata.Provider, metadata.Key);
 
+    // SUBMISSIONFORM is served through the shared plugin cache-aside service (on-demand,
+    // per submission) rather than the generic per-provider seeding flow below, since the
+    // seeding scenarios are not aware of individual submission ids.
+    if (metadata.Key.Equals(SubmissionFormKey, StringComparison.OrdinalIgnoreCase))
+    {
+      return await PopulateSubmissionFormAsync(metadata, cancellationToken);
+    }
+
     try
     {
       // FIRST: Ensure demo data is seeded for this user profile (on-demand seeding)

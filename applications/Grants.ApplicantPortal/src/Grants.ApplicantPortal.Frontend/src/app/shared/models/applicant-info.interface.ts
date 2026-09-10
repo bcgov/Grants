@@ -31,6 +31,49 @@ export interface Address {
   referenceNo: string;
 }
 
+/**
+ * Map of address type key (e.g. "Physical", "Mailing", "Business") to the id of
+ * the primary address for that type. There is exactly one primary per type.
+ * Type keys are compared case-insensitively by consumers.
+ */
+export type PrimaryAddressIdsByType = Record<string, string>;
+
+/**
+ * Shape returned by every address mutation endpoint
+ * (create / update / set-primary / delete).
+ */
+export interface AddressMutationResponse {
+  /** Id of the address the mutation applied to. */
+  addressId?: string;
+  /** Primary address id per address type — replaces the old scalar primaryAddressId. */
+  primaryAddressIdsByType?: PrimaryAddressIdsByType;
+}
+
+/** Payload sent when creating or updating an address. */
+export interface AddressMutationRequest {
+  addressId?: string;
+  applicantId?: string;
+  addressType: string;
+  street: string;
+  street2?: string;
+  unit?: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country?: string;
+  isPrimary: boolean;
+}
+
+/** A selectable address type as configured for a workspace. */
+export interface AddressTypeOption {
+  key: string;
+  label: string;
+}
+
+export interface AddressTypesResponse {
+  types: AddressTypeOption[];
+}
+
 export interface Contact {
   name: string;
   title: string;

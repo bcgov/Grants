@@ -63,7 +63,7 @@ public class Delete(IMediator _mediator)
       {
         AddressId = result.Value.AddressId,
         Message = "Address deleted successfully",
-        PrimaryAddressId = result.Value.PrimaryAddressId
+        PrimaryAddressIdsByType = result.Value.PrimaryAddressIdsByType
       };
       return;
     }

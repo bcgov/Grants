@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
-import { 
-  DatatableConfig, 
+import {
+  DatatableConfig,
+  DatatableActionItem,
   DatatableColumn,
   DatatableRowClickEvent,
   DatatableActionEvent,
+  DatatableCellActionEvent,
   DatatableSortEvent
 } from './datatable.models';
 import { TableSortService, SortState, TableSortConfig } from '../../services/table-sort.service';
@@ -29,6 +31,7 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   @Output() rowClick = new EventEmitter<DatatableRowClickEvent>();
   @Output() actionClick = new EventEmitter<DatatableActionEvent>();
+  @Output() cellAction = new EventEmitter<DatatableCellActionEvent>();
   @Output() sort = new EventEmitter<DatatableSortEvent>();
   @Output() dataChange = new EventEmitter<any[]>(); // Emit sorted data
 
@@ -187,6 +190,18 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
   onActionClick(actionType: string, row: any, index: number, event: Event): void {
     event.stopPropagation();
     this.actionClick.emit({ action: actionType, row, index });
+  }
+
+  onCellAction(column: DatatableColumn, row: any, event: Event): void {
+    event.stopPropagation();
+    this.cellAction.emit({ column, row });
+  }
+
+  getActionLinkAriaLabel(row: any, column: DatatableColumn): string {
+    const config = this.config.actionLinkConfig;
+    const prefix = config?.ariaLabelPrefix || 'Download PDF for';
+    const labelValue = config?.ariaLabelField ? row[config.ariaLabelField] : this.getCellValue(row, column);
+    return labelValue ? `${prefix} ${labelValue}` : prefix;
   }
 
   getRowLink(row: any): string | null {
@@ -419,6 +434,19 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
   get pagerPages(): number[] {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  /**
+   * Resolves the label to show for an action on a given row. When the action
+   * declares a `labelField`, the value of that field on the row wins; otherwise
+   * the static `label` from the config is used.
+   */
+  getActionLabel(row: Record<string, unknown>, action: DatatableActionItem): string {
+    if (!action.labelField) {
+      return action.label;
+    }
+    const rowLabel = this.getNestedProperty(row, action.labelField);
+    return rowLabel ? String(rowLabel) : action.label;
   }
 
   shouldShowActions(row: any): boolean {

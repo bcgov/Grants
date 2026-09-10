@@ -79,12 +79,26 @@ public class PluginCacheService(
   private readonly string _storeType = distributedCache.GetType().Name;
 
   /// <summary>
+  /// Shared options for serialization — camelCase so a cache-hit round trip produces
+  /// byte-for-byte equivalent JSON shape to the HTTP layer's own camelCase output on a
+  /// cache miss (object-typed properties, e.g. <see cref="ProfileData.Data"/>, retain
+  /// whatever casing was baked into the stored JSON when later read back as a
+  /// <see cref="System.Text.Json.JsonElement"/>, so the casing must match at write time).
+  /// </summary>
+  private static readonly JsonSerializerOptions _writeOptions = new()
+  {
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+  };
+
+  /// <summary>
   /// Shared options for deserialization — case-insensitive so cache entries written
-  /// with camelCase (e.g. DEMO plugin) or PascalCase both deserialize correctly.
+  /// with camelCase (current convention) or PascalCase (pre-existing entries written
+  /// before this fix) both deserialize correctly into the declared C# properties.
   /// </summary>
   private static readonly JsonSerializerOptions _readOptions = new()
   {
-    PropertyNameCaseInsensitive = true
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
   };
 
   public async Task<T> GetOrFetchAsync<T>(
@@ -133,7 +147,7 @@ public class PluginCacheService(
     // 3. Evaluate caching predicate (default: always cache)
     if (shouldCache is null || shouldCache(result))
     {
-      var json = JsonSerializer.Serialize(result);
+      var json = JsonSerializer.Serialize(result, _writeOptions);
       var options = new DistributedCacheEntryOptions
       {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheOptions.Value.CacheExpiryMinutes),
@@ -199,7 +213,7 @@ public class PluginCacheService(
 
     try
     {
-      var json = JsonSerializer.Serialize(value);
+      var json = JsonSerializer.Serialize(value, _writeOptions);
       var options = new DistributedCacheEntryOptions
       {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheOptions.Value.CacheExpiryMinutes),

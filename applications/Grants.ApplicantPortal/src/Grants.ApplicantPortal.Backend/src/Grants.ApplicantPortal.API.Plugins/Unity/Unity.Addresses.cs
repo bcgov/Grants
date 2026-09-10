@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
+using System.Globalization;
 using Ardalis.Result;
 using Grants.ApplicantPortal.API.Core.DTOs;
+using Grants.ApplicantPortal.API.Core.Plugins;
 using Grants.ApplicantPortal.API.Infrastructure.Messaging.Messages;
 
 namespace Grants.ApplicantPortal.API.Plugins.Unity;
@@ -23,10 +25,16 @@ public partial class UnityPlugin
       // Generate a new address ID for the Unity system
       var newAddressId = Guid.NewGuid();
 
+      // A type group with no flagged primary has one inferred on read. Persist that decision
+      // instead of leaving it to be recomputed: otherwise the next address added to the same
+      // group is newer, wins the inference, and silently takes the primary slot.
+      addressRequest = await PromoteWhenTypeGroupHasNoPrimary(addressRequest, profileContext, cancellationToken);
+
       // 🔥 STEP 1: Update cache optimistically with the new address
       await UpdateAddressCacheOptimistically(newAddressId, addressRequest, profileContext, cancellationToken);
 
-      // 🔥 STEP 2: Send command to Unity via message queue
+      // 🔥 STEP 2: Send command to Unity via message queue — carries the same IsPrimary the
+      // cache was patched with, so the flag survives the next hydration from Unity.
       await FireAddressCreateMessage(newAddressId, addressRequest, profileContext, cancellationToken);
 
       logger.LogInformation("Unity plugin optimistically created address - ID: {AddressId}, Type: {AddressType}, Street: {Street}",
@@ -274,6 +282,8 @@ public partial class UnityPlugin
 
   /// <summary>
   /// Optimistically appends the new address to the cached addresses array.
+  /// When the new address is primary, only the existing addresses of the SAME address type
+  /// are demoted — every other address type keeps its own primary.
   /// </summary>
   private async Task UpdateAddressCacheOptimistically(Guid addressId,
     CreateAddressRequest addressRequest,
@@ -303,18 +313,12 @@ public partial class UnityPlugin
         {
           foreach (var existing in arr.EnumerateArray())
           {
-            // If the new address is primary, clear isPrimary on all existing addresses
-            if (addressRequest.IsPrimary && existing.TryGetProperty("isPrimary", out _))
+            // If the new address is primary, clear isPrimary on the existing addresses of the same type only.
+            // The flag is written even when the cached entry does not carry it yet, so a stale
+            // entry can never remain primary within the type group.
+            if (addressRequest.IsPrimary && IsSameAddressType(existing, addressRequest.AddressType))
             {
-              writer.WriteStartObject();
-              foreach (var prop in existing.EnumerateObject())
-              {
-                if (prop.NameEquals("isPrimary"))
-                  writer.WriteBoolean("isPrimary", false);
-                else
-                  prop.WriteTo(writer);
-              }
-              writer.WriteEndObject();
+              WriteAddressWithPrimary(writer, existing, false);
             }
             else
             {
@@ -328,7 +332,10 @@ public partial class UnityPlugin
 
   /// <summary>
   /// Optimistically replaces the edited address in the cached addresses array.
-  /// When the edited address has IsPrimary set to true, other addresses are toggled to not primary.
+  /// When the edited address has IsPrimary set to true, only the other addresses of the
+  /// edited address's NEW type are toggled to not primary — other types keep their own primary.
+  /// When the edit also changes the address type, the address leaves its old type group behind;
+  /// that group then has no flagged primary and one is inferred on the next read.
   /// </summary>
   private async Task UpdateAddressCacheOptimistically(EditAddressRequest editRequest,
     ProfileContext profileContext,
@@ -340,6 +347,19 @@ public partial class UnityPlugin
         profileContext.ProfileId, profileContext.Provider, "ADDRESSINFO",
         root => RebuildWithArray(root, "addresses", (writer, arr) =>
         {
+          // Read the address type the edited address had BEFORE the overwrite, so a type
+          // change can be detected and the old type group can be left to re-infer its primary.
+          var previousAddressType = FindAddressTypeById(arr, editId);
+          var typeChanged = previousAddressType != null &&
+                            !string.Equals(previousAddressType, editRequest.AddressType, StringComparison.OrdinalIgnoreCase);
+
+          if (typeChanged)
+          {
+            logger.LogDebug(
+                "Address {AddressId} changed type from {PreviousAddressType} to {AddressType} — the previous type group will re-infer its primary",
+                editId, previousAddressType, editRequest.AddressType);
+          }
+
           foreach (var existing in arr.EnumerateArray())
           {
             if (existing.TryGetProperty("id", out var idProp) &&
@@ -363,18 +383,11 @@ public partial class UnityPlugin
               };
               JsonSerializer.Serialize(writer, updated, _camelCase);
             }
-            else if (editRequest.IsPrimary)
+            else if (editRequest.IsPrimary && IsSameAddressType(existing, editRequest.AddressType))
             {
-              // Toggle other addresses to not primary when the edited address becomes primary
-              writer.WriteStartObject();
-              foreach (var prop in existing.EnumerateObject())
-              {
-                if (prop.NameEquals("isPrimary"))
-                  writer.WriteBoolean("isPrimary", false);
-                else
-                  prop.WriteTo(writer);
-              }
-              writer.WriteEndObject();
+              // Toggle the other addresses of the same type to not primary when the edited
+              // address becomes primary. Addresses of any other type are left untouched.
+              WriteAddressWithPrimary(writer, existing, false);
             }
             else
             {
@@ -387,6 +400,9 @@ public partial class UnityPlugin
 
   /// <summary>
   /// Optimistically toggles isPrimary flags in the cached addresses array.
+  /// The address type is derived from the target address itself (it is an attribute of the
+  /// address, not a caller-supplied parameter) and only that type group is re-flagged.
+  /// Addresses of every other type are written back untouched.
   /// </summary>
   private async Task UpdateAddressPrimaryCacheOptimistically(Guid addressId,
     ProfileContext profileContext,
@@ -398,20 +414,23 @@ public partial class UnityPlugin
         profileContext.ProfileId, profileContext.Provider, "ADDRESSINFO",
         root => RebuildWithArray(root, "addresses", (writer, arr) =>
         {
+          // First pass: determine the target address's own type — that is the group to re-flag.
+          var targetAddressType = FindAddressTypeById(arr, targetId);
+
           foreach (var existing in arr.EnumerateArray())
           {
             var isTarget = existing.TryGetProperty("id", out var idProp) &&
                            string.Equals(idProp.GetString(), targetId, StringComparison.OrdinalIgnoreCase);
 
-            writer.WriteStartObject();
-            foreach (var prop in existing.EnumerateObject())
+            // Only the target's type group is rewritten; other groups stay byte-identical.
+            if (isTarget || (targetAddressType != null && IsSameAddressType(existing, targetAddressType)))
             {
-              if (prop.NameEquals("isPrimary"))
-                writer.WriteBoolean("isPrimary", isTarget);
-              else
-                prop.WriteTo(writer);
+              WriteAddressWithPrimary(writer, existing, isTarget);
             }
-            writer.WriteEndObject();
+            else
+            {
+              existing.WriteTo(writer);
+            }
           }
         }),
         cancellationToken);
@@ -419,7 +438,8 @@ public partial class UnityPlugin
 
   /// <summary>
   /// Optimistically removes the address from the cached addresses array.
-  /// If the deleted address was primary, auto-promotes the most recent remaining address.
+  /// If the deleted address was primary, auto-promotes the most recent remaining address
+  /// OF THE SAME ADDRESS TYPE. Addresses of every other type are left untouched.
   /// </summary>
   private async Task DeleteAddressFromCacheOptimistically(Guid addressId,
     ProfileContext profileContext,
@@ -431,15 +451,16 @@ public partial class UnityPlugin
         profileContext.ProfileId, profileContext.Provider, "ADDRESSINFO",
         root => RebuildWithArray(root, "addresses", (writer, arr) =>
         {
-          // First pass: determine if the deleted address was primary
+          // First pass: determine if the deleted address was primary, and which type group it belonged to
           var deletedWasPrimary = false;
+          string? deletedAddressType = null;
           foreach (var a in arr.EnumerateArray())
           {
             if (a.TryGetProperty("id", out var id) &&
-                string.Equals(id.GetString(), targetId, StringComparison.OrdinalIgnoreCase) &&
-                a.TryGetProperty("isPrimary", out var ip) && ip.GetBoolean())
+                string.Equals(id.GetString(), targetId, StringComparison.OrdinalIgnoreCase))
             {
-              deletedWasPrimary = true;
+              deletedAddressType = ReadAddressTypeValue(a);
+              deletedWasPrimary = a.TryGetProperty("isPrimary", out var ip) && ip.ValueKind == JsonValueKind.True;
               break;
             }
           }
@@ -454,17 +475,28 @@ public partial class UnityPlugin
             remaining.Add(a.Clone());
           }
 
-          // If the deleted address was primary, promote the most recently created remaining address
+          // Only the deleted address's own type group can lose its primary, so promotion is
+          // restricted to the remaining addresses of that type.
+          var sameTypeRemaining = deletedAddressType == null
+            ? []
+            : remaining.Where(r => IsSameAddressType(r, deletedAddressType)).ToList();
+
+          // If the deleted address was primary, promote the most recently created remaining address of that type
           var promotedId = (string?)null;
-          if (deletedWasPrimary && remaining.Count > 0)
+          if (deletedWasPrimary && sameTypeRemaining.Count > 0)
           {
             JsonElement? best = null;
             DateTimeOffset bestTime = DateTimeOffset.MinValue;
 
-            foreach (var r in remaining)
+            foreach (var r in sameTypeRemaining)
             {
               if (r.TryGetProperty("creationTime", out var ctProp) &&
-                  DateTimeOffset.TryParse(ctProp.GetString(), out var ct) &&
+                  ctProp.ValueKind == JsonValueKind.String &&
+                  DateTimeOffset.TryParse(
+                      ctProp.GetString(),
+                      CultureInfo.InvariantCulture,
+                      DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                      out var ct) &&
                   ct > bestTime)
               {
                 bestTime = ct;
@@ -472,29 +504,21 @@ public partial class UnityPlugin
               }
             }
 
-            // Fall back to the first remaining address if none have a creationTime
-            var candidate = best ?? remaining[0];
+            // Fall back to the first remaining address of that type if none have a creationTime
+            var candidate = best ?? sameTypeRemaining[0];
             if (candidate.TryGetProperty("id", out var cid))
               promotedId = cid.GetString();
           }
 
-          // Write remaining addresses, promoting one if needed
+          // Write remaining addresses, promoting one within the deleted address's type group if needed
           foreach (var a in remaining)
           {
-            if (promotedId != null)
+            if (promotedId != null && IsSameAddressType(a, deletedAddressType))
             {
               var isPromoted = a.TryGetProperty("id", out var cid) &&
                                string.Equals(cid.GetString(), promotedId, StringComparison.OrdinalIgnoreCase);
 
-              writer.WriteStartObject();
-              foreach (var prop in a.EnumerateObject())
-              {
-                if (prop.NameEquals("isPrimary"))
-                  writer.WriteBoolean("isPrimary", isPromoted);
-                else
-                  prop.WriteTo(writer);
-              }
-              writer.WriteEndObject();
+              WriteAddressWithPrimary(writer, a, isPromoted);
             }
             else
             {
@@ -503,5 +527,159 @@ public partial class UnityPlugin
           }
         }),
         cancellationToken);
+  }
+
+  // ── Address type helpers ──────────────────────────────────────────────────
+
+  /// <summary>
+  /// Reads a cached address's type. A missing, non-string or blank value is normalized to an
+  /// empty string so that untyped addresses still form one consistent group.
+  /// </summary>
+  private static string ReadAddressTypeValue(JsonElement address)
+  {
+    if (address.ValueKind == JsonValueKind.Object &&
+        address.TryGetProperty("addressType", out var typeProp) &&
+        typeProp.ValueKind == JsonValueKind.String)
+    {
+      return AddressTypeKey.Normalize(typeProp.GetString());
+    }
+
+    return AddressTypeKey.Unknown;
+  }
+
+  /// <summary>
+  /// Returns true when the cached address belongs to the given address type group.
+  /// Types are compared case-insensitively; no type value is ever hardcoded.
+  /// </summary>
+  private static bool IsSameAddressType(JsonElement address, string? addressType)
+    => AddressTypeKey.AreSame(ReadAddressTypeValue(address), addressType);
+
+  /// <summary>
+  /// Marks a new address as primary when no address of its type is flagged yet, so the primary
+  /// the reader would infer anyway is written down. Requests that already ask for primary, and
+  /// groups that already have one, are returned untouched.
+  /// </summary>
+  private async Task<CreateAddressRequest> PromoteWhenTypeGroupHasNoPrimary(
+      CreateAddressRequest addressRequest,
+      ProfileContext profileContext,
+      CancellationToken cancellationToken)
+  {
+    if (addressRequest.IsPrimary)
+    {
+      return addressRequest;
+    }
+
+    // Only promote on a cache we could actually read. Treating an absent or malformed cache as
+    // "no primary" would rewrite the request to primary and publish that to Unity, replacing a
+    // primary that exists there simply because the cache had expired.
+    var groupState = await ReadTypeGroupPrimaryState(addressRequest.AddressType, profileContext, cancellationToken);
+
+    if (groupState != TypeGroupPrimaryState.NoFlaggedPrimary)
+    {
+      return addressRequest;
+    }
+
+    logger.LogInformation(
+        "No primary address exists for type {AddressType} on ProfileId {ProfileId} — the new address is created as that type's primary",
+        addressRequest.AddressType, profileContext.ProfileId);
+
+    return addressRequest with { IsPrimary = true };
+  }
+
+  /// <summary>
+  /// What the cache can tell us about an address type group's primary.
+  /// </summary>
+  private enum TypeGroupPrimaryState
+  {
+    /// <summary>The cache is missing or not in the expected shape — nothing can be concluded.</summary>
+    Unknown,
+
+    /// <summary>The cache was read and an address of this type carries an explicit isPrimary flag.</summary>
+    HasFlaggedPrimary,
+
+    /// <summary>The cache was read and no address of this type is flagged.</summary>
+    NoFlaggedPrimary
+  }
+
+  /// <summary>
+  /// Reads the cache and reports whether any address of the given type already carries an
+  /// explicit isPrimary flag. Unflagged addresses do not count: a group whose primary is only
+  /// inferred is exactly the case that needs the flag written down. An unreadable cache returns
+  /// <see cref="TypeGroupPrimaryState.Unknown"/> so callers do not mistake it for an empty group.
+  /// </summary>
+  private async Task<TypeGroupPrimaryState> ReadTypeGroupPrimaryState(
+      string addressType,
+      ProfileContext profileContext,
+      CancellationToken cancellationToken)
+  {
+    var cached = await pluginCacheService.TryGetAsync<ProfileData>(
+        profileContext.ProfileId, PluginId, $"{profileContext.Provider}:ADDRESSINFO", cancellationToken);
+
+    if (cached?.Data is not JsonElement root ||
+        !root.TryGetProperty("addresses", out var addresses) ||
+        addresses.ValueKind != JsonValueKind.Array)
+    {
+      logger.LogDebug(
+          "No usable cached ADDRESSINFO for ProfileId {ProfileId} — leaving the requested IsPrimary untouched",
+          profileContext.ProfileId);
+      return TypeGroupPrimaryState.Unknown;
+    }
+
+    foreach (var address in addresses.EnumerateArray())
+    {
+      if (IsSameAddressType(address, addressType) &&
+          address.TryGetProperty("isPrimary", out var isPrimary) &&
+          isPrimary.ValueKind == JsonValueKind.True)
+      {
+        return TypeGroupPrimaryState.HasFlaggedPrimary;
+      }
+    }
+
+    return TypeGroupPrimaryState.NoFlaggedPrimary;
+  }
+
+  /// <summary>
+  /// Finds the address type of the address with the given ID, or null when it is not cached.
+  /// </summary>
+  private static string? FindAddressTypeById(JsonElement addresses, string addressId)
+  {
+    foreach (var address in addresses.EnumerateArray())
+    {
+      if (address.TryGetProperty("id", out var idProp) &&
+          string.Equals(idProp.GetString(), addressId, StringComparison.OrdinalIgnoreCase))
+      {
+        return ReadAddressTypeValue(address);
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Writes a cached address back with the given isPrimary value. The flag is written even
+  /// when the source entry does not carry the property, so no entry can silently stay primary.
+  /// </summary>
+  private static void WriteAddressWithPrimary(Utf8JsonWriter writer, JsonElement address, bool isPrimary)
+  {
+    writer.WriteStartObject();
+
+    var wroteIsPrimary = false;
+    foreach (var prop in address.EnumerateObject())
+    {
+      if (prop.NameEquals("isPrimary"))
+      {
+        writer.WriteBoolean("isPrimary", isPrimary);
+        wroteIsPrimary = true;
+      }
+      else
+      {
+        prop.WriteTo(writer);
+      }
+    }
+
+    if (!wroteIsPrimary)
+      writer.WriteBoolean("isPrimary", isPrimary);
+
+    writer.WriteEndObject();
   }
 }

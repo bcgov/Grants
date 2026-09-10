@@ -94,6 +94,11 @@ export const AppSelectors = {
     primaryContactInfo: '[data-cy="primary-contact-info"]',
     noPrimaryContact:   '[data-cy="no-primary-contact"]',
     primaryAddressInfo: '[data-cy="primary-address-info"]',
+    // Factory — one block per address type. Mirrors the component's idKey derivation
+    // (trim, lowercase, non-alphanumeric runs to dashes) so multi-word configured types
+    // such as "Home Office" resolve to primary-address-home-office.
+    primaryAddressBlock: (typeKey: string) =>
+      `[data-cy="primary-address-${typeKey.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).join('-')}"]`,
     noAddressesMessage: '[data-cy="no-addresses-message"]',
   },
 

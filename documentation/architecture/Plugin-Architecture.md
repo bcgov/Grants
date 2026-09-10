@@ -108,7 +108,10 @@ Production plugin that integrates with the Unity Grant Manager.
 - `Unity/Unity.Addresses.cs` — Address management + messaging
 - `Unity/Unity.Organizations.cs` — Organization management + messaging
 - `Unity/Unity.Profile.cs` — Profile population
+- `Unity/Unity.SubmissionForm.cs` — Single-submission form.io schema/data retrieval (on-demand only, see note below)
 - `Unity/Unity.CacheHelpers.cs` — Cache key/serialization helpers
+
+> Updated: added `Unity.SubmissionForm.cs` — retrieves a single submission's form.io schema + data (`SUBMISSIONFORM` key) via the Unity profile endpoint with an extra `SubmissionId` query parameter. Unlike the other profile keys, this data is fetched **on-demand only** (never pre-seeded) and is cached per-submission. The upstream call is currently stubbed/unreachable in dev/test; failures surface as a generic error rather than an unhandled exception.
 
 ### DEMO (`PluginId = "DEMO"`)
 
@@ -136,7 +139,8 @@ Test/demonstration plugin with hardcoded data. No external dependencies.
 - `Demo/Demo.Addresses.cs` — Address management (cache-only)
 - `Demo/Demo.Organizations.cs` — Organization management (cache-only)
 - `Demo/Demo.Profile.cs` — Profile population
-- `Demo/Data/` — Hardcoded seed data (contacts, addresses, orgs, submissions, payments)
+- `Demo/Demo.SubmissionForm.cs` — Single-submission form.io schema/data retrieval (on-demand only, see note above)
+- `Demo/Data/` — Hardcoded seed data (contacts, addresses, orgs, submissions, payments); `Demo/Data/SubmissionFormData.cs` holds the static form.io fixture used by `SUBMISSIONFORM`
 
 ---
 
@@ -228,8 +232,8 @@ Request → ProfileResolutionMiddleware
 
 ## Related Documentation
 
-- [API Endpoints](API-Endpoints.md) — Complete endpoint reference
+- [API Endpoints](../auto/API-Endpoints.md) — Complete endpoint reference
 - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) — Outbox/inbox messaging pattern
 - [Resource Ownership Validation](Resource-Ownership-Validation.md) — IDOR prevention and ownership enforcement
 - [Unity Integration](Unity-Integration.md) — Unity-specific integration details
-- [UNITY RabbitMQ Integration Spec](UNITY-RabbitMQ-Integration-Spec.md) — External system consumer contract
+- [UNITY RabbitMQ Integration Spec](../integration-specs/UNITY-RabbitMQ-Integration-Spec.md) — External system consumer contract
