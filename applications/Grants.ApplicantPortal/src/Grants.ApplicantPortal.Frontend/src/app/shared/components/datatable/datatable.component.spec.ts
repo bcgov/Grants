@@ -122,6 +122,162 @@ describe('DatatableComponent', () => {
       component.goToPage(99);
       expect(component.currentPage).toBe(1);
     });
+
+    it('returns to page 1 from a middle page', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(13);
+      expect(component.currentPage).toBe(13);
+
+      component.goToPage(1);
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('jumps to the last page', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(component.totalPages);
+      expect(component.currentPage).toBe(30);
+    });
+  });
+
+  describe('pagerPages', () => {
+    it('returns every page when totalPages <= 5', () => {
+      component.data = Array.from({ length: 3 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      expect(component.pagerPages).toEqual([1, 2, 3]);
+    });
+
+    it('returns exactly [1,2,3,4,5] when totalPages is exactly 5', () => {
+      component.data = Array.from({ length: 5 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      expect(component.pagerPages).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('never returns more than 5 entries for a large data set', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(13);
+      expect(component.pagerPages.length).toBe(5);
+    });
+
+    it('clamps to [1,2,3,4,5] when on page 1 of 30', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(1);
+      expect(component.pagerPages).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('clamps to [1,2,3,4,5] when on page 2 of 30', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(2);
+      expect(component.pagerPages).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('centres on the current page mid-range: page 13 of 30 → [11,12,13,14,15]', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(13);
+      expect(component.pagerPages).toEqual([11, 12, 13, 14, 15]);
+    });
+
+    it('clamps to the last five when on the last page: page 30 of 30 → [26,27,28,29,30]', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(30);
+      expect(component.pagerPages).toEqual([26, 27, 28, 29, 30]);
+    });
+
+    it('re-clamps the window when the data shrinks while on the last page', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(30);
+      expect(component.pagerPages).toEqual([26, 27, 28, 29, 30]);
+
+      // Rows removed (e.g. deleting records) while the window sits at the far end:
+      // applySorting(resetPage=false) must pull currentPage back to the new last
+      // page, and the window must follow it rather than pointing past the end.
+      component.data = Array.from({ length: 8 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.ngOnChanges();
+
+      expect(component.totalPages).toBe(8);
+      expect(component.currentPage).toBe(8);
+      expect(component.pagerPages).toEqual([4, 5, 6, 7, 8]);
+    });
+
+    it('collapses to a full, un-clamped list when the data shrinks below the cap', () => {
+      component.data = Array.from({ length: 30 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.config.pageSize = 1;
+      component.ngOnChanges();
+
+      component.goToPage(30);
+
+      component.data = Array.from({ length: 3 }, (_, i) => ({
+        name: `Item${i}`,
+        lastUpdated: '2024-01-01',
+      }));
+      component.ngOnChanges();
+
+      expect(component.currentPage).toBe(3);
+      expect(component.pagerPages).toEqual([1, 2, 3]);
+    });
   });
 
   describe('onRowClick', () => {

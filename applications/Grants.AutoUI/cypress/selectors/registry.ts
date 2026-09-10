@@ -90,6 +90,16 @@ export const AppSelectors = {
     orgNameField:       '[data-cy="org-name"]',
     regNumberField:     '[data-cy="reg-number"]',
     submissionsTable:   '[data-cy="datatable-submissions"]',
+    // Pager controls for the submissions datatable — generated at runtime by
+    // datatable.component via [attr.data-cy]="'datatable-pager-first-' + idSuffix"
+    // etc. (idSuffix="submissions"); invisible to static validator.
+    submissionsPagerFirst: '[data-cy="datatable-pager-first-submissions"]',
+    submissionsPagerPrev:  '[data-cy="datatable-pager-prev-submissions"]',
+    submissionsPagerNext:  '[data-cy="datatable-pager-next-submissions"]',
+    submissionsPagerLast:  '[data-cy="datatable-pager-last-submissions"]',
+    // Factory — one button per visible page number in the sliding 5-window
+    submissionsPagerPage: (pageNumber: number) =>
+      `[data-cy="datatable-pager-submissions-${pageNumber}"]`,
     addContactButton:   '[data-cy="contact-add-btn"]',
     primaryContactInfo: '[data-cy="primary-contact-info"]',
     noPrimaryContact:   '[data-cy="no-primary-contact"]',
@@ -184,6 +194,16 @@ export const AppSelectors = {
     table:       '[data-cy="datatable-payments"]',
     searchInput: '[data-cy="datatable-search-payments"]',
     tableBody:   '[data-cy="datatable-body-payments"]',
+    // Pager controls for the payments datatable — same runtime-generated
+    // pattern as the three selectors above (idSuffix="payments");
+    // invisible to static validator.
+    pagerFirst: '[data-cy="datatable-pager-first-payments"]',
+    pagerPrev:  '[data-cy="datatable-pager-prev-payments"]',
+    pagerNext:  '[data-cy="datatable-pager-next-payments"]',
+    pagerLast:  '[data-cy="datatable-pager-last-payments"]',
+    // Factory — one button per visible page number in the sliding 5-window
+    pagerPage: (pageNumber: number) =>
+      `[data-cy="datatable-pager-payments-${pageNumber}"]`,
   },
 
 } as const;

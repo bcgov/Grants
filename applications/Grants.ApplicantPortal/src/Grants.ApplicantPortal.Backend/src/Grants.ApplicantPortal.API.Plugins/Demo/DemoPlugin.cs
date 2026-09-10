@@ -62,7 +62,8 @@ public partial class DemoPlugin(
         IReadOnlyList<ProviderInfo> providers =
         [
             new("PROGRAM1", "PROGRAM1", DisplayName: "Program One", DefaultFromAddress: "NoReply@gov.bc.ca"),
-            new("PROGRAM2", "PROGRAM2", DisplayName: "Program Two", DefaultFromAddress: "NoReply@gov.bc.ca")
+            new("PROGRAM2", "PROGRAM2", DisplayName: "Program Two", DefaultFromAddress: "NoReply@gov.bc.ca"),
+            new("PROGRAM3", "PROGRAM3", DisplayName: "Program Three (Large Data Set)", DefaultFromAddress: "NoReply@gov.bc.ca")
         ];
         return Task.FromResult(providers);
     }
@@ -87,7 +88,12 @@ public partial class DemoPlugin(
         new("PROGRAM2", "ORGINFO"),
         new("PROGRAM2", "PAYMENTINFO"),
         new("PROGRAM2", "CONTACTINFO"),
-        new("PROGRAM2", "ADDRESSINFO")
+        new("PROGRAM2", "ADDRESSINFO"),
+        new("PROGRAM3", "SUBMISSIONINFO"),
+        new("PROGRAM3", "ORGINFO"),
+        new("PROGRAM3", "PAYMENTINFO"),
+        new("PROGRAM3", "CONTACTINFO"),
+        new("PROGRAM3", "ADDRESSINFO")
     ];
 
     /// <summary>
@@ -338,6 +344,11 @@ public partial class DemoPlugin(
             ("PROGRAM2", "PAYMENTINFO") => PaymentsData.GenerateProgram2Payments(baseData),
             ("PROGRAM2", "CONTACTINFO") => ContactsData.GenerateProgram2Contacts(baseData),
             ("PROGRAM2", "ADDRESSINFO") => AddressesData.GenerateProgram2Addresses(baseData),
+            ("PROGRAM3", "SUBMISSIONINFO") => SubmissionsData.GenerateProgram3Submissions(baseData),
+            ("PROGRAM3", "ORGINFO") => OrganizationsData.GenerateProgram3OrgInfo(baseData),
+            ("PROGRAM3", "PAYMENTINFO") => PaymentsData.GenerateProgram3Payments(baseData),
+            ("PROGRAM3", "CONTACTINFO") => ContactsData.GenerateProgram3Contacts(baseData),
+            ("PROGRAM3", "ADDRESSINFO") => AddressesData.GenerateProgram3Addresses(baseData),
             _ => throw new NotImplementedException($"No mock data generator for {metadata.Provider}:{metadata.Key}")
         };
     }
