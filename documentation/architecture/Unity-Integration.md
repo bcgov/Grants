@@ -124,6 +124,16 @@ The Unity Grant Manager maintains a centralized lookup table (AppApplicantTenant
 
 **Result**: The API always returns up-to-date tenant associations without requiring expensive database scans.
 
+### Applicant Merging Across OIDC Subjects (Root Filtering)
+
+> **⚠️ Needs confirmation with the Unity team** — this section documents behavior described verbally, not yet a written contract. Treat the specifics as provisional until Unity confirms the exact scope.
+
+A single real-world applicant can authenticate through more than one identity method (e.g. BC Services Card vs. IDIR), producing more than one distinct OIDC `sub`. Unity handles this by merging applicant records that share the same underlying Unity applicant identity. When resolving a submission, Unity's root filtering now does an extra scan for other applications sharing that same applicant Id, and can return them alongside the requested one.
+
+**Effect on the Portal**: every Unity read (`SUBMISSIONINFO`, `SUBMISSIONFORM`, etc.) is scoped by the caller's own `ProfileId`/`Subject` (a single `sub`+`iss` pair — see [Resource-Ownership-Validation.md](Resource-Ownership-Validation.md)). The Portal has no independent model of "these two subs are the same merged applicant" — it fully trusts whatever list Unity returns for a given `Subject` as "belongs to this caller." If Unity's root filtering causes `SUBMISSIONINFO` for one sub to include submissions originally created under a *different* sub of the same merged applicant, the Portal will treat those as owned by the caller too, purely because Unity included them in the response.
+
+This is very likely the intended behavior (the two subs really are the same person), but it changes the Portal's ownership trust boundary from "per-sub" to "whatever Unity decides to merge," which the Portal-side ownership design ([Resource-Ownership-Validation.md](Resource-Ownership-Validation.md)) did not originally account for. See that document for the specific implications, especially for any future submission/application **write** endpoint.
+
 ## Authentication
 
 All API requests require an API key in the `X-API-Key` header.
@@ -244,7 +254,7 @@ docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 
 > **Detailed Documentation**: For complete message schemas, payload examples, outbox/inbox lifecycle, and external system consumer contract, see:
 > - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) - Full portal-side messaging architecture
-> - [UNITY RabbitMQ Integration Spec](UNITY-RabbitMQ-Integration-Spec.md) - External consumer contract for Unity
+> - [UNITY RabbitMQ Integration Spec](../integration-specs/UNITY-RabbitMQ-Integration-Spec.md) - External consumer contract for Unity
 
 ## Performance
 
@@ -280,12 +290,13 @@ docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 |------|---------|---------|
 | 2026-01-XX | 1.0.0 | Initial integration documentation |
 | 2026-03-XX | 2.0.0 | Added write operations (contact/address/org CRUD), updated RabbitMQ messaging with actual implemented commands, added plugin events documentation |
+| 2026-09-02 | 2.1.0 | Documented Unity's applicant-merging/root-filtering behavior across OIDC subjects and its effect on `SUBMISSIONINFO` (provisional — pending Unity team confirmation) |
 
 ## Related Documentation
 
-- [API Endpoints](API-Endpoints.md) - Complete REST endpoint reference
+- [API Endpoints](../auto/API-Endpoints.md) - Complete REST endpoint reference
 - [Plugin Architecture](Plugin-Architecture.md) - Plugin system design
 - [Messaging Plugin Integration Guide](Messaging-Plugin-Integration-Guide.md) - Outbox/inbox messaging details
-- [UNITY RabbitMQ Integration Spec](UNITY-RabbitMQ-Integration-Spec.md) - External consumer contract
+- [UNITY RabbitMQ Integration Spec](../integration-specs/UNITY-RabbitMQ-Integration-Spec.md) - External consumer contract
 - [Authentication](Authentication.md) - Keycloak OIDC configuration
-- [Secrets Management](Secrets-Management.md) - Configuration and secrets
+- [Secrets Management](../guides/Secrets-Management.md) - Configuration and secrets
