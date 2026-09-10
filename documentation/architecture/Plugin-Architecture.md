@@ -16,7 +16,7 @@ A plugin is a class that implements one or more plugin interfaces. Each plugin h
 
 ### Provider
 
-A provider represents a data source or program within a plugin. For UNITY, providers map to **tenants** (grant programs). For DEMO, providers are hardcoded test programs (`PROGRAM1`, `PROGRAM2`). Providers are fetched at runtime via the `/Plugins/{PluginId}/providers` endpoint. Each provider can include an optional `Metadata` dictionary (`Dictionary<string, string>`) for plugin-specific key-value data.
+A provider represents a data source or program within a plugin. For UNITY, providers map to **tenants** (grant programs). For DEMO, providers are hardcoded test programs (`PROGRAM1`, `PROGRAM2`, `PROGRAM3`). Providers are fetched at runtime via the `/Plugins/{PluginId}/providers` endpoint. Each provider can include an optional `Metadata` dictionary (`Dictionary<string, string>`) for plugin-specific key-value data.
 
 ### Features
 
@@ -119,7 +119,9 @@ Test/demonstration plugin with hardcoded data. No external dependencies.
 
 **Features:** `ProfilePopulation`, `ContactManagement`, `AddressManagement`, `OrganizationManagement`
 
-**Providers:** Hardcoded: `PROGRAM1`, `PROGRAM2`
+**Providers:** Hardcoded: `PROGRAM1` (Program One), `PROGRAM2` (Program Two), `PROGRAM3` (Program Three (Large Data Set)).
+
+`PROGRAM3` carries a deliberately large, deterministic mock data set — 120 submissions, 14 contacts, 12 addresses, 1 organization and 40 payments — so table pagination and other high-volume UI behaviour can be exercised against realistic volumes. Its data is generated from the record index (no `Random`, no `DateTime.UtcNow`), so ids and timestamps are stable across restarts.
 
 **Contact roles:**
 | Key | Label |

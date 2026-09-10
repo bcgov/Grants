@@ -432,8 +432,22 @@ export class DatatableComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     }
   }
 
+  private static readonly MAX_PAGER_BUTTONS = 5;
+
+  /**
+   * Builds the sliding window of page numbers shown between the first/prev
+   * and next/last pager buttons. The window is centred on the current page,
+   * capped at MAX_PAGER_BUTTONS entries, and clamped so it never runs past
+   * page 1 or totalPages.
+   */
   get pagerPages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const total = this.totalPages;
+    const max = DatatableComponent.MAX_PAGER_BUTTONS;
+    if (total <= max) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const start = Math.max(1, Math.min(this.currentPage - Math.floor(max / 2), total - max + 1));
+    return Array.from({ length: max }, (_, i) => start + i);
   }
 
   /**

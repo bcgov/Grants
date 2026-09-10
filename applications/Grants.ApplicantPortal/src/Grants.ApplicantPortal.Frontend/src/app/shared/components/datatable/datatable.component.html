@@ -433,12 +433,22 @@
         <button
           type="button"
           class="pager-btn"
+          [attr.data-cy]="'datatable-pager-first-' + idSuffix"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(1)"
+          aria-label="First page"
+        >
+          <i class="fas fa-angles-left" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="pager-btn"
           [attr.data-cy]="'datatable-pager-prev-' + idSuffix"
           [disabled]="currentPage === 1"
           (click)="goToPage(currentPage - 1)"
           aria-label="Previous page"
         >
-          <i class="fas fa-chevron-left"></i>
+          <i class="fas fa-chevron-left" aria-hidden="true"></i>
         </button>
         @for (page of pagerPages; track page) {
           <button
@@ -461,7 +471,17 @@
           (click)="goToPage(currentPage + 1)"
           aria-label="Next page"
         >
-          <i class="fas fa-chevron-right"></i>
+          <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="pager-btn"
+          [attr.data-cy]="'datatable-pager-last-' + idSuffix"
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(totalPages)"
+          aria-label="Last page"
+        >
+          <i class="fas fa-angles-right" aria-hidden="true"></i>
         </button>
       </nav>
     }

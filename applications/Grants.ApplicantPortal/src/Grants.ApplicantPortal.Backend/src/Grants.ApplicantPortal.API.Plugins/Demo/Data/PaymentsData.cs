@@ -1,4 +1,6 @@
-﻿namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
+﻿using System.Globalization;
+
+namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
 /// Static data provider for demo payment information.
@@ -70,5 +72,44 @@ public static class PaymentsData
         }
       }
     };
+  }
+
+  private const int Program3PaymentCount = 40;
+
+  private static readonly string[] _program3Statuses = ["L1Pending", "L2Pending", "Paid", "Fully Paid"];
+  private static readonly HashSet<string> _program3PendingStatuses = new(["L1Pending", "L2Pending"]);
+
+  /// <summary>
+  /// Generates a large (40 record), fully deterministic set of Program 3 payments.
+  /// Ids, reference numbers and dates are all derived from the loop index — no
+  /// <see cref="Random"/> and no <see cref="DateTime.UtcNow"/> — so the data is
+  /// stable across restarts.
+  /// </summary>
+  public static object GenerateProgram3Payments(object baseData)
+  {
+    var settledBase = new DateTime(2025, 3, 1, 9, 0, 0, DateTimeKind.Utc);
+
+    var payments = Enumerable.Range(0, Program3PaymentCount)
+      .Select(index =>
+      {
+        var status = _program3Statuses[index % _program3Statuses.Length];
+        var isPending = _program3PendingStatuses.Contains(status);
+        var amount = 100.00m + index * 25.5m;
+
+        return new
+        {
+          id = $"9{index:x7}-a004-4b04-8c04-000000000000",
+          paymentNumber = isPending ? "" : $"P3-{index + 1:D4}",
+          referenceNo = $"DEMO-2025-{2001 + index}",
+          amount,
+          paymentDate = (string?)(isPending
+            ? null
+            : settledBase.AddDays(index).ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)),
+          paymentStatus = status
+        };
+      })
+      .ToArray();
+
+    return new { payments };
   }
 }
