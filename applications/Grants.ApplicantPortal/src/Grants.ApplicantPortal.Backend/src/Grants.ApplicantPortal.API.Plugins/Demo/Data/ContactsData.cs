@@ -454,6 +454,247 @@ public static class ContactsData
           LastUpdated = new DateTime(2024, 1, 1, 12, 30, 0, DateTimeKind.Utc)
         }
       },
+      "PROGRAM3" => new[]
+      {
+        new ContactInfo
+        {
+          ContactId = "C3000000-0001-4000-8000-000000000001",
+          ContactType = "Applicant",
+          Name = "Sarah Thompson",
+          Email = "sarah.thompson@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = "+1-250-555-0101",
+          WorkPhoneNumber = "+1-250-555-0100",
+          WorkPhoneExtension = "201",
+          Title = "Executive Director",
+          Role = "Primary",
+          IsPrimary = true,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 0, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0002-4000-8000-000000000002",
+          ContactType = "Application",
+          Name = "Michael Chen",
+          Email = "michael.chen@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "+1-250-555-0102",
+          WorkPhoneExtension = null,
+          Title = "Finance Manager",
+          Role = "Additional Signing Authority",
+          IsPrimary = false,
+          IsEditable = false,
+          ApplicationId = Guid.Parse("3a1eac9f-da13-a888-883f-d2c0575e7620"),
+          LastUpdated = new DateTime(2024, 2, 1, 9, 5, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0003-4000-8000-000000000003",
+          ContactType = "Applicant",
+          Name = "Priya Sharma",
+          Email = "priya.sharma@example.org",
+          HomePhoneNumber = "(250) 555-0103",
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0100",
+          WorkPhoneExtension = "202",
+          Title = "Program Coordinator",
+          Role = "General",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 10, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0004-4000-8000-000000000004",
+          ContactType = "Applicant",
+          Name = "David Wilson",
+          Email = "david.wilson@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = "+1-250-555-0104",
+          WorkPhoneNumber = null,
+          WorkPhoneExtension = null,
+          Title = "Grants Administrator",
+          Role = "Billing",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 15, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0005-4000-8000-000000000005",
+          ContactType = "Application",
+          Name = "Amara Okafor",
+          Email = "amara.okafor@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0105",
+          WorkPhoneExtension = "203",
+          Title = "IT Systems Lead",
+          Role = "Technical",
+          IsPrimary = false,
+          IsEditable = false,
+          ApplicationId = Guid.Parse("3a1eac9f-da13-a888-883f-d2c0575e7620"),
+          LastUpdated = new DateTime(2024, 2, 1, 9, 20, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0006-4000-8000-000000000006",
+          ContactType = "Applicant",
+          Name = "Robert Fontaine",
+          Email = "robert.fontaine@example.org",
+          HomePhoneNumber = "(250) 555-0106",
+          MobilePhoneNumber = "+1-250-555-0116",
+          WorkPhoneNumber = "(250) 555-0100",
+          WorkPhoneExtension = "204",
+          Title = "Board Chair",
+          Role = "General",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 25, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0007-4000-8000-000000000007",
+          ContactType = "Applicant",
+          Name = "Linda Martin",
+          Email = "linda.martin@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0107",
+          WorkPhoneExtension = null,
+          Title = "Communications Officer",
+          Role = "General",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 30, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0008-4000-8000-000000000008",
+          ContactType = "Application",
+          Name = "Kevin Park",
+          Email = "kevin.park@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = "+1-250-555-0108",
+          WorkPhoneNumber = null,
+          WorkPhoneExtension = null,
+          Title = "Volunteer Coordinator",
+          Role = "Additional Signing Authority",
+          IsPrimary = false,
+          IsEditable = false,
+          ApplicationId = Guid.Parse("3a1eac9f-da13-a888-883f-d2c0575e7620"),
+          LastUpdated = new DateTime(2024, 2, 1, 9, 35, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0009-4000-8000-000000000009",
+          ContactType = "Applicant",
+          Name = "Grace Nakamura",
+          Email = "grace.nakamura@example.org",
+          HomePhoneNumber = "(250) 555-0109",
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0100",
+          WorkPhoneExtension = "205",
+          Title = "Operations Manager",
+          Role = "Billing",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 40, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0010-4000-8000-000000000010",
+          ContactType = "Applicant",
+          Name = "Marcus Bellingham",
+          Email = "marcus.bellingham@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0110",
+          WorkPhoneExtension = "206",
+          Title = "Program Manager",
+          Role = "General",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 45, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0011-4000-8000-000000000011",
+          ContactType = "Application",
+          Name = "Fatima Al-Sayed",
+          Email = "fatima.alsayed@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = "+1-250-555-0111",
+          WorkPhoneNumber = null,
+          WorkPhoneExtension = null,
+          Title = "Reporting Analyst",
+          Role = "Technical",
+          IsPrimary = false,
+          IsEditable = false,
+          ApplicationId = Guid.Parse("3a1eac9f-da13-a888-883f-d2c0575e7620"),
+          LastUpdated = new DateTime(2024, 2, 1, 9, 50, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0012-4000-8000-000000000012",
+          ContactType = "Applicant",
+          Name = "Trevor MacDonald",
+          Email = "trevor.macdonald@example.org",
+          HomePhoneNumber = "(250) 555-0112",
+          MobilePhoneNumber = "+1-250-555-0122",
+          WorkPhoneNumber = null,
+          WorkPhoneExtension = null,
+          Title = "Facilities Lead",
+          Role = "General",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 9, 55, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0013-4000-8000-000000000013",
+          ContactType = "Applicant",
+          Name = "Chantal Roy",
+          Email = "chantal.roy@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0113",
+          WorkPhoneExtension = "207",
+          Title = "Outreach Coordinator",
+          Role = "Billing",
+          IsPrimary = false,
+          IsEditable = true,
+          ApplicationId = null,
+          LastUpdated = new DateTime(2024, 2, 1, 10, 0, 0, DateTimeKind.Utc)
+        },
+        new ContactInfo
+        {
+          ContactId = "C3000000-0014-4000-8000-000000000014",
+          ContactType = "Application",
+          Name = "Owen Kwan",
+          Email = "owen.kwan@example.org",
+          HomePhoneNumber = null,
+          MobilePhoneNumber = null,
+          WorkPhoneNumber = "(250) 555-0114",
+          WorkPhoneExtension = null,
+          Title = "Legal Counsel",
+          Role = "Additional Signing Authority",
+          IsPrimary = false,
+          IsEditable = false,
+          ApplicationId = Guid.Parse("3a1eac9f-da13-a888-883f-d2c0575e7620"),
+          LastUpdated = new DateTime(2024, 2, 1, 10, 5, 0, DateTimeKind.Utc)
+        }
+      },
       _ => Array.Empty<ContactInfo>()
     };
   }
@@ -470,7 +711,19 @@ public static class ContactsData
     }
   }
 
-  public static object GenerateProgram1Contacts(object baseData)
+  public static object GenerateProgram1Contacts(object baseData) => GenerateContacts("PROGRAM1", baseData);
+
+  public static object GenerateProgram2Contacts(object baseData) => GenerateContacts("PROGRAM2", baseData);
+
+  public static object GenerateProgram3Contacts(object baseData) => GenerateContacts("PROGRAM3", baseData);
+
+  /// <summary>
+  /// Shared body for the per-provider contact generators: merges default (demo) contacts with
+  /// any applicant-managed stored contacts, resolves the "only one primary" invariant, and
+  /// projects the Unity API contact shape. Extracted from the near-identical Program 1/2/3
+  /// generator methods — behaviour is unchanged for existing providers.
+  /// </summary>
+  private static object GenerateContacts(string provider, object baseData)
   {
     // Get the ProfileId from baseData if available
     var profileId = Guid.Empty;
@@ -482,91 +735,13 @@ public static class ContactsData
     }
 
     // Get stored contacts
-    var storedContacts = GetStoredContacts("PROGRAM1", profileId);
+    var storedContacts = GetStoredContacts(provider, profileId);
 
     // Default contacts (always present as baseline) - use shared method
-    var defaultContacts = GetDefaultContacts("PROGRAM1");
+    var defaultContacts = GetDefaultContacts(provider);
 
     // Get deleted default contact IDs for this provider/profile
-    var key = $"PROGRAM1-{profileId}";
-    var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
-
-    // Filter out any default contacts that have been materialized into stored contacts
-    // or have been deleted (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultContacts.Where(dc =>
-      !storedContacts.Any(sc => string.Equals(sc.ContactId, dc.ContactId, StringComparison.OrdinalIgnoreCase)) &&
-      !deletedDefaultIds.Contains(dc.ContactId)).ToArray();
-
-    // Combine non-materialized defaults and stored contacts
-    var allContacts = nonMaterializedDefaults.Concat(storedContacts).ToList();
-
-    // Handle primary contact conflicts - only one can be primary
-    var primaryContacts = allContacts.Where(c => c.IsPrimary).ToList();
-    if (primaryContacts.Count > 1)
-    {
-      // If there are multiple primary contacts, prefer stored contacts over default contacts
-      // and if there are multiple stored primary contacts, keep the most recent one
-      var storedPrimary = primaryContacts.Where(c => storedContacts.Contains(c)).OrderByDescending(c => c.LastUpdated).FirstOrDefault();
-
-      if (storedPrimary != null)
-      {
-        // Set stored contact as primary and make all others non-primary
-        for (var i = 0; i < allContacts.Count; i++)
-        {
-          if (allContacts[i].ContactId == storedPrimary.ContactId)
-          {
-            allContacts[i] = allContacts[i] with { IsPrimary = true };
-          }
-          else if (allContacts[i].IsPrimary)
-          {
-            allContacts[i] = allContacts[i] with { IsPrimary = false };
-          }
-        }
-      }
-    }
-
-    return new
-    {
-      Contacts = allContacts
-        .OrderByDescending(c => c.LastUpdated)
-        .Select(c => new
-        {
-          c.ContactId,
-          c.Name,
-          c.Title,
-          c.Email,
-          c.HomePhoneNumber,
-          c.MobilePhoneNumber,
-          c.WorkPhoneNumber,
-          c.WorkPhoneExtension,
-          c.ContactType,
-          c.Role,
-          c.IsPrimary,
-          c.IsEditable,
-          c.ApplicationId
-        }).ToArray()
-    };
-  }
-
-  public static object GenerateProgram2Contacts(object baseData)
-  {
-    // Get the ProfileId from baseData if available
-    var profileId = Guid.Empty;
-    var baseDataType = baseData.GetType();
-    var profileIdProperty = baseDataType.GetProperty("ProfileId");
-    if (profileIdProperty != null)
-    {
-      profileId = (Guid)profileIdProperty.GetValue(baseData)!;
-    }
-
-    // Get stored contacts
-    var storedContacts = GetStoredContacts("PROGRAM2", profileId);
-
-    // Default contacts (always present as baseline) - use shared method
-    var defaultContacts = GetDefaultContacts("PROGRAM2");
-
-    // Get deleted default contact IDs for this provider/profile
-    var key = $"PROGRAM2-{profileId}";
+    var key = $"{provider}-{profileId}";
     var deletedDefaultIds = _deletedDefaultContactIds.TryGetValue(key, out var deletedIds) ? deletedIds : new HashSet<string>();
 
     // Filter out any default contacts that have been materialized into stored contacts

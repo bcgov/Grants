@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 
 /// <summary>
@@ -210,4 +212,173 @@ public static class SubmissionsData
       linkSource = "https://demo-forms.example.com/app/user/view?s="
     };
   }
+
+  /// <summary>
+  /// The 8 Program 3 grant program names, cycled deterministically across the
+  /// generated submissions. Reused verbatim by <see cref="SubmissionFormData"/>.
+  /// </summary>
+  private static readonly string[] _program3Types =
+  [
+    "Rural Arts Access Grant",
+    "Coastal Habitat Restoration",
+    "Indigenous Language Revitalization",
+    "Community Food Security",
+    "Youth Sport Participation",
+    "Small Business Innovation",
+    "Heritage Building Conservation",
+    "Climate Adaptation Planning"
+  ];
+
+  private static readonly string[] _program3Statuses =
+  [
+    "Submitted",
+    "Under Review",
+    "Approved",
+    "Declined",
+    "On Hold",
+    "Withdrawn",
+    "Closed"
+  ];
+
+  private const int Program3SubmissionCount = 120;
+
+  /// <summary>
+  /// Generates a large (120 record), fully deterministic set of Program 3 submissions
+  /// so the frontend table pager can be demonstrated against realistic data volumes.
+  /// Every field is derived from the loop index — no <see cref="Random"/> and no
+  /// <see cref="DateTime.UtcNow"/> — so ids, timestamps and reference numbers are
+  /// stable across restarts.
+  /// </summary>
+  public static object GenerateProgram3Submissions(object baseData)
+  {
+    var receivedBase = new DateTime(2025, 12, 30, 8, 0, 0, DateTimeKind.Utc);
+
+    var submissions = Enumerable.Range(0, Program3SubmissionCount)
+      .Select(index =>
+      {
+        var programType = _program3Types[index % _program3Types.Length];
+        var status = _program3Statuses[index % _program3Statuses.Length];
+
+        // Strictly descending across the whole set: the 6-day step per index dwarfs the
+        // small per-record hour jitter, so newer indexes never sort after older ones.
+        var received = receivedBase.AddDays(-index * 6).AddHours(-(index % 7));
+        var submissionTime = received.AddMinutes(-(30 + index % 45));
+
+        // Cycle through all four link scenarios required by the demo:
+        //   0 = renewal link + multiple related links
+        //   1 = no renewal link + one or two related links
+        //   2 = renewal link only, empty relatedLinks
+        //   3 = neither renewal nor related links
+        var caseIndex = index % 4;
+        var includesUnorderedLink = index % 12 == 0 && caseIndex is 0 or 1;
+
+        var renewalLink = caseIndex is 0 or 2
+          ? new SubmissionLink(
+              $"https://demo-forms.example.com/app/form/renew?f=program3-{index:D3}",
+              $"Renew {programType}",
+              "",
+              0)
+          : null;
+
+        var relatedLinks = BuildProgram3RelatedLinks(caseIndex, programType, index, includesUnorderedLink);
+
+        var referenceNo = BuildProgram3ReferenceNo(index);
+        var applicantMessage = index % 3 == 0
+          ? null
+          : $"Your {programType} submission (Reference No. {referenceNo}) is currently {status.ToLowerInvariant()}.";
+
+        return new
+        {
+          id = BuildProgram3Id('e', index),
+          linkId = BuildProgram3Id('f', index),
+          receivedTime = FormatProgram3Timestamp(received),
+          submissionTime = FormatProgram3Timestamp(submissionTime),
+          referenceNo,
+          type = programType,
+          status,
+          renewalLink = (SubmissionLink?)renewalLink,
+          relatedLinks,
+          applicantMessage = (string?)applicantMessage,
+          eligibleForRenewal = renewalLink != null
+        };
+      })
+      .ToArray();
+
+    return new
+    {
+      submissions,
+      linkSource = "https://demo-forms.example.com/app/user/view?s="
+    };
+  }
+
+  /// <summary>
+  /// Builds the related links for a Program 3 submission based on its link scenario.
+  /// A few records (every 12th, within the scenarios that already carry related links)
+  /// also get an unordered (Order == -1) link to exercise the "sorts last" case.
+  /// </summary>
+  private static SubmissionLink[] BuildProgram3RelatedLinks(int caseIndex, string programType, int index, bool includeUnorderedLink)
+  {
+    var slug = programType.ToLowerInvariant().Replace(" ", "-");
+    var links = new List<SubmissionLink>();
+
+    switch (caseIndex)
+    {
+      case 0:
+        links.Add(new SubmissionLink(
+          $"https://demo-forms.example.com/guidelines/{slug}",
+          "Program Guidelines",
+          "Read the eligibility and reporting guidelines for this program.",
+          0));
+        links.Add(new SubmissionLink(
+          $"https://demo-forms.example.com/faq/{slug}",
+          "Frequently Asked Questions",
+          "Answers to common questions about this submission.",
+          1));
+        break;
+      case 1:
+        links.Add(new SubmissionLink(
+          $"https://demo-forms.example.com/guidelines/{slug}",
+          "Program Guidelines",
+          "Read the eligibility and reporting guidelines for this program.",
+          0));
+        if (index % 2 == 1)
+        {
+          links.Add(new SubmissionLink(
+            $"https://demo-forms.example.com/contact/{slug}",
+            "Contact Program Staff",
+            "Reach out to program staff with questions about this submission.",
+            1));
+        }
+        break;
+      default:
+        // caseIndex 2 (renewal only) and 3 (neither) have no related links
+        break;
+    }
+
+    if (includeUnorderedLink)
+    {
+      links.Add(new SubmissionLink(
+        $"https://demo-forms.example.com/misc/{slug}-{index:D3}",
+        "Additional Resources",
+        "Unordered link — should always render last.",
+        -1));
+    }
+
+    return links.Count == 0 ? Array.Empty<SubmissionLink>() : [.. links];
+  }
+
+  /// <summary>
+  /// Builds a stable, unique, GUID-shaped id for a Program 3 submission record.
+  /// <paramref name="rolePrefix"/> distinguishes the submission id ('e') from its
+  /// linkId ('f'); the loop index fills the rest of the first group so every
+  /// record gets a unique, reproducible value.
+  /// </summary>
+  private static string BuildProgram3Id(char rolePrefix, int index) =>
+    $"{rolePrefix}{index:x7}-9003-4a03-8003-000000000000";
+
+  private static string BuildProgram3ReferenceNo(int index) =>
+    $"P3-2025-{index + 1:D4}";
+
+  private static string FormatProgram3Timestamp(DateTime value) =>
+    value.ToString("yyyy-MM-ddTHH:mm:ss.ffffffK", CultureInfo.InvariantCulture);
 }
