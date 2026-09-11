@@ -5,9 +5,10 @@ namespace Grants.ApplicantPortal.API.Plugins.Demo.Data;
 /// <summary>
 /// Static fixture data for the DEMO plugin's submission form retrieval.
 /// Provides a form.io schema/data pair that varies per submission — looked up
-/// from the same 7 static demo submissions defined in <see cref="SubmissionsData"/>
-/// (<see cref="SubmissionsData.GenerateProgram1Submissions"/> and
-/// <see cref="SubmissionsData.GenerateProgram2Submissions"/>) — so the PDF preview
+/// from the static demo submissions defined in <see cref="SubmissionsData"/>
+/// (<see cref="SubmissionsData.GenerateProgram1Submissions"/>,
+/// <see cref="SubmissionsData.GenerateProgram2Submissions"/> and
+/// <see cref="SubmissionsData.GenerateProgram3Submissions"/>) — so the PDF preview
 /// for a given submission id renders plausible, submission-specific content instead
 /// of identical fixture data for every submission.
 /// </summary>
@@ -17,7 +18,7 @@ public static class SubmissionFormData
   /// Maps a demo submission's <c>type</c> (as defined in <see cref="SubmissionsData"/>)
   /// to a form.io "programType" select option value/label, and a plausible organization
   /// name for that program. Types not present here (i.e. any submission id that isn't
-  /// one of the 7 known static fixtures) fall back to a generic value.
+  /// one of the known static fixtures) fall back to a generic value.
   /// </summary>
   private static readonly IReadOnlyDictionary<string, (string Value, string OrganizationName)> _programTypesByType =
       new Dictionary<string, (string Value, string OrganizationName)>
@@ -28,12 +29,21 @@ public static class SubmissionFormData
         ["Digital Community Program"] = ("digitalCommunity", "Northern Digital Access Cooperative"),
         ["STEM Education Excellence Initiative"] = ("stemEducation", "Pacific STEM Education Alliance"),
         ["Digital Literacy for Seniors"] = ("digitalLiteracySeniors", "Vancouver Island Seniors Digital Literacy Network"),
-        ["Rural Broadband Access Project"] = ("ruralBroadband", "Cariboo Rural Broadband Society")
+        ["Rural Broadband Access Project"] = ("ruralBroadband", "Cariboo Rural Broadband Society"),
+        ["Rural Arts Access Grant"] = ("ruralArtsAccess", "Kootenay Rural Arts Collective"),
+        ["Coastal Habitat Restoration"] = ("coastalHabitatRestoration", "Salish Sea Habitat Restoration Society"),
+        ["Indigenous Language Revitalization"] = ("indigenousLanguageRevitalization", "First Nations Language Keepers Alliance"),
+        ["Community Food Security"] = ("communityFoodSecurity", "Fraser Valley Food Security Network"),
+        ["Youth Sport Participation"] = ("youthSportParticipation", "Okanagan Youth Sport Association"),
+        ["Small Business Innovation"] = ("smallBusinessInnovation", "Vancouver Island Small Business Innovation Hub"),
+        ["Heritage Building Conservation"] = ("heritageBuildingConservation", "Cariboo Heritage Conservation Trust"),
+        ["Climate Adaptation Planning"] = ("climateAdaptationPlanning", "North Coast Climate Adaptation Partnership")
       };
 
   /// <summary>
-  /// The 7 known static demo submissions (id, type, referenceNo), sourced directly
-  /// from <see cref="SubmissionsData"/> so this fixture never drifts from the grid data.
+  /// The known static demo submissions (id, type, referenceNo) across all demo
+  /// providers, sourced directly from <see cref="SubmissionsData"/> so this fixture
+  /// never drifts from the grid data.
   /// </summary>
   private static readonly IReadOnlyList<(string Id, string Type, string ReferenceNo)> _knownSubmissions =
       BuildKnownSubmissions();
@@ -46,6 +56,7 @@ public static class SubmissionFormData
 
     AppendSubmissions(SubmissionsData.GenerateProgram1Submissions(_genericFallbackBaseData), submissions);
     AppendSubmissions(SubmissionsData.GenerateProgram2Submissions(_genericFallbackBaseData), submissions);
+    AppendSubmissions(SubmissionsData.GenerateProgram3Submissions(_genericFallbackBaseData), submissions);
 
     return submissions;
   }
@@ -71,7 +82,7 @@ public static class SubmissionFormData
 
   /// <summary>
   /// Returns a form.io schema and matching submission data for the given submission id.
-  /// When <paramref name="submissionId"/> matches one of the 7 known static demo
+  /// When <paramref name="submissionId"/> matches one of the known static demo
   /// submissions, the returned data reflects that submission's program type and
   /// reference number. Any other id (the known submission set is not assumed to be
   /// exhaustive or immutable) falls back to generic, but still submission-id-aware, data.
@@ -152,7 +163,7 @@ public static class SubmissionFormData
       return (option.OrganizationName, option.Value, projectSummary);
     }
 
-    // Generic fallback for any submission id that isn't one of the 7 known static fixtures.
+    // Generic fallback for any submission id that isn't one of the known static fixtures.
     return (
         "Demo Community Society",
         "communityHealth",

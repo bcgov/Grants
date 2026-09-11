@@ -133,6 +133,189 @@ public static class AddressesData
           ReferenceNo = "DEMO0004"
         }
       ],
+      "PROGRAM3" =>
+      [
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890001",
+          AddressType = "Physical",
+          Street = "100 Harbour Street",
+          Street2 = "",
+          Unit = "",
+          City = "Vancouver",
+          Province = "BC",
+          PostalCode = "V6C2W9",
+          Country = "",
+          IsPrimary = true,
+          IsEditable = false,
+          ReferenceNo = "DEMO0005"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890002",
+          AddressType = "Mailing",
+          Street = "PO Box 4500",
+          Street2 = "",
+          Unit = "",
+          City = "Victoria",
+          Province = "BC",
+          PostalCode = "V8W3L3",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0005"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890003",
+          AddressType = "Mailing",
+          Street = "200 Terminal Avenue",
+          Street2 = "Suite 300",
+          Unit = "",
+          City = "Nanaimo",
+          Province = "BC",
+          PostalCode = "V9R5G8",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0005"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890004",
+          AddressType = "Physical",
+          Street = "555 Bernard Avenue",
+          Street2 = "",
+          Unit = "Unit 4",
+          City = "Kelowna",
+          Province = "BC",
+          PostalCode = "V1Y6N9",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0006"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890005",
+          AddressType = "Mailing",
+          Street = "PO Box 220",
+          Street2 = "",
+          Unit = "",
+          City = "Prince George",
+          Province = "BC",
+          PostalCode = "V2L4S1",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0006"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890006",
+          AddressType = "Physical",
+          Street = "890 Columbia Street",
+          Street2 = "2nd Floor",
+          Unit = "",
+          City = "Kamloops",
+          Province = "BC",
+          PostalCode = "V2C2T6",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0006"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890007",
+          AddressType = "Mailing",
+          Street = "45 Victoria Street West",
+          Street2 = "",
+          Unit = "",
+          City = "Duncan",
+          Province = "BC",
+          PostalCode = "V9L1C7",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0007"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890008",
+          AddressType = "Physical",
+          Street = "1500 King George Boulevard",
+          Street2 = "",
+          Unit = "Unit 12",
+          City = "Surrey",
+          Province = "BC",
+          PostalCode = "V4A5A9",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0007"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890009",
+          AddressType = "Mailing",
+          Street = "PO Box 88",
+          Street2 = "",
+          Unit = "",
+          City = "Nelson",
+          Province = "BC",
+          PostalCode = "V1L5P7",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0007"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890010",
+          AddressType = "Physical",
+          Street = "310 Wallace Street",
+          Street2 = "Suite 210",
+          Unit = "",
+          City = "Chilliwack",
+          Province = "BC",
+          PostalCode = "V2P1L1",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0008"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890011",
+          AddressType = "Mailing",
+          Street = "980 Cumberland Road",
+          Street2 = "",
+          Unit = "",
+          City = "Courtenay",
+          Province = "BC",
+          PostalCode = "V9N2J3",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0008"
+        },
+        new AddressInfo
+        {
+          Id = "3F12E345-6789-0ABC-DEF1-234567890012",
+          AddressType = "Physical",
+          Street = "700 Kalum Street",
+          Street2 = "",
+          Unit = "Unit 3",
+          City = "Terrace",
+          Province = "BC",
+          PostalCode = "V8G1P8",
+          Country = "",
+          IsPrimary = false,
+          IsEditable = false,
+          ReferenceNo = "DEMO0008"
+        }
+      ],
       _ => Array.Empty<AddressInfo>()
     };
   }
@@ -487,7 +670,19 @@ public static class AddressesData
       return _addressesByProviderProfile.TryGetValue(key, out var addresses) ? addresses : new List<AddressInfo>();
     }
   }
-  public static object GenerateProgram1Addresses(object baseData)
+  public static object GenerateProgram1Addresses(object baseData) => GenerateAddresses("PROGRAM1", baseData);
+
+  public static object GenerateProgram2Addresses(object baseData) => GenerateAddresses("PROGRAM2", baseData);
+
+  public static object GenerateProgram3Addresses(object baseData) => GenerateAddresses("PROGRAM3", baseData);
+
+  /// <summary>
+  /// Shared body for the per-provider address generators: merges default (demo) addresses with
+  /// any applicant-managed stored addresses and resolves the "one primary per address type"
+  /// invariant. Extracted from the near-identical Program 1/2/3 generator methods — behaviour
+  /// is unchanged for existing providers.
+  /// </summary>
+  private static object GenerateAddresses(string provider, object baseData)
   {
     // Get the ProfileId from baseData if available
     var profileId = Guid.Empty;
@@ -499,63 +694,14 @@ public static class AddressesData
     }
 
     // Get stored addresses
-    var storedAddresses = GetStoredAddresses("PROGRAM1", profileId);
+    var storedAddresses = GetStoredAddresses(provider, profileId);
 
     // Default addresses (always present as baseline) - use shared method
-    var defaultAddresses = GetDefaultAddresses("PROGRAM1");
-    
+    var defaultAddresses = GetDefaultAddresses(provider);
+
     // Filter out any default addresses that have been materialized into stored addresses
     // to avoid duplication (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultAddresses.Where(da => 
-      !storedAddresses.Any(sa => string.Equals(sa.Id, da.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
-
-    // Combine non-materialized defaults and stored addresses
-    var allAddresses = nonMaterializedDefaults.Concat(storedAddresses).ToList();
-
-    // Handle primary address conflicts - exactly one primary per address type
-    allAddresses = ResolveOnePrimaryPerType(allAddresses, storedAddresses);
-
-    return new
-    {
-      Addresses = allAddresses
-        .Select(a => new
-        {
-          a.Id,
-          a.AddressType,
-          a.Street,
-          a.Street2,
-          a.Unit,
-          a.City,
-          a.Province,
-          a.PostalCode,
-          a.Country,
-          a.IsPrimary,
-          a.IsEditable,
-          a.ReferenceNo
-        }).ToArray()
-    };
-  }
-
-  public static object GenerateProgram2Addresses(object baseData)
-  {
-    // Get the ProfileId from baseData if available
-    var profileId = Guid.Empty;
-    var baseDataType = baseData.GetType();
-    var profileIdProperty = baseDataType.GetProperty("ProfileId");
-    if (profileIdProperty != null)
-    {
-      profileId = (Guid)profileIdProperty.GetValue(baseData)!;
-    }
-
-    // Get stored addresses
-    var storedAddresses = GetStoredAddresses("PROGRAM2", profileId);
-
-    // Default addresses (always present as baseline) - use shared method
-    var defaultAddresses = GetDefaultAddresses("PROGRAM2");
-    
-    // Filter out any default addresses that have been materialized into stored addresses
-    // to avoid duplication (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultAddresses.Where(da => 
+    var nonMaterializedDefaults = defaultAddresses.Where(da =>
       !storedAddresses.Any(sa => string.Equals(sa.Id, da.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
 
     // Combine non-materialized defaults and stored addresses
