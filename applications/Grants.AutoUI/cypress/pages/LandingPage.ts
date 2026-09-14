@@ -164,7 +164,7 @@ class LandingPage {
           $card.find(AppSelectors.Landing.primaryContactInfo).length > 0;
 
         if (hasPrimaryContact) {
-          this.primaryContactInfo.should("be.visible");
+          this.primaryContactInfo.scrollIntoView().should("be.visible");
         } else {
           this.noPrimaryContact.should("be.visible");
         }
@@ -190,7 +190,7 @@ class LandingPage {
           $card.find(AppSelectors.Landing.primaryAddressInfo).length > 0;
 
         if (hasPrimaryAddress) {
-          this.primaryAddressInfo.should("be.visible");
+          this.primaryAddressInfo.scrollIntoView().should("be.visible");
         } else {
           this.noAddressesMessage.should("be.visible");
         }
