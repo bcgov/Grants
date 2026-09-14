@@ -1,8 +1,8 @@
-# PowerShell Keycloak Token Automation ??
+# PowerShell Keycloak Token Automation
 
 This directory contains PowerShell scripts to automate Keycloak token retrieval with IDIR/BCeID authentication, featuring a beautiful API callback experience.
 
-## ?? Quick Start
+## Quick Start
 
 ### 1. Setup Configuration (One-time)
 ```powershell
@@ -26,15 +26,15 @@ dotnet run
 curl -H "Authorization: Bearer $env:KEYCLOAK_TOKEN" https://localhost:7000/Auth/userinfo
 ```
 
-## ?? Available Scripts
+## Available Scripts
 
 | Script | Description | Experience |
 |--------|-------------|------------|
-| **`Get-KeycloakTokenFullyAutomated.ps1`** ? | Opens browser, handles login, shows beautiful callback page with copy buttons | **Best** - Fully automated |
+| **`Get-KeycloakTokenFullyAutomated.ps1`** | Opens browser, handles login, shows beautiful callback page with copy buttons | **Best** - Fully automated |
 | **`Get-KeycloakTokenSimple.ps1`** | Selenium-powered browser automation with fallback to manual | **Good** - Reliable fallback |
 | **`setup-dev-secrets.ps1`** | Configure Keycloak settings in user secrets | **Setup** - One-time |
 
-## ?? Recommended Workflow
+## Recommended Workflow
 
 ### Fully Automated Experience (NEW!)
 The best way to get tokens now uses your API's beautiful callback endpoint:
@@ -49,14 +49,14 @@ dotnet run
 ```
 
 **What happens:**
-1. ?? **Browser opens** to Keycloak login
-2. ?? **You complete authentication** (IDIR, BCeID, etc.)
-3. ? **Beautiful callback page appears** with:
-   - ??? Access token with copy button
-   - ?? Refresh token with copy button  
-   - ?? User information display
-   - ? Token expiration details
-   - ?? Ready-to-use curl examples
+1. **Browser opens** to Keycloak login
+2. **You complete authentication** (IDIR, BCeID, etc.)
+3. **Beautiful callback page appears** with:
+   - Access token with copy button
+   - Refresh token with copy button  
+   - User information display
+   - Token expiration details
+   - Ready-to-use curl examples
 
 ### Simple Automation (Fallback)
 If the fully automated approach doesn't work:
@@ -67,7 +67,7 @@ If the fully automated approach doesn't work:
 
 This uses Selenium browser automation and works without requiring your API to be running.
 
-## ?? Configuration
+## Configuration
 
 ### User Secrets (Recommended)
 User secrets are stored securely and not committed to source control:
@@ -80,7 +80,7 @@ dotnet user-secrets set "Keycloak:AuthServerUrl" "https://dev.loginproxy.gov.bc.
 dotnet user-secrets set "Keycloak:Realm" "standard"
 ```
 
-## ?? Usage Examples
+## Usage Examples
 
 ### Most Common Usage
 ```powershell
@@ -101,7 +101,7 @@ $headers = @{ "Authorization" = "Bearer $env:KEYCLOAK_TOKEN" }
 Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
 ```
 
-## ??? Security Notes
+## Security Notes
 
 ### Configuration Security
 - **User secrets**: Stored in `%APPDATA%\Microsoft\UserSecrets\grants-applicant-portal-web-secrets\secrets.json`
@@ -114,7 +114,7 @@ Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
 - **JSON file saved**: `keycloak-token.json` (gitignored — use `keycloak-token.example.json` as a template)
 - **Copy buttons** make it easy to use tokens securely
 
-## ?? Dependencies
+## Dependencies
 
 ### Required
 - **PowerShell 5.0+** (Windows PowerShell or PowerShell Core)
@@ -129,7 +129,7 @@ Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
 - **Selenium WebDriver module**: Auto-installed if missing
 - **Chrome or Edge browser** for automation
 
-## ?? Troubleshooting
+## Troubleshooting
 
 ### "API server not running" (Fully Automated)
 ```powershell
@@ -160,7 +160,7 @@ Make sure this redirect URI is configured in your Keycloak client:
 - **For Fully Automated**: `https://localhost:7000/auth/callback`
 - **For Simple Script**: `https://localhost:7000/auth/callback` (first choice)
 
-## ?? Testing Your Token
+## Testing Your Token
 
 Once you have a token:
 
@@ -168,13 +168,13 @@ Once you have a token:
 # Check token validity and user info
 $headers = @{ "Authorization" = "Bearer $env:KEYCLOAK_TOKEN" }
 $userInfo = Invoke-RestMethod -Uri "https://localhost:7000/Auth/userinfo" -Headers $headers
-Write-Host "? Logged in as: $($userInfo.username)" -ForegroundColor Green
+Write-Host "Logged in as: $($userInfo.username)" -ForegroundColor Green
 
 # Test other protected endpoints
 Invoke-RestMethod -Uri "https://localhost:7000/System/info" -Headers $headers
 ```
 
-## ?? Pro Tips
+## Pro Tips
 
 ### Quick Token Refresh
 ```powershell
@@ -197,13 +197,13 @@ Write-Host "Authorization: Bearer $env:KEYCLOAK_TOKEN"
 "Bearer $env:KEYCLOAK_TOKEN" | Set-Clipboard
 ```
 
-## ?? What Makes This Special
+## What Makes This Special
 
-1. **?? Fully Automated**: No manual token copying from URLs
-2. **?? Beautiful UI**: Professional callback page with copy buttons
-3. **?? User-Friendly**: Shows user info, expiration, examples
-4. **?? Smart Fallback**: Multiple approaches if one doesn't work
-5. **??? Secure**: Uses user secrets, no hardcoded credentials
-6. **? Fast**: Quick token refresh workflow
+1. **Fully Automated**: No manual token copying from URLs
+2. **Beautiful UI**: Professional callback page with copy buttons
+3. **User-Friendly**: Shows user info, expiration, examples
+4. **Smart Fallback**: Multiple approaches if one doesn't work
+5. **Secure**: Uses user secrets, no hardcoded credentials
+6. **Fast**: Quick token refresh workflow
 
-Your PowerShell automation is now streamlined and ready! The fully automated approach with the beautiful callback page makes getting Keycloak tokens a pleasant experience. ??
+Your PowerShell automation is now streamlined and ready! The fully automated approach with the beautiful callback page makes getting Keycloak tokens a pleasant experience.

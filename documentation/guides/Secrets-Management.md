@@ -137,14 +137,14 @@ ASP.NET Core loads configuration in this order (later sources override earlier o
 
 ## Security Best Practices
 
-### ? Do:
+### Do:
 - Use User Secrets for local development
 - Use Environment Variables or Key Vault for production
 - Set different client IDs/secrets per environment
 - Use HTTPS-only in production (`SslRequired: true`)
 - Rotate secrets regularly
 
-### ? Don't:
+### Don't:
 - Commit secrets to source control
 - Use the same secrets across environments
 - Store secrets in configuration files

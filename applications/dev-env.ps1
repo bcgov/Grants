@@ -13,6 +13,10 @@ $Host.UI.RawUI.WindowTitle = "Grants Application - Local Dev Environment"
 # Set project name to "grants" instead of the folder name
 $env:COMPOSE_PROJECT_NAME = "grants"
 
+# docker-compose.yml lives in Grants.ApplicantPortal/, not alongside this script —
+# switch there so plain docker-compose commands find it, no matter where this is invoked from.
+Push-Location (Join-Path $PSScriptRoot "Grants.ApplicantPortal")
+
 function Show-Usage {
     Write-Host "Grants Application - Development Environment Helper" -ForegroundColor Cyan
     Write-Host
@@ -31,14 +35,15 @@ function Show-Usage {
     Write-Host
 }
 
+try {
 switch ($Command) {
     "start" {
         Write-Host "Starting local development environment..." -ForegroundColor Green
         docker-compose up -d
-        
+
         Write-Host
         Write-Host "Services:" -ForegroundColor Cyan
-        Write-Host "Frontend: http://localhost:4000" -ForegroundColor Yellow
+        Write-Host "Frontend: http://localhost:4200" -ForegroundColor Yellow
         Write-Host "Backend API: http://localhost:5100" -ForegroundColor Yellow
         Write-Host "PostgreSQL: localhost:5434 (User: postgres, Password: localdev, Database: GrantsDB)" -ForegroundColor Yellow
         Write-Host
@@ -69,7 +74,7 @@ switch ($Command) {
     "clean" {
         Write-Host "Stopping all services..." -ForegroundColor Yellow
         docker-compose down
-        
+
         Write-Host "Removing all containers, volumes, and networks for the project..." -ForegroundColor Yellow
         docker-compose down --volumes --remove-orphans
         
@@ -86,4 +91,7 @@ switch ($Command) {
     default {
         Show-Usage
     }
+}
+} finally {
+    Pop-Location
 }

@@ -1,12 +1,13 @@
-# Unity.AutoUI Testing Project
+# Grants.AutoUI Testing Project
 
-This project uses a Cypress folder structure to automate end-to-end testing for the Unity Applicant Portal. The Cypress testing framework executes automated tests to ensure the quality and reliability of the web application using continuous integration.
+This project uses a Cypress folder structure to automate end-to-end testing for the Grants Applicant Portal. The Cypress testing framework executes automated tests to ensure the quality and reliability of the web application using continuous integration. Tests target deployed environments — they do **not** run against localhost.
 
 ## Subfolders and Files
 
 - `cypress/`: Cypress configuration and test files.
 - `cypress.config.ts`: Cypress configuration in TypeScript.
 - `cypress.pipeline.env.json`: CI/CD environment overrides.
+- `cypress-github-workflows.md`: notes on the GitHub Actions Cypress runners.
 - `package.json`, `package-lock.json`: Project dependencies and metadata.
 - `tsconfig.json`: TypeScript configuration.
 
@@ -24,17 +25,14 @@ To get started with this Cypress project, follow these steps:
 
 ## Project Structure
 
-The Cypress projects typically have a directory structure as follows:
-
 - `cypress/`: Cypress configuration and test files.
-  - `e2e/`: End-to-end test files specifically targeting the application's functionality.
-    - `testcasefiles.cy.ts`: End-to-end test specifications written in Cypress testing syntax.
-  - `fixtures/`: Files used to mock data for testing.
-  - `integration/`: Standalone tests written in Cypress testing syntax.
-  - `plugins/`:  Plugins used to extend Cypress's functionality.
-  - `support/`:  Commands and custom Cypress configurations.
-    - `e2e.ts`: Functions specifically for end-to-end testing.
-    - `commands.ts`: Custom Cypress commands used in end-to-end testing.
+  - `e2e/`: End-to-end test specs (`*.cy.ts`) covering application flows (login, addresses, workspaces, etc.).
+  - `pages/`: Page objects — one class per screen, encapsulating selectors and interactions.
+  - `selectors/`: `registry.ts` — the canonical `data-cy` selector registry kept in sync with the Angular frontend (see `/sync-selectors`), plus `external-registry.ts` for third-party UI (e.g. BC Services Card, BCeID).
+  - `config/`: Per-environment config (`dev.json.example`, `dev2.json.example`, `test.json.example`, `prod.json.example`) — real `*.json` copies are gitignored.
+  - `scripts/`: Helper scripts, e.g. `run-cypress-with-output.ps1` and `validate-selectors.ts`.
+  - `support/`: Custom commands (`commands.ts`), global hooks (`e2e.ts`), and reusable flows (`flows/`).
+  - `CypressTestOutput/`: Local test run artifacts (gitignored).
 - `node_modules`: Automatically generated folder for the Node.js modules and dependencies.
 - `cypress.config.ts`: Configuration settings for Cypress, written in TypeScript format.
 - `cypress.env.json` : Cypress environmental variables (Ignored in repository).
