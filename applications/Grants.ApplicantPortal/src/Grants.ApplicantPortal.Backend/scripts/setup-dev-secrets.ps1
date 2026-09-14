@@ -7,7 +7,7 @@ Write-Host "Setting up Grants Applicant Portal API secrets..." -ForegroundColor 
 $webProjectPath = "src\Grants.ApplicantPortal.API.Web"
 
 if (-not (Test-Path $webProjectPath)) {
-    Write-Host "? Web project directory not found: $webProjectPath" -ForegroundColor Red
+    Write-Host "Web project directory not found: $webProjectPath" -ForegroundColor Red
     Write-Host "   Make sure you're running this script from the repository root directory." -ForegroundColor Yellow
     exit 1
 }
@@ -46,18 +46,18 @@ try {
     [System.GC]::Collect()
     
     Write-Host ""
-    Write-Host "? Secrets configured successfully!" -ForegroundColor Green
+    Write-Host "Secrets configured successfully!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Configured secrets:" -ForegroundColor Cyan
     dotnet user-secrets list
     
     Write-Host ""
-    Write-Host "? Setup complete! You can now:" -ForegroundColor Green
+    Write-Host "Setup complete! You can now:" -ForegroundColor Green
     Write-Host "   1. Run the application: dotnet run" -ForegroundColor White
     Write-Host "   2. Use token automation scripts: .\scripts\Get-KeycloakTokenSimple.ps1" -ForegroundColor White
     
 } catch {
-    Write-Host "? Error setting up secrets: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Error setting up secrets: $($_.Exception.Message)" -ForegroundColor Red
 } finally {
     Pop-Location
 }

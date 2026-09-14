@@ -1,7 +1,7 @@
 # Grants Application Portal
 
-[![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
-The project is in the very early stages of development. The codebase will be changing frequently.
+[![Lifecycle:Stable](https://img.shields.io/badge/Lifecycle-Stable-97ca00)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
+The project is in a reliable state and major changes are unlikely to happen.
 
 ## Project Overview
 
@@ -27,15 +27,15 @@ This project provides a grants application system with the following features:
     .github                    - GitHub Actions
     applications/              - Application Root
     ├── Grants.ApplicantPortal/ - Applicant Information solution (frontend + backend)
-    ├── Grants.AutoUI/          - Automated User Interface testing (Cypress)
-    └── dev-env.ps1             - Local docker-compose helper
+    └── Grants.AutoUI/          - Automated User Interface testing (Cypress)
     documentation/             - Solution documentation and assets
     COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
+    CONTRIBUTING.md            - Contribution guidelines
     LICENSE                    - License
     SECURITY.md                - Security Policy and Reporting
 
 ## Documentation
 
-- **New to the project? [Applicant Portal, from zero](documentation/handover/Applicant-Portal-Orientation.html)** — a single read-through orientation to the system, its conventions, and local setup
+- [Applicant Portal, from zero](documentation/handover/Applicant-Portal-Orientation.html) — orientation to the system, its conventions, and local setup
 - [Documentation index](documentation/README.md) — architecture, guides, integration specs, ADRs
 - [Application Readme](applications/README.md)
