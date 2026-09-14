@@ -100,11 +100,19 @@ docker-compose up postgres
 
 ```text
 src/
-├── Grants.ApplicantPortal.Backend/    # .NET Web API
-│   ├── Controllers/                   # API endpoints
-│   ├── Services/                      # Business logic
-│   ├── Models/                        # Data models
-│   └── Dockerfile                     # Backend container
+├── Grants.ApplicantPortal.Backend/           # .NET 9 API — FastEndpoints + CQRS (MediatR)
+│   ├── src/
+│   │   ├── Grants.ApplicantPortal.API.Web/           # Endpoints (route/auth/validation per feature)
+│   │   ├── Grants.ApplicantPortal.API.UseCases/       # Commands/Queries + handlers
+│   │   ├── Grants.ApplicantPortal.API.Core/           # Domain entities
+│   │   ├── Grants.ApplicantPortal.API.Core.Features/  # Shared domain feature logic
+│   │   ├── Grants.ApplicantPortal.API.Infrastructure/ # EF Core, Redis, messaging
+│   │   ├── Grants.ApplicantPortal.API.Migrations/     # EF Core migrations
+│   │   ├── Grants.ApplicantPortal.API.Plugins/        # Pluggable integrations (e.g. Demo)
+│   │   ├── Grants.ApplicantPortal.API.ServiceDefaults/# Shared Aspire service config
+│   │   └── Grants.ApplicantPortal.API.AspireHost/     # .NET Aspire orchestration host
+│   ├── tests/                                # Unit, integration, functional test projects
+│   └── Dockerfile                            # Backend container
 ├── Grants.ApplicantPortal.Frontend/   # Angular SPA
 │   ├── src/app/                       # Angular application
 │   ├── src/environments/              # Environment configs

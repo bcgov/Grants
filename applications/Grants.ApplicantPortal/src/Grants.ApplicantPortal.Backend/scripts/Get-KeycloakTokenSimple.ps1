@@ -25,13 +25,13 @@ param(
 try {
     Import-Module Selenium -ErrorAction Stop
 } catch {
-    Write-Host "? Selenium module not found. Installing..." -ForegroundColor Red
+    Write-Host "Selenium module not found. Installing..." -ForegroundColor Red
     try {
         Install-Module -Name Selenium -Force -Scope CurrentUser
         Import-Module Selenium
-        Write-Host "? Selenium installed successfully!" -ForegroundColor Green
+        Write-Host "Selenium installed successfully!" -ForegroundColor Green
     } catch {
-        Write-Host "? Failed to install Selenium. Please run manually:" -ForegroundColor Red
+        Write-Host "Failed to install Selenium. Please run manually:" -ForegroundColor Red
         Write-Host "   Install-Module -Name Selenium -Force -Scope CurrentUser" -ForegroundColor Yellow
         exit 1
     }
@@ -39,17 +39,17 @@ try {
 
 function Write-Status {
     param([string]$Message)
-    Write-Host "?? $Message" -ForegroundColor Cyan
+    Write-Host "$Message" -ForegroundColor Cyan
 }
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "? $Message" -ForegroundColor Green
+    Write-Host "$Message" -ForegroundColor Green
 }
 
 function Write-Info {
     param([string]$Message)
-    Write-Host "??  $Message" -ForegroundColor Blue
+    Write-Host "$Message" -ForegroundColor Blue
 }
 
 function Find-WebProjectPath {
@@ -259,7 +259,7 @@ function Read-KeycloakConfigInteractively {
 
 function Get-ConfigurationInteractively {
     Write-Host ""
-    Write-Host "?? Keycloak Configuration" -ForegroundColor Yellow
+    Write-Host "Keycloak Configuration" -ForegroundColor Yellow
     Write-Host "=========================" -ForegroundColor Yellow
     Write-Host ""
 
@@ -280,7 +280,7 @@ function Get-ConfigurationInteractively {
 
 function Get-ValidRedirectUris {
     Write-Host ""
-    Write-Host "?? Redirect URI Options" -ForegroundColor Yellow
+    Write-Host "Redirect URI Options" -ForegroundColor Yellow
     Write-Host "======================" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Choose a redirect URI to use:" -ForegroundColor Cyan
@@ -405,13 +405,13 @@ function Resolve-BrowserAuthenticationError {
         [int]$TimeoutSeconds
     )
 
-    Write-Host "? Browser automation failed: $($ErrorRecord.Exception.Message)" -ForegroundColor Red
+    Write-Host "Browser automation failed: $($ErrorRecord.Exception.Message)" -ForegroundColor Red
 
     $isRedirectUriError = $ErrorRecord.Exception.Message -like "*Invalid parameter*" -or $ErrorRecord.Exception.Message -like "*redirect_uri*"
 
     if ($isRedirectUriError) {
         Write-Host ""
-        Write-Host "?? This appears to be a redirect URI error!" -ForegroundColor Yellow
+        Write-Host "This appears to be a redirect URI error!" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "You need to add this redirect URI to your Keycloak client configuration:" -ForegroundColor Cyan
         Write-Host "  Client: grants-portal-5361" -ForegroundColor White
@@ -434,7 +434,7 @@ function Resolve-BrowserAuthenticationError {
 
     # Offer manual fallback
     Write-Host ""
-    Write-Host "?? Falling back to manual authentication..." -ForegroundColor Yellow
+    Write-Host "Falling back to manual authentication..." -ForegroundColor Yellow
     return Get-TokenManually -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
 }
 
@@ -453,7 +453,7 @@ function Start-BrowserAuthentication {
     $availableBrowsers = $browsers | Where-Object { $_.Available -eq $true }
 
     if ($availableBrowsers.Count -eq 0) {
-        Write-Host "? No supported browsers found!" -ForegroundColor Red
+        Write-Host "No supported browsers found!" -ForegroundColor Red
         Write-Host ""
         Write-Host "Please install one of the following:" -ForegroundColor Yellow
         Write-Host "  - Google Chrome: https://www.google.com/chrome/" -ForegroundColor White
@@ -499,10 +499,10 @@ function Start-BrowserAuthentication {
         $driver.Navigate().GoToUrl($authUrl)
 
         Write-Host ""
-        Write-Host "?? Browser is open!" -ForegroundColor Green
-        Write-Host "   ?? Complete your authentication in the browser" -ForegroundColor Yellow
-        Write-Host "   ?? Keycloak will prompt for identity provider and credentials" -ForegroundColor Yellow
-        Write-Host "   ??  Script will automatically continue when done" -ForegroundColor Yellow
+        Write-Host "Browser is open!" -ForegroundColor Green
+        Write-Host "   Complete your authentication in the browser" -ForegroundColor Yellow
+        Write-Host "   Keycloak will prompt for identity provider and credentials" -ForegroundColor Yellow
+        Write-Host "   Script will automatically continue when done" -ForegroundColor Yellow
         Write-Host ""
 
         $authCode = Wait-ForAuthorizationCode -Driver $driver -RedirectUri $RedirectUri -TimeoutSeconds $TimeoutSeconds
@@ -540,7 +540,7 @@ function Get-TokenManually {
     )
     
     Write-Host ""
-    Write-Host "?? Manual Authentication" -ForegroundColor Yellow
+    Write-Host "Manual Authentication" -ForegroundColor Yellow
     Write-Host "========================" -ForegroundColor Yellow
     Write-Host ""
     
@@ -612,7 +612,7 @@ function Get-JwtToken {
 # Main execution
 try {
     Write-Host ""
-    Write-Host "?? Keycloak Token Generator" -ForegroundColor Cyan
+    Write-Host "Keycloak Token Generator" -ForegroundColor Cyan
     Write-Host "===========================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Current directory: $(Get-Location)" -ForegroundColor Gray
@@ -630,15 +630,15 @@ try {
     
     # Ask for redirect URI if not provided
     if (-not $RedirectUri -or $RedirectUri -eq "https://localhost:7000/auth/callback") {
-        Write-Host "?? Using your app's callback endpoint by default" -ForegroundColor Yellow
+        Write-Host "Using your app's callback endpoint by default" -ForegroundColor Yellow
         Write-Host "   If this doesn't work, try option 2 for manual mode" -ForegroundColor Gray
     }
     
     Write-Host "Ready to authenticate with:" -ForegroundColor Yellow
-    Write-Host "  ?? $KeycloakUrl" -ForegroundColor White
-    Write-Host "  ???  Realm: $Realm" -ForegroundColor White
-    Write-Host "  ?? Client: $ClientId" -ForegroundColor White
-    Write-Host "  ?? Redirect: $RedirectUri" -ForegroundColor White
+    Write-Host "  $KeycloakUrl" -ForegroundColor White
+    Write-Host "  Realm: $Realm" -ForegroundColor White
+    Write-Host "  Client: $ClientId" -ForegroundColor White
+    Write-Host "  Redirect: $RedirectUri" -ForegroundColor White
     Write-Host ""
     
     $proceed = Read-Host "Continue? (Y/n)"
@@ -654,7 +654,7 @@ try {
     $tokenResult = Get-JwtToken -AuthCode $authCode -ClientId $ClientId -ClientSecret $ClientSecret -KeycloakUrl $KeycloakUrl -Realm $Realm -RedirectUri $RedirectUri
     
     Write-Host ""
-    Write-Host "?? Success!" -ForegroundColor Green
+    Write-Host "Success!" -ForegroundColor Green
     Write-Host "============" -ForegroundColor Green
     Write-Host ""
     
@@ -669,18 +669,18 @@ try {
     
     # Show expiration
     $expiresInMinutes = [math]::Round($tokenResult.ExpiresIn / 60, 1)
-    Write-Host "? Expires in: $expiresInMinutes minutes" -ForegroundColor Yellow
+    Write-Host "Expires in: $expiresInMinutes minutes" -ForegroundColor Yellow
     
     Write-Host ""
-    Write-Host "?? Test your API:" -ForegroundColor Cyan
+    Write-Host "Test your API:" -ForegroundColor Cyan
     Write-Host 'curl -H "Authorization: Bearer $env:KEYCLOAK_TOKEN" https://localhost:7000/Auth/userinfo' -ForegroundColor Gray
     Write-Host ""
     
 } catch {
     Write-Host ""
-    Write-Host "? Failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Failed: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
-    Write-Host "?? Common Solutions:" -ForegroundColor Yellow
+    Write-Host "Common Solutions:" -ForegroundColor Yellow
     Write-Host "  1. Add redirect URI to Keycloak client configuration:" -ForegroundColor White
     Write-Host "     https://localhost:7000/auth/callback" -ForegroundColor Gray
     Write-Host "  2. Make sure your API is running on https://localhost:7000" -ForegroundColor White

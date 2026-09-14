@@ -23,17 +23,17 @@ param(
 
 function Write-Status {
     param([string]$Message)
-    Write-Host "?? $Message" -ForegroundColor Cyan
+    Write-Host "$Message" -ForegroundColor Cyan
 }
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "? $Message" -ForegroundColor Green
+    Write-Host "$Message" -ForegroundColor Green
 }
 
 function Write-Info {
     param([string]$Message)
-    Write-Host "??  $Message" -ForegroundColor Blue
+    Write-Host "$Message" -ForegroundColor Blue
 }
 
 function Find-WebProjectPath {
@@ -157,7 +157,7 @@ function Get-FullyAutomatedToken {
     # Check if API server is running
     if (-not (Test-ApiServer -ApiBaseUrl $ApiBaseUrl)) {
         Write-Host ""
-        Write-Host "? API server is not running!" -ForegroundColor Red
+        Write-Host "API server is not running!" -ForegroundColor Red
         Write-Host ""
         Write-Host "Please start your API server first:" -ForegroundColor Yellow
         Write-Host "  1. Navigate to: src\Grants.ApplicantPortal.API.Web" -ForegroundColor White
@@ -172,15 +172,15 @@ function Get-FullyAutomatedToken {
     $authInfo = Get-AuthorizationUrl -Config $Config -ApiBaseUrl $ApiBaseUrl
     
     Write-Host ""
-    Write-Host "?? Fully Automated Token Generation" -ForegroundColor Cyan
+    Write-Host "Fully Automated Token Generation" -ForegroundColor Cyan
     Write-Host "====================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Configuration:" -ForegroundColor Yellow
-    Write-Host "  ?? Keycloak: $($Config.KeycloakUrl)" -ForegroundColor White
-    Write-Host "  ???  Realm: $($Config.Realm)" -ForegroundColor White
-    Write-Host "  ?? Client: $($Config.ClientId)" -ForegroundColor White
-    Write-Host "  ?? Callback: $($authInfo.RedirectUri)" -ForegroundColor White
-    Write-Host "  ?? API Server: $ApiBaseUrl" -ForegroundColor White
+    Write-Host "  Keycloak: $($Config.KeycloakUrl)" -ForegroundColor White
+    Write-Host "  Realm: $($Config.Realm)" -ForegroundColor White
+    Write-Host "  Client: $($Config.ClientId)" -ForegroundColor White
+    Write-Host "  Callback: $($authInfo.RedirectUri)" -ForegroundColor White
+    Write-Host "  API Server: $ApiBaseUrl" -ForegroundColor White
     Write-Host ""
     
     Write-Status "Opening browser for authentication..."
@@ -195,12 +195,12 @@ function Get-FullyAutomatedToken {
     }
     
     Write-Host ""
-    Write-Host "?? Complete your authentication in the browser" -ForegroundColor Green
-    Write-Host "   ?? Choose your identity provider (IDIR, BCeID, etc.)" -ForegroundColor Yellow
-    Write-Host "   ?? Enter your credentials" -ForegroundColor Yellow
-    Write-Host "   ? After login, you'll see a beautiful page with your token!" -ForegroundColor Yellow
+    Write-Host "Complete your authentication in the browser" -ForegroundColor Green
+    Write-Host "   Choose your identity provider (IDIR, BCeID, etc.)" -ForegroundColor Yellow
+    Write-Host "   Enter your credentials" -ForegroundColor Yellow
+    Write-Host "   After login, you'll see a beautiful page with your token!" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "?? The callback endpoint will automatically:" -ForegroundColor Cyan
+    Write-Host "The callback endpoint will automatically:" -ForegroundColor Cyan
     Write-Host "   • Exchange your authorization code for a JWT token" -ForegroundColor White
     Write-Host "   • Display a user-friendly page with copy buttons" -ForegroundColor White
     Write-Host "   • Show your user information and token details" -ForegroundColor White
@@ -210,12 +210,12 @@ function Get-FullyAutomatedToken {
     $proceed = Read-Host "Press Enter after you've completed the login and copied your token..."
     
     Write-Host ""
-    Write-Host "?? Automation Complete!" -ForegroundColor Green
+    Write-Host "Automation Complete!" -ForegroundColor Green
     Write-Host "========================" -ForegroundColor Green
     Write-Host ""
     Write-Host "Your token should now be available from the beautiful callback page!" -ForegroundColor White
     Write-Host ""
-    Write-Host "?? Next Steps:" -ForegroundColor Yellow
+    Write-Host "Next Steps:" -ForegroundColor Yellow
     Write-Host "  1. Copy the access token from the browser page" -ForegroundColor White
     Write-Host "  2. Set it as an environment variable:" -ForegroundColor White
     Write-Host "     `$env:KEYCLOAK_TOKEN = \"your-token-here\"" -ForegroundColor Gray
@@ -234,7 +234,7 @@ function Get-FullyAutomatedToken {
 # Main execution
 try {
     Write-Host ""
-    Write-Host "?? Fully Automated Keycloak Token Generator" -ForegroundColor Cyan
+    Write-Host "Fully Automated Keycloak Token Generator" -ForegroundColor Cyan
     Write-Host "============================================" -ForegroundColor Cyan
     Write-Host ""
     
@@ -242,7 +242,7 @@ try {
     $config = Get-ConfigurationFromSecrets
     
     if (-not $config) {
-        Write-Host "? No configuration found!" -ForegroundColor Red
+        Write-Host "No configuration found!" -ForegroundColor Red
         Write-Host ""
         Write-Host "Please set up your configuration first:" -ForegroundColor Yellow
         Write-Host "  .\scripts\setup-dev-secrets.ps1" -ForegroundColor White
@@ -262,9 +262,9 @@ try {
     
 } catch {
     Write-Host ""
-    Write-Host "? Failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Failed: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
-    Write-Host "?? Troubleshooting:" -ForegroundColor Yellow
+    Write-Host "Troubleshooting:" -ForegroundColor Yellow
     Write-Host "  1. Make sure your API is running: dotnet run" -ForegroundColor White
     Write-Host "  2. Check it's accessible at: $ApiBaseUrl" -ForegroundColor White
     Write-Host "  3. Add redirect URI to Keycloak: $ApiBaseUrl/auth/callback" -ForegroundColor White
