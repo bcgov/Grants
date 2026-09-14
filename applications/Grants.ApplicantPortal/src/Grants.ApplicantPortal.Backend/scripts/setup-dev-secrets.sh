@@ -9,7 +9,7 @@ echo "Setting up Grants Applicant Portal API secrets..."
 WEB_PROJECT_PATH="src/Grants.ApplicantPortal.API.Web"
 
 if [[ ! -d "$WEB_PROJECT_PATH" ]]; then
-    echo "? Web project directory not found: $WEB_PROJECT_PATH"
+    echo "Web project directory not found: $WEB_PROJECT_PATH"
     echo "   Make sure you're running this script from the repository root directory."
     exit 1
 fi
@@ -44,12 +44,12 @@ dotnet user-secrets set "Keycloak:Realm" "$REALM"
 unset CLIENT_SECRET
 
 echo ""
-echo "? Secrets configured successfully!"
+echo "Secrets configured successfully!"
 echo ""
 echo "Configured secrets:"
 dotnet user-secrets list
 
 echo ""
-echo "? Setup complete! You can now:"
+echo "Setup complete! You can now:"
 echo "   1. Run the application: dotnet run"
 echo "   2. Use token automation scripts: ./scripts/Get-KeycloakTokenSimple.ps1"
