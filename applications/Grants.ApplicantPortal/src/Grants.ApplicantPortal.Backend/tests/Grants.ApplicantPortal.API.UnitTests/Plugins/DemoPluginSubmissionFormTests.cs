@@ -96,7 +96,7 @@ public class DemoPluginSubmissionFormTests
     [Fact]
     public async Task PopulateProfileAsync_SubmissionForm_ReturnsSubmissionSpecificData_ForKnownSubmissions()
     {
-        // Two of the 7 known static demo submissions defined in SubmissionsData —
+        // Two of the known static demo submissions defined in SubmissionsData —
         // "Community Health Initiative" (Program 1) and "STEM Education Excellence
         // Initiative" (Program 2). The PDF content must correspond to whichever
         // submission was actually requested, not identical fixture data for both.

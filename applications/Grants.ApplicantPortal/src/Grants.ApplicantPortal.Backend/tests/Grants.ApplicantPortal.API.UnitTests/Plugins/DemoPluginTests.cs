@@ -31,7 +31,7 @@ public class DemoPluginTests
     {
         var providers = await _sut.GetProvidersAsync(Guid.NewGuid(), "subject");
 
-        providers.Should().HaveCount(2);
+        providers.Should().HaveCount(3);
 
         var program1 = providers.Single(p => p.Id == "PROGRAM1");
         program1.Name.Should().Be("PROGRAM1");
@@ -42,5 +42,10 @@ public class DemoPluginTests
         program2.Name.Should().Be("PROGRAM2");
         program2.DisplayName.Should().Be("Program Two");
         program2.DefaultFromAddress.Should().Be("NoReply@gov.bc.ca");
+
+        var program3 = providers.Single(p => p.Id == "PROGRAM3");
+        program3.Name.Should().Be("PROGRAM3");
+        program3.DisplayName.Should().Be("Program Three (Large Data Set)");
+        program3.DefaultFromAddress.Should().Be("NoReply@gov.bc.ca");
     }
 }

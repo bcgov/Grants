@@ -104,6 +104,35 @@ public static class OrganizationsData
           AllowEdit = true
         }
       },
+      "PROGRAM3" => new[]
+      {
+        new OrganizationInfo
+        {
+          Id = "8FA08926-38E4-6F0D-A797-79F7047D62FB",
+          ApplicantRefId = "200003",
+          ApplicantName = "Demo Applicant 3",
+          OrgName = "Demo Coastal Grants Society",
+          OrgNumber = "S0000003",
+          OrgStatus = "Active",
+          OrganizationType = "Society",
+          LegalName = "Demo Coastal Grants Society",
+          NonRegOrgName = "Demo Coastal Collective",
+          DoingBusinessAs = "DCGS",
+          EIN = "00-0000003",
+          Founded = 2008,
+          FiscalMonth = "Mar",
+          FiscalDay = 31,
+          OrganizationSize = 75,
+          Sector = "Community Services",
+          SubSector = "Grants & Philanthropy",
+          Mission = "To strengthen coastal BC communities through equitable access to arts, environmental, and social programs.",
+          ServicesAreas = new[] { "Arts & Culture", "Environmental Stewardship", "Food Security", "Community Development" },
+          // Fixed literal timestamp (rather than DateTime.UtcNow.AddDays(-n) like the entries
+          // above) so the large Program 3 data set stays fully deterministic.
+          LastUpdated = new DateTime(2024, 3, 1, 10, 0, 0, DateTimeKind.Utc),
+          AllowEdit = true
+        }
+      },
       _ => Array.Empty<OrganizationInfo>()
     };
   }
@@ -211,7 +240,19 @@ public static class OrganizationsData
       return _organizationsByProviderProfile.TryGetValue(key, out var organizations) ? organizations : new List<OrganizationInfo>();
     }
   }
-  public static object GenerateProgram1OrgInfo(object baseData)
+  public static object GenerateProgram1OrgInfo(object baseData) => GenerateOrgInfo("PROGRAM1", baseData);
+
+  public static object GenerateProgram2OrgInfo(object baseData) => GenerateOrgInfo("PROGRAM2", baseData);
+
+  public static object GenerateProgram3OrgInfo(object baseData) => GenerateOrgInfo("PROGRAM3", baseData);
+
+  /// <summary>
+  /// Shared body for the per-provider organization generators: merges default (demo)
+  /// organizations with any applicant-managed stored organizations. Extracted from the
+  /// near-identical Program 1/2/3 generator methods — behaviour is unchanged for existing
+  /// providers.
+  /// </summary>
+  private static object GenerateOrgInfo(string provider, object baseData)
   {
     // Get the ProfileId from baseData if available
     var profileId = Guid.Empty;
@@ -223,10 +264,10 @@ public static class OrganizationsData
     }
 
     // Get stored organizations
-    var storedOrganizations = GetStoredOrganizations("PROGRAM1", profileId);
+    var storedOrganizations = GetStoredOrganizations(provider, profileId);
 
     // Default organizations (always present as baseline) - use shared method
-    var defaultOrganizations = GetDefaultOrganizations("PROGRAM1");
+    var defaultOrganizations = GetDefaultOrganizations(provider);
 
     // Filter out any default organizations that have been materialized into stored organizations
     // to avoid duplication (case-insensitive comparison)
@@ -258,53 +299,4 @@ public static class OrganizationsData
         }).ToArray()
     };
   }
-
-  public static object GenerateProgram2OrgInfo(object baseData)
-  {
-    // Get the ProfileId from baseData if available
-    var profileId = Guid.Empty;
-    var baseDataType = baseData.GetType();
-    var profileIdProperty = baseDataType.GetProperty("ProfileId");
-    if (profileIdProperty != null)
-    {
-      profileId = (Guid)profileIdProperty.GetValue(baseData)!;
-    }
-
-    // Get stored organizations
-    var storedOrganizations = GetStoredOrganizations("PROGRAM2", profileId);
-
-    // Default organizations (always present as baseline) - use shared method
-    var defaultOrganizations = GetDefaultOrganizations("PROGRAM2");
-
-    // Filter out any default organizations that have been materialized into stored organizations
-    // to avoid duplication (case-insensitive comparison)
-    var nonMaterializedDefaults = defaultOrganizations.Where(defaultOrg =>
-      !storedOrganizations.Any(so => string.Equals(so.Id, defaultOrg.Id, StringComparison.OrdinalIgnoreCase))).ToArray();
-
-    // Combine non-materialized defaults and stored organizations
-    var allOrganizations = nonMaterializedDefaults.Concat(storedOrganizations).ToList();
-
-    return new
-    {
-      Organizations = allOrganizations
-        .OrderByDescending(o => o.LastUpdated)
-        .Select(o => new
-        {
-          o.Id,
-          o.ApplicantRefId,
-          o.ApplicantName,
-          o.OrgName,
-          o.OrganizationType,
-          o.OrgNumber,
-          o.OrgStatus,
-          o.NonRegOrgName,
-          o.FiscalMonth,
-          o.FiscalDay,
-          o.OrganizationSize,
-          o.Sector,
-          o.SubSector
-        }).ToArray()
-    };
-  }
-
-  }
+}

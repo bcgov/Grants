@@ -36,6 +36,47 @@ class LandingPage {
     return cy.get(AppSelectors.Landing.submissionsTable);
   }
 
+  // ── Submissions — pager (AB#32560) ──────────────────────────────────────
+  get submissionsPagerFirst() {
+    return cy.get(AppSelectors.Landing.submissionsPagerFirst);
+  }
+
+  get submissionsPagerPrev() {
+    return cy.get(AppSelectors.Landing.submissionsPagerPrev);
+  }
+
+  get submissionsPagerNext() {
+    return cy.get(AppSelectors.Landing.submissionsPagerNext);
+  }
+
+  get submissionsPagerLast() {
+    return cy.get(AppSelectors.Landing.submissionsPagerLast);
+  }
+
+  submissionsPagerPage(pageNumber: number) {
+    return cy.get(AppSelectors.Landing.submissionsPagerPage(pageNumber));
+  }
+
+  clickSubmissionsPagerFirst(): void {
+    this.submissionsPagerFirst.should("be.visible").click();
+  }
+
+  clickSubmissionsPagerPrev(): void {
+    this.submissionsPagerPrev.should("be.visible").click();
+  }
+
+  clickSubmissionsPagerNext(): void {
+    this.submissionsPagerNext.should("be.visible").click();
+  }
+
+  clickSubmissionsPagerLast(): void {
+    this.submissionsPagerLast.should("be.visible").click();
+  }
+
+  clickSubmissionsPagerPage(pageNumber: number): void {
+    this.submissionsPagerPage(pageNumber).should("be.visible").click();
+  }
+
   // TODO (AB#34070): the "Submission Type" column is now a per-row
   // 'action-link' button (view/download PDF) instead of a plain <a> link.
   // Its data-cy is a dynamic, per-row binding (no static registry entry —
