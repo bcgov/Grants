@@ -43,7 +43,7 @@
           }
           
           <!-- Provider Selection (fetched from API) -->
-          <div *ngIf="currentProviders.length > 1">
+          <ng-container *ngIf="currentProviders.length > 1">
             <li><h6 class="dropdown-header">Providers</h6></li>
             <li *ngIf="isLoadingProviders">
               <span class="dropdown-item text-muted">
@@ -51,7 +51,7 @@
               </span>
             </li>
             <li *ngFor="let provider of currentProviders">
-              <button 
+              <button
                 class="dropdown-item provider-item"
                 [attr.id]="'provider-item-' + provider.id"
                 [attr.data-cy]="'provider-item-' + provider.id"
@@ -60,20 +60,20 @@
                 type="button"
               >
                 <span>{{ provider.displayName ?? provider.name }}</span>
-                <i 
-                  class="fas fa-check ms-auto" 
+                <i
+                  class="fas fa-check ms-auto"
                   *ngIf="provider.id === selectedProvider"
                   aria-hidden="true"
                 ></i>
               </button>
             </li>
             <li *ngIf="availableWorkspaces.length > 1"><hr class="dropdown-divider"></li>
-          </div>
-          
+          </ng-container>
+
           <!-- Change Workspace (only if multiple available) -->
-          <div *ngIf="availableWorkspaces.length > 1">
+          <ng-container *ngIf="availableWorkspaces.length > 1">
             <li>
-              <button 
+              <button
                 id="change-workspace-btn"
                 data-cy="change-workspace-btn"
                 class="dropdown-item change-workspace-item"
@@ -84,7 +84,7 @@
                 Change Workspace
               </button>
             </li>
-          </div>
+          </ng-container>
         </ul>
       </div>
     </div>
