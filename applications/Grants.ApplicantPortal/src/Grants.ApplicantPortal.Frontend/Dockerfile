@@ -15,7 +15,7 @@ COPY . .
 
 # Build the Angular application
 ARG BUILD_CONFIG=docker
-RUN echo "Building with config: ${BUILD_CONFIG}" && npm run build:${BUILD_CONFIG}
+RUN echo "Building with config: ${BUILD_CONFIG}" && npm run "build:${BUILD_CONFIG}"
 
 # The final stage now runs the appropriate server
 FROM node:22-slim AS runtime
@@ -35,8 +35,8 @@ RUN npm ci --omit=dev
 ENV PORT=4200
 ENV BACKEND_SERVICE_URL=http://backend:5100
 ENV ENABLE_API_PROXY=false
-ENV MATOMO__URL=//dev-analytics-matomo.apps.silver.devops.gov.bc.ca/
-ENV MATOMO__SITEID=2
+ENV MATOMO__URL=http://localhost:8080
+ENV MATOMO__SITEID=1
 
 # Expose port 4200
 EXPOSE 4200
