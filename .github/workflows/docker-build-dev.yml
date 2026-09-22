@@ -12,6 +12,8 @@ on:
       - 'documentation/**'
       - '**/docs/**'
       - '**/README*'
+      - '**/CLAUDE.md'
+      - '**/.claude/**'
       - 'CODE_OF_CONDUCT.md'
       - 'COMPLIANCE.yaml'
       - 'CONTRIBUTING.md'
