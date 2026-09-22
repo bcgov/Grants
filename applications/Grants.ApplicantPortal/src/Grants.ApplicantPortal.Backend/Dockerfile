@@ -1,4 +1,4 @@
-# Use the official .NET SDK image as the base image for building the application
+# Use the official .NET SDK image as the base image for building the backend application
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 # Set the working directory
