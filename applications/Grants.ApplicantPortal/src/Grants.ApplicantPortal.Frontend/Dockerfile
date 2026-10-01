@@ -1,4 +1,4 @@
-# Use the official Node.js image as the base image
+# Use the official Node.js image as the frontend base image
 FROM node:22-slim AS build
 
 # Set the working directory
