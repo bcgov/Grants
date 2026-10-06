@@ -179,7 +179,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   changeWorkspace(): void {
     // Clear selection but keep available workspaces, then redirect to selector
     this.workspaceService.clearSelection();
-    this.router.navigate(['/workspace-selector']);
+    void this.router.navigate(['/workspace-selector']);
   }
 
   selectWorkspace(workspace: Plugin): void {
@@ -204,10 +204,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
       // Clear sessionStorage
       sessionStorage.clear();
       // Redirect to login page
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error clearing session:', error);
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     }
   }
 }

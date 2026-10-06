@@ -115,10 +115,10 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
       // Clear sessionStorage
       sessionStorage.clear();
       // Redirect to login page
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error clearing session:', error);
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     }
   }
 }
