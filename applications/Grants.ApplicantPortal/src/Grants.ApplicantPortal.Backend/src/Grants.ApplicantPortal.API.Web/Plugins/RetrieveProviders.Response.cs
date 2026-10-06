@@ -10,5 +10,6 @@ public record ProviderDto(
     string Name,
     Dictionary<string, string> metaData,
     string? DisplayName,
-    string? DefaultFromAddress
+    string? DefaultFromAddress,
+    string? MultipleIdentitiesMessageHtml = null
 );

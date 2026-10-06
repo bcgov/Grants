@@ -504,3 +504,14 @@ button.disabled-action-info {
   background-color: var(--bc-surface-info);
   border-bottom: 1px solid var(--bc-gray-50);
 }
+
+// Rich text inserted with innerHTML does not receive component style attributes.
+.global-warning-banner .portal-message-content {
+  p:last-child, ul:last-child, ol:last-child {
+    margin-bottom: 0;
+  }
+
+  ul, ol {
+    padding-inline-start: 1.5rem;
+  }
+}
