@@ -17,8 +17,12 @@ export class WorkspaceService {
     applicantRefId: null,
     applicantName: '',
     orgNumber: '',
-    orgName: '',
-    tenantEmail: null
+    orgName: ''
+  };
+
+  private readonly defaultProviderState = {
+    tenantEmail: null,
+    multipleIdentitiesMessageHtml: null
   };
 
   private readonly workspaceState$ = new BehaviorSubject<WorkspaceState>({
@@ -28,7 +32,8 @@ export class WorkspaceService {
     availableWorkspaces: [],
     isWorkspaceSelected: false,
     isProviderSelected: false,
-    ...this.defaultOrgState
+    ...this.defaultOrgState,
+    ...this.defaultProviderState
   });
 
   private readonly changingWorkspace$ = new BehaviorSubject<boolean>(false);
@@ -118,13 +123,14 @@ export class WorkspaceService {
   }
 
   /**
-   * Update the tenant email address from provider metadata
+   * Update the tenant email and warning message together from provider metadata
    */
-  setTenantEmail(email: string | null): void {
+  setTenantEmail(email: string | null, messageHtml: string | null = null): void {
     const currentState = this.workspaceState$.value;
     this.workspaceState$.next({
       ...currentState,
-      tenantEmail: email
+      tenantEmail: email,
+      multipleIdentitiesMessageHtml: messageHtml
     });
   }
 
@@ -185,9 +191,12 @@ export class WorkspaceService {
     // When a provider is explicitly supplied without a name, clear the stale
     // providerName so the header doesn't show a mismatched label.
     // Keep the previous name only when neither provider nor providerName changed.
+    const selectionChanged = currentState.selectedWorkspace?.pluginId !== workspace.pluginId
+      || currentState.selectedProvider !== (provider || null);
     const resolvedProviderName = providerName ?? (provider ? null : currentState.selectedProviderName);
     const newState = {
       ...currentState,
+      ...(selectionChanged ? { ...this.defaultOrgState, ...this.defaultProviderState } : {}),
       selectedWorkspace: workspace,
       selectedProvider: provider || null,
       selectedProviderName: resolvedProviderName,
@@ -220,6 +229,10 @@ export class WorkspaceService {
     const currentState = this.workspaceState$.value;
     const newState = {
       ...currentState,
+      ...(currentState.selectedWorkspace?.pluginId !== workspace.pluginId || currentState.selectedProvider !== provider.id
+        ? this.defaultOrgState : {}),
+      tenantEmail: provider.defaultFromAddress ?? null,
+      multipleIdentitiesMessageHtml: provider.multipleIdentitiesMessageHtml ?? null,
       selectedWorkspace: workspace,
       selectedProvider: provider.id,
       selectedProviderName: provider.displayName ?? provider.name,
@@ -249,7 +262,8 @@ export class WorkspaceService {
       availableWorkspaces: [],
       isWorkspaceSelected: false,
       isProviderSelected: false,
-      ...this.defaultOrgState
+      ...this.defaultOrgState,
+      ...this.defaultProviderState
     });
 
     localStorage.removeItem('selectedWorkspace');
@@ -268,7 +282,8 @@ export class WorkspaceService {
       availableWorkspaces: currentState.availableWorkspaces,
       isWorkspaceSelected: false,
       isProviderSelected: false,
-      ...this.defaultOrgState
+      ...this.defaultOrgState,
+      ...this.defaultProviderState
     });
 
     localStorage.removeItem('selectedWorkspace');
@@ -296,6 +311,8 @@ export class WorkspaceService {
         const currentState = this.workspaceState$.value;
         this.workspaceState$.next({
           ...currentState,
+          ...this.defaultOrgState,
+          ...this.defaultProviderState,
           selectedWorkspace: workspace,
           selectedProvider: provider ?? null,
           selectedProviderName: providerName ?? null,

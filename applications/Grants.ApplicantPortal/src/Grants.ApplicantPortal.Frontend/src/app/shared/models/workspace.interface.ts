@@ -3,6 +3,7 @@ export interface Provider {
   name: string;
   displayName?: string | null;
   defaultFromAddress?: string | null;
+  multipleIdentitiesMessageHtml?: string | null;
   metaData?: Record<string, string> | null;
 }
 
@@ -41,4 +42,5 @@ export interface WorkspaceState {
   orgNumber: string;
   orgName: string;
   tenantEmail: string | null;
+  multipleIdentitiesMessageHtml?: string | null;
 }
