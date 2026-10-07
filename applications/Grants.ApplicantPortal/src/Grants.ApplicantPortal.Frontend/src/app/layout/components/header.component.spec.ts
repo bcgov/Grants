@@ -226,13 +226,13 @@ describe('HeaderComponent', () => {
     it('calls setTenantEmail with the provider defaultFromAddress', () => {
       const provider: Provider = { id: 'new-id', name: 'internal', defaultFromAddress: 'from@example.com' };
       component.selectProviderById(provider);
-      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith('from@example.com');
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith('from@example.com', null);
     });
 
     it('calls setTenantEmail with null when defaultFromAddress is absent', () => {
       const provider: Provider = { id: 'new-id', name: 'internal' };
       component.selectProviderById(provider);
-      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith(null);
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith(null, null);
     });
   });
 
@@ -240,18 +240,18 @@ describe('HeaderComponent', () => {
     it('sets tenant email from defaultFromAddress of the currently selected provider', () => {
       component.currentProviders = [
         { id: 'a', name: 'internal-a', defaultFromAddress: 'a@example.com' },
-        { id: 'b', name: 'internal-b', defaultFromAddress: 'b@example.com' },
+        { id: 'b', name: 'internal-b', defaultFromAddress: 'b@example.com', multipleIdentitiesMessageHtml: '<p>Program B message</p>' },
       ];
       component.selectedProvider = 'b';
       (component as any).updateTenantEmail();
-      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith('b@example.com');
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith('b@example.com', '<p>Program B message</p>');
     });
 
     it('sets tenant email to null when the selected provider has no defaultFromAddress', () => {
       component.currentProviders = [{ id: 'a', name: 'internal-a' }];
       component.selectedProvider = 'a';
       (component as any).updateTenantEmail();
-      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith(null);
+      expect(workspaceServiceSpy.setTenantEmail).toHaveBeenCalledWith(null, null);
     });
   });
 });

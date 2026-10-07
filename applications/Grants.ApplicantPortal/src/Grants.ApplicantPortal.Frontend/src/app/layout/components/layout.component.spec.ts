@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 import { LayoutComponent } from './layout.component';
@@ -28,6 +28,7 @@ const defaultWorkspaceState: WorkspaceState = {
 };
 
 describe('LayoutComponent', () => {
+  let workspaceState: BehaviorSubject<WorkspaceState>;
   let component: LayoutComponent;
   let fixture: ComponentFixture<LayoutComponent>;
   let applicantServiceSpy: jasmine.SpyObj<ApplicantService>;
@@ -35,6 +36,7 @@ describe('LayoutComponent', () => {
   let workspaceServiceSpy: jasmine.SpyObj<WorkspaceService>;
 
   beforeEach(async () => {
+    workspaceState = new BehaviorSubject<WorkspaceState>({ ...defaultWorkspaceState });
     applicantServiceSpy = jasmine.createSpyObj<ApplicantService>('ApplicantService', [
       'getApplicantInfo',
     ]);
@@ -48,7 +50,7 @@ describe('LayoutComponent', () => {
       'WorkspaceService',
       ['getProviders', 'setTenantEmail'],
       {
-        currentWorkspaceState$: of(defaultWorkspaceState),
+        currentWorkspaceState$: workspaceState.asObservable(),
         isChangingWorkspace$: of(false),
       }
     );
@@ -108,5 +110,43 @@ describe('LayoutComponent', () => {
 
   it('cleans up on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
+  });
+
+  it('renders the configured rich text only for multiple applicants', () => {
+    workspaceState.next({ ...defaultWorkspaceState, multipleIdentitiesMessageHtml: '<p><strong>Contact us</strong></p>' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.global-warning-banner')).toBeNull();
+    workspaceState.next({ ...workspaceState.value, hasMultipleOrgs: true });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.portal-message-content strong').textContent).toBe('Contact us');
+  });
+
+  it('sanitizes API HTML without bypassing Angular security', () => {
+    workspaceState.next({ ...defaultWorkspaceState, hasMultipleOrgs: true,
+      multipleIdentitiesMessageHtml: '<p onclick="alert(1)">Contact us</p><script>alert(1)</script><a href="javascript:alert(1)">Help</a>' });
+    fixture.detectChanges();
+    const content = fixture.nativeElement.querySelector('.portal-message-content');
+    expect(content.querySelector('script')).toBeNull();
+    expect(content.querySelector('p').hasAttribute('onclick')).toBeFalse();
+    expect(content.querySelector('a').getAttribute('href')).not.toBe('javascript:alert(1)');
+  });
+
+  it('falls back to the original message for an older API response', () => {
+    workspaceState.next({ ...defaultWorkspaceState, hasMultipleOrgs: true, tenantEmail: 'program@example.test' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.global-warning-banner').textContent).toContain('administrator at program@example.test.');
+    workspaceState.next({ ...defaultWorkspaceState, hasMultipleOrgs: true });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.global-warning-banner').textContent).toContain('contact the grant program administrator.');
+  });
+
+  it('replaces the displayed message when the selected tenant state changes', () => {
+    workspaceState.next({ ...defaultWorkspaceState, hasMultipleOrgs: true, multipleIdentitiesMessageHtml: '<p>Tenant A</p>' });
+    fixture.detectChanges();
+    workspaceState.next({ ...defaultWorkspaceState, hasMultipleOrgs: true, multipleIdentitiesMessageHtml: '<p>Tenant B</p>' });
+    fixture.detectChanges();
+    const content = fixture.nativeElement.querySelector('.portal-message-content').textContent;
+    expect(content).toContain('Tenant B');
+    expect(content).not.toContain('Tenant A');
   });
 });
