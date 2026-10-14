@@ -102,6 +102,15 @@ export class WorkspaceProviderSelectionPage {
     });
   }
 
+  selectFirstProvider(): void {
+    this.providerSelect.should("be.visible").then(($select) => {
+      const $option = $select.find('option:not(:disabled)').first();
+      expect($option, 'first available provider option').to.have.length(1);
+      cy.log(`Selecting provider: ${$option.text().trim()}`);
+      cy.wrap($select).select(String($option.val()));
+    });
+  }
+
   continueFromProvider(): void {
     this.providerContinueButton.should("be.visible").click();
   }

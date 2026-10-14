@@ -32,6 +32,7 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
   sidebarCollapsed = false;
   hasMultipleOrgs = false;
   tenantEmail: string | null = null;
+  multipleIdentitiesMessageHtml: string | null = null;
 
   private readonly lgBreakpoint = 992;
   private resizeObserver: ResizeObserver | null = null;
@@ -56,6 +57,7 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe(state => {
         this.hasMultipleOrgs = state.hasMultipleOrgs;
         this.tenantEmail = state.tenantEmail;
+        this.multipleIdentitiesMessageHtml = state.multipleIdentitiesMessageHtml ?? null;
       });
   }
 
@@ -113,10 +115,10 @@ export class LayoutComponent implements OnInit, AfterViewInit, OnDestroy {
       // Clear sessionStorage
       sessionStorage.clear();
       // Redirect to login page
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error clearing session:', error);
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     }
   }
 }

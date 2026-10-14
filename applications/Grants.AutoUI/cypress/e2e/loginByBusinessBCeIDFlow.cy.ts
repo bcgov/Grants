@@ -37,7 +37,6 @@ describe(
       }
     };
     const workspaceName = () => getRequiredEnv("workspaceName");
-    const providerName = () => getRequiredEnv("providerName");
     const bceidActivityHeading =
       "To complete login with your BCeID, review your BCeID account activity.";
 
@@ -168,7 +167,7 @@ describe(
 
           if ($body.find(AppSelectors.Workspace.providerSelect).length > 0) {
             workspaceProviderSelectionPage.verifyProviderScreenLoaded();
-            workspaceProviderSelectionPage.selectProvider(providerName());
+            workspaceProviderSelectionPage.selectFirstProvider();
             workspaceProviderSelectionPage.continueFromProvider();
             cy.location("pathname", { timeout: 60000 }).should("include", "/app/");
           }

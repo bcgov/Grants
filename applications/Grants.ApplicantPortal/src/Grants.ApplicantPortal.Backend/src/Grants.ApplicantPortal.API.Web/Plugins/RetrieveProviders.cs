@@ -62,7 +62,7 @@ public class RetrieveProviders(ILogger<RetrieveProviders> logger, IProfilePlugin
 
       Response = new RetrieveProvidersResponse(
         request.PluginId,
-        [.. providers.Select(p => new ProviderDto(p.Id, p.Name, p.Metadata, p.DisplayName, p.DefaultFromAddress))]);
+        [.. providers.Select(p => new ProviderDto(p.Id, p.Name, p.Metadata, p.DisplayName, p.DefaultFromAddress, p.MultipleIdentitiesMessageHtml))]);
     }
     catch (Exception ex)
     {

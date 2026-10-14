@@ -8,7 +8,8 @@ public record ProviderInfo(
     string Name,
     Dictionary<string, string> Metadata = null!,
     string? DisplayName = null,
-    string? DefaultFromAddress = null
+    string? DefaultFromAddress = null,
+    string? MultipleIdentitiesMessageHtml = null
 )
 {
     public Dictionary<string, string> Metadata { get; init; } = Metadata ?? [];

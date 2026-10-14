@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, Subject, take } from 'rxjs';
 
 import { WorkspaceService } from './workspace.service';
 import { ApplicantInfoService } from './applicant-info.service';
@@ -338,6 +338,61 @@ describe('WorkspaceService', () => {
         expect(state.tenantEmail).toBe('admin@example.com');
         done();
       });
+    });
+  });
+
+  describe('tenant warning messages', () => {
+    function currentState(): WorkspaceState {
+      let result!: WorkspaceState;
+      service.currentWorkspaceState$.pipe(take(1)).subscribe(state => result = state);
+      return result;
+    }
+
+    it('retains provider configuration when organization results are empty', () => {
+      service.selectWorkspaceWithProviderDetails(mockPlugin, {
+        ...mockProvider,
+        defaultFromAddress: 'program@example.test',
+        multipleIdentitiesMessageHtml: '<p>Program message</p>'
+      });
+      expect(currentState().multipleIdentitiesMessageHtml).toBe('<p>Program message</p>');
+      expect(currentState().tenantEmail).toBe('program@example.test');
+      expect(currentState().hasMultipleOrgs).toBeFalse();
+    });
+
+    it('updates the message when switching programs and clears it for legacy providers', () => {
+      service.selectWorkspaceWithProviderDetails(mockPlugin, {
+        ...mockProvider, multipleIdentitiesMessageHtml: '<p>First</p>'
+      });
+      service.selectWorkspaceWithProviderDetails(mockPlugin, {
+        id: 'second', name: 'Second', multipleIdentitiesMessageHtml: '<p>Second</p>'
+      });
+      expect(currentState().multipleIdentitiesMessageHtml).toBe('<p>Second</p>');
+      service.selectWorkspaceWithProviderDetails(mockPlugin, { id: 'legacy', name: 'Legacy' });
+      expect(currentState().multipleIdentitiesMessageHtml).toBeNull();
+      expect(currentState().tenantEmail).toBeNull();
+    });
+
+    it('clears the prior program warning while the next program loads', () => {
+      const organizations = new Subject<any>();
+      applicantInfoServiceSpy.getOrganizationInfo.and.returnValue(organizations);
+      service.selectWorkspaceWithProviderDetails(mockPlugin, {
+        ...mockProvider, multipleIdentitiesMessageHtml: '<p>First</p>'
+      });
+      organizations.next({ organizationsData: [{ id: 'one' }, { id: 'two' }] });
+      expect(currentState().hasMultipleOrgs).toBeTrue();
+      service.selectWorkspace({ ...mockPlugin, pluginId: 'other' }, 'other-program');
+      expect(currentState().hasMultipleOrgs).toBeFalse();
+      expect(currentState().multipleIdentitiesMessageHtml).toBeNull();
+    });
+
+    it('clears email and message when logging out or clearing selection', () => {
+      service.setTenantEmail('first@example.test', '<p>First</p>');
+      service.clearSelection();
+      expect(currentState().multipleIdentitiesMessageHtml).toBeNull();
+      service.setTenantEmail('second@example.test', '<p>Second</p>');
+      service.clearWorkspace();
+      expect(currentState().multipleIdentitiesMessageHtml).toBeNull();
+      expect(currentState().tenantEmail).toBeNull();
     });
   });
 });
