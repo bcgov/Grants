@@ -20,6 +20,7 @@ function loadEnvConfig(env: string): Record<string, unknown> {
 }
 
 export default defineConfig({
+  allowCypressEnv: false,
   e2e: {
     setupNodeEvents(on, config) {
       const env = String(config.env["ENV"] || process.env.CYPRESS_ENV || "dev");
@@ -31,6 +32,10 @@ export default defineConfig({
       );
       // Keep file config as defaults, but let runtime-provided values win.
       Object.assign(config.env, envConfig, runtimeEnv);
+      config.expose = {
+        ...config.expose,
+        currentEnv: String(config.env["ENV"] || config.env["environment"] || "").toLowerCase(),
+      };
 
       return config;
     },
