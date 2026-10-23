@@ -14,22 +14,20 @@ describe(
   "Login by BC Services Card - Full Flow",
   { testIsolation: false },
   () => {
-    const getRequiredEnv = (key: string): string => {
-      const value = Cypress.env(key);
-      if (!value) {
-        throw new Error(
-          `Missing required Cypress env variable "${key}". ` +
-            "Provide it via --env, CI config, or a local cypress.env.json.",
-        );
-      }
-      return String(value);
+    const withRequiredEnv = (key: string, use: (value: string) => void): void => {
+      cy.env([key]).then((values) => {
+        const value = values[key];
+        if (!value) {
+          throw new Error(
+            `Missing required Cypress env variable "${key}". ` +
+              "Provide it via --env, CI config, or a local cypress.env.json.",
+          );
+        }
+        use(String(value));
+      });
     };
 
-    const username = () => getRequiredEnv("bcscUsername");
-    const password = () => getRequiredEnv("bcscPassword");
-    const currentEnv = String(
-      Cypress.env("ENV") || Cypress.env("environment") || "",
-    ).toLowerCase();
+    const currentEnv = String(Cypress.expose("currentEnv"));
     const isProd = currentEnv === "prod";
     const shouldValidatePayments = currentEnv !== "prod";
     const skipInProd = (context: Mocha.Context): void => {
@@ -37,8 +35,6 @@ describe(
         context.skip();
       }
     };
-    const workspaceName = () => getRequiredEnv("workspaceName");
-    const providerName = () => getRequiredEnv("providerName");
 
     const waitForPostLoginDestination = () => {
       cy.location("href", { timeout: 60000 }).should((href) => {
@@ -138,9 +134,13 @@ describe(
       it("enters username and password then clicks Continue", function (this: Mocha.Context) {
         skipInProd(this);
 
-        bcServicesCardPage.enterUsername(username());
-        bcServicesCardPage.enterPassword(password());
-        bcServicesCardPage.clickContinue();
+        withRequiredEnv("bcscUsername", (username) => {
+          withRequiredEnv("bcscPassword", (password) => {
+            bcServicesCardPage.enterUsername(username);
+            bcServicesCardPage.enterPassword(password);
+            bcServicesCardPage.clickContinue();
+          });
+        });
       });
     });
 
@@ -178,8 +178,10 @@ describe(
 
           if ($body.find(AppSelectors.Workspace.workspaceSelect).length > 0) {
             workspaceProviderSelectionPage.verifyWorkspaceScreenLoaded();
-            workspaceProviderSelectionPage.selectWorkspace(workspaceName());
-            workspaceProviderSelectionPage.continueFromWorkspace();
+            withRequiredEnv("workspaceName", (workspaceName) => {
+              workspaceProviderSelectionPage.selectWorkspace(workspaceName);
+              workspaceProviderSelectionPage.continueFromWorkspace();
+            });
           }
         });
       });
@@ -198,9 +200,11 @@ describe(
 
           if ($body.find(AppSelectors.Workspace.providerSelect).length > 0) {
             workspaceProviderSelectionPage.verifyProviderScreenLoaded();
-            workspaceProviderSelectionPage.selectProvider(providerName());
-            workspaceProviderSelectionPage.continueFromProvider();
-            cy.location("pathname", { timeout: 60000 }).should("include", "/app/");
+            withRequiredEnv("providerName", (providerName) => {
+              workspaceProviderSelectionPage.selectProvider(providerName);
+              workspaceProviderSelectionPage.continueFromProvider();
+              cy.location("pathname", { timeout: 60000 }).should("include", "/app/");
+            });
           }
         });
       });
