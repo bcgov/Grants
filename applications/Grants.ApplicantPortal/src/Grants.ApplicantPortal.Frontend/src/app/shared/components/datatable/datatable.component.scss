@@ -129,6 +129,21 @@
               text-decoration: none;
               &:hover { text-decoration: underline; }
             }
+            // Reset Bootstrap .btn/.btn-link defaults so action links match .datatable-cell-link
+            .datatable-cell-action {
+              --bs-btn-color: var(--bc-blue);
+              --bs-btn-hover-color: var(--bc-blue);
+              --bs-btn-active-color: var(--bc-blue);
+              --bs-btn-font-size: inherit;
+              --bs-btn-line-height: inherit;
+              color: var(--bc-blue);
+              font-size: inherit;
+              line-height: inherit;
+              text-align: left;
+              text-decoration: none;
+              vertical-align: baseline;
+              &:hover { text-decoration: underline; }
+            }
             &.title-column { font-style: italic; }
             &.paid-amount-column { font-weight: 500 !important; }
 
