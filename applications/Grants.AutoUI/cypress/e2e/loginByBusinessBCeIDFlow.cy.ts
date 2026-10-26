@@ -14,29 +14,26 @@ describe(
   "Login by Business BCeID - Full Flow",
   { testIsolation: false },
   () => {
-    const getRequiredEnv = (key: string): string => {
-      const value = Cypress.env(key);
-      if (!value) {
-        throw new Error(
-          `Missing required Cypress env variable "${key}". ` +
-            "Provide it via --env, CI config, or a local cypress.env.json.",
-        );
-      }
-      return String(value);
+    const withRequiredEnv = (key: string, use: (value: string) => void): void => {
+      cy.env([key]).then((values) => {
+        const value = values[key];
+        if (!value) {
+          throw new Error(
+            `Missing required Cypress env variable "${key}". ` +
+              "Provide it via --env, CI config, or a local cypress.env.json.",
+          );
+        }
+        use(String(value));
+      });
     };
 
-    const username = () => getRequiredEnv("test1username");
-    const password = () => getRequiredEnv("test1password");
-    const currentEnv = String(
-      Cypress.env("ENV") || Cypress.env("environment") || "",
-    ).toLowerCase();
+    const currentEnv = String(Cypress.expose("currentEnv"));
     const shouldValidatePayments = currentEnv !== "prod";
     const skipPaymentsInProd = (context: Mocha.Context): void => {
       if (!shouldValidatePayments) {
         context.skip();
       }
     };
-    const workspaceName = () => getRequiredEnv("workspaceName");
     const bceidActivityHeading =
       "To complete login with your BCeID, review your BCeID account activity.";
 
@@ -116,9 +113,13 @@ describe(
       });
 
       it("enters username and password then clicks Continue", () => {
-        bceidLoginPage.enterUserId(username());
-        bceidLoginPage.enterPassword(password());
-        bceidLoginPage.clickContinue();
+        withRequiredEnv("test1username", (username) => {
+          withRequiredEnv("test1password", (password) => {
+            bceidLoginPage.enterUserId(username);
+            bceidLoginPage.enterPassword(password);
+            bceidLoginPage.clickContinue();
+          });
+        });
       });
     });
 
@@ -149,8 +150,10 @@ describe(
 
           if ($body.find(AppSelectors.Workspace.workspaceSelect).length > 0) {
             workspaceProviderSelectionPage.verifyWorkspaceScreenLoaded();
-            workspaceProviderSelectionPage.selectWorkspace(workspaceName());
-            workspaceProviderSelectionPage.continueFromWorkspace();
+            withRequiredEnv("workspaceName", (workspaceName) => {
+              workspaceProviderSelectionPage.selectWorkspace(workspaceName);
+              workspaceProviderSelectionPage.continueFromWorkspace();
+            });
           }
         });
       });

@@ -30,20 +30,18 @@ import { navMenuPage } from '../pages/NavMenuPage';
 import { AppSelectors } from '../selectors/registry';
 
 describe('Single-Workspace Provider Selection Flow', { testIsolation: false }, () => {
-  const getRequiredEnv = (key: string): string => {
-    const value = Cypress.env(key);
-    if (!value) {
-      throw new Error(
-        `Missing required Cypress env variable "${key}". ` +
-          'Provide it via --env, CI config, or a local cypress.env.json.',
-      );
-    }
-    return String(value);
+  const withRequiredEnv = (key: string, use: (value: string) => void): void => {
+    cy.env([key]).then((values) => {
+      const value = values[key];
+      if (!value) {
+        throw new Error(
+          `Missing required Cypress env variable "${key}". ` +
+            'Provide it via --env, CI config, or a local cypress.env.json.',
+        );
+      }
+      use(String(value));
+    });
   };
-
-  const username     = () => getRequiredEnv('singleWsUsername');
-  const password     = () => getRequiredEnv('singleWsPassword');
-  const providerName = () => getRequiredEnv('singleWsProviderName');
 
   before(() => {
     cy.clearCookies();
@@ -62,7 +60,11 @@ describe('Single-Workspace Provider Selection Flow', { testIsolation: false }, (
     loginPage.clickLogin();
     authenticatorPage.clickBCServicesCard();
     bcServicesCardPage.clickTestWithUsernamePassword();
-    bcServicesCardPage.submitCredentials(username(), password());
+    withRequiredEnv('singleWsUsername', (username) => {
+      withRequiredEnv('singleWsPassword', (password) => {
+        bcServicesCardPage.submitCredentials(username, password);
+      });
+    });
   });
 
   it.skip('accepts Terms of Use if presented, then proceeds', () => {
@@ -98,9 +100,11 @@ describe('Single-Workspace Provider Selection Flow', { testIsolation: false }, (
   });
 
   it.skip('should allow the user to select a provider and continue', () => {
-    workspaceProviderSelectionPage.selectProvider(providerName());
-    workspaceProviderSelectionPage.continueFromProvider();
-    cy.url().should('include', '/app/');
+    withRequiredEnv('singleWsProviderName', (providerName) => {
+      workspaceProviderSelectionPage.selectProvider(providerName);
+      workspaceProviderSelectionPage.continueFromProvider();
+      cy.url().should('include', '/app/');
+    });
   });
 
   // ── Header dropdown (header component) ──────────────────────────────────
@@ -109,10 +113,12 @@ describe('Single-Workspace Provider Selection Flow', { testIsolation: false }, (
     // In single-workspace mode displayText = providerName only.
     // The aria-label pattern is "Current workspace: <providerName>".
     // Assert providerName is present and workspaceName is NOT part of the label.
-    navMenuPage.workspaceDropdown
-      .should('be.visible')
-      .invoke('attr', 'aria-label')
-      .should('include', providerName());
+    withRequiredEnv('singleWsProviderName', (providerName) => {
+      navMenuPage.workspaceDropdown
+        .should('be.visible')
+        .invoke('attr', 'aria-label')
+        .should('include', providerName);
+    });
     // TODO: also assert the label does NOT include any workspace slug if the
     //       workspace name is known for this test account.
   });
