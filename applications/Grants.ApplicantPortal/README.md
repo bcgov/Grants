@@ -9,7 +9,7 @@ A full-stack application for managing grant applications, built with Angular fro
 | Component | Technology | Port | Description |
 |-----------|------------|------|-------------|
 | **Frontend** | Angular 20 SPA | 4200 | User interface and application logic |
-| **Backend** | .NET 9 Web API | 5100 | REST API and business logic |
+| **Backend** | .NET 10 Web API | 5100 | REST API and business logic |
 | **Database** | PostgreSQL 17 | 5434 | Primary data storage |
 | **Cache** | Redis 7 | 6379 | Session and caching layer |
 | **Admin UI** | Redis Commander | 8081 | Redis management interface |
@@ -100,7 +100,7 @@ docker-compose up postgres
 
 ```text
 src/
-├── Grants.ApplicantPortal.Backend/           # .NET 9 API — FastEndpoints + CQRS (MediatR)
+├── Grants.ApplicantPortal.Backend/           # .NET 10 API — FastEndpoints + CQRS (MediatR)
 │   ├── src/
 │   │   ├── Grants.ApplicantPortal.API.Web/           # Endpoints (route/auth/validation per feature)
 │   │   ├── Grants.ApplicantPortal.API.UseCases/       # Commands/Queries + handlers
@@ -187,5 +187,5 @@ See individual service READMEs for detailed development instructions:
 
 - Docker & Docker Compose
 - Node.js 20+ (for local frontend development)
-- .NET 9 SDK (for local backend development)
+- .NET 10 SDK (for local backend development)
 - PowerShell or Bash
