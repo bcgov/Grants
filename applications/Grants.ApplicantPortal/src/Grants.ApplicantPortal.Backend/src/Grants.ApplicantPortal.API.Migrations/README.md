@@ -5,7 +5,7 @@ This project is responsible for applying database migrations and seeding initial
 ## Prerequisites
 
 - PostgreSQL server running
-- .NET 9.0 SDK installed
+- .NET 10.0 SDK installed
 - Docker (optional, for containerized deployment)
 
 ## Configuration
