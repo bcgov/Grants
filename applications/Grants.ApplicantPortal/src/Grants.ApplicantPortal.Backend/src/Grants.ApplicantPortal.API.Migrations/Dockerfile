@@ -1,9 +1,9 @@
-# Use the official .NET 9 ASP.NET runtime image as a base image (required by Serilog.AspNetCore)
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+# Use the official .NET 10 ASP.NET runtime image as a base image (required by Serilog.AspNetCore)
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 
 # Use the SDK image to build the application
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy project files

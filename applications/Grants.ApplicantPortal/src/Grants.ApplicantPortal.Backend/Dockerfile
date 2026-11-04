@@ -1,5 +1,5 @@
 # Use the official .NET SDK image as the base image for building the backend application
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 # Set the working directory
 WORKDIR /app
@@ -29,7 +29,7 @@ COPY src/ ./src/
 RUN dotnet publish src/Grants.ApplicantPortal.API.Web/Grants.ApplicantPortal.API.Web.csproj -c Release -o /out
 
 # Use the official .NET runtime image for running the application
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 
 # Set the working directory
 WORKDIR /app

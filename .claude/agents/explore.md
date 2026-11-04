@@ -16,7 +16,7 @@ applications/
 │   │   │   ├── src/app/core/                  # services, guards, interceptors
 │   │   │   ├── src/app/features/              # lazy-loaded feature pages
 │   │   │   └── src/app/shared/                # reusable components
-│   │   └── Grants.ApplicantPortal.Backend/    # .NET 9 Web API
+│   │   └── Grants.ApplicantPortal.Backend/    # .NET 10 Web API
 │   │       ├── src/Grants.ApplicantPortal.API.Web/        # FastEndpoints (endpoints live here)
 │   │       ├── src/Grants.ApplicantPortal.API.UseCases/   # MediatR handlers (Commands/Queries)
 │   │       ├── src/Grants.ApplicantPortal.API.Core/       # domain interfaces + entities
