@@ -152,7 +152,11 @@ export class ContactsComponent implements OnInit, OnDestroy, OnChanges {
 
   // Helper method to get safe data for datatable
   getContactsForTable(): ContactDisplay[] {
-    return this.contacts && Array.isArray(this.contacts) ? this.contacts : [];
+    return Array.isArray(this.contacts)
+      ? this.contacts.filter(contact =>
+          [contact.name, contact.email, contact.title, contact.workPhoneNumber]
+            .some(value => !!value?.trim()))
+      : [];
   }
 
   private updateActionsVisibility(): void {
