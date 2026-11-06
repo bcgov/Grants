@@ -8,6 +8,7 @@ import { OrganizationInfoComponent } from './organization.component';
 import { ENTITY_TYPE_LOOKUP } from '../../../shared/models/orgbook.constants';
 import { ApplicantInfoService } from '../../../core/services/applicant-info.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { OrgbookOrganization } from '../../../shared/models/applicant-info.interface';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,60 @@ describe('OrganizationInfoComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('table rows', () => {
+    const blankOrganization: OrgbookOrganization = {
+      id: 'blank',
+      orgName: null,
+      organizationType: null,
+      orgNumber: null,
+      orgStatus: null,
+      organizationSize: null,
+      sector: null,
+      subSector: null,
+      nonRegOrgName: 'Hidden name',
+      fiscalMonth: 'Jan',
+      fiscalDay: 1
+    };
+
+    it('returns no rows when there are no organizations', () => {
+      expect(component.getOrganizationsForTable()).toEqual([]);
+    });
+
+    it('hides rows with null or whitespace-only displayed fields without changing stored organizations', () => {
+      component.multipleOrganizations = [blankOrganization, {
+        ...blankOrganization,
+        id: 'whitespace',
+        orgName: ' ',
+        organizationType: '\t',
+        orgNumber: '',
+        orgStatus: '\n',
+        organizationSize: ' ',
+        sector: '',
+        subSector: '  '
+      }];
+
+      expect(component.getOrganizationsForTable()).toEqual([]);
+      expect(component.multipleOrganizations).toHaveSize(2);
+    });
+
+    for (const field of ['orgName', 'organizationType', 'orgNumber', 'orgStatus',
+      'organizationSize', 'sector', 'subSector'] as const) {
+      it(`keeps a row with only ${field} populated`, () => {
+        const organization = { ...blankOrganization, id: 'visible', [field]: ' value ' };
+        component.multipleOrganizations = [blankOrganization, organization];
+
+        expect(component.getOrganizationsForTable()).toEqual([organization]);
+      });
+    }
+
+    it('keeps a numeric organization size of zero', () => {
+      const organization = { ...blankOrganization, organizationSize: 0 };
+      component.multipleOrganizations = [organization];
+
+      expect(component.getOrganizationsForTable()).toEqual([organization]);
+    });
   });
 
   // ── ENTITY_TYPE_LOOKUP constant ─────────────────────────────────────────────

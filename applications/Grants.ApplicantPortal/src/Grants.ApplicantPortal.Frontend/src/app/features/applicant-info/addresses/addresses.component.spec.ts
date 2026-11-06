@@ -119,6 +119,38 @@ describe('AddressesComponent', () => {
   const MAILING_PRIMARY = makeAddress('m1', 'Mailing', true, { street: '1 Mailing Way' });
   const MAILING_OTHER = makeAddress('m2', 'Mailing', false, { street: '2 Mailing Way' });
 
+  describe('table rows', () => {
+    const emptyFields: Partial<Address> = {
+      street: '', street2: '', unit: '', city: '', province: '', postalCode: ''
+    };
+
+    it('hides a type-only address without removing it from stored addresses', () => {
+      initWith([makeAddress('empty', 'Physical', false, emptyFields)]);
+
+      expect(component.getAddressesForTable()).toEqual([]);
+      expect(component.addresses).toHaveSize(1);
+    });
+
+    it('hides addresses with whitespace-only address fields', () => {
+      initWith([makeAddress('whitespace', 'Mailing', false, {
+        street: ' ', street2: '\t', unit: ' ', city: '\n', province: ' ', postalCode: '  '
+      })]);
+
+      expect(component.getAddressesForTable()).toEqual([]);
+    });
+
+    for (const field of ['street', 'street2', 'unit', 'city', 'province', 'postalCode'] as const) {
+      it(`keeps an address with only ${field} populated`, () => {
+        initWith([
+          makeAddress('empty', 'Physical', false, emptyFields),
+          makeAddress('visible', 'Mailing', false, { ...emptyFields, [field]: ' value ' })
+        ]);
+
+        expect(component.getAddressesForTable().map(address => address.id)).toEqual(['visible']);
+      });
+    }
+  });
+
   // ── rendering: one primary block per type ───────────────────────────────────
 
   describe('primary address blocks', () => {
