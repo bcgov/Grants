@@ -267,7 +267,7 @@
           <tbody>
             <tr><th scope="row"><code class="inline">Grants.ApplicantPortal/</code></th><td>The product — frontend and backend, plus the <code class="inline">docker-compose.yml</code> that runs the whole stack locally</td></tr>
             <tr><th scope="row"><code class="inline">Grants.AutoUI/</code></th><td>Cypress E2E suite. Targets <em>deployed</em> environments — it does not run against localhost</td></tr>
-            <tr><th scope="row"><code class="inline">dev-env.ps1</code></th><td>PowerShell wrapper over docker-compose: <code class="inline">start</code>, <code class="inline">stop</code>, <code class="inline">logs</code>, <code class="inline">rebuild</code>, <code class="inline">clean</code></td></tr>
+            <tr><th scope="row"><code class="inline">local-docker.ps1</code></th><td>PowerShell wrapper over docker-compose: <code class="inline">start</code>, <code class="inline">stop</code>, <code class="inline">logs</code>, <code class="inline">rebuild</code>, <code class="inline">clean</code></td></tr>
             <tr><th scope="row"><code class="inline">documentation/</code></th><td>What you're reading. §<a href="#next">Where to go next</a> maps the rest of it</td></tr>
           </tbody>
         </table>
@@ -516,7 +516,7 @@ result.Errors.Any()      -->  AddError() + SendErrorsAsync(400)</code></pre>
 docker-compose up --build
 
 # or, from applications/
-.\dev-env.ps1 start      # also: stop | logs [service] | rebuild | clean</code></pre>
+.\local-docker.ps1 start      # also: stop | logs [service] | rebuild | clean</code></pre>
 
       <div class="twrap">
         <table>
@@ -525,7 +525,7 @@ docker-compose up --build
             <tr><th scope="row">Frontend</th><td><code class="inline">http://localhost:4200</code></td><td>Angular SPA served by Express</td></tr>
             <tr><th scope="row">Backend API</th><td><code class="inline">http://localhost:5100</code></td><td>Swagger UI is served from the same host</td></tr>
             <tr><th scope="row">Redis Commander</th><td><code class="inline">http://localhost:8081</code></td><td>Inspect cached profile segments directly — invaluable when debugging</td></tr>
-            <tr><th scope="row">PostgreSQL</th><td><code class="inline">localhost:5434</code></td><td><code class="inline">postgres</code> / <code class="inline">localdev</code> / database <code class="inline">GrantsDB</code></td></tr>
+            <tr><th scope="row">PostgreSQL</th><td><code class="inline">localhost:5432</code> (shared Unity <code class="inline">unitydb</code>)</td><td>database <code class="inline">UnityApplicantPortal</code> (matches OpenShift dev/dev2)</td></tr>
             <tr><th scope="row">Redis</th><td><code class="inline">localhost:6379</code></td><td>Reachable directly too, if you prefer <code class="inline">redis-cli</code></td></tr>
           </tbody>
         </table>
@@ -661,7 +661,7 @@ npm run cy:run:test      # headless</code></pre>
     <li>API.Plugins/PluginRegistry.cs · ProfilePluginFactory.cs — plugin resolution</li>
     <li>API.Infrastructure/Data/AppDbContext.cs — EF Core model</li>
     <li>Frontend src/app/app.routes.ts · api.service.ts · core/guards · core/interceptors</li>
-    <li>applications/Grants.ApplicantPortal/docker-compose.yml · applications/dev-env.ps1</li>
+    <li>applications/Grants.ApplicantPortal/docker-compose.yml · applications/local-docker.ps1</li>
     <li>applications/Grants.AutoUI/cypress — E2E specs and the selector registry</li>
     <li>CLAUDE.md at the repo root, plus the frontend and backend .claude/CLAUDE.md files</li>
   </ul>

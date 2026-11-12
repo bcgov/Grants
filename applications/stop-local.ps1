@@ -1,3 +1,5 @@
+# Stops the Grants frontend/backend started directly on this machine (start-frontend.ps1 /
+# start-backend.ps1), then checks the backend DLLs are unlocked. For the Docker stack use local-docker.ps1 stop.
 param(
     [ValidateRange(1, 65535)]
     [int[]]$Ports = @(4200, 7000)
@@ -41,12 +43,24 @@ foreach ($process in $processes) {
     }
 }
 
+# Ports published by Docker containers (local-docker.ps1) are owned by Docker Desktop's port proxy.
+# Never kill those - it takes Docker down. Report them and point at local-docker.ps1 instead.
+$dockerPortProcesses = @("com.docker.backend.exe", "com.docker.proxy.exe", "docker-proxy.exe", "wslrelay.exe", "vpnkit.exe")
+$dockerOwnedPorts = [System.Collections.Generic.List[int]]::new()
 $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue)
 foreach ($listener in $listeners) {
     $processId = [int]$listener.OwningProcess
     if ($listener.LocalPort -in $Ports -and -not $protectedIds.Contains($processId) -and $processId -gt 4) {
+        $owner = $processesById[$processId]
+        if ($owner -and $owner.Name -in $dockerPortProcesses) {
+            if (-not $dockerOwnedPorts.Contains([int]$listener.LocalPort)) { $dockerOwnedPorts.Add([int]$listener.LocalPort) }
+            continue
+        }
         if ($targetIds.Add($processId)) { $stopOrder.Add($processId) }
     }
+}
+if ($dockerOwnedPorts.Count -gt 0) {
+    Write-Warning "Port(s) $($dockerOwnedPorts -join ', ') are published by Docker containers, not local processes. Use .\local-docker.ps1 stop to stop the Docker stack."
 }
 
 do {
@@ -97,7 +111,7 @@ for ($index = $stopOrder.Count - 1; $index -ge 0; $index--) {
 }
 
 $remainingListeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
-    Where-Object { $_.LocalPort -in $checkedPorts })
+    Where-Object { $_.LocalPort -in $checkedPorts -and -not $dockerOwnedPorts.Contains([int]$_.LocalPort) })
 $remainingIds = @($targetIds | Where-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue })
 if ($remainingListeners.Count -gt 0 -or $remainingIds.Count -gt 0 -or $failedIds.Count -gt 0) {
     throw "Some services could not be stopped. Listening ports: $($remainingListeners.LocalPort -join ', '); remaining PIDs: $($remainingIds -join ', '); failed PIDs: $($failedIds -join ', ')."

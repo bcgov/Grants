@@ -16,7 +16,7 @@ Update the connection strings in:
 
 Default connection string format:
 ```
-Host=localhost;Database=ApplicantPortal;Username=postgres;Password=admin;Port=5432
+Host=localhost;Database=UnityApplicantPortal;Username=postgres;Password=admin;Port=5432
 ```
 
 ## Running as Startup Project
@@ -52,7 +52,7 @@ docker build -f src\Grants.ApplicantPortal.API.Migrations\Dockerfile -t grants-m
 ### Run Container (One-time execution)
 ```bash
 docker run --rm --name grants-migrations \
-  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Database=ApplicantPortal;Username=postgres;Password=admin;Port=5432" \
+  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Database=UnityApplicantPortal;Username=postgres;Password=admin;Port=5432" \
   grants-migrations
 ```
 
@@ -65,7 +65,7 @@ docker run --name postgres-grants -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=Appl
 # Run migrations
 docker run --rm --name grants-migrations \
   --link postgres-grants:postgres \
-  -e ConnectionStrings__DefaultConnection="Host=postgres;Database=ApplicantPortal;Username=postgres;Password=admin;Port=5432" \
+  -e ConnectionStrings__DefaultConnection="Host=postgres;Database=UnityApplicantPortal;Username=postgres;Password=admin;Port=5432" \
   grants-migrations
 ```
 
