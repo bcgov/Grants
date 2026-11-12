@@ -1,5 +1,6 @@
 # Quick setup script for developer secrets
-# Run this from the repository root directory
+# Run this from the backend directory: applications\Grants.ApplicantPortal\src\Grants.ApplicantPortal.Backend
+#   .\scripts\setup-dev-secrets.ps1
 
 Write-Host "Setting up Grants Applicant Portal API secrets..." -ForegroundColor Green
 
@@ -8,7 +9,7 @@ $webProjectPath = "src\Grants.ApplicantPortal.API.Web"
 
 if (-not (Test-Path $webProjectPath)) {
     Write-Host "Web project directory not found: $webProjectPath" -ForegroundColor Red
-    Write-Host "   Make sure you're running this script from the repository root directory." -ForegroundColor Yellow
+    Write-Host "   Make sure you're running this script from applications\Grants.ApplicantPortal\src\Grants.ApplicantPortal.Backend." -ForegroundColor Yellow
     exit 1
 }
 
