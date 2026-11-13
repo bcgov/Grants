@@ -207,3 +207,6 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Local Docker Compose overrides (copy from docker-compose.override.yml.example; may hold real passwords)
+docker-compose.override.yml

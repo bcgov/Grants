@@ -1,0 +1,52 @@
+# Local override: reuse Unity's shared Postgres ("unitydb") and Redis instead of the bundled ones,
+# like ce395f-dev where every app shares one Postgres cluster per environment.
+#
+# Setup:
+#   1. Start Unity's stack: docker compose up -d   (in Unity\applications\Unity.GrantManager)
+#   2. Copy this file to docker-compose.override.yml (gitignored / excluded - do not commit it)
+#   3. ..\local-docker.ps1 start   (passes Unity's .env via --env-file for the passwords below)
+#   4. First time only: ..\local-docker.ps1 migrate   (creates and seeds UnityApplicantPortal)
+#
+# Database name matches the running OpenShift environments (dev and dev2): UnityApplicantPortal
+services:
+  backend:
+    environment:
+      - ConnectionStrings__Grants=Host=unity-data-postgres;Port=5432;Database=UnityApplicantPortal;Username=postgres;Password=${UNITY_POSTGRES_PASSWORD:?Run via local-docker.ps1 (needs Unity .env)}
+      - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:?Run via local-docker.ps1 (needs Unity .env)}
+      # Unity's RabbitMQ on the shared network (same Messaging__RabbitMQ__* keys OpenShift sets)
+      - Messaging__RabbitMQ__HostName=${UNITY_RABBIT_MQ_HOST:-rabbitmq}
+      - Messaging__RabbitMQ__Port=${UNITY_RABBIT_MQ_PORT:-5672}
+      - Messaging__RabbitMQ__UserName=${UNITY_RABBIT_MQ_USER:-guest}
+      - Messaging__RabbitMQ__Password=${UNITY_RABBIT_MQ_PASSWORD:-guest}
+      - Messaging__RabbitMQ__VirtualHost=${UNITY_RABBIT_MQ_VIRTUALHOST:-/}
+      - Database__RunMigrationsOnStartup=true
+    networks:
+      - grants-network
+      - unity
+    depends_on: !reset []
+
+  # Postgres / Redis come from Unity's stack in this mode.
+  postgres:
+    profiles: ["standalone"]
+  redis:
+    profiles: ["standalone"]
+  redis-commander:
+    profiles: ["standalone"]
+
+  # One-shot DB migrator + seeder. Only runs when invoked explicitly: ..\local-docker.ps1 migrate
+  migrator:
+    build:
+      context: ./src/Grants.ApplicantPortal.Backend
+      dockerfile: src/Grants.ApplicantPortal.API.Migrations/Dockerfile
+    image: grants-migrator
+    profiles: ["tools"]
+    environment:
+      - ConnectionStrings__Grants=Host=unity-data-postgres;Port=5432;Database=UnityApplicantPortal;Username=postgres;Password=${UNITY_POSTGRES_PASSWORD:?Run via local-docker.ps1 (needs Unity .env)}
+    networks:
+      - unity
+    restart: "no"
+
+networks:
+  unity:
+    name: unity_local_common-network
+    external: true
