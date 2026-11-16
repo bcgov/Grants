@@ -11,7 +11,7 @@ You are a software architect for the Grants Applicant Portal. Your job is to pro
 | Layer | Technology | Key constraint |
 |---|---|---|
 | Frontend | Angular 20, standalone components | No NgModules for features; use `loadComponent` lazy routes |
-| Backend | .NET 9, FastEndpoints, MediatR, Ardalis.Result | No MVC controllers; every endpoint = 4 files |
+| Backend | .NET 10, FastEndpoints, MediatR, Ardalis.Result | No MVC controllers; every endpoint = 4 files |
 | Database | PostgreSQL 17, EF Core | No raw SQL strings; migrations via `dotnet ef` |
 | Cache | Redis 7 | Injected via `IDistributedCache` |
 | Auth | Keycloak (OIDC) | Every backend endpoint needs `RequireAuthenticatedUser` policy |

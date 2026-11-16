@@ -79,7 +79,7 @@ To enable Redis caching, add a `Redis` connection string to your `appsettings.js
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Database=ApplicantPortal;Username=postgres;Password=admin;Port=5432",
+  "DefaultConnection": "Host=localhost;Database=UnityApplicantPortal;Username=postgres;Password=admin;Port=5432",
   "Redis": "localhost:6379,password=password,defaultDatabase=1,abortConnect=false"
 }
 ```

@@ -11,7 +11,7 @@ services:
       - "5100:5100"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=GrantsDB;Username=postgres;Password=localdev
+      - ConnectionStrings__Grants=Host=postgres;Port=5432;Database=UnityApplicantPortal;Username=postgres;Password=localdev
       - ConnectionStrings__Redis=redis:6379
       - KEYCLOAK__CREDENTIALS__SECRET=placeholder-client-secret
       - KEYCLOAK__AUTHSERVERURL=https://dev.loginproxy.gov.bc.ca/auth
@@ -54,7 +54,7 @@ services:
     ports:
       - "5434:5432"
     environment:
-      - POSTGRES_DB=GrantsDB
+      - POSTGRES_DB=UnityApplicantPortal
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=localdev
     volumes:

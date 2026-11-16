@@ -79,7 +79,7 @@
           <app-datatable
             idSuffix="organizations"
             [config]="orgbookDataTableConfig"
-            [data]="multipleOrganizations"
+            [data]="getOrganizationsForTable()"
             [loading]="false">
           </app-datatable>
         </div>

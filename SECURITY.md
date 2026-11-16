@@ -1,18 +1,11 @@
-# Security Policies and Procedures
-
-This document outlines security procedures for the Economy Sector Grant Applicatant Portal Solution project.
-
-- [Supported Versions](#supported-versions)
-- [Reporting a Security Bug](#reporting-a-security-bug)
+# Security Policy
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | Experimental  |
-| 1.0.x   | Initial release |
-| 1.x.x   | Production release |
+Only the latest release deployed from the `main` branch receives security fixes.
 
-## Reporting a Security Bug
+## Reporting a Vulnerability
 
-The project team and the BC Governement developer community take all security bugs seriously. Reporting security issues is always helpful this can be done by sending an email to <grantmanagementsupport@gov.bc.ca> or following the links on the portal landing page.
+Please do not report security issues in public issues or pull requests.
+Report them privately using [Report a vulnerability](https://github.com/bcgov/Grants/security/advisories/new)
+or by email to <grantmanagementsupport@gov.bc.ca>.

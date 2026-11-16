@@ -1,6 +1,6 @@
 # GitHub Copilot Instructions — Grants Applicant Portal
 
-BC Government full-stack application for grant applicants. Angular 20 frontend + .NET 9 backend on OpenShift.
+BC Government full-stack application for grant applicants. Angular 20 frontend + .NET 10 backend on OpenShift.
 
 ---
 
@@ -11,7 +11,7 @@ applications/
 ├── Grants.ApplicantPortal/
 │   ├── src/
 │   │   ├── Grants.ApplicantPortal.Frontend/   # Angular 20 SPA (port 4200 dev / 4000 Docker)
-│   │   └── Grants.ApplicantPortal.Backend/    # .NET 9 FastEndpoints API (port 7000 dev / 5100 Docker)
+│   │   └── Grants.ApplicantPortal.Backend/    # .NET 10 FastEndpoints API (port 7000 dev / 5100 Docker)
 │   └── docker-compose.yml                     # Full stack: frontend, backend, PostgreSQL, Redis
 └── Grants.AutoUI/                             # Cypress E2E test suite (targets deployed envs)
     └── cypress/
@@ -71,7 +71,7 @@ src/app/
 
 ---
 
-## Backend (.NET 9)
+## Backend (.NET 10)
 
 ### Architecture
 

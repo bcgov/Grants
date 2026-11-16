@@ -28,7 +28,7 @@ This document provides a guide for the Grants Applicant Portal SonarCloud integr
 **Technology Stack:**
 
 - **Frontend:** Angular 20+ with Server-Side Rendering
-- **Backend:** .NET 9.0 with Clean Architecture
+- **Backend:** .NET 10.0 with Clean Architecture
 - **Database:** PostgreSQL 17 with Entity Framework Core 7.0
 - **Testing:** Karma/Jasmine (Frontend), xUnit (Backend), Cypress (E2E)
 - **Build System:** Angular CLI with Vite, .NET CLI
@@ -82,7 +82,7 @@ sonar.tests=tests
 
 **Language Configuration:**
 
-- .NET 9.0
+- .NET 10.0
 - TypeScript/JavaScript (Angular 20+)
 - HTML/CSS/SCSS
 - Java 17 (for SonarCloud scanner)
@@ -183,7 +183,7 @@ on:
 
 1. **Environment Setup:**
    - Java 17 (SonarCloud scanner)
-   - .NET 9.0 SDK
+   - .NET 10.0 SDK
    - Node.js 20 (for Angular build)
    - dotnet-sonarscanner tool
 

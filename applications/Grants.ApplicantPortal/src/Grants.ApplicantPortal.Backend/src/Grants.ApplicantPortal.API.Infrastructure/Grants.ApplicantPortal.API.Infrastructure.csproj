@@ -21,6 +21,8 @@
     <PackageReference Include="Quartz.Extensions.Hosting" />
     <PackageReference Include="RabbitMQ.Client" />
     <PackageReference Include="StackExchange.Redis" />
+    <!-- Pin over the vulnerable 9.0.x pulled in transitively by Microsoft.Data.SqlClient -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
   
   <ItemGroup>

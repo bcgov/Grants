@@ -2,7 +2,7 @@
 applyTo: applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/**
 ---
 
-# Backend Instructions — .NET 9
+# Backend Instructions — .NET 10
 
 These rules apply to all files in the .NET backend (`applications/Grants.ApplicantPortal/src/Grants.ApplicantPortal.Backend/`).
 

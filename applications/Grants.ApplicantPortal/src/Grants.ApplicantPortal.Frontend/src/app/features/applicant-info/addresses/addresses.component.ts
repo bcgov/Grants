@@ -181,7 +181,11 @@ export class AddressesComponent implements OnInit, OnDestroy, OnChanges {
 
   // Helper method to get safe data for datatable
   getAddressesForTable(): AddressDisplay[] {
-    return this.addresses && Array.isArray(this.addresses) ? this.addresses : [];
+    return Array.isArray(this.addresses)
+      ? this.addresses.filter(address =>
+          [address.street, address.street2, address.unit, address.city, address.province, address.postalCode]
+            .some(value => !!value?.trim()))
+      : [];
   }
 
   private updateActionsVisibility(): void {

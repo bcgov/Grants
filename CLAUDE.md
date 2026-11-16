@@ -16,12 +16,14 @@ Two apps under `applications/`: `Grants.ApplicantPortal` (full-stack portal, fro
 # Full stack — run from applications/Grants.ApplicantPortal/
 cd applications/Grants.ApplicantPortal
 docker-compose up --build
-# or use the PowerShell helper: .\dev-env.ps1 start
+# or use the PowerShell helper (from applications/): .\local-docker.ps1 start
+# run directly without Docker (from applications/): .\start-backend.ps1, .\start-frontend.ps1, .\stop-local.ps1
 
 # Frontend:          http://localhost:4200
 # Backend API:       http://localhost:5100
 # Redis Commander:   http://localhost:8081
-# PostgreSQL:        localhost:5434 (user: postgres / password: localdev / db: GrantsDB)
+# PostgreSQL:        localhost:5432 - shared Unity container "unitydb" (db: UnityApplicantPortal, matches OpenShift)
+#                    standalone (no docker-compose.override.yml): localhost:5434 (user: postgres / password: localdev)
 ```
 
 ## Frontend

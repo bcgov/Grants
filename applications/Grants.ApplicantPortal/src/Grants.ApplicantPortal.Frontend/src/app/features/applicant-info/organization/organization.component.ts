@@ -172,6 +172,13 @@ export class OrganizationInfoComponent implements OnInit, OnDestroy, OnChanges {
     this.cdr.detectChanges();
   }
 
+  getOrganizationsForTable(): OrgbookOrganization[] {
+    return this.multipleOrganizations.filter(organization =>
+      [organization.orgName, organization.organizationType, organization.orgNumber,
+        organization.orgStatus, organization.organizationSize, organization.sector, organization.subSector]
+        .some(value => value != null && String(value).trim() !== ''));
+  }
+
   private initializeDataTableConfig(): void {
     this.orgbookDataTableConfig = {
       columns: [

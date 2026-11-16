@@ -1,6 +1,6 @@
 # Grants Applicant Portal — Backend
 
-.NET 9 Web API for BC Government grants applicants. Deployed as a Docker container on OpenShift.
+.NET 10 Web API for BC Government grants applicants. Deployed as a Docker container on OpenShift.
 
 ## Tech Stack
 
