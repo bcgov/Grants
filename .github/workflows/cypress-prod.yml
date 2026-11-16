@@ -2,8 +2,8 @@ name: Cypress E2E — Prod
 
 # Manual-only — triggered after UAT sign-off, not automatically after deployment.
 #
-# Required secret (repo or environment scope):
-#   CYPRESS_CONFIG_PROD — full contents of cypress/config/prod.json
+# Credentials: CYPRESS_CONFIG_PROD key of the GRANTS_CYPRESS_CONFIG repo
+# secret — see cypress-e2e-runner.yml.
 
 on:
   workflow_dispatch:
@@ -16,5 +16,5 @@ jobs:
     uses: ./.github/workflows/cypress-e2e-runner.yml
     with:
       env_name: prod
-    secrets:
-      cypress_config: ${{ secrets.CYPRESS_CONFIG_PROD }}
+      cypress_config_key: CYPRESS_CONFIG_PROD
+    secrets: inherit
