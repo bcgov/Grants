@@ -58,8 +58,10 @@ jobs:
         # cypress/config/<env>.json. A value may be stored as a nested object or
         # as a JSON string; both are accepted. Using env: avoids shell
         # interpolation issues with quotes inside the JSON.
-        # Every non-URL string leaf is masked individually, since GitHub only
-        # masks the secret's raw text (per line), not values jq re-serializes.
+        # Every string leaf is masked individually, since GitHub only masks the
+        # secret's raw text (per line), not values jq re-serializes. URLs and the
+        # env-name keys (environment, CHEFS_ENV) are left unmasked — masking a
+        # value like "dev" would turn every "dev" in the log into ***.
         run: |
           set -euo pipefail
           if [ -z "$GRANTS_CYPRESS_CONFIG" ]; then
@@ -71,7 +73,7 @@ jobs:
             echo "::error::Key $CONFIG_KEY not found in GRANTS_CYPRESS_CONFIG" >&2
             exit 1
           fi
-          jq -r '.. | strings | select(length > 0 and (test("^https?://") | not))' <<< "$ENV_CONFIG" | while IFS= read -r v; do
+          jq -r 'del(.environment, .CHEFS_ENV) | .. | strings | select(length > 0 and (test("^https?://") | not))' <<< "$ENV_CONFIG" | while IFS= read -r v; do
             echo "::add-mask::$v"
           done
           echo "$ENV_CONFIG" > "cypress/config/${ENV_NAME}.json"
