@@ -5,11 +5,8 @@ name: Cypress E2E — On Demand
 #   Actions → Cypress E2E — On Demand → Run workflow → select your branch → pick env
 #
 # Your branch's specs are checked out and run against the chosen live environment.
-# Credentials come from the existing dev/test secrets — no extra setup needed.
-#
-# Required secrets (repo or environment scope):
-#   CYPRESS_CONFIG_DEV  — full contents of cypress/config/dev.json
-#   CYPRESS_CONFIG_TEST — full contents of cypress/config/test.json
+# Credentials come from the CYPRESS_CONFIG_DEV/TEST keys of the
+# GRANTS_CYPRESS_CONFIG repo secret — no extra setup needed.
 
 on:
   workflow_dispatch:
@@ -27,20 +24,9 @@ permissions:
   contents: read
 
 jobs:
-  # GitHub Actions secrets cannot be selected dynamically, so each env gets its
-  # own job with an if-condition. Only one will run per dispatch.
-  cypress-dev:
-    if: ${{ inputs.env_name == 'dev' }}
+  cypress:
     uses: ./.github/workflows/cypress-e2e-runner.yml
     with:
-      env_name: dev
-    secrets:
-      cypress_config: ${{ secrets.CYPRESS_CONFIG_DEV }}
-
-  cypress-test:
-    if: ${{ inputs.env_name == 'test' }}
-    uses: ./.github/workflows/cypress-e2e-runner.yml
-    with:
-      env_name: test
-    secrets:
-      cypress_config: ${{ secrets.CYPRESS_CONFIG_TEST }}
+      env_name: ${{ inputs.env_name }}
+      cypress_config_key: CYPRESS_CONFIG_${{ inputs.env_name == 'test' && 'TEST' || 'DEV' }}
+    secrets: inherit
