@@ -3,8 +3,8 @@ name: Cypress E2E — Test
 # Runs against the test environment after a successful test deployment,
 # or manually via workflow_dispatch.
 #
-# Required secret (repo or environment scope):
-#   CYPRESS_CONFIG_TEST — full contents of cypress/config/test.json
+# Credentials: CYPRESS_CONFIG_TEST key of the GRANTS_CYPRESS_CONFIG repo
+# secret — see cypress-e2e-runner.yml.
 
 on:
   workflow_run:
@@ -21,5 +21,5 @@ jobs:
     uses: ./.github/workflows/cypress-e2e-runner.yml
     with:
       env_name: test
-    secrets:
-      cypress_config: ${{ secrets.CYPRESS_CONFIG_TEST }}
+      cypress_config_key: CYPRESS_CONFIG_TEST
+    secrets: inherit

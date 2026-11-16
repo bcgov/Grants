@@ -2,6 +2,11 @@ name: Cypress E2E (runner)
 
 # Shared job called by cypress-dev/test/uat/prod.yml.
 # Writes the env config from a secret, installs deps, and runs headless Cypress.
+#
+# Credentials come from one repo secret, GRANTS_CYPRESS_CONFIG: a JSON object
+# keyed by cypress_config_key (CYPRESS_CONFIG_DEV/TEST/UAT/PROD), each value
+# being that env's cypress/config/<env>.json — same shape Unity uses for
+# UNITY_CYPRESS_CONFIG. Callers pass `secrets: inherit`.
 
 on:
   workflow_call:
@@ -15,10 +20,10 @@ on:
         required: false
         type: string
         default: ""
-    secrets:
-      cypress_config:
-        description: "Full contents of cypress/config/<env_name>.json"
+      cypress_config_key:
+        description: "Key in GRANTS_CYPRESS_CONFIG for this env (e.g. CYPRESS_CONFIG_DEV)"
         required: true
+        type: string
 
 permissions:
   contents: read
@@ -36,6 +41,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # workflow_run sets github.sha to the default branch head, not the
+          # commit that was built — check out the triggering commit instead.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -45,11 +54,31 @@ jobs:
           cache-dependency-path: applications/Grants.AutoUI/package-lock.json
 
       - name: Write environment config
-        # Secret contains the full JSON for cypress/config/<env>.json.
-        # Using env: avoids shell interpolation issues with quotes inside the JSON.
-        run: echo "$CYPRESS_CONFIG" > cypress/config/${{ inputs.env_name }}.json
+        # Extract this env's entry from GRANTS_CYPRESS_CONFIG into
+        # cypress/config/<env>.json. A value may be stored as a nested object or
+        # as a JSON string; both are accepted. Using env: avoids shell
+        # interpolation issues with quotes inside the JSON.
+        # Every non-URL string leaf is masked individually, since GitHub only
+        # masks the secret's raw text (per line), not values jq re-serializes.
+        run: |
+          set -euo pipefail
+          if [ -z "$GRANTS_CYPRESS_CONFIG" ]; then
+            echo "::error::GRANTS_CYPRESS_CONFIG secret is not set" >&2
+            exit 1
+          fi
+          ENV_CONFIG=$(jq -c --arg k "$CONFIG_KEY" '.[$k] // empty | if type == "string" then fromjson else . end' <<< "$GRANTS_CYPRESS_CONFIG")
+          if [ -z "$ENV_CONFIG" ]; then
+            echo "::error::Key $CONFIG_KEY not found in GRANTS_CYPRESS_CONFIG" >&2
+            exit 1
+          fi
+          jq -r '.. | strings | select(length > 0 and (test("^https?://") | not))' <<< "$ENV_CONFIG" | while IFS= read -r v; do
+            echo "::add-mask::$v"
+          done
+          echo "$ENV_CONFIG" > "cypress/config/${ENV_NAME}.json"
         env:
-          CYPRESS_CONFIG: ${{ secrets.cypress_config }}
+          GRANTS_CYPRESS_CONFIG: ${{ secrets.GRANTS_CYPRESS_CONFIG }}
+          CONFIG_KEY: ${{ inputs.cypress_config_key }}
+          ENV_NAME: ${{ inputs.env_name }}
 
       - name: Install dependencies
         # --ignore-scripts blocks dependency lifecycle scripts (Sonar githubactions:S6505).
@@ -72,7 +101,7 @@ jobs:
 
       - name: Upload screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cypress-screenshots-${{ inputs.env_name }}-${{ github.run_number }}
           path: applications/Grants.AutoUI/cypress/screenshots

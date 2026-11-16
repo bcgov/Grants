@@ -30,37 +30,42 @@ Each Cypress workflow only proceeds if the upstream build/push workflow **succee
 
 ### Environment config at runtime
 
-The `cypress/config/` files (`dev.json`, `test.json`, `uat.json`, `prod.json`) are in `.gitignore` and are never committed. In CI they are written to disk from a GitHub secret immediately before `npm ci` runs.
+The `cypress/config/` files (`dev.json`, `test.json`, `uat.json`, `prod.json`) are in `.gitignore` and are never committed. In CI the runner extracts the env's entry from the `GRANTS_CYPRESS_CONFIG` secret and writes it to `cypress/config/<env>.json` immediately before `npm ci` runs.
 
 `cypress.config.ts` reads the file at startup and merges it into the Cypress environment. Runtime `--env` flags always override file values, which is how the optional `base_url` override works in `cypress-dev.yml`.
 
 ### Runner inputs
 
-`cypress-e2e-runner.yml` accepts two inputs from its callers:
+`cypress-e2e-runner.yml` accepts these inputs from its callers (who also pass `secrets: inherit`):
 
 | Input | Required | Description |
 |---|---|---|
 | `env_name` | Yes | One of `dev`, `test`, `uat`, `prod` — selects the config file and names the job. |
+| `cypress_config_key` | Yes | Key in `GRANTS_CYPRESS_CONFIG` for this env (`CYPRESS_CONFIG_DEV`, `_TEST`, `_UAT`, `_PROD`). |
 | `base_url` | No | Overrides the `baseUrl` from the config file. Used by `cypress-dev.yml` when pointing at a non-default URL. |
 
 ---
 
 ## Configuration
 
-### Step 1 — Create GitHub Secrets
+### Step 1 — Create the GitHub Secret
 
-One secret per environment containing the **full JSON** for that environment's config file. Store these at repository level under **Settings → Secrets and variables → Actions**.
+One repository secret, `GRANTS_CYPRESS_CONFIG`, under **Settings → Secrets and variables → Actions**. It is a JSON object with one key per environment; each value is the **full JSON** for that environment's config file (as a nested object or a JSON string):
 
-| Secret name | Contains |
-|---|---|
-| `CYPRESS_CONFIG_DEV` | Full contents of `cypress/config/dev.json` |
-| `CYPRESS_CONFIG_TEST` | Full contents of `cypress/config/test.json` |
-| `CYPRESS_CONFIG_UAT` | Full contents of `cypress/config/uat.json` |
-| `CYPRESS_CONFIG_PROD` | Full contents of `cypress/config/prod.json` |
+```json
+{
+  "CYPRESS_CONFIG_DEV":  { "baseUrl": "https://dev-grants.apps.silver.devops.gov.bc.ca/", "environment": "dev", "...": "..." },
+  "CYPRESS_CONFIG_TEST": { "...": "..." },
+  "CYPRESS_CONFIG_UAT":  { "...": "..." },
+  "CYPRESS_CONFIG_PROD": { "...": "..." }
+}
+```
+
+This is the same shape Unity uses for `UNITY_CYPRESS_CONFIG`.
 
 ### Step 2 — Config file format
 
-Each secret value is a flat JSON object. Use `cypress.pipeline.env.json` as the field reference — it shows all keys with placeholder values. Fill in the real values for each environment:
+Each environment's value is a flat JSON object. Use `cypress.pipeline.env.json` as the field reference — it shows all keys with placeholder values. Fill in the real values for each environment:
 
 ```json
 {
@@ -143,7 +148,7 @@ Use this when writing or debugging specs on a `feature/` or `bugfix/` branch. Yo
 5. In the **Target environment** dropdown, select `dev` or `test`.
 6. Click **Run workflow**.
 
-Your specs run against the live environment. Credentials and base URL come from the existing `CYPRESS_CONFIG_DEV` or `CYPRESS_CONFIG_TEST` secret — no additional configuration required.
+Your specs run against the live environment. Credentials and base URL come from the `CYPRESS_CONFIG_DEV` or `CYPRESS_CONFIG_TEST` key of `GRANTS_CYPRESS_CONFIG` — no additional configuration required.
 
 Screenshots of any failing tests are uploaded as a workflow artifact and available for download from the workflow run summary page.
 
@@ -158,7 +163,7 @@ Prod is never triggered automatically. Run it only after UAT has been signed off
 
 ### Flow 4 — Dev run against a specific URL (advanced)
 
-`cypress-dev.yml` accepts an optional `base_url` input that overrides the URL in `CYPRESS_CONFIG_DEV`. Use this if you need to point the dev test suite at a non-standard URL.
+`cypress-dev.yml` accepts an optional `base_url` input that overrides the URL in the `CYPRESS_CONFIG_DEV` config. Use this if you need to point the dev test suite at a non-standard URL.
 
 1. Go to **Actions → Cypress E2E — Dev**.
 2. Click **Run workflow**.

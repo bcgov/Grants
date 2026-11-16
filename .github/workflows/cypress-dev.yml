@@ -4,8 +4,8 @@ name: Cypress E2E — Dev
 # Can also be run manually — supply base_url to target a feature branch deployment
 # instead of the default dev environment URL.
 #
-# Required secret (repo or environment scope):
-#   CYPRESS_CONFIG_DEV — full contents of cypress/config/dev.json
+# Credentials: CYPRESS_CONFIG_DEV key of the GRANTS_CYPRESS_CONFIG repo
+# secret — see cypress-e2e-runner.yml.
 
 on:
   workflow_run:
@@ -28,5 +28,5 @@ jobs:
     with:
       env_name: dev
       base_url: ${{ inputs.base_url || '' }}
-    secrets:
-      cypress_config: ${{ secrets.CYPRESS_CONFIG_DEV }}
+      cypress_config_key: CYPRESS_CONFIG_DEV
+    secrets: inherit
