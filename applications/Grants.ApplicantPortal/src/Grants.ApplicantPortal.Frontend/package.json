@@ -50,5 +50,8 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.4"
+  },
+  "overrides": {
+    "minimatch@^10.0.0": "^11.0.1"
   }
 }
