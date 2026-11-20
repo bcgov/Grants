@@ -6,10 +6,6 @@ export class BCServicesCardPage {
     return cy.get(ExternalSelectors.BCServicesCard.testWithPasswordTile);
   }
 
-  get testWithUsernamePasswordTitle() {
-    return this.testWithUsernamePasswordTile.find(ExternalSelectors.BCServicesCard.tileTitleHeading);
-  }
-
   get testWithUsernamePasswordImage() {
     return cy.get(ExternalSelectors.BCServicesCard.testWithPasswordImage);
   }
@@ -29,11 +25,9 @@ export class BCServicesCardPage {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
   verifyPageLoaded(): void {
-    this.testWithUsernamePasswordTile.should("be.visible");
-    this.testWithUsernamePasswordTitle.should(
-      "contain.text",
-      "Test with username and password",
-    );
+    this.testWithUsernamePasswordTile
+      .should("be.visible")
+      .and("contain.text", "Test with username and password");
   }
 
   verifyProdMfaPageLoaded(): void {
