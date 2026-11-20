@@ -1,7 +1,5 @@
 import { ExternalSelectors } from '../selectors/external-registry';
 
-import { ExternalSelectors } from '../selectors/external-registry';
-
 export class BCServicesCardPage {
   // ── Device Selection Selectors ───────────────────────────────────────────────
   get testWithUsernamePasswordTile() {
