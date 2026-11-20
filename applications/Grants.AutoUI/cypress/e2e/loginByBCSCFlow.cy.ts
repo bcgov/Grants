@@ -1,5 +1,4 @@
 import { loginPage } from "../pages/LoginPage";
-import { loginPage } from "../pages/LoginPage";
 import { authenticatorPage } from "../pages/AuthenticatorPage";
 import { bcServicesCardPage } from "../pages/BCServicesCardPage";
 import { termsOfUsePage } from "../pages/TermsOfUsePage";
