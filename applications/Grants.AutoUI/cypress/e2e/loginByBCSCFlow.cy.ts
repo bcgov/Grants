@@ -1,4 +1,5 @@
 import { loginPage } from "../pages/LoginPage";
+import { loginPage } from "../pages/LoginPage";
 import { authenticatorPage } from "../pages/AuthenticatorPage";
 import { bcServicesCardPage } from "../pages/BCServicesCardPage";
 import { termsOfUsePage } from "../pages/TermsOfUsePage";
@@ -114,10 +115,9 @@ describe(
       it("shows the 'Test with username and password' tile and clicks it", function (this: Mocha.Context) {
         skipInProd(this);
 
-        bcServicesCardPage.testWithUsernamePasswordTitle.should(
-          "contain.text",
-          "Test with username and password",
-        );
+        bcServicesCardPage.testWithUsernamePasswordTile
+          .should("be.visible")
+          .and("contain.text", "Test with username and password");
         bcServicesCardPage.clickTestWithUsernamePassword();
       });
     });

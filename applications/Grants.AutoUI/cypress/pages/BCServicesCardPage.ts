@@ -1,13 +1,11 @@
 import { ExternalSelectors } from '../selectors/external-registry';
 
+import { ExternalSelectors } from '../selectors/external-registry';
+
 export class BCServicesCardPage {
   // ── Device Selection Selectors ───────────────────────────────────────────────
   get testWithUsernamePasswordTile() {
     return cy.get(ExternalSelectors.BCServicesCard.testWithPasswordTile);
-  }
-
-  get testWithUsernamePasswordTitle() {
-    return this.testWithUsernamePasswordTile.find(ExternalSelectors.BCServicesCard.tileTitleHeading);
   }
 
   get testWithUsernamePasswordImage() {
@@ -29,11 +27,9 @@ export class BCServicesCardPage {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
   verifyPageLoaded(): void {
-    this.testWithUsernamePasswordTile.should("be.visible");
-    this.testWithUsernamePasswordTitle.should(
-      "contain.text",
-      "Test with username and password",
-    );
+    this.testWithUsernamePasswordTile
+      .should("be.visible")
+      .and("contain.text", "Test with username and password");
   }
 
   verifyProdMfaPageLoaded(): void {
