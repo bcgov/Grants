@@ -1,0 +1,72 @@
+{
+  "CYPRESS_CONFIG_DEV": {
+    "baseUrl": "https://dev-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "dev",
+    "test1username": "",
+    "test1password": "",
+    "test2username": "",
+    "test2password": "",
+    "bcscUsername": "",
+    "bcscPassword": "",
+    "idirusername": "",
+    "idirpassword": "",
+    "workspaceName": "",
+    "providerName": ""
+  },
+  "CYPRESS_CONFIG_DEV2": {
+    "baseUrl": "https://dev2-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "dev2",
+    "test1username": "",
+    "test1password": "",
+    "test2username": "",
+    "test2password": "",
+    "bcscUsername": "",
+    "bcscPassword": "",
+    "idirusername": "",
+    "idirpassword": "",
+    "workspaceName": "",
+    "providerName": ""
+  },
+  "CYPRESS_CONFIG_TEST": {
+    "baseUrl": "https://test-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "test",
+    "test1username": "",
+    "test1password": "",
+    "test2username": "",
+    "test2password": "",
+    "bcscUsername": "",
+    "bcscPassword": "",
+    "idirusername": "",
+    "idirpassword": "",
+    "workspaceName": "",
+    "providerName": ""
+  },
+  "CYPRESS_CONFIG_UAT": {
+    "baseUrl": "https://uat-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "uat",
+    "test1username": "",
+    "test1password": "",
+    "test2username": "",
+    "test2password": "",
+    "bcscUsername": "",
+    "bcscPassword": "",
+    "idirusername": "",
+    "idirpassword": "",
+    "workspaceName": "",
+    "providerName": ""
+  },
+  "CYPRESS_CONFIG_PROD": {
+    "baseUrl": "https://prod-grants.apps.silver.devops.gov.bc.ca/",
+    "environment": "prod",
+    "test1username": "",
+    "test1password": "",
+    "test2username": "",
+    "test2password": "",
+    "bcscUsername": "",
+    "bcscPassword": "",
+    "idirusername": "",
+    "idirpassword": "",
+    "workspaceName": "",
+    "providerName": ""
+  }
+}

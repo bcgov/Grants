@@ -12,11 +12,30 @@ function loadEnvConfig(env: string): Record<string, unknown> {
     );
   }
 
+  // Per-env file takes precedence so existing local setups keep working.
   const configPath = path.resolve(__dirname, `cypress/config/${env}.json`);
-  if (!fs.existsSync(configPath)) {
-    throw new Error(`Environment config not found: ${configPath}`);
+  if (fs.existsSync(configPath)) {
+    return JSON.parse(fs.readFileSync(configPath, "utf-8"));
   }
-  return JSON.parse(fs.readFileSync(configPath, "utf-8"));
+
+  // Fallback: the combined file, same shape as the GRANTS_CYPRESS_CONFIG CI
+  // secret — one CYPRESS_CONFIG_<ENV> key per environment.
+  const combinedPath = path.resolve(__dirname, "cypress/config/grants-cypress-config.json");
+  const key = `CYPRESS_CONFIG_${env.toUpperCase()}`;
+  if (fs.existsSync(combinedPath)) {
+    let entry = JSON.parse(fs.readFileSync(combinedPath, "utf-8"))[key];
+    if (typeof entry === "string") {
+      // Matches the workflow's jq `fromjson` handling of string-encoded values.
+      entry = JSON.parse(entry);
+    }
+    if (entry) {
+      return entry as Record<string, unknown>;
+    }
+  }
+
+  throw new Error(
+    `Environment config not found: ${configPath} or ${key} in ${combinedPath}`,
+  );
 }
 
 export default defineConfig({

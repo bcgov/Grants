@@ -61,11 +61,11 @@ One repository secret, `GRANTS_CYPRESS_CONFIG`, under **Settings → Secrets and
 }
 ```
 
-This is the same shape Unity uses for `UNITY_CYPRESS_CONFIG`.
+This is the same shape Unity uses for `UNITY_CYPRESS_CONFIG`. A full template with every key and base URL is in [`cypress/config/grants-cypress-config.json.example`](cypress/config/grants-cypress-config.json.example) — copy it, fill in the credentials, and paste the result as the secret value. GitHub Actions and Azure runners use the same combined value.
 
 ### Step 2 — Config file format
 
-Each environment's value is a flat JSON object. Use `cypress.pipeline.env.json` as the field reference — it shows all keys with placeholder values. Fill in the real values for each environment:
+Each environment's value is a flat JSON object. Use `cypress/config/grants-cypress-config.json.example` as the field reference — it shows all keys with empty placeholder values. Fill in the real values for each environment:
 
 ```json
 {
@@ -191,8 +191,8 @@ Videos are not recorded by default (disabled in Cypress 10+). Enable them in `cy
 To run tests locally before pushing, create your own config file (not committed):
 
 ```bash
-# Copy the pipeline template and fill in real values
-cp cypress.pipeline.env.json cypress/config/dev.json   # edit to the flat format shown above
+# Copy the per-env template and fill in real values
+cp cypress/config/dev.json.example cypress/config/dev.json
 
 npm run cy:open:dev    # interactive Cypress UI against dev
 npm run cy:run:dev     # headless run against dev
